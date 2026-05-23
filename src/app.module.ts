@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { VehiclesModule } from './vehicles/vehicles.module';
+import { RevisionModule } from './revision/revision.module';
 // ... seus outros imports (como o VehiclesModule)
 
 @Module({
@@ -10,6 +11,7 @@ import { VehiclesModule } from './vehicles/vehicles.module';
       isGlobal: true,
     }),
     VehiclesModule,
+    RevisionModule,
     // ... outros módulos
   ],
   controllers: [],

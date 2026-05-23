@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { FirebaseService } from '../services/firebase.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { v4 as uuid } from 'uuid';
@@ -16,25 +20,18 @@ export class VehiclesService {
   async create(createVehicleDto: CreateVehicleDto) {
     const id = uuid();
     try {
-      // 1. Pede pro Firebase gerar uma referência vazia (isso já cria um ID único tipo 'aB3x9Y...')
       const docRef = this.collection.doc();
 
-      // 2. Monta o objeto final misturando o que veio do front com as regras do back-end
       const newVehicle = {
         id,
-        ...createVehicleDto, // Espalha todos os dados do DTO aqui (nome, placa, etc)
-        status: 'ativo', // Todo veículo novo entra como ativo por padrão
-        createdAt: new Date().toISOString(), // Salva a data e hora exata do cadastro
+        ...createVehicleDto,
+        status: 'ativo',
+        createdAt: new Date().toISOString(),
       };
-
-      // 3. Manda salvar de fato no Firestore
       await docRef.set(newVehicle);
-
-      // 4. Devolve o veículo criado (com o ID) para o Controller mandar pro Front-end
       return newVehicle;
     } catch (error) {
       console.error('Erro ao salvar veículo:', error);
-
       const firestoreErrorCode =
         typeof error === 'object' && error !== null && 'code' in error
           ? (error as { code?: number }).code
@@ -45,9 +42,83 @@ export class VehiclesService {
           'Firestore nao encontrado para este projeto. Verifique se o Firestore foi habilitado no Firebase/GCP e se as credenciais pertencem ao projeto correto.',
         );
       }
-
       throw new InternalServerErrorException(
         'Não foi possível salvar o veículo no banco de dados.',
+      );
+    }
+  }
+
+  async findAllByID(id: string) {
+    try {
+      const docRef = await this.collection
+        .where('prefeituraId', '==', id)
+        .get();
+
+      if (docRef.empty) {
+        return { data: [], message: 'Nenhum veículo encontrado.' };
+      }
+      const data = docRef.docs.map((doc) => doc.data());
+      return { data, message: 'Veículos encontrados com sucesso!' };
+    } catch (error) {
+      console.error('Erro ao buscar veículo:', error);
+
+      throw new InternalServerErrorException(
+        'Não foi possível buscar o veículo no banco de dados.',
+      );
+    }
+  }
+
+  async updateById(carId: string, updateVehicleDto: CreateVehicleDto) {
+    try {
+      const docRef = await this.collection.where('id', '==', carId).get();
+
+      if (docRef.empty) {
+        throw new NotFoundException(
+          'Veículo não encontrado para o ID fornecido.',
+        );
+      }
+      const docId = docRef.docs[0].id;
+
+      await this.collection.doc(docId).update({
+        ...updateVehicleDto,
+        updatedAt: new Date().toISOString(),
+      });
+
+      return {
+        data: {},
+        message: 'Veículo atualizado com sucesso!',
+      };
+    } catch (error) {
+      console.error('Erro ao atualizar veículo:', error);
+
+      throw new InternalServerErrorException(
+        'Não foi possível atualizar o veículo no banco de dados. tente novamente mais tarde.',
+      );
+    }
+  }
+
+  async deleteById(carId: string) {
+    try {
+      const docRef = await this.collection.where('id', '==', carId).get();
+
+      if (docRef.empty) {
+        throw new NotFoundException(
+          'Veículo não encontrado para o ID fornecido.',
+        );
+      }
+      const docId = docRef.docs[0].id;
+
+      await this.collection.doc(docId).delete();
+
+      return {
+        data: {},
+        message: 'Veículo deletado com sucesso!',
+      };
+    } catch (error) {
+      console.error('Erro ao deletar veículo:', error);
+
+      throw new InternalServerErrorException(
+        'Não foi possível deletar o veículo no banco de dados. tente novamente mais tarde.',
       );
     }
   }

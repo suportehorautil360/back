@@ -1,18 +1,43 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  HttpStatus,
+  HttpCode,
+  Delete,
+} from '@nestjs/common';
 import { VehiclesService } from './vehicles.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 
 // O texto 'vehicles' aqui define a URL da rota: http://localhost:3000/vehicles
 @Controller('vehicles')
 export class VehiclesController {
-  // Injetamos o Service para que o Controller possa usá-lo
   constructor(private readonly vehiclesService: VehiclesService) {}
 
-  // O @Post() diz que essa função só responde a requisições do tipo POST (usadas para criar dados)
   @Post()
   async create(@Body() createVehicleDto: CreateVehicleDto) {
-    // O @Body() pega os dados que vieram no corpo da requisição e joga na variável 'createVehicleDto'
-    // Depois, repassamos isso para o serviço fazer o trabalho pesado
     return this.vehiclesService.create(createVehicleDto);
+  }
+
+  @Get(':id')
+  async findAll(@Param('id') id: string) {
+    return this.vehiclesService.findAllByID(id);
+  }
+
+  @Post('update/:carId')
+  @HttpCode(HttpStatus.OK)
+  async update(
+    @Param('carId') carId: string,
+    @Body() updateVehicleDto: CreateVehicleDto,
+  ) {
+    return this.vehiclesService.updateById(carId, updateVehicleDto);
+  }
+
+  @Delete(':carId')
+  @HttpCode(HttpStatus.OK)
+  async delete(@Param('carId') carId: string) {
+    return this.vehiclesService.deleteById(carId);
   }
 }

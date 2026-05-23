@@ -6,5 +6,7 @@ export class CreateVehicleDto {
   currentMeter!: number;
   brand!: string;
   maintenanceInterval!: number;
-  maintenanceUnit!: string;
+  maintenanceUnit!: 'km' | 'hours';
+  prefeituraId!: string;
+  lastRevisionOdometerReading!: number;
 }
