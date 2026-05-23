@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { VehiclesModule } from './vehicles/vehicles.module';
-import { RevisionModule } from './revision/revision.module';
-// ... seus outros imports (como o VehiclesModule)
+import { VehiclesModule } from './modules/vehicles/vehicles.module';
+import { RevisionModule } from './modules/revision/revision.module';
 
 @Module({
   imports: [
-    // Isso carrega o arquivo .env para o projeto inteiro
     ConfigModule.forRoot({
       isGlobal: true,
     }),

@@ -3,7 +3,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { FirebaseService } from '../services/firebase.service';
+import { FirebaseService } from '../../config/firebase.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { v4 as uuid } from 'uuid';
 
@@ -55,7 +55,9 @@ export class VehiclesService {
         .get();
 
       if (docRef.empty) {
-        return { data: [], message: 'Nenhum veículo encontrado.' };
+        throw new NotFoundException(
+          'Nenhum veículo encontrado para a prefeitura fornecida.',
+        );
       }
       const data = docRef.docs.map((doc) => doc.data());
       return { data, message: 'Veículos encontrados com sucesso!' };

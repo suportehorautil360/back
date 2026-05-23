@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { RevisionService } from './revision.service';
-import { FirebaseService } from '../services/firebase.service';
+import { FirebaseService } from '../../config/firebase.service';
 import { RevisionController } from './revision.controller';
 
 @Module({

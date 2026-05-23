@@ -2,8 +2,9 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
-import { FirebaseService } from '../services/firebase.service';
+import { FirebaseService } from '../../config/firebase.service';
 import { v4 as uuid } from 'uuid';
 import { CreateRevisionDto } from './dto/create-revision.dto';
 
@@ -76,6 +77,12 @@ export class RevisionService {
       const docRef = await this.collection
         .where('prefeituraId', '==', id)
         .get();
+
+      if (docRef.empty) {
+        throw new NotFoundException(
+          'Nenhuma revisão encontrada para a prefeitura fornecida.',
+        );
+      }
 
       const revisions = docRef.docs.map((doc) => doc.data());
       return {
