@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { VehiclesController } from './vehicles.controller';
 import { VehiclesService } from './vehicles.service';
-import { FirebaseService } from '../services/firebase.service';
+import { FirebaseService } from '../../config/firebase.service';
 
 @Module({
   controllers: [VehiclesController],
