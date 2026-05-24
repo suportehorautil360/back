@@ -7,9 +7,23 @@ import {
   HttpStatus,
   HttpCode,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiCreatedResponse,
+  ApiInternalServerErrorResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiBody,
+} from '@nestjs/swagger';
 import { RevisionService } from './revision.service';
 import { CreateRevisionDto } from './dto/create-revision.dto';
+import {
+  RevisionCreateResponseDto,
+  RevisionListResponseDto,
+} from './dto/revision-response.dto';
 
 @ApiTags('revision')
 @Controller('revision')
@@ -18,11 +32,18 @@ export class RevisionController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Registrar uma nova revisão' })
-  @ApiResponse({ status: 201, description: 'Revisão registrada com sucesso.' })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad Request: A quilometragem é insuficiente ou inválida.',
+  @ApiOperation({
+    summary: 'Registrar uma nova revisão',
+    description:
+      'Valida a quilometragem do veículo, grava a revisão e bloqueia o veículo até a conclusão do processo.',
+  })
+  @ApiBody({ type: CreateRevisionDto })
+  @ApiCreatedResponse({
+    description: 'Revisão registrada com sucesso.',
+    type: RevisionCreateResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Dados inválidos para criação da revisão.',
     schema: {
       type: 'object',
       properties: {
@@ -36,37 +57,30 @@ export class RevisionController {
       },
     },
   })
+  @ApiInternalServerErrorResponse({
+    description: 'Falha inesperada ao persistir a revisão.',
+  })
   async create(@Body() createRevisionDto: CreateRevisionDto) {
     return this.revisionService.create(createRevisionDto);
   }
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Listar revisões por ID' })
+  @ApiOperation({
+    summary: 'Listar revisões por prefeitura',
+    description:
+      'Retorna todas as revisões associadas ao ID da prefeitura informada.',
+  })
   @ApiParam({
     name: 'id',
     description: 'ID da prefeitura',
   })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Lista de revisões encontrada.',
-    schema: {
-      type: 'object',
-      properties: {
-        data: {
-          type: 'array',
-          items: { $ref: '#/components/schemas/CreateRevisionDto' },
-        },
-        message: {
-          type: 'string',
-          example: 'Revisões encontradas com sucesso!',
-        },
-      },
-    },
+    type: RevisionListResponseDto,
   })
-  @ApiResponse({
-    status: 404,
-    description: 'Nenhuma revisão encontrada.',
+  @ApiNotFoundResponse({
+    description: 'Nenhuma revisão encontrada para a prefeitura informada.',
     schema: {
       type: 'object',
       properties: {
@@ -78,6 +92,9 @@ export class RevisionController {
         statusCode: { type: 'number', example: 404 },
       },
     },
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Falha inesperada ao consultar as revisões.',
   })
   async findAllById(@Param('id') id: string) {
     return this.revisionService.findAllById(id);

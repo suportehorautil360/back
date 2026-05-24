@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { RevisionModule } from './modules/revision/revision.module';
+import { WorkFrontModule } from './modules/work-front/work-front.module';
+import { AllocationsModule } from './modules/allocations/allocations.module';
 
 @Module({
   imports: [
@@ -10,6 +12,8 @@ import { RevisionModule } from './modules/revision/revision.module';
     }),
     VehiclesModule,
     RevisionModule,
+    WorkFrontModule,
+    AllocationsModule,
     // ... outros módulos
   ],
   controllers: [],

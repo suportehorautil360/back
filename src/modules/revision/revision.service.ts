@@ -66,6 +66,9 @@ export class RevisionService {
       };
     } catch (error) {
       console.error('Erro ao salvar revisão:', error);
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       throw new InternalServerErrorException(
         'Ocorreu um erro ao salvar a revisão. Por favor, tente novamente mais tarde.',
       );
@@ -91,6 +94,9 @@ export class RevisionService {
       };
     } catch (error) {
       console.error('Erro ao buscar revisões:', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new InternalServerErrorException(
         'Ocorreu um erro ao buscar as revisões. Por favor, tente novamente mais tarde.',
       );

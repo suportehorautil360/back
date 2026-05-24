@@ -37,4 +37,8 @@ export class FirebaseService {
   getFirestore() {
     return FirebaseService.db;
   }
+
+  get FieldValue() {
+    return admin.firestore.FieldValue;
+  }
 }
