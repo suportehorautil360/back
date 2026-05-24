@@ -6,6 +6,9 @@ export function setupSwagger(app: INestApplication): void {
     .setTitle('Minha API Profissional')
     .setDescription('Documentação dos endpoints do sistema')
     .setVersion('1.0')
+    .addTag('allocations')
+    .addTag('revision')
+    .addTag('work-front')
     .addTag('vehicles')
     .build();
 
