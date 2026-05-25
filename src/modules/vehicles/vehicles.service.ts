@@ -62,6 +62,9 @@ export class VehiclesService {
       const data = docRef.docs.map((doc) => doc.data());
       return { data, message: 'Veículos encontrados com sucesso!' };
     } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       console.error('Erro ao buscar veículo:', error);
 
       throw new InternalServerErrorException(
@@ -91,6 +94,9 @@ export class VehiclesService {
         message: 'Veículo atualizado com sucesso!',
       };
     } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       console.error('Erro ao atualizar veículo:', error);
 
       throw new InternalServerErrorException(
@@ -117,6 +123,9 @@ export class VehiclesService {
         message: 'Veículo deletado com sucesso!',
       };
     } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       console.error('Erro ao deletar veículo:', error);
 
       throw new InternalServerErrorException(
