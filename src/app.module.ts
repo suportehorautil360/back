@@ -4,6 +4,7 @@ import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { RevisionModule } from './modules/revision/revision.module';
 import { WorkFrontModule } from './modules/work-front/work-front.module';
 import { AllocationsModule } from './modules/allocations/allocations.module';
+import { TimeRecordsModule } from './modules/time-records/time-records.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { AllocationsModule } from './modules/allocations/allocations.module';
     RevisionModule,
     WorkFrontModule,
     AllocationsModule,
+    TimeRecordsModule,
     // ... outros módulos
   ],
   controllers: [],
