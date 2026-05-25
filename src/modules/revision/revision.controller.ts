@@ -64,6 +64,30 @@ export class RevisionController {
     return this.revisionService.create(createRevisionDto);
   }
 
+  @Post('complete')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Registrar uma revisão concluída e liberar o veículo',
+    description:
+      'Grava a revisão como concluída, adota a leitura informada como leitura ' +
+      'atual e base da próxima revisão, e devolve o veículo para o status ativo.',
+  })
+  @ApiBody({ type: CreateRevisionDto })
+  @ApiCreatedResponse({
+    description: 'Revisão concluída e veículo liberado.',
+    type: RevisionCreateResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Dados inválidos para conclusão da revisão.',
+  })
+  @ApiNotFoundResponse({ description: 'Veículo não encontrado.' })
+  @ApiInternalServerErrorResponse({
+    description: 'Falha inesperada ao concluir a revisão.',
+  })
+  async complete(@Body() createRevisionDto: CreateRevisionDto) {
+    return this.revisionService.complete(createRevisionDto);
+  }
+
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
