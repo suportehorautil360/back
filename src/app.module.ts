@@ -6,6 +6,7 @@ import { WorkFrontModule } from './modules/work-front/work-front.module';
 import { AllocationsModule } from './modules/allocations/allocations.module';
 import { TimeRecordsModule } from './modules/time-records/time-records.module';
 import { EscalaModule } from './modules/escala/escala.module';
+import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { EscalaModule } from './modules/escala/escala.module';
     AllocationsModule,
     TimeRecordsModule,
     EscalaModule,
+    FeatureFlagsModule,
     // ... outros módulos
   ],
   controllers: [],

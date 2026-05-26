@@ -1,16 +1,21 @@
 import {
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
 import { FirebaseService } from '../../config/firebase.service';
+import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
 import { CreateTimeRecordDto } from './dto/create-time-record.dto';
 import { UpdateTimeRecordDto } from './dto/update-time-record.dto';
 
 @Injectable()
 export class TimeRecordsService {
-  constructor(private firebaseService: FirebaseService) {}
+  constructor(
+    private firebaseService: FirebaseService,
+    private featureFlags: FeatureFlagsService,
+  ) {}
 
   private get collection() {
     return this.firebaseService.getFirestore().collection('timeRecords');
@@ -39,6 +44,11 @@ export class TimeRecordsService {
   }
 
   async create(dto: CreateTimeRecordDto) {
+    if (!(await this.featureFlags.ativo(dto.prefeituraId, 'ponto'))) {
+      throw new ForbiddenException(
+        'O ponto não está ativo para esta prefeitura.',
+      );
+    }
     const id = uuid();
     try {
       const novo = {
