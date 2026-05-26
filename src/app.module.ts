@@ -5,6 +5,7 @@ import { RevisionModule } from './modules/revision/revision.module';
 import { WorkFrontModule } from './modules/work-front/work-front.module';
 import { AllocationsModule } from './modules/allocations/allocations.module';
 import { TimeRecordsModule } from './modules/time-records/time-records.module';
+import { EscalaModule } from './modules/escala/escala.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { TimeRecordsModule } from './modules/time-records/time-records.module';
     WorkFrontModule,
     AllocationsModule,
     TimeRecordsModule,
+    EscalaModule,
     // ... outros módulos
   ],
   controllers: [],
