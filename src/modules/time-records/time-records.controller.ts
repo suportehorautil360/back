@@ -17,6 +17,7 @@ import {
 import { TimeRecordsService } from './time-records.service';
 import { CreateTimeRecordDto } from './dto/create-time-record.dto';
 import { UpdateTimeRecordDto } from './dto/update-time-record.dto';
+import { ReprovarTimeRecordDto } from './dto/reprovar-time-record.dto';
 
 @ApiTags('time-records')
 @Controller('time-records')
@@ -44,6 +45,29 @@ export class TimeRecordsController {
     @Body() dto: UpdateTimeRecordDto,
   ) {
     return this.timeRecordsService.update(id, dto);
+  }
+
+  @Post(':id/aprovar')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Aprovar uma batida de ponto (RH)' })
+  @ApiParam({ name: 'id', description: 'ID da batida' })
+  @ApiOkResponse({ description: 'Batida aprovada.' })
+  @ApiInternalServerErrorResponse({ description: 'Falha ao aprovar a batida.' })
+  async aprovar(@Param('id') id: string) {
+    return this.timeRecordsService.aprovar(id);
+  }
+
+  @Post(':id/reprovar')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reprovar uma batida de ponto, com motivo (RH)' })
+  @ApiParam({ name: 'id', description: 'ID da batida' })
+  @ApiOkResponse({ description: 'Batida reprovada.' })
+  @ApiInternalServerErrorResponse({ description: 'Falha ao reprovar a batida.' })
+  async reprovar(
+    @Param('id') id: string,
+    @Body() dto: ReprovarTimeRecordDto,
+  ) {
+    return this.timeRecordsService.reprovar(id, dto.motivo);
   }
 
   @Get(':id')

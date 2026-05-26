@@ -40,9 +40,45 @@ describe('TimeRecordsService', () => {
         prefeituraId: 'pref-1',
         timestampOriginal: '2026-05-25T13:05:00.000Z',
         tipo: 'entrada',
+        status: 'pendente',
       }),
     );
     expect(res.data).toHaveProperty('createdAt');
+  });
+
+  it('aprovar marca status aprovado', async () => {
+    const { firebaseService, updateDoc } = makeFirestore([
+      { id: 'doc-1', data: () => ({ id: 't1' }) },
+    ]);
+    const service = new TimeRecordsService(firebaseService);
+
+    await service.aprovar('t1');
+
+    expect(updateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'aprovado' }),
+    );
+  });
+
+  it('reprovar marca status reprovado + motivo', async () => {
+    const { firebaseService, updateDoc } = makeFirestore([
+      { id: 'doc-1', data: () => ({ id: 't1' }) },
+    ]);
+    const service = new TimeRecordsService(firebaseService);
+
+    await service.reprovar('t1', 'Foto não confere');
+
+    expect(updateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'reprovado',
+        motivoReprovacao: 'Foto não confere',
+      }),
+    );
+  });
+
+  it('aprovar lança 404 quando a batida não existe', async () => {
+    const { firebaseService } = makeFirestore([]);
+    const service = new TimeRecordsService(firebaseService);
+    await expect(service.aprovar('x')).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('atualiza o horário de uma batida existente', async () => {

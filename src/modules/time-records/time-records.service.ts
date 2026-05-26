@@ -26,6 +26,7 @@ export class TimeRecordsService {
         prefeituraId: dto.prefeituraId,
         timestampOriginal: dto.timestampOriginal,
         tipo: dto.tipo,
+        status: 'pendente',
         createdAt: new Date().toISOString(),
       };
       await this.collection.doc().set(novo);
@@ -57,6 +58,50 @@ export class TimeRecordsService {
       console.error('Erro ao atualizar ponto:', error);
       throw new InternalServerErrorException(
         'Não foi possível atualizar a batida. Tente novamente mais tarde.',
+      );
+    }
+  }
+
+  /** Atualiza o status de avaliação (aprovado/reprovado) de uma batida. */
+  private async avaliar(
+    id: string,
+    patch: { status: string; motivoReprovacao?: string },
+  ) {
+    const snap = await this.collection.where('id', '==', id).get();
+    if (snap.empty) {
+      throw new NotFoundException('Batida não encontrada para o ID fornecido.');
+    }
+    const docId = snap.docs[0].id;
+    await this.collection.doc(docId).update({
+      ...patch,
+      avaliadoEm: new Date().toISOString(),
+    });
+    return { data: {}, message: 'Status atualizado com sucesso!' };
+  }
+
+  async aprovar(id: string) {
+    try {
+      return await this.avaliar(id, { status: 'aprovado' });
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      console.error('Erro ao aprovar ponto:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível aprovar a batida. Tente novamente mais tarde.',
+      );
+    }
+  }
+
+  async reprovar(id: string, motivo: string) {
+    try {
+      return await this.avaliar(id, {
+        status: 'reprovado',
+        motivoReprovacao: motivo,
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      console.error('Erro ao reprovar ponto:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível reprovar a batida. Tente novamente mais tarde.',
       );
     }
   }
