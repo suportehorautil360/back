@@ -1,7 +1,12 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
 import { FirebaseService } from '../../config/firebase.service';
 import { CreateTimeRecordDto } from './dto/create-time-record.dto';
+import { UpdateTimeRecordDto } from './dto/update-time-record.dto';
 
 @Injectable()
 export class TimeRecordsService {
@@ -20,6 +25,7 @@ export class TimeRecordsService {
         photo: dto.photo,
         prefeituraId: dto.prefeituraId,
         timestampOriginal: dto.timestampOriginal,
+        tipo: dto.tipo,
         createdAt: new Date().toISOString(),
       };
       await this.collection.doc().set(novo);
@@ -28,6 +34,29 @@ export class TimeRecordsService {
       console.error('Erro ao registrar ponto:', error);
       throw new InternalServerErrorException(
         'Não foi possível registrar o ponto. Tente novamente mais tarde.',
+      );
+    }
+  }
+
+  async update(id: string, dto: UpdateTimeRecordDto) {
+    try {
+      const snap = await this.collection.where('id', '==', id).get();
+      if (snap.empty) {
+        throw new NotFoundException('Batida não encontrada para o ID fornecido.');
+      }
+      const docId = snap.docs[0].id;
+      await this.collection.doc(docId).update({
+        timestampOriginal: dto.timestampOriginal,
+        updatedAt: new Date().toISOString(),
+      });
+      return { data: {}, message: 'Batida atualizada com sucesso!' };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      console.error('Erro ao atualizar ponto:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível atualizar a batida. Tente novamente mais tarde.',
       );
     }
   }

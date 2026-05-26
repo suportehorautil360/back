@@ -1,20 +1,22 @@
 jest.mock('uuid', () => ({ v4: () => 'fixed-uuid' }));
 
+import { NotFoundException } from '@nestjs/common';
 import { TimeRecordsService } from './time-records.service';
 import { FirebaseService } from '../../config/firebase.service';
 import { CreateTimeRecordDto } from './dto/create-time-record.dto';
 
-function makeFirestore(docs: { data: () => unknown }[] = []) {
+function makeFirestore(docs: { id?: string; data: () => unknown }[] = []) {
   const setDoc = jest.fn().mockResolvedValue(undefined);
-  const getDocs = jest.fn().mockResolvedValue({ docs });
+  const updateDoc = jest.fn().mockResolvedValue(undefined);
+  const getDocs = jest.fn().mockResolvedValue({ empty: docs.length === 0, docs });
   const collection = jest.fn(() => ({
     where: jest.fn(() => ({ get: getDocs })),
-    doc: jest.fn(() => ({ set: setDoc })),
+    doc: jest.fn(() => ({ set: setDoc, update: updateDoc })),
   }));
   const firebaseService = {
     getFirestore: () => ({ collection }),
   } as unknown as FirebaseService;
-  return { firebaseService, setDoc };
+  return { firebaseService, setDoc, updateDoc };
 }
 
 const dto: CreateTimeRecordDto = {
@@ -22,6 +24,7 @@ const dto: CreateTimeRecordDto = {
   photo: 'data:image/jpeg;base64,abc',
   prefeituraId: 'pref-1',
   timestampOriginal: '2026-05-25T13:05:00.000Z',
+  tipo: 'entrada',
 };
 
 describe('TimeRecordsService', () => {
@@ -36,9 +39,35 @@ describe('TimeRecordsService', () => {
         name: 'João da Silva',
         prefeituraId: 'pref-1',
         timestampOriginal: '2026-05-25T13:05:00.000Z',
+        tipo: 'entrada',
       }),
     );
     expect(res.data).toHaveProperty('createdAt');
+  });
+
+  it('atualiza o horário de uma batida existente', async () => {
+    const { firebaseService, updateDoc } = makeFirestore([
+      { id: 'doc-1', data: () => ({ id: 't1' }) },
+    ]);
+    const service = new TimeRecordsService(firebaseService);
+
+    await service.update('t1', { timestampOriginal: '2026-05-25T12:00:00.000Z' });
+
+    expect(updateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ timestampOriginal: '2026-05-25T12:00:00.000Z' }),
+    );
+  });
+
+  it('update lança 404 quando a batida não existe', async () => {
+    const { firebaseService, updateDoc } = makeFirestore([]);
+    const service = new TimeRecordsService(firebaseService);
+
+    await expect(
+      service.update('inexistente', {
+        timestampOriginal: '2026-05-25T12:00:00.000Z',
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(updateDoc).not.toHaveBeenCalled();
   });
 
   it('lista vazia retorna [] (sem 404)', async () => {

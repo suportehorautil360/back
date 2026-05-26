@@ -24,4 +24,11 @@ export class CreateTimeRecordDto {
     example: '2026-05-25T13:05:00.000Z',
   })
   timestampOriginal!: string;
+
+  @ApiProperty({
+    description: 'Tipo da batida no dia.',
+    enum: ['entrada', 'almoco', 'volta', 'saida'],
+    example: 'entrada',
+  })
+  tipo!: string;
 }
