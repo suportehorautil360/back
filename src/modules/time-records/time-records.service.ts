@@ -16,6 +16,28 @@ export class TimeRecordsService {
     return this.firebaseService.getFirestore().collection('timeRecords');
   }
 
+  /**
+   * Versão legível em horário de Brasília (ex.: "26/05/2026 18:07") só para
+   * leitura/auditoria no console. A fonte de verdade segue em UTC
+   * (timestampOriginal).
+   */
+  private horaLocalBR(iso: string): string {
+    const d = new Date(iso);
+    const tz = 'America/Sao_Paulo';
+    const data = d.toLocaleDateString('pt-BR', {
+      timeZone: tz,
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+    const hora = d.toLocaleTimeString('pt-BR', {
+      timeZone: tz,
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    return `${data} ${hora}`;
+  }
+
   async create(dto: CreateTimeRecordDto) {
     const id = uuid();
     try {
@@ -25,6 +47,7 @@ export class TimeRecordsService {
         photo: dto.photo,
         prefeituraId: dto.prefeituraId,
         timestampOriginal: dto.timestampOriginal,
+        horaLocalBR: this.horaLocalBR(dto.timestampOriginal),
         tipo: dto.tipo,
         status: 'pendente',
         createdAt: new Date().toISOString(),
@@ -48,6 +71,7 @@ export class TimeRecordsService {
       const docId = snap.docs[0].id;
       await this.collection.doc(docId).update({
         timestampOriginal: dto.timestampOriginal,
+        horaLocalBR: this.horaLocalBR(dto.timestampOriginal),
         updatedAt: new Date().toISOString(),
       });
       return { data: {}, message: 'Batida atualizada com sucesso!' };

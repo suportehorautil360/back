@@ -39,6 +39,8 @@ describe('TimeRecordsService', () => {
         name: 'João da Silva',
         prefeituraId: 'pref-1',
         timestampOriginal: '2026-05-25T13:05:00.000Z',
+        // 13:05Z em São Paulo (UTC-3) = 10:05.
+        horaLocalBR: '25/05/2026 10:05',
         tipo: 'entrada',
         status: 'pendente',
       }),
