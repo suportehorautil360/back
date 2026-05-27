@@ -34,10 +34,17 @@ export class RevisionService {
       const vehicleRef = await this.vehiclesCollection
         .where('id', '==', createRevisionDto.vehicleId)
         .get();
+
+      if (vehicleRef.empty) {
+        throw new NotFoundException(
+          'Veículo não encontrado para o ID fornecido.',
+        );
+      }
+
       const vehicleDocID = vehicleRef.docs[0].id;
 
       const vehicleData = vehicleRef.docs[0].data() as {
-        odometerReading: number;
+        currentMeter: number;
         lastRevisionOdometerReading: number;
       };
 
@@ -49,7 +56,7 @@ export class RevisionService {
         );
       }
 
-      if (createRevisionDto.odometerReading < vehicleData.odometerReading) {
+      if (createRevisionDto.odometerReading < vehicleData.currentMeter) {
         throw new BadRequestException(
           'A quilometragem não pode ser menor que a atual do veículo.',
         );
@@ -66,11 +73,77 @@ export class RevisionService {
       };
     } catch (error) {
       console.error('Erro ao salvar revisão:', error);
-      if (error instanceof BadRequestException) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
         throw error;
       }
       throw new InternalServerErrorException(
         'Ocorreu um erro ao salvar a revisão. Por favor, tente novamente mais tarde.',
+      );
+    }
+  }
+
+  /**
+   * Registra uma revisão JÁ concluída e libera o veículo no mesmo passo:
+   * grava a revisão com status "Concluída", adota a leitura informada como
+   * leitura atual (currentMeter) e como base da próxima revisão
+   * (lastRevisionOdometerReading), e devolve o veículo para "ativo".
+   */
+  async complete(createRevisionDto: CreateRevisionDto) {
+    const revisionId = uuid();
+    try {
+      const vehicleRef = await this.vehiclesCollection
+        .where('id', '==', createRevisionDto.vehicleId)
+        .get();
+
+      if (vehicleRef.empty) {
+        throw new NotFoundException(
+          'Veículo não encontrado para o ID fornecido.',
+        );
+      }
+
+      const vehicleDocID = vehicleRef.docs[0].id;
+      const vehicleData = vehicleRef.docs[0].data() as {
+        currentMeter: number;
+      };
+
+      if (createRevisionDto.odometerReading < vehicleData.currentMeter) {
+        throw new BadRequestException(
+          'A quilometragem não pode ser menor que a atual do veículo.',
+        );
+      }
+
+      const newRevision = {
+        id: revisionId,
+        ...createRevisionDto,
+        status: 'Concluída',
+        createdAt: new Date().toISOString(),
+      };
+
+      await this.collection.doc().set(newRevision);
+      await this.vehiclesCollection.doc(vehicleDocID).update({
+        currentMeter: createRevisionDto.odometerReading,
+        lastRevisionOdometerReading: createRevisionDto.odometerReading,
+        status: 'ativo',
+        updatedAt: new Date().toISOString(),
+      });
+
+      return {
+        data: newRevision,
+        message: 'Revisão concluída e veículo liberado com sucesso',
+      };
+    } catch (error) {
+      console.error('Erro ao concluir revisão:', error);
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'Ocorreu um erro ao concluir a revisão. Por favor, tente novamente mais tarde.',
       );
     }
   }

@@ -61,4 +61,11 @@ export class CreateVehicleDto {
     example: 40000,
   })
   lastRevisionOdometerReading!: number;
+
+  @ApiProperty({
+    description: 'Obra / frente de trabalho atual (opcional).',
+    example: 'Rodovia SP-310 — Trecho 4',
+    required: false,
+  })
+  obra?: string;
 }
