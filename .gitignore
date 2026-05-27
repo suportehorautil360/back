@@ -54,3 +54,7 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Credenciais do Firebase (NUNCA commitar)
+*firebase-adminsdk*.json
+*service-account*.json

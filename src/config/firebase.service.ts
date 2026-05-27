@@ -3,6 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
 import { existsSync, readFileSync } from 'node:fs';
 import { isAbsolute, resolve } from 'node:path';
+import {
+  FIREBASE_DATABASE_ID,
+  FIREBASE_SERVICE_ACCOUNT,
+} from './firebase-credentials';
 
 @Injectable()
 export class FirebaseService {
@@ -19,11 +23,15 @@ export class FirebaseService {
 
       FirebaseService.db = admin.firestore();
 
-      // Configuração única garantida pela verificação estática
+      // Com credencial embutida (produção), usa o banco dela "(default)".
+      // Sem ela (homolog via env), o nomeado "default" — override por env.
+      const usandoEmbutida = !!FIREBASE_SERVICE_ACCOUNT.privateKey;
       FirebaseService.db.settings({
         ignoreUndefinedProperties: true,
         preferRest: true,
-        databaseId: 'default',
+        databaseId: usandoEmbutida
+          ? FIREBASE_DATABASE_ID
+          : (this.configService.get<string>('FIREBASE_DATABASE_ID') ?? 'default'),
       });
     }
   }
@@ -37,6 +45,11 @@ export class FirebaseService {
   }
 
   private getCredential(): admin.credential.Credential {
+    // Credencial embutida (host sem env). Ver firebase-credentials.ts.
+    if (FIREBASE_SERVICE_ACCOUNT.privateKey) {
+      return admin.credential.cert(FIREBASE_SERVICE_ACCOUNT);
+    }
+
     const projectId = this.configService.get<string>('FIREBASE_PROJECT_ID');
     const clientEmail = this.configService.get<string>('FIREBASE_CLIENT_EMAIL');
     const privateKey = this.configService
