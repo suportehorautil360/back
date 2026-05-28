@@ -79,11 +79,19 @@ export class TimeRecordsService {
         throw new NotFoundException('Batida não encontrada para o ID fornecido.');
       }
       const docId = snap.docs[0].id;
-      await this.collection.doc(docId).update({
+      // Correção feita pelo operador: o motivo acompanha a alteração e a
+      // batida volta para "pendente" para o RH avaliar de novo.
+      const patch: Record<string, unknown> = {
         timestampOriginal: dto.timestampOriginal,
         horaLocalBR: this.horaLocalBR(dto.timestampOriginal),
         updatedAt: new Date().toISOString(),
-      });
+      };
+      if (dto.motivo?.trim()) {
+        patch.motivoCorrecao = dto.motivo.trim();
+        patch.status = 'pendente';
+        patch.motivoReprovacao = null;
+      }
+      await this.collection.doc(docId).update(patch);
       return { data: {}, message: 'Batida atualizada com sucesso!' };
     } catch (error) {
       if (error instanceof NotFoundException) {

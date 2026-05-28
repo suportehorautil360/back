@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateTimeRecordDto {
   @ApiProperty({
@@ -6,4 +7,15 @@ export class UpdateTimeRecordDto {
     example: '2026-05-25T12:00:00.000Z',
   })
   timestampOriginal!: string;
+
+  @ApiProperty({
+    description:
+      'Motivo da correção (opcional). Quando informado, a batida volta para "pendente" de aprovação do RH.',
+    example: 'Esqueci de bater na hora certa, registrei depois.',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(250)
+  motivo?: string;
 }
