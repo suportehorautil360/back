@@ -9,6 +9,7 @@ import {
   CreateSolicitacaoPontoDto,
   TipoSolicitacao,
 } from './dto/create-solicitacao-ponto.dto';
+import { NotificacoesService } from '../notificacoes/notificacoes.service';
 
 export type StatusSolicitacao = 'pendente' | 'aprovado' | 'reprovado';
 
@@ -32,7 +33,10 @@ export interface SolicitacaoDoc {
 
 @Injectable()
 export class SolicitacoesPontoService {
-  constructor(private firebase: FirebaseService) {}
+  constructor(
+    private firebase: FirebaseService,
+    private notificacoes: NotificacoesService,
+  ) {}
 
   private get collection() {
     return this.firebase.getFirestore().collection('solicitacoesPonto');
@@ -41,6 +45,15 @@ export class SolicitacoesPontoService {
   /** Coleção de batidas (para aprovar/cancelar refletir lá quando aplicável). */
   private get timeRecords() {
     return this.firebase.getFirestore().collection('timeRecords');
+  }
+
+  private rotuloTipo(tipo: TipoSolicitacao): string {
+    return {
+      incluir: 'Incluir batida',
+      cancelar: 'Cancelar batida',
+      abono: 'Solicitar abono',
+      mensagem: 'Mensagem',
+    }[tipo];
   }
 
   async create(dto: CreateSolicitacaoPontoDto) {
@@ -64,6 +77,26 @@ export class SolicitacoesPontoService {
         updatedAt: agora,
       };
       await this.collection.doc(id).set(doc);
+
+      // Notifica o RH (broadcast pra prefeitura) que tem solicitação nova.
+      // Falhar a notificação não deve quebrar a criação da solicitação.
+      try {
+        await this.notificacoes.create({
+          destinatarioTipo: 'rh',
+          destinatarioId: dto.prefeituraId,
+          prefeituraId: dto.prefeituraId,
+          tipo: 'info',
+          titulo: `Nova solicitação: ${this.rotuloTipo(dto.tipo)}`,
+          mensagem: `${dto.name} enviou uma solicitação${
+            dto.observacao ? `: "${dto.observacao.slice(0, 120)}"` : '.'
+          }`,
+          referenciaTipo: 'solicitacao-ponto',
+          referenciaId: id,
+        });
+      } catch (notifErr) {
+        console.warn('Não foi possível notificar o RH:', notifErr);
+      }
+
       return { data: doc, message: 'Solicitação criada com sucesso!' };
     } catch (e) {
       console.error('Erro ao criar solicitação de ponto:', e);
@@ -143,6 +176,25 @@ export class SolicitacoesPontoService {
         updatedAt: new Date().toISOString(),
       };
       await this.collection.doc(id).set(updated);
+
+      // Notifica o funcionário (se identificável por CPF).
+      if (doc.cpf) {
+        try {
+          await this.notificacoes.create({
+            destinatarioTipo: 'funcionario',
+            destinatarioId: doc.cpf,
+            prefeituraId: doc.prefeituraId,
+            tipo: 'sucesso',
+            titulo: `${this.rotuloTipo(doc.tipo)} aprovada`,
+            mensagem: `Sua solicitação foi aprovada pelo gestor.`,
+            referenciaTipo: 'solicitacao-ponto',
+            referenciaId: doc.id,
+          });
+        } catch (notifErr) {
+          console.warn('Não foi possível notificar funcionário:', notifErr);
+        }
+      }
+
       return { data: updated, message: 'Solicitação aprovada.' };
     } catch (e) {
       console.error('Erro ao aprovar solicitação:', e);
@@ -165,6 +217,24 @@ export class SolicitacoesPontoService {
       updatedAt: new Date().toISOString(),
     };
     await this.collection.doc(id).set(updated);
+
+    if (doc.cpf) {
+      try {
+        await this.notificacoes.create({
+          destinatarioTipo: 'funcionario',
+          destinatarioId: doc.cpf,
+          prefeituraId: doc.prefeituraId,
+          tipo: 'erro',
+          titulo: `${this.rotuloTipo(doc.tipo)} reprovada`,
+          mensagem: `Motivo: ${motivo}`,
+          referenciaTipo: 'solicitacao-ponto',
+          referenciaId: doc.id,
+        });
+      } catch (notifErr) {
+        console.warn('Não foi possível notificar funcionário:', notifErr);
+      }
+    }
+
     return { data: updated, message: 'Solicitação reprovada.' };
   }
 }
