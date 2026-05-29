@@ -59,7 +59,11 @@ export class TimeRecordsService {
         timestampOriginal: dto.timestampOriginal,
         horaLocalBR: this.horaLocalBR(dto.timestampOriginal),
         tipo: dto.tipo,
-        status: 'pendente',
+        // Batida feita na hora pelo operador entra como APROVADA (com selfie
+        // e timestamp do device, já é a fonte de verdade). Só vira "pendente"
+        // se o operador editar o horário depois — aí o update() rebaixa o
+        // status para o RH avaliar a correção.
+        status: 'aprovado',
         createdAt: new Date().toISOString(),
       };
       await this.collection.doc().set(novo);
@@ -79,11 +83,21 @@ export class TimeRecordsService {
         throw new NotFoundException('Batida não encontrada para o ID fornecido.');
       }
       const docId = snap.docs[0].id;
-      await this.collection.doc(docId).update({
+      // Correção feita pelo operador: SEMPRE rebaixa a batida para
+      // "pendente" — a única forma de uma batida ficar "aprovado" é não
+      // ter sido editada (criada na hora, com selfie). O motivo, se vier,
+      // acompanha a alteração para o RH avaliar com contexto.
+      const patch: Record<string, unknown> = {
         timestampOriginal: dto.timestampOriginal,
         horaLocalBR: this.horaLocalBR(dto.timestampOriginal),
+        status: 'pendente',
+        motivoReprovacao: null,
         updatedAt: new Date().toISOString(),
-      });
+      };
+      if (dto.motivo?.trim()) {
+        patch.motivoCorrecao = dto.motivo.trim();
+      }
+      await this.collection.doc(docId).update(patch);
       return { data: {}, message: 'Batida atualizada com sucesso!' };
     } catch (error) {
       if (error instanceof NotFoundException) {
