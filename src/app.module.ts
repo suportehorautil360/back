@@ -10,6 +10,8 @@ import { NotificacoesModule } from './modules/notificacoes/notificacoes.module';
 import { AbonosModule } from './modules/abonos/abonos.module';
 import { EscalaModule } from './modules/escala/escala.module';
 import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
+import { EmergenciesModule } from './modules/emergencies/emergencies.module';
+import { ChecklistsModule } from './modules/checklists/checklists.module';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module
     AbonosModule,
     EscalaModule,
     FeatureFlagsModule,
+    EmergenciesModule,
+    ChecklistsModule,
     // ... outros módulos
   ],
   controllers: [],
