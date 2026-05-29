@@ -10,6 +10,7 @@ import {
   TipoSolicitacao,
 } from './dto/create-solicitacao-ponto.dto';
 import { NotificacoesService } from '../notificacoes/notificacoes.service';
+import { AbonosService } from '../abonos/abonos.service';
 
 export type StatusSolicitacao = 'pendente' | 'aprovado' | 'reprovado';
 
@@ -36,6 +37,7 @@ export class SolicitacoesPontoService {
   constructor(
     private firebase: FirebaseService,
     private notificacoes: NotificacoesService,
+    private abonos: AbonosService,
   ) {}
 
   private get collection() {
@@ -166,6 +168,23 @@ export class SolicitacoesPontoService {
             canceladoPorSolicitacao: doc.id,
             updatedAt: new Date().toISOString(),
           });
+        }
+      } else if (doc.tipo === 'abono' && doc.data && doc.cpf) {
+        // Aprovar abono cria um registro na coleção `abonos` — o front
+        // consulta para classificar o dia como 'abonado' em vez de 'falta'
+        // e respeitar o saldo. Sem CPF não dá pra casar o dia com o
+        // funcionário, então a aprovação só muda o status (RH age fora).
+        try {
+          await this.abonos.criar({
+            prefeituraId: doc.prefeituraId,
+            funcionarioCpf: doc.cpf.replace(/\D/g, ''),
+            funcionarioNome: doc.name,
+            data: doc.data,
+            motivo: doc.observacao ?? null,
+            solicitacaoId: doc.id,
+          });
+        } catch (abonoErr) {
+          console.warn('Não foi possível criar abono:', abonoErr);
         }
       }
 

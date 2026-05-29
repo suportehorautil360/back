@@ -7,6 +7,7 @@ import { AllocationsModule } from './modules/allocations/allocations.module';
 import { TimeRecordsModule } from './modules/time-records/time-records.module';
 import { SolicitacoesPontoModule } from './modules/solicitacoes-ponto/solicitacoes-ponto.module';
 import { NotificacoesModule } from './modules/notificacoes/notificacoes.module';
+import { AbonosModule } from './modules/abonos/abonos.module';
 import { EscalaModule } from './modules/escala/escala.module';
 import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
 
@@ -22,6 +23,7 @@ import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module
     TimeRecordsModule,
     SolicitacoesPontoModule,
     NotificacoesModule,
+    AbonosModule,
     EscalaModule,
     FeatureFlagsModule,
     // ... outros módulos
