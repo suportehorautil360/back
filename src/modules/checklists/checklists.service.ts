@@ -13,6 +13,54 @@ import {
 import { CreateChecklistRunDto } from './dto/create-checklist-run.dto';
 import { ChecklistFlowService } from './checklist-flow.service';
 
+function toSafeString(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  return '';
+}
+
+function toSafeMillis(value: unknown): number {
+  if (typeof value === 'string') {
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+
+  if (
+    value &&
+    typeof value === 'object' &&
+    'toDate' in value &&
+    typeof (value as { toDate: () => Date }).toDate === 'function'
+  ) {
+    return (value as { toDate: () => Date }).toDate().getTime();
+  }
+
+  return 0;
+}
+
+function normalizeAnswerValue(value: unknown): 'sim' | 'nao' | 'outro' {
+  if (typeof value === 'boolean') {
+    return value ? 'sim' : 'nao';
+  }
+
+  const normalized = toSafeString(value)
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  if (normalized === 'sim' || normalized === 'yes' || normalized === 'ok') {
+    return 'sim';
+  }
+
+  if (normalized === 'nao' || normalized === 'no') {
+    return 'nao';
+  }
+
+  return 'outro';
+}
+
 @Injectable()
 export class ChecklistsService {
   constructor(
@@ -123,26 +171,99 @@ export class ChecklistsService {
     }
   }
 
+  async listRunsByPrefeitura(prefeituraId: string) {
+    try {
+      const snap = await this.runs
+        .where('prefeituraId', '==', prefeituraId)
+        .get();
+
+      const rows = await Promise.all(
+        snap.docs.map(async (doc) => {
+          const runData = doc.data() as Record<string, unknown>;
+          const runId = toSafeString(runData.id) || doc.id;
+
+          const answersSnap = await this.answers
+            .where('runId', '==', runId)
+            .get();
+
+          const respostas = answersSnap.docs
+            .map((answerDoc) => {
+              const answer = answerDoc.data() as Record<string, unknown>;
+              const normalized = normalizeAnswerValue(answer.value);
+              return {
+                id: toSafeString(answer.id) || answerDoc.id,
+                runId,
+                questionId: toSafeString(answer.questionId),
+                questionLabel: toSafeString(answer.questionLabel),
+                value: answer.value,
+                valueNormalized: normalized,
+                problemDescription: toSafeString(answer.problemDescription),
+                photoUrls: Array.isArray(answer.photoUrls)
+                  ? answer.photoUrls.filter(
+                      (url: unknown): url is string => typeof url === 'string',
+                    )
+                  : [],
+                answeredAt: toSafeString(answer.answeredAt),
+              };
+            })
+            .sort(
+              (a, b) => toSafeMillis(b.answeredAt) - toSafeMillis(a.answeredAt),
+            );
+
+          const totalOk = respostas.filter(
+            (resposta) => resposta.valueNormalized === 'sim',
+          ).length;
+          const totalNao = respostas.filter(
+            (resposta) => resposta.valueNormalized === 'nao',
+          ).length;
+
+          return {
+            ...runData,
+            id: runId,
+            startedAt: runData.startedAt ?? null,
+            resumo: {
+              totalPerguntas: respostas.length,
+              totalOk,
+              totalNao,
+            },
+            respostas,
+          };
+        }),
+      );
+
+      rows.sort(
+        (a, b) => toSafeMillis(b.startedAt) - toSafeMillis(a.startedAt),
+      );
+
+      return { data: rows, message: 'Execuções de checklist listadas.' };
+    } catch (error) {
+      console.error('Erro ao listar execuções de checklist:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível listar as execuções de checklist.',
+      );
+    }
+  }
+
   private async createEmergencyFromAction(
     run: Record<string, unknown>,
     answer: AnswerChecklistQuestionDto,
     action: Extract<ChecklistRuleActionDto, { type: 'CREATE_EMERGENCY' }>,
   ) {
     const created = await this.emergencies.create({
-      prefeituraId: String(run.prefeituraId ?? ''),
+      prefeituraId: toSafeString(run.prefeituraId),
       source: 'checklist_auto',
       severity: action.severity ?? 'critical',
-      equipamentoId: String(run.equipamentoId ?? ''),
-      chassis: String(run.chassis ?? ''),
-      operadorNome: String(run.operadorNome ?? ''),
+      equipamentoId: toSafeString(run.equipamentoId),
+      chassis: toSafeString(run.chassis),
+      operadorNome: toSafeString(run.operadorNome),
       tipoFalha: action.failureType,
       descricao:
         action.description ??
         answer.problemDescription ??
         `Emergência gerada pela pergunta: ${answer.questionLabel ?? answer.questionId}`,
       fotos: answer.photoUrls,
-      checklistRunId: String(run.id ?? ''),
-      checklistId: String(run.definitionId ?? ''),
+      checklistRunId: toSafeString(run.id),
+      checklistId: toSafeString(run.definitionId),
       questionId: answer.questionId,
       questionLabel: answer.questionLabel ?? null,
       answerValue: answer.value,

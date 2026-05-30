@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -25,12 +26,22 @@ export class ChecklistsController {
 
   @Post('runs/:id/answers')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Responder pergunta do checklist e executar regras' })
+  @ApiOperation({
+    summary: 'Responder pergunta do checklist e executar regras',
+  })
   @ApiParam({ name: 'id', description: 'ID da execução do checklist' })
   async answer(
     @Param('id') id: string,
     @Body() dto: AnswerChecklistQuestionDto,
   ) {
     return this.service.answer(id, dto);
+  }
+
+  @Get('runs/prefeitura/:prefeituraId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Listar execuções de checklist por prefeitura' })
+  @ApiParam({ name: 'prefeituraId', description: 'ID da prefeitura' })
+  async listRunsByPrefeitura(@Param('prefeituraId') prefeituraId: string) {
+    return this.service.listRunsByPrefeitura(prefeituraId);
   }
 }
