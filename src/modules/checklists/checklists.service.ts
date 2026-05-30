@@ -61,6 +61,21 @@ function normalizeAnswerValue(value: unknown): 'sim' | 'nao' | 'outro' {
   return 'outro';
 }
 
+function toDateFilterIso(value?: string): string | undefined {
+  if (!value) return undefined;
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) return undefined;
+  return new Date(parsed).toISOString();
+}
+
+function normalizeText(value?: string): string {
+  return toSafeString(value)
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 @Injectable()
 export class ChecklistsService {
   constructor(
@@ -171,11 +186,30 @@ export class ChecklistsService {
     }
   }
 
-  async listRunsByPrefeitura(prefeituraId: string) {
+  async listRunsByPrefeitura(params: {
+    prefeituraId: string;
+    startDate?: string;
+    endDate?: string;
+    chassis?: string;
+    operadorNome?: string;
+  }) {
     try {
-      const snap = await this.runs
-        .where('prefeituraId', '==', prefeituraId)
-        .get();
+      const { prefeituraId, startDate, endDate, chassis, operadorNome } =
+        params;
+      const startDateIso = toDateFilterIso(startDate);
+      const endDateIso = toDateFilterIso(endDate);
+      const chassisTerm = normalizeText(chassis);
+      const operadorTerm = normalizeText(operadorNome);
+
+      let runsQuery = this.runs.where('prefeituraId', '==', prefeituraId);
+      if (startDateIso) {
+        runsQuery = runsQuery.where('startedAt', '>=', startDateIso);
+      }
+      if (endDateIso) {
+        runsQuery = runsQuery.where('startedAt', '<=', endDateIso);
+      }
+
+      const snap = await runsQuery.get();
 
       const rows = await Promise.all(
         snap.docs.map(async (doc) => {
@@ -221,6 +255,8 @@ export class ChecklistsService {
             ...runData,
             id: runId,
             startedAt: runData.startedAt ?? null,
+            chassis: toSafeString(runData.chassis),
+            operadorNome: toSafeString(runData.operadorNome),
             resumo: {
               totalPerguntas: respostas.length,
               totalOk,
@@ -231,11 +267,26 @@ export class ChecklistsService {
         }),
       );
 
-      rows.sort(
+      let filteredRows = rows;
+      if (chassisTerm) {
+        filteredRows = filteredRows.filter((row) =>
+          normalizeText(toSafeString(row.chassis)).includes(chassisTerm),
+        );
+      }
+      if (operadorTerm) {
+        filteredRows = filteredRows.filter((row) =>
+          normalizeText(toSafeString(row.operadorNome)).includes(operadorTerm),
+        );
+      }
+
+      filteredRows.sort(
         (a, b) => toSafeMillis(b.startedAt) - toSafeMillis(a.startedAt),
       );
 
-      return { data: rows, message: 'Execuções de checklist listadas.' };
+      return {
+        data: filteredRows,
+        message: 'Execuções de checklist listadas.',
+      };
     } catch (error) {
       console.error('Erro ao listar execuções de checklist:', error);
       throw new InternalServerErrorException(
