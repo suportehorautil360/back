@@ -12,6 +12,7 @@ import { EscalaModule } from './modules/escala/escala.module';
 import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
 import { EmergenciesModule } from './modules/emergencies/emergencies.module';
 import { ChecklistsModule } from './modules/checklists/checklists.module';
+import { RiskTriageModule } from './modules/risk-triage/risk-triage.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ChecklistsModule } from './modules/checklists/checklists.module';
     FeatureFlagsModule,
     EmergenciesModule,
     ChecklistsModule,
+    RiskTriageModule,
     // ... outros módulos
   ],
   controllers: [],
