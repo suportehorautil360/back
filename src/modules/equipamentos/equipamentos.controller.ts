@@ -38,6 +38,13 @@ export class EquipamentosController {
     return this.equipamentosService.completeRevision(dto);
   }
 
+  @Get('item/:id')
+  @ApiOperation({ summary: 'Buscar um equipamento pelo ID' })
+  @ApiParam({ name: 'id', description: 'ID do equipamento' })
+  async findOne(@Param('id') id: string) {
+    return this.equipamentosService.findById(id);
+  }
+
   @Get(':prefeituraId')
   @ApiOperation({ summary: 'Listar equipamentos de uma prefeitura' })
   @ApiParam({ name: 'prefeituraId', description: 'ID da prefeitura' })

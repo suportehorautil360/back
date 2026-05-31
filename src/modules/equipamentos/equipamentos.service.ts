@@ -55,6 +55,12 @@ export class EquipamentosService {
     }
   }
 
+  /** Busca um equipamento pelo campo `id` (documento bruto). */
+  async findById(id: string) {
+    const doc = await this.findDocByField(id);
+    return { data: doc.data(), message: 'Equipamento encontrado.' };
+  }
+
   /** Lista os equipamentos da prefeitura. Sem registros => lista vazia (200). */
   async findAllByPrefeitura(prefeituraId: string) {
     try {
