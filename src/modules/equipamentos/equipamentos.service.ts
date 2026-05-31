@@ -24,15 +24,20 @@ export class EquipamentosService {
       .collection('equipamentos_revisoes');
   }
 
-  /** Localiza o documento Firestore pelo campo `id` (não o id do doc). */
+  /**
+   * Localiza o documento pelo campo `id` salvo (docs novos) ou, em fallback,
+   * pelo id do próprio documento Firestore (docs legados sem o campo `id`).
+   */
   private async findDocByField(id: string) {
     const ref = await this.collection.where('id', '==', id).get();
-    if (ref.empty) {
-      throw new NotFoundException(
-        'Equipamento não encontrado para o ID fornecido.',
-      );
-    }
-    return ref.docs[0];
+    if (!ref.empty) return ref.docs[0];
+
+    const byDocId = await this.collection.doc(id).get();
+    if (byDocId.exists) return byDocId;
+
+    throw new NotFoundException(
+      'Equipamento não encontrado para o ID fornecido.',
+    );
   }
 
   async create(dto: CreateEquipamentoDto) {
@@ -67,7 +72,12 @@ export class EquipamentosService {
       const ref = await this.collection
         .where('prefeituraId', '==', prefeituraId)
         .get();
-      const data = ref.docs.map((doc) => doc.data());
+      // Garante um `id` utilizável: o campo salvo (docs novos) ou, em fallback,
+      // o id do documento Firestore (docs legados sem o campo `id`).
+      const data = ref.docs.map((doc) => {
+        const raw = doc.data();
+        return { ...raw, id: (raw as { id?: string }).id ?? doc.id };
+      });
       return { data, message: 'Equipamentos buscados com sucesso!' };
     } catch (error) {
       console.error('Erro ao buscar equipamentos:', error);
