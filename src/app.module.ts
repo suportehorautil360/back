@@ -13,6 +13,7 @@ import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module
 import { EmergenciesModule } from './modules/emergencies/emergencies.module';
 import { ChecklistsModule } from './modules/checklists/checklists.module';
 import { RiskTriageModule } from './modules/risk-triage/risk-triage.module';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { RiskTriageModule } from './modules/risk-triage/risk-triage.module';
     EmergenciesModule,
     ChecklistsModule,
     RiskTriageModule,
+    UserModule,
     // ... outros módulos
   ],
   controllers: [],

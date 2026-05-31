@@ -1,16 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
+import type { ServiceAccount } from 'firebase-admin';
 import { existsSync, readFileSync } from 'node:fs';
 import { isAbsolute, resolve } from 'node:path';
-import {
-  FIREBASE_DATABASE_ID,
-  FIREBASE_SERVICE_ACCOUNT,
-} from './firebase-credentials';
 
 @Injectable()
 export class FirebaseService {
   private static db: admin.firestore.Firestore;
+
+  private isServiceAccount(value: unknown): value is ServiceAccount {
+    if (!value || typeof value !== 'object') return false;
+    const candidate = value as Record<string, unknown>;
+    return (
+      typeof candidate.projectId === 'string' &&
+      typeof candidate.clientEmail === 'string' &&
+      typeof candidate.privateKey === 'string'
+    );
+  }
 
   constructor(private configService: ConfigService) {
     // A inicialização só ocorre se a variável estática db estiver vazia
@@ -22,16 +29,11 @@ export class FirebaseService {
       }
 
       FirebaseService.db = admin.firestore();
-
-      // Com credencial embutida (produção), usa o banco dela "(default)".
-      // Sem ela (homolog via env), o nomeado "default" — override por env.
-      const usandoEmbutida = !!FIREBASE_SERVICE_ACCOUNT.privateKey;
       FirebaseService.db.settings({
         ignoreUndefinedProperties: true,
         preferRest: true,
-        databaseId: usandoEmbutida
-          ? FIREBASE_DATABASE_ID
-          : (this.configService.get<string>('FIREBASE_DATABASE_ID') ?? 'default'),
+        databaseId:
+          this.configService.get<string>('FIREBASE_DATABASE_ID') ?? 'default',
       });
     }
   }
@@ -45,11 +47,6 @@ export class FirebaseService {
   }
 
   private getCredential(): admin.credential.Credential {
-    // Credencial embutida (host sem env). Ver firebase-credentials.ts.
-    if (FIREBASE_SERVICE_ACCOUNT.privateKey) {
-      return admin.credential.cert(FIREBASE_SERVICE_ACCOUNT);
-    }
-
     const projectId = this.configService.get<string>('FIREBASE_PROJECT_ID');
     const clientEmail = this.configService.get<string>('FIREBASE_CLIENT_EMAIL');
     const privateKey = this.configService
@@ -85,9 +82,14 @@ export class FirebaseService {
         );
       }
 
-      const serviceAccount = JSON.parse(readFileSync(absolutePath, 'utf8'));
+      const serviceAccountRaw: unknown = JSON.parse(
+        readFileSync(absolutePath, 'utf8'),
+      );
+      if (!this.isServiceAccount(serviceAccountRaw)) {
+        throw new Error(`Arquivo de service account invalido: ${absolutePath}`);
+      }
 
-      return admin.credential.cert(serviceAccount);
+      return admin.credential.cert(serviceAccountRaw);
     }
 
     return admin.credential.applicationDefault();
