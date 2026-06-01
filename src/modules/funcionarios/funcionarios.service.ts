@@ -108,7 +108,10 @@ export class FuncionariosService {
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
-      return { data: { id: ref.id }, message: 'Funcionário criado com sucesso!' };
+      return {
+        data: { id: ref.id },
+        message: 'Funcionário criado com sucesso!',
+      };
     } catch (error) {
       console.error('Erro ao criar funcionário:', error);
       throw new InternalServerErrorException(

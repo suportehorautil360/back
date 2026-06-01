@@ -39,11 +39,10 @@ export class TimeRecordsController {
   @ApiOperation({ summary: 'Editar o horário de uma batida de ponto' })
   @ApiParam({ name: 'id', description: 'ID da batida' })
   @ApiOkResponse({ description: 'Batida atualizada.' })
-  @ApiInternalServerErrorResponse({ description: 'Falha ao atualizar a batida.' })
-  async update(
-    @Param('id') id: string,
-    @Body() dto: UpdateTimeRecordDto,
-  ) {
+  @ApiInternalServerErrorResponse({
+    description: 'Falha ao atualizar a batida.',
+  })
+  async update(@Param('id') id: string, @Body() dto: UpdateTimeRecordDto) {
     return this.timeRecordsService.update(id, dto);
   }
 
@@ -62,11 +61,10 @@ export class TimeRecordsController {
   @ApiOperation({ summary: 'Reprovar uma batida de ponto, com motivo (RH)' })
   @ApiParam({ name: 'id', description: 'ID da batida' })
   @ApiOkResponse({ description: 'Batida reprovada.' })
-  @ApiInternalServerErrorResponse({ description: 'Falha ao reprovar a batida.' })
-  async reprovar(
-    @Param('id') id: string,
-    @Body() dto: ReprovarTimeRecordDto,
-  ) {
+  @ApiInternalServerErrorResponse({
+    description: 'Falha ao reprovar a batida.',
+  })
+  async reprovar(@Param('id') id: string, @Body() dto: ReprovarTimeRecordDto) {
     return this.timeRecordsService.reprovar(id, dto.motivo);
   }
 

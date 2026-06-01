@@ -22,7 +22,7 @@ export type NotificacaoTipo = (typeof NOTIFICACAO_TIPOS)[number];
  */
 export class CreateNotificacaoDto {
   @ApiProperty({ enum: DESTINATARIO_TIPOS })
-  @IsIn(DESTINATARIO_TIPOS as unknown as string[])
+  @IsIn(DESTINATARIO_TIPOS)
   destinatarioTipo!: DestinatarioTipo;
 
   @ApiProperty({
@@ -52,7 +52,7 @@ export class CreateNotificacaoDto {
 
   @ApiProperty({ enum: NOTIFICACAO_TIPOS, required: false })
   @IsOptional()
-  @IsIn(NOTIFICACAO_TIPOS as unknown as string[])
+  @IsIn(NOTIFICACAO_TIPOS)
   tipo?: NotificacaoTipo;
 
   @ApiProperty({

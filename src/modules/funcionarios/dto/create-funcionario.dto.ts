@@ -9,7 +9,10 @@ export class CreateFuncionarioDto {
   @ApiProperty({ description: 'Nome completo', example: 'João da Silva' })
   nome!: string;
 
-  @ApiProperty({ description: 'CPF (com ou sem máscara)', example: '123.456.789-09' })
+  @ApiProperty({
+    description: 'CPF (com ou sem máscara)',
+    example: '123.456.789-09',
+  })
   cpf!: string;
 
   @ApiProperty({ required: false, example: 'Operador' })
@@ -25,7 +28,11 @@ export class CreateFuncionarioDto {
   })
   tipo?: 'operador' | 'supervisor' | 'admin';
 
-  @ApiProperty({ required: false, enum: ['ativo', 'inativo'], example: 'ativo' })
+  @ApiProperty({
+    required: false,
+    enum: ['ativo', 'inativo'],
+    example: 'ativo',
+  })
   status?: 'ativo' | 'inativo';
 
   @ApiProperty({
