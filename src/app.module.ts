@@ -15,6 +15,7 @@ import { ChecklistsModule } from './modules/checklists/checklists.module';
 import { RiskTriageModule } from './modules/risk-triage/risk-triage.module';
 import { UserModule } from './modules/user/user.module';
 import { EquipamentosModule } from './modules/equipamentos/equipamentos.module';
+import { FuncionariosModule } from './modules/funcionarios/funcionarios.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { EquipamentosModule } from './modules/equipamentos/equipamentos.module';
     }),
     VehiclesModule,
     EquipamentosModule,
+    FuncionariosModule,
     RevisionModule,
     WorkFrontModule,
     AllocationsModule,
