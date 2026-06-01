@@ -1,7 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpsertFeatureFlagsDto {
-  @ApiProperty({ description: 'ID da prefeitura / cliente.', example: 'pref-001' })
+  @ApiProperty({
+    description: 'ID da prefeitura / cliente.',
+    example: 'pref-001',
+  })
   prefeituraId!: string;
 
   @ApiProperty({

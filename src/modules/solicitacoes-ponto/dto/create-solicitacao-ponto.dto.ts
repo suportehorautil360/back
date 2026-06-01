@@ -22,7 +22,7 @@ export type TipoSolicitacao = (typeof TIPOS_SOLICITACAO)[number];
  */
 export class CreateSolicitacaoPontoDto {
   @ApiProperty({ enum: TIPOS_SOLICITACAO })
-  @IsIn(TIPOS_SOLICITACAO as unknown as string[])
+  @IsIn(TIPOS_SOLICITACAO)
   tipo!: TipoSolicitacao;
 
   @ApiProperty({ description: 'ID da prefeitura (tenant).' })

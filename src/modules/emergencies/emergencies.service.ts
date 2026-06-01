@@ -39,7 +39,9 @@ export interface EmergencyDoc {
 }
 
 function normalizeEmergencyStatus(status: string | undefined): EmergencyStatus {
-  const s = String(status ?? '').trim().toLowerCase();
+  const s = String(status ?? '')
+    .trim()
+    .toLowerCase();
   if (s === 'resolvido') return 'RESOLVIDO';
   if (s === 'em_atendimento' || s === 'em atendimento') return 'EM_ATENDIMENTO';
   if (s === 'cancelado') return 'CANCELADO';
@@ -137,8 +139,14 @@ export class EmergenciesService {
       String(data.statusAtendimento ?? data.Status_Atendimento ?? ''),
     );
     const fotos = Array.isArray(data.fotos)
-      ? data.fotos.filter((foto: unknown): foto is string => typeof foto === 'string')
+      ? data.fotos.filter(
+          (foto: unknown): foto is string => typeof foto === 'string',
+        )
       : [];
+    // GPS pode vir como string ou objeto de coordenadas — preserva o valor
+    // como veio, só tipando como unknown para não propagar `any`.
+    const localizacaoGps: unknown =
+      data.localizacaoGps ?? data.Localizacao_GPS ?? null;
     return {
       id,
       ...data,
@@ -150,9 +158,11 @@ export class EmergenciesService {
       idMaquina: String(data.idMaquina ?? data.equipamentoId ?? ''),
       tipoFalha: String(data.tipoFalha ?? data.Tipo_Falha ?? '—'),
       descricao: String(data.descricao ?? data.Descricao_Curta ?? '—'),
-      localizacaoGps: data.localizacaoGps ?? data.Localizacao_GPS ?? null,
+      localizacaoGps,
       fotos,
-      qtdFotos: Number(data.qtdFotos ?? data.Qtd_Fotos_Evidencia ?? fotos.length),
+      qtdFotos: Number(
+        data.qtdFotos ?? data.Qtd_Fotos_Evidencia ?? fotos.length,
+      ),
       statusAtendimento,
       dataHoraIso: String(data.dataHoraIso ?? data.Data_Hora ?? ''),
     };

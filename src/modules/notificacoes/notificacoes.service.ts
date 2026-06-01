@@ -87,7 +87,8 @@ export class NotificacoesService {
   async marcarLida(id: string) {
     const ref = this.collection.doc(id);
     const snap = await ref.get();
-    if (!snap.exists) throw new NotFoundException('Notificação não encontrada.');
+    if (!snap.exists)
+      throw new NotFoundException('Notificação não encontrada.');
     await ref.update({ lida: true, updatedAt: new Date().toISOString() });
     return { data: { id }, message: 'Notificação marcada como lida.' };
   }

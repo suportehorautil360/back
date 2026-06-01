@@ -92,7 +92,9 @@ export class EquipamentosService {
       const doc = await this.findDocByField(id);
 
       // Só grava os campos informados (evita sobrescrever com undefined).
-      const patch: Record<string, unknown> = { updatedAt: new Date().toISOString() };
+      const patch: Record<string, unknown> = {
+        updatedAt: new Date().toISOString(),
+      };
       for (const [key, value] of Object.entries(dto)) {
         if (value !== undefined) patch[key] = value;
       }

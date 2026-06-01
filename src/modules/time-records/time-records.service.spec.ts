@@ -17,7 +17,9 @@ function makeService(firebaseService: FirebaseService, pontoAtivo = true) {
 function makeFirestore(docs: { id?: string; data: () => unknown }[] = []) {
   const setDoc = jest.fn().mockResolvedValue(undefined);
   const updateDoc = jest.fn().mockResolvedValue(undefined);
-  const getDocs = jest.fn().mockResolvedValue({ empty: docs.length === 0, docs });
+  const getDocs = jest
+    .fn()
+    .mockResolvedValue({ empty: docs.length === 0, docs });
   const collection = jest.fn(() => ({
     where: jest.fn(() => ({ get: getDocs })),
     doc: jest.fn(() => ({ set: setDoc, update: updateDoc })),
@@ -51,7 +53,9 @@ describe('TimeRecordsService', () => {
         // 13:05Z em São Paulo (UTC-3) = 10:05.
         horaLocalBR: '25/05/2026 10:05',
         tipo: 'entrada',
-        status: 'pendente',
+        // Batida criada na hora (com selfie + timestamp do device) entra
+        // como APROVADA; só vira "pendente" se o operador editar depois.
+        status: 'aprovado',
       }),
     );
     expect(res.data).toHaveProperty('createdAt');
@@ -61,7 +65,9 @@ describe('TimeRecordsService', () => {
     const { firebaseService, setDoc } = makeFirestore();
     const service = makeService(firebaseService, false);
 
-    await expect(service.create(dto)).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(service.create(dto)).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
     expect(setDoc).not.toHaveBeenCalled();
   });
 
@@ -97,7 +103,9 @@ describe('TimeRecordsService', () => {
   it('aprovar lança 404 quando a batida não existe', async () => {
     const { firebaseService } = makeFirestore([]);
     const service = makeService(firebaseService);
-    await expect(service.aprovar('x')).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.aprovar('x')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 
   it('atualiza o horário de uma batida existente', async () => {
@@ -106,10 +114,14 @@ describe('TimeRecordsService', () => {
     ]);
     const service = makeService(firebaseService);
 
-    await service.update('t1', { timestampOriginal: '2026-05-25T12:00:00.000Z' });
+    await service.update('t1', {
+      timestampOriginal: '2026-05-25T12:00:00.000Z',
+    });
 
     expect(updateDoc).toHaveBeenCalledWith(
-      expect.objectContaining({ timestampOriginal: '2026-05-25T12:00:00.000Z' }),
+      expect.objectContaining({
+        timestampOriginal: '2026-05-25T12:00:00.000Z',
+      }),
     );
   });
 

@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci:
+    name: Lint + testes + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lint (ESLint — só checagem, falha em erros)
+        run: pnpm lint:ci
+      - name: Testes unitários (Jest)
+        run: pnpm test
+      - name: Build de produção (nest build)
+        run: pnpm build
+
+  # E2E desativado por ora: sobe a app inteira (AppModule) e depende de
+  # credencial do Firebase no boot. O teste atual só valida "GET / => Hello
+  # World", então não justifica configurar segredo no CI. Para reativar,
+  # adicione um job com as vars FIREBASE_* (ou um service account dummy) e
+  # rode `pnpm test:e2e`.

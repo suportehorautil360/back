@@ -53,7 +53,10 @@ describe('VehiclesService.findAllByID', () => {
 
 describe('VehiclesService.create', () => {
   it('grava o veículo com status ativo', async () => {
-    const { firebaseService, setDoc } = makeFirestore({ empty: true, docs: [] });
+    const { firebaseService, setDoc } = makeFirestore({
+      empty: true,
+      docs: [],
+    });
     const service = new VehiclesService(firebaseService);
 
     await service.create({
