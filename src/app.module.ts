@@ -16,6 +16,7 @@ import { RiskTriageModule } from './modules/risk-triage/risk-triage.module';
 import { UserModule } from './modules/user/user.module';
 import { EquipamentosModule } from './modules/equipamentos/equipamentos.module';
 import { FuncionariosModule } from './modules/funcionarios/funcionarios.module';
+import { ConfiguracoesModule } from './modules/configuracoes/configuracoes.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { FuncionariosModule } from './modules/funcionarios/funcionarios.module';
     VehiclesModule,
     EquipamentosModule,
     FuncionariosModule,
+    ConfiguracoesModule,
     RevisionModule,
     WorkFrontModule,
     AllocationsModule,
