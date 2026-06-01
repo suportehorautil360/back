@@ -17,6 +17,7 @@ import { UserModule } from './modules/user/user.module';
 import { EquipamentosModule } from './modules/equipamentos/equipamentos.module';
 import { FuncionariosModule } from './modules/funcionarios/funcionarios.module';
 import { ConfiguracoesModule } from './modules/configuracoes/configuracoes.module';
+import { AbastecimentosModule } from './modules/abastecimentos/abastecimentos.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ConfiguracoesModule } from './modules/configuracoes/configuracoes.modul
     EquipamentosModule,
     FuncionariosModule,
     ConfiguracoesModule,
+    AbastecimentosModule,
     RevisionModule,
     WorkFrontModule,
     AllocationsModule,
