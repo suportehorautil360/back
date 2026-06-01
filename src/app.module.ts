@@ -14,6 +14,10 @@ import { EmergenciesModule } from './modules/emergencies/emergencies.module';
 import { ChecklistsModule } from './modules/checklists/checklists.module';
 import { RiskTriageModule } from './modules/risk-triage/risk-triage.module';
 import { UserModule } from './modules/user/user.module';
+import { EquipamentosModule } from './modules/equipamentos/equipamentos.module';
+import { FuncionariosModule } from './modules/funcionarios/funcionarios.module';
+import { ConfiguracoesModule } from './modules/configuracoes/configuracoes.module';
+import { AbastecimentosModule } from './modules/abastecimentos/abastecimentos.module';
 
 @Module({
   imports: [
@@ -21,6 +25,10 @@ import { UserModule } from './modules/user/user.module';
       isGlobal: true,
     }),
     VehiclesModule,
+    EquipamentosModule,
+    FuncionariosModule,
+    ConfiguracoesModule,
+    AbastecimentosModule,
     RevisionModule,
     WorkFrontModule,
     AllocationsModule,
