@@ -48,7 +48,10 @@ export class AllocationsService {
     await batch.commit();
 
     // Sincroniza o `obra` do equipamento com a frente de destino.
-    await this.setObraDoEquipamento(createDto.vehicleId, createDto.workFrontName);
+    await this.setObraDoEquipamento(
+      createDto.vehicleId,
+      createDto.workFrontName,
+    );
 
     return allocation;
   }
