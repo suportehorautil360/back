@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateWorkFrontDto } from './dto/create-work-front.dto';
 import { FirebaseService } from 'src/config/firebase.service';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'node:crypto';
 
 @Injectable()
 export class WorkFrontService {
@@ -14,7 +14,7 @@ export class WorkFrontService {
     try {
       const db = this.firebaseService.getFirestore();
 
-      const id = uuid();
+      const id = randomUUID();
       const newWorkFront = {
         id,
         ...createWorkFrontDto,
@@ -111,3 +111,4 @@ export class WorkFrontService {
     };
   }
 }
+

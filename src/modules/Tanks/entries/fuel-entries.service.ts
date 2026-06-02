@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { FirebaseService } from 'src/config/firebase.service';
 import { CreateFuelEntryDto } from '../dto/create-fuel-entry.dto';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'node:crypto';
 
 @Injectable()
 export class FuelEntriesService {
@@ -14,7 +14,7 @@ export class FuelEntriesService {
     // Acessando o FieldValue via seu serviço centralizado
     const { FieldValue } = this.firebaseService;
 
-    const entryId = uuid();
+    const entryId = randomUUID();
     const entryRef = db.collection('fuel-entries').doc(entryId);
     const tankRef = db.collection('tanks').doc(createDto.tankId);
 
@@ -31,3 +31,4 @@ export class FuelEntriesService {
     return { success: true };
   }
 }
+

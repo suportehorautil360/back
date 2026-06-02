@@ -3,7 +3,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
 import {
   CreateNotificacaoDto,
@@ -35,7 +35,7 @@ export class NotificacoesService {
   }
 
   async create(dto: CreateNotificacaoDto): Promise<NotificacaoDoc> {
-    const id = uuid();
+    const id = randomUUID();
     const agora = new Date().toISOString();
     const doc: NotificacaoDoc = {
       id,
@@ -115,3 +115,4 @@ export class NotificacoesService {
     };
   }
 }
+

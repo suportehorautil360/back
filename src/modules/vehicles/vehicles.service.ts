@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { FirebaseService } from '../../config/firebase.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'node:crypto';
 
 type VehicleFilters = {
   plate?: string;
@@ -24,7 +24,7 @@ export class VehiclesService {
   }
 
   async create(createVehicleDto: CreateVehicleDto) {
-    const id = uuid();
+    const id = randomUUID();
     try {
       const docRef = this.collection.doc();
 
@@ -191,3 +191,4 @@ export class VehiclesService {
     return '';
   }
 }
+

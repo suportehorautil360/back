@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { FirebaseService } from '../../config/firebase.service';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { CreateRevisionDto } from './dto/create-revision.dto';
 
 @Injectable()
@@ -22,7 +22,7 @@ export class RevisionService {
   }
 
   async create(createRevisionDto: CreateRevisionDto) {
-    const revisionId = uuid();
+    const revisionId = randomUUID();
     try {
       const newRevision = {
         id: revisionId,
@@ -92,7 +92,7 @@ export class RevisionService {
    * (lastRevisionOdometerReading), e devolve o veículo para "ativo".
    */
   async complete(createRevisionDto: CreateRevisionDto) {
-    const revisionId = uuid();
+    const revisionId = randomUUID();
     try {
       const vehicleRef = await this.vehiclesCollection
         .where('id', '==', createRevisionDto.vehicleId)
@@ -176,3 +176,4 @@ export class RevisionService {
     }
   }
 }
+

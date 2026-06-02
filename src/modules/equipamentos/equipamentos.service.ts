@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { FirebaseService } from '../../config/firebase.service';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { CreateEquipamentoDto } from './dto/create-equipamento.dto';
 import { UpdateEquipamentoDto } from './dto/update-equipamento.dto';
 import { CompleteRevisaoEquipDto } from './dto/complete-revisao-equip.dto';
@@ -41,7 +41,7 @@ export class EquipamentosService {
   }
 
   async create(dto: CreateEquipamentoDto) {
-    const id = uuid();
+    const id = randomUUID();
     try {
       const novo = {
         id,
@@ -130,7 +130,7 @@ export class EquipamentosService {
    * revisão, e devolve o equipamento para o status "ativo".
    */
   async completeRevision(dto: CompleteRevisaoEquipDto) {
-    const revisionId = uuid();
+    const revisionId = randomUUID();
     try {
       const doc = await this.findDocByField(dto.equipamentoId);
       const data = doc.data() as { medicaoAtual?: number };
@@ -174,3 +174,4 @@ export class EquipamentosService {
     }
   }
 }
+

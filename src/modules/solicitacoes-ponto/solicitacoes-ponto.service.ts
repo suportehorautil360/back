@@ -3,7 +3,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
 import {
   CreateSolicitacaoPontoDto,
@@ -60,7 +60,7 @@ export class SolicitacoesPontoService {
 
   async create(dto: CreateSolicitacaoPontoDto) {
     try {
-      const id = uuid();
+      const id = randomUUID();
       const agora = new Date().toISOString();
       const doc: SolicitacaoDoc = {
         id,
@@ -143,7 +143,7 @@ export class SolicitacoesPontoService {
 
     try {
       if (doc.tipo === 'incluir' && doc.timestampOriginal) {
-        const batidaId = uuid();
+        const batidaId = randomUUID();
         await this.timeRecords.doc(batidaId).set({
           id: batidaId,
           prefeituraId: doc.prefeituraId,
@@ -257,3 +257,4 @@ export class SolicitacoesPontoService {
     return { data: updated, message: 'Solicitação reprovada.' };
   }
 }
+
