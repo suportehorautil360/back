@@ -137,7 +137,10 @@ export class WorkFrontService {
       .get();
 
     // 2. Adiciona cada alocação ao batch para deletar/inativar
+    const vehicleIds: string[] = [];
     allocations.docs.forEach((doc) => {
+      const vehicleId = doc.data().vehicleId as string | undefined;
+      if (vehicleId) vehicleIds.push(vehicleId);
       batch.delete(doc.ref); // Ou batch.update(doc.ref, { status: 'inativa' })
     });
 
@@ -152,6 +155,19 @@ export class WorkFrontService {
 
     // 4. Executa tudo de uma vez
     await batch.commit();
+
+    // 5. Limpa o `obra` dos veículos que estavam alocados nessa frente.
+    if (vehicleIds.length > 0) {
+      const limpaBatch = db.batch();
+      for (const vehicleId of vehicleIds) {
+        const eqSnap = await db
+          .collection('equipamentos')
+          .where('id', '==', vehicleId)
+          .get();
+        eqSnap.docs.forEach((doc) => limpaBatch.update(doc.ref, { obra: '' }));
+      }
+      await limpaBatch.commit();
+    }
 
     return {
       message: 'Front de trabalho removido com sucesso',
