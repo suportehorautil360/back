@@ -38,6 +38,12 @@ export interface EmergencyDoc {
   updatedAt: string;
 }
 
+type EmergencyFilters = {
+  date?: string;
+  chassis?: string;
+  operator?: string;
+};
+
 function normalizeEmergencyStatus(status: string | undefined): EmergencyStatus {
   const s = String(status ?? '')
     .trim()
@@ -100,13 +106,14 @@ export class EmergenciesService {
     }
   }
 
-  async listByPrefeitura(prefeituraId: string) {
+  async listByPrefeitura(prefeituraId: string, filters?: EmergencyFilters) {
     try {
       const snap = await this.collection
         .where('prefeituraId', '==', prefeituraId)
         .get();
       const rows = snap.docs
         .map((doc) => this.mapFirestoreDoc(doc.id, doc.data()))
+        .filter((row) => this.matchesFilters(row, filters))
         .sort((a, b) => b.dataHoraIso.localeCompare(a.dataHoraIso));
       return { data: rows, message: 'Emergências carregadas.' };
     } catch (error) {
@@ -158,7 +165,7 @@ export class EmergenciesService {
       idMaquina: String(data.idMaquina ?? data.equipamentoId ?? ''),
       tipoFalha: String(data.tipoFalha ?? data.Tipo_Falha ?? '—'),
       descricao: String(data.descricao ?? data.Descricao_Curta ?? '—'),
-      localizacaoGps,
+      localizacaoGps: localizacaoGps,
       fotos,
       qtdFotos: Number(
         data.qtdFotos ?? data.Qtd_Fotos_Evidencia ?? fotos.length,
@@ -166,5 +173,100 @@ export class EmergenciesService {
       statusAtendimento,
       dataHoraIso: String(data.dataHoraIso ?? data.Data_Hora ?? ''),
     };
+  }
+
+  private matchesFilters(
+    row: {
+      dataHoraIso?: string;
+      chassis?: string;
+      operador?: string;
+      operadorNome?: string;
+      createdAt?: string;
+    },
+    filters?: EmergencyFilters,
+  ): boolean {
+    const filtroData = this.normalizeText(filters?.date);
+    const filtroChassis = this.normalizeText(filters?.chassis);
+    const filtroOperador = this.normalizeText(filters?.operator);
+
+    if (filtroData && !this.matchesDateFilter(row, filtroData)) {
+      return false;
+    }
+
+    if (filtroChassis) {
+      const chassis = this.normalizeText(row.chassis);
+      if (!chassis.includes(filtroChassis)) {
+        return false;
+      }
+    }
+
+    if (filtroOperador) {
+      const operador = this.normalizeText(row.operador || row.operadorNome);
+      if (!operador.includes(filtroOperador)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private matchesDateFilter(
+    row: { dataHoraIso?: string; createdAt?: string },
+    filtroData: string,
+  ): boolean {
+    const dateCandidates = [row.dataHoraIso, row.createdAt]
+      .map((value) => String(value ?? '').trim())
+      .filter((value) => value.length > 0);
+
+    if (dateCandidates.length === 0) {
+      return false;
+    }
+
+    const isoDate = this.normalizeDateToIso(filtroData);
+    if (isoDate) {
+      return dateCandidates.some((value) => value.startsWith(isoDate));
+    }
+
+    return dateCandidates.some((value) =>
+      this.normalizeText(value).includes(filtroData),
+    );
+  }
+
+  private normalizeDateToIso(input: string): string | null {
+    const value = input.trim();
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return value;
+    }
+
+    const br = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (br) {
+      const [, dd, mm, yyyy] = br;
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    return null;
+  }
+
+  private normalizeText(value: unknown): string {
+    if (typeof value === 'string') {
+      return value.trim().toLowerCase();
+    }
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return String(value).trim().toLowerCase();
+    }
+    return '';
+  }
+
+  private toNullableString(value: unknown): string | null {
+    if (value == null) return null;
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      return trimmed.length > 0 ? trimmed : null;
+    }
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return String(value);
+    }
+    return null;
   }
 }

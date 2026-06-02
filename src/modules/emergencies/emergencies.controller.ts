@@ -6,8 +6,9 @@ import {
   HttpStatus,
   Param,
   Post,
+  Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateEmergencyDto } from './dto/create-emergency.dto';
 import { UpdateEmergencyStatusDto } from './dto/update-emergency-status.dto';
 import { EmergenciesService } from './emergencies.service';
@@ -28,8 +29,32 @@ export class EmergenciesController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Listar emergências por prefeitura' })
   @ApiParam({ name: 'prefeituraId', description: 'ID da prefeitura' })
-  async listByPrefeitura(@Param('prefeituraId') prefeituraId: string) {
-    return this.service.listByPrefeitura(prefeituraId);
+  @ApiQuery({
+    name: 'date',
+    required: false,
+    description: 'Filtrar por data (ex.: 2026-05-31 ou 31/05/2026).',
+  })
+  @ApiQuery({
+    name: 'chassis',
+    required: false,
+    description: 'Filtrar por chassis (busca parcial, case-insensitive).',
+  })
+  @ApiQuery({
+    name: 'operator',
+    required: false,
+    description: 'Filtrar por operador (busca parcial, case-insensitive).',
+  })
+  async listByPrefeitura(
+    @Param('prefeituraId') prefeituraId: string,
+    @Query('date') date?: string,
+    @Query('chassis') chassis?: string,
+    @Query('operator') operator?: string,
+  ) {
+    return this.service.listByPrefeitura(prefeituraId, {
+      date,
+      chassis,
+      operator,
+    });
   }
 
   @Post(':id/status')
