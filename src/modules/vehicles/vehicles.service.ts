@@ -7,6 +7,12 @@ import { FirebaseService } from '../../config/firebase.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { v4 as uuid } from 'uuid';
 
+type VehicleFilters = {
+  plate?: string;
+  nome?: string;
+  tipo?: string;
+};
+
 @Injectable()
 export class VehiclesService {
   // Injetamos o FirebaseService para poder conversar com o banco
@@ -48,7 +54,7 @@ export class VehiclesService {
     }
   }
 
-  async findAllByID(id: string) {
+  async findAllByID(id: string, filters?: VehicleFilters) {
     try {
       const docRef = await this.collection
         .where('prefeituraId', '==', id)
@@ -59,7 +65,16 @@ export class VehiclesService {
           'Nenhum veículo encontrado para a prefeitura fornecida.',
         );
       }
-      const data = docRef.docs.map((doc) => doc.data());
+      const data = docRef.docs
+        .map((doc) => doc.data())
+        .filter((vehicle) => this.matchesFilters(vehicle, filters));
+
+      if (data.length === 0) {
+        throw new NotFoundException(
+          'Nenhum veículo encontrado para os filtros informados.',
+        );
+      }
+
       return { data, message: 'Veículos encontrados com sucesso!' };
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -132,5 +147,47 @@ export class VehiclesService {
         'Não foi possível deletar o veículo no banco de dados. tente novamente mais tarde.',
       );
     }
+  }
+
+  private matchesFilters(
+    vehicle: Record<string, unknown>,
+    filters?: VehicleFilters,
+  ): boolean {
+    const filtroPlate = this.normalizeText(filters?.plate);
+    const filtroNome = this.normalizeText(filters?.nome);
+    const filtroTipo = this.normalizeText(filters?.tipo);
+
+    if (filtroPlate) {
+      const plateValue = this.normalizeText(vehicle.plate ?? vehicle.chassis);
+      if (!plateValue.includes(filtroPlate)) {
+        return false;
+      }
+    }
+
+    if (filtroNome) {
+      const nomeValue = this.normalizeText(vehicle.name ?? vehicle.nome);
+      if (!nomeValue.includes(filtroNome)) {
+        return false;
+      }
+    }
+
+    if (filtroTipo) {
+      const tipoValue = this.normalizeText(vehicle.type ?? vehicle.tipo);
+      if (!tipoValue.includes(filtroTipo)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private normalizeText(value: unknown): string {
+    if (typeof value === 'string') {
+      return value.trim().toLowerCase();
+    }
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return String(value).trim().toLowerCase();
+    }
+    return '';
   }
 }

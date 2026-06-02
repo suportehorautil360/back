@@ -7,10 +7,17 @@ import {
   HttpStatus,
   HttpCode,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { VehiclesService } from './vehicles.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 
 @ApiTags('vehicles')
 @Controller('vehicles')
@@ -27,6 +34,23 @@ export class VehiclesController {
   @Get(':id')
   @ApiOperation({ summary: 'Listar veículos de uma prefeitura' })
   @ApiParam({ name: 'id', description: 'ID único da prefeitura' })
+  @ApiQuery({
+    name: 'plate',
+    required: false,
+    description: 'Filtrar por placa (busca parcial, case-insensitive).',
+  })
+  @ApiQuery({
+    name: 'nome',
+    required: false,
+    description:
+      'Filtrar por nome do veículo (busca parcial, case-insensitive).',
+  })
+  @ApiQuery({
+    name: 'tipo',
+    required: false,
+    description:
+      'Filtrar por tipo do veículo (busca parcial, case-insensitive).',
+  })
   @ApiResponse({
     status: 200,
     description: 'Lista de veículos encontrada com sucesso.',
@@ -59,8 +83,17 @@ export class VehiclesController {
       },
     },
   })
-  async findAll(@Param('id') id: string) {
-    return this.vehiclesService.findAllByID(id);
+  async findAll(
+    @Param('id') id: string,
+    @Query('plate') plate?: string,
+    @Query('nome') nome?: string,
+    @Query('tipo') tipo?: string,
+  ) {
+    return this.vehiclesService.findAllByID(id, {
+      plate,
+      nome,
+      tipo,
+    });
   }
 
   @Post('update/:carId')
