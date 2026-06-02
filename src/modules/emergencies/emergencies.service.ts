@@ -3,7 +3,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
 import {
   CreateEmergencyDto,
@@ -63,7 +63,7 @@ export class EmergenciesService {
   }
 
   async create(dto: CreateEmergencyDto) {
-    const id = uuid();
+    const id = randomUUID();
     const agora = new Date().toISOString();
     const fotos = Array.isArray(dto.fotos)
       ? dto.fotos.filter((foto) => typeof foto === 'string' && foto.length > 0)
@@ -270,3 +270,4 @@ export class EmergenciesService {
     return null;
   }
 }
+

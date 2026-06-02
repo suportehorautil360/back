@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { FirebaseService } from 'src/config/firebase.service';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { CreateAllocationDto } from './dto/create-allocation.dto';
 
 @Injectable()
@@ -9,7 +9,7 @@ export class AllocationsService {
 
   async allocate(createDto: CreateAllocationDto) {
     const db = this.firebaseService.getFirestore();
-    const id = uuid();
+    const id = randomUUID();
 
     const allocation = {
       id,
@@ -22,3 +22,4 @@ export class AllocationsService {
     return allocation;
   }
 }
+

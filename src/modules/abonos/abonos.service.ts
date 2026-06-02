@@ -3,7 +3,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
 
 export interface AbonoDoc {
@@ -36,7 +36,7 @@ export class AbonosService {
   }
 
   async criar(input: Omit<AbonoDoc, 'id' | 'createdAt'>): Promise<AbonoDoc> {
-    const id = uuid();
+    const id = randomUUID();
     const doc: AbonoDoc = {
       id,
       ...input,
@@ -79,3 +79,4 @@ export class AbonosService {
     return { data: { id }, message: 'Abono removido.' };
   }
 }
+

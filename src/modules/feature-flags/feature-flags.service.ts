@@ -1,5 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
 import { UpsertFeatureFlagsDto } from './dto/upsert-feature-flags.dto';
 
@@ -47,7 +47,7 @@ export class FeatureFlagsService {
         atualizadoEm: new Date().toISOString(),
       };
       if (snap.empty) {
-        await this.collection.doc().set({ id: uuid(), ...dados });
+        await this.collection.doc().set({ id: randomUUID(), ...dados });
       } else {
         await this.collection.doc(snap.docs[0].id).update(dados);
       }
@@ -60,3 +60,4 @@ export class FeatureFlagsService {
     }
   }
 }
+

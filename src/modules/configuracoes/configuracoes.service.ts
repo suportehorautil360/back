@@ -1,5 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
 import { UpsertConfiguracaoDto } from './dto/upsert-configuracao.dto';
 
@@ -44,7 +44,7 @@ export class ConfiguracoesService {
       };
 
       if (snap.empty) {
-        const novo = { id: uuid(), ...dados };
+        const novo = { id: randomUUID(), ...dados };
         await this.collection.doc().set(novo);
         return { data: novo, message: 'Configuração criada com sucesso!' };
       }
@@ -60,3 +60,4 @@ export class ConfiguracoesService {
     }
   }
 }
+

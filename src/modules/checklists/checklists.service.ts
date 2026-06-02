@@ -3,7 +3,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
 import { EmergenciesService } from '../emergencies/emergencies.service';
 import {
@@ -93,7 +93,7 @@ export class ChecklistsService {
   }
 
   async createRun(dto: CreateChecklistRunDto) {
-    const id = uuid();
+    const id = randomUUID();
     const agora = new Date().toISOString();
     const doc = {
       id,
@@ -131,7 +131,7 @@ export class ChecklistsService {
     const run = runSnap.data() as Record<string, unknown>;
     const agora = new Date().toISOString();
     const answerDoc = {
-      id: uuid(),
+      id: randomUUID(),
       runId,
       questionId: dto.questionId,
       questionLabel: dto.questionLabel ?? null,
@@ -322,3 +322,4 @@ export class ChecklistsService {
     return created.data;
   }
 }
+

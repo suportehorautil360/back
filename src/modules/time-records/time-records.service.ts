@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
 import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
 import { CreateTimeRecordDto } from './dto/create-time-record.dto';
@@ -49,7 +49,7 @@ export class TimeRecordsService {
         'O ponto não está ativo para esta prefeitura.',
       );
     }
-    const id = uuid();
+    const id = randomUUID();
     try {
       const novo = {
         id,
@@ -173,3 +173,4 @@ export class TimeRecordsService {
     }
   }
 }
+
