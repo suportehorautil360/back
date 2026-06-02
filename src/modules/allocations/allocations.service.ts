@@ -21,4 +21,16 @@ export class AllocationsService {
     await db.collection('allocations').doc().set(allocation);
     return allocation;
   }
+
+  async remove(allocationId: string) {
+    const db = this.firebaseService.getFirestore();
+    const snapshot = await db
+      .collection('allocations')
+      .where('id', '==', allocationId)
+      .get();
+
+    const batch = db.batch();
+    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+  }
 }
