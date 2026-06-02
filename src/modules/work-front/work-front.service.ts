@@ -1,5 +1,10 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateWorkFrontDto } from './dto/create-work-front.dto';
+import { UpdateWorkFrontDto } from './dto/update-work-front.dto';
 import { FirebaseService } from 'src/config/firebase.service';
 import { randomUUID } from 'node:crypto';
 
@@ -79,6 +84,48 @@ export class WorkFrontService {
     }
   }
 
+  async update(workFrontId: string, updateDto: UpdateWorkFrontDto) {
+    try {
+      const db = this.firebaseService.getFirestore();
+
+      const snapshot = await db
+        .collection('work-fronts')
+        .where('id', '==', workFrontId)
+        .get();
+
+      if (snapshot.empty) {
+        throw new NotFoundException('Frente de trabalho não encontrada.');
+      }
+
+      // Mantém apenas os campos realmente enviados (não toca em alocações).
+      const data: Record<string, unknown> = {};
+      const allowed: (keyof UpdateWorkFrontDto)[] = [
+        'name',
+        'address',
+        'responsible',
+        'status',
+        'cost',
+        'startDate',
+        'endDate',
+      ];
+      for (const key of allowed) {
+        if (updateDto[key] !== undefined) data[key] = updateDto[key];
+      }
+
+      const batch = db.batch();
+      snapshot.docs.forEach((doc) => batch.update(doc.ref, data));
+      await batch.commit();
+
+      return { message: 'Front de trabalho atualizado com sucesso' };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      console.error('Error updating work front:', error);
+      throw new InternalServerErrorException(
+        'Ocorreu um erro ao atualizar o front de trabalho. Tente novamente mais tarde.',
+      );
+    }
+  }
+
   async remove(workFrontId: string) {
     const db = this.firebaseService.getFirestore();
     const batch = db.batch();
@@ -90,7 +137,10 @@ export class WorkFrontService {
       .get();
 
     // 2. Adiciona cada alocação ao batch para deletar/inativar
+    const vehicleIds: string[] = [];
     allocations.docs.forEach((doc) => {
+      const vehicleId = doc.data().vehicleId as string | undefined;
+      if (vehicleId) vehicleIds.push(vehicleId);
       batch.delete(doc.ref); // Ou batch.update(doc.ref, { status: 'inativa' })
     });
 
@@ -105,6 +155,19 @@ export class WorkFrontService {
 
     // 4. Executa tudo de uma vez
     await batch.commit();
+
+    // 5. Limpa o `obra` dos veículos que estavam alocados nessa frente.
+    if (vehicleIds.length > 0) {
+      const limpaBatch = db.batch();
+      for (const vehicleId of vehicleIds) {
+        const eqSnap = await db
+          .collection('equipamentos')
+          .where('id', '==', vehicleId)
+          .get();
+        eqSnap.docs.forEach((doc) => limpaBatch.update(doc.ref, { obra: '' }));
+      }
+      await limpaBatch.commit();
+    }
 
     return {
       message: 'Front de trabalho removido com sucesso',

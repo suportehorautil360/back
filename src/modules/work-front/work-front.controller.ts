@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Delete,
+  Patch,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -22,6 +23,7 @@ import {
 } from '@nestjs/swagger';
 import { WorkFrontService } from './work-front.service';
 import { CreateWorkFrontDto } from './dto/create-work-front.dto';
+import { UpdateWorkFrontDto } from './dto/update-work-front.dto';
 import {
   WorkFrontCreateResponseDto,
   WorkFrontListResponseDto,
@@ -76,6 +78,31 @@ export class WorkFrontController {
   @Get(':prefeituraId')
   findAll(@Param('prefeituraId') prefeituraId: string) {
     return this.workFrontService.findAll(prefeituraId);
+  }
+
+  @ApiOperation({
+    summary: 'Atualizar uma frente de trabalho',
+    description:
+      'Atualiza os campos editáveis da frente de trabalho (não altera as alocações vinculadas).',
+  })
+  @ApiParam({
+    name: 'workFrontId',
+    description: 'ID da frente de trabalho a ser atualizada',
+  })
+  @ApiBody({ type: UpdateWorkFrontDto })
+  @ApiOkResponse({ description: 'Frente de trabalho atualizada com sucesso.' })
+  @ApiNotFoundResponse({
+    description: 'Frente de trabalho não encontrada.',
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Falha inesperada ao atualizar a frente de trabalho.',
+  })
+  @Patch(':workFrontId')
+  update(
+    @Param('workFrontId') workFrontId: string,
+    @Body() updateDto: UpdateWorkFrontDto,
+  ) {
+    return this.workFrontService.update(workFrontId, updateDto);
   }
 
   @ApiOperation({
