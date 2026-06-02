@@ -54,6 +54,13 @@ export class WorkFrontItemDto {
   status!: string;
 
   @ApiProperty({
+    description: 'Custo estimado da frente de trabalho (em reais)',
+    example: 2120,
+    required: false,
+  })
+  cost?: number;
+
+  @ApiProperty({
     description: 'Data de início da frente de trabalho',
     example: '2026-05-24T12:30:45.123Z',
   })

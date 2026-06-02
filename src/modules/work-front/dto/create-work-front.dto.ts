@@ -4,6 +4,8 @@ import {
   IsNotEmpty,
   IsDateString,
   IsOptional,
+  IsNumber,
+  Min,
 } from 'class-validator';
 
 export class CreateWorkFrontDto {
@@ -53,6 +55,17 @@ export class CreateWorkFrontDto {
   })
   @IsString()
   status!: string;
+
+  @ApiProperty({
+    description: 'Custo estimado da frente de trabalho (em reais)',
+    example: 2120,
+    required: false,
+    default: 0,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  cost?: number;
 
   @ApiProperty({
     description: 'Data de início da frente de trabalho no formato ISO 8601',

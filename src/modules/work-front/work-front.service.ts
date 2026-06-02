@@ -1,5 +1,10 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateWorkFrontDto } from './dto/create-work-front.dto';
+import { UpdateWorkFrontDto } from './dto/update-work-front.dto';
 import { FirebaseService } from 'src/config/firebase.service';
 import { v4 as uuid } from 'uuid';
 
@@ -75,6 +80,48 @@ export class WorkFrontService {
       console.error('Error fetching work fronts:', error);
       throw new InternalServerErrorException(
         'Ocorreu um erro ao buscar os dados. Tente novamente mais tarde.',
+      );
+    }
+  }
+
+  async update(workFrontId: string, updateDto: UpdateWorkFrontDto) {
+    try {
+      const db = this.firebaseService.getFirestore();
+
+      const snapshot = await db
+        .collection('work-fronts')
+        .where('id', '==', workFrontId)
+        .get();
+
+      if (snapshot.empty) {
+        throw new NotFoundException('Frente de trabalho não encontrada.');
+      }
+
+      // Mantém apenas os campos realmente enviados (não toca em alocações).
+      const data: Record<string, unknown> = {};
+      const allowed: (keyof UpdateWorkFrontDto)[] = [
+        'name',
+        'address',
+        'responsible',
+        'status',
+        'cost',
+        'startDate',
+        'endDate',
+      ];
+      for (const key of allowed) {
+        if (updateDto[key] !== undefined) data[key] = updateDto[key];
+      }
+
+      const batch = db.batch();
+      snapshot.docs.forEach((doc) => batch.update(doc.ref, data));
+      await batch.commit();
+
+      return { message: 'Front de trabalho atualizado com sucesso' };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      console.error('Error updating work front:', error);
+      throw new InternalServerErrorException(
+        'Ocorreu um erro ao atualizar o front de trabalho. Tente novamente mais tarde.',
       );
     }
   }
