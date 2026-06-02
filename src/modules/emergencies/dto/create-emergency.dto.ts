@@ -15,7 +15,10 @@ export class CreateEmergencyDto {
   @ApiProperty({ example: 'manual', enum: ['manual', 'checklist_auto'] })
   source?: EmergencySource;
 
-  @ApiProperty({ example: 'critical', enum: ['warning', 'critical', 'blocking'] })
+  @ApiProperty({
+    example: 'critical',
+    enum: ['warning', 'critical', 'blocking'],
+  })
   severity?: EmergencySeverity;
 
   @ApiProperty({ example: 'equip-001' })

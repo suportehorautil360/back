@@ -25,7 +25,6 @@ import { CreateWorkFrontDto } from './dto/create-work-front.dto';
 import {
   WorkFrontCreateResponseDto,
   WorkFrontListResponseDto,
-  WorkFrontRemoveResponseDto,
 } from './dto/work-front-response.dto';
 
 @ApiTags('work-front')

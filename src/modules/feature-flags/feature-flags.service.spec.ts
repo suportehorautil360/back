@@ -6,7 +6,9 @@ import { FirebaseService } from '../../config/firebase.service';
 function makeFirestore(docs: { id?: string; data: () => unknown }[] = []) {
   const setDoc = jest.fn().mockResolvedValue(undefined);
   const updateDoc = jest.fn().mockResolvedValue(undefined);
-  const getDocs = jest.fn().mockResolvedValue({ empty: docs.length === 0, docs });
+  const getDocs = jest
+    .fn()
+    .mockResolvedValue({ empty: docs.length === 0, docs });
   const collection = jest.fn(() => ({
     where: jest.fn(() => ({ get: getDocs })),
     doc: jest.fn(() => ({ set: setDoc, update: updateDoc })),
@@ -20,12 +22,17 @@ function makeFirestore(docs: { id?: string; data: () => unknown }[] = []) {
 describe('FeatureFlagsService', () => {
   it('obter devolve {} quando não há flags', async () => {
     const { firebaseService } = makeFirestore([]);
-    expect(await new FeatureFlagsService(firebaseService).obter('p')).toEqual({});
+    expect(await new FeatureFlagsService(firebaseService).obter('p')).toEqual(
+      {},
+    );
   });
 
   it('ativo é false por padrão (opt-in)', async () => {
     const { firebaseService } = makeFirestore([]);
-    const ativo = await new FeatureFlagsService(firebaseService).ativo('p', 'ponto');
+    const ativo = await new FeatureFlagsService(firebaseService).ativo(
+      'p',
+      'ponto',
+    );
     expect(ativo).toBe(false);
   });
 
@@ -33,7 +40,10 @@ describe('FeatureFlagsService', () => {
     const { firebaseService } = makeFirestore([
       { id: 'd1', data: () => ({ flags: { ponto: true } }) },
     ]);
-    const ativo = await new FeatureFlagsService(firebaseService).ativo('p', 'ponto');
+    const ativo = await new FeatureFlagsService(firebaseService).ativo(
+      'p',
+      'ponto',
+    );
     expect(ativo).toBe(true);
   });
 

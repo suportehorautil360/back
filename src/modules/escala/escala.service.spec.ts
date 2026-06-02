@@ -7,7 +7,9 @@ import { UpsertEscalaDto } from './dto/upsert-escala.dto';
 function makeFirestore(docs: { id?: string; data: () => unknown }[] = []) {
   const setDoc = jest.fn().mockResolvedValue(undefined);
   const updateDoc = jest.fn().mockResolvedValue(undefined);
-  const getDocs = jest.fn().mockResolvedValue({ empty: docs.length === 0, docs });
+  const getDocs = jest
+    .fn()
+    .mockResolvedValue({ empty: docs.length === 0, docs });
   const collection = jest.fn(() => ({
     where: jest.fn(() => ({ get: getDocs })),
     doc: jest.fn(() => ({ set: setDoc, update: updateDoc })),

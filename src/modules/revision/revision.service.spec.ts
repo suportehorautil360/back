@@ -72,7 +72,10 @@ describe('RevisionService.complete', () => {
   });
 
   it('lança 404 quando o veículo não existe', async () => {
-    const { firebaseService, setDoc } = makeFirestore({ empty: true, docs: [] });
+    const { firebaseService, setDoc } = makeFirestore({
+      empty: true,
+      docs: [],
+    });
     const service = new RevisionService(firebaseService);
 
     await expect(service.complete(dto)).rejects.toBeInstanceOf(

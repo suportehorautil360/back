@@ -150,6 +150,10 @@ export class EmergenciesService {
           (foto: unknown): foto is string => typeof foto === 'string',
         )
       : [];
+    // GPS pode vir como string ou objeto de coordenadas — preserva o valor
+    // como veio, só tipando como unknown para não propagar `any`.
+    const localizacaoGps: unknown =
+      data.localizacaoGps ?? data.Localizacao_GPS ?? null;
     return {
       id,
       ...data,
@@ -161,9 +165,7 @@ export class EmergenciesService {
       idMaquina: String(data.idMaquina ?? data.equipamentoId ?? ''),
       tipoFalha: String(data.tipoFalha ?? data.Tipo_Falha ?? '—'),
       descricao: String(data.descricao ?? data.Descricao_Curta ?? '—'),
-      localizacaoGps: this.toNullableString(
-        data.localizacaoGps ?? data.Localizacao_GPS,
-      ),
+      localizacaoGps: localizacaoGps,
       fotos,
       qtdFotos: Number(
         data.qtdFotos ?? data.Qtd_Fotos_Evidencia ?? fotos.length,

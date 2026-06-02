@@ -80,7 +80,9 @@ export class TimeRecordsService {
     try {
       const snap = await this.collection.where('id', '==', id).get();
       if (snap.empty) {
-        throw new NotFoundException('Batida não encontrada para o ID fornecido.');
+        throw new NotFoundException(
+          'Batida não encontrada para o ID fornecido.',
+        );
       }
       const docId = snap.docs[0].id;
       // Correção feita pelo operador: SEMPRE rebaixa a batida para

@@ -1,7 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpsertEscalaDto {
-  @ApiProperty({ description: 'ID da prefeitura / cliente.', example: 'pref-001' })
+  @ApiProperty({
+    description: 'ID da prefeitura / cliente.',
+    example: 'pref-001',
+  })
   prefeituraId!: string;
 
   @ApiProperty({ description: 'Início da jornada (HH:MM).', example: '08:00' })

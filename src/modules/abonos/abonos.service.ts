@@ -35,9 +35,7 @@ export class AbonosService {
     return this.firebase.getFirestore().collection('abonos');
   }
 
-  async criar(
-    input: Omit<AbonoDoc, 'id' | 'createdAt'>,
-  ): Promise<AbonoDoc> {
+  async criar(input: Omit<AbonoDoc, 'id' | 'createdAt'>): Promise<AbonoDoc> {
     const id = uuid();
     const doc: AbonoDoc = {
       id,

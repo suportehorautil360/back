@@ -60,10 +60,7 @@ export class SolicitacoesPontoController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reprovar uma solicitação com motivo' })
   @ApiParam({ name: 'id', description: 'ID da solicitação' })
-  async reprovar(
-    @Param('id') id: string,
-    @Body() dto: ReprovarSolicitacaoDto,
-  ) {
+  async reprovar(@Param('id') id: string, @Body() dto: ReprovarSolicitacaoDto) {
     return this.service.reprovar(id, dto.motivo);
   }
 }
