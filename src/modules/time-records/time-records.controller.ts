@@ -6,15 +6,19 @@ import {
   HttpStatus,
   Param,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   ApiInternalServerErrorResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { TimeRecordsService } from './time-records.service';
+import { AfdService } from './afd.service';
+import { AejService } from './aej.service';
 import { CreateTimeRecordDto } from './dto/create-time-record.dto';
 import { UpdateTimeRecordDto } from './dto/update-time-record.dto';
 import { ReprovarTimeRecordDto } from './dto/reprovar-time-record.dto';
@@ -22,7 +26,47 @@ import { ReprovarTimeRecordDto } from './dto/reprovar-time-record.dto';
 @ApiTags('time-records')
 @Controller('time-records')
 export class TimeRecordsController {
-  constructor(private readonly timeRecordsService: TimeRecordsService) {}
+  constructor(
+    private readonly timeRecordsService: TimeRecordsService,
+    private readonly afdService: AfdService,
+    private readonly aejService: AejService,
+  ) {}
+
+  @Get('afd/:prefeituraId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Gerar o AFD (Arquivo Fonte de Dados) da prefeitura — Portaria 671',
+  })
+  @ApiParam({ name: 'prefeituraId', description: 'ID da prefeitura' })
+  @ApiQuery({ name: 'de', required: false, description: 'Data inicial YYYY-MM-DD' })
+  @ApiQuery({ name: 'ate', required: false, description: 'Data final YYYY-MM-DD' })
+  @ApiOkResponse({ description: 'AFD gerado (conteúdo + nome do arquivo).' })
+  async gerarAfd(
+    @Param('prefeituraId') prefeituraId: string,
+    @Query('de') de?: string,
+    @Query('ate') ate?: string,
+  ) {
+    const r = await this.afdService.gerar(prefeituraId, de, ate);
+    return { data: r, message: 'AFD gerado com sucesso!' };
+  }
+
+  @Get('aej/:prefeituraId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Gerar o AEJ (Arquivo Eletrônico de Jornada) — Portaria 671',
+  })
+  @ApiParam({ name: 'prefeituraId', description: 'ID da prefeitura' })
+  @ApiQuery({ name: 'de', required: false, description: 'Data inicial YYYY-MM-DD' })
+  @ApiQuery({ name: 'ate', required: false, description: 'Data final YYYY-MM-DD' })
+  @ApiOkResponse({ description: 'AEJ gerado (conteúdo + nome do arquivo).' })
+  async gerarAej(
+    @Param('prefeituraId') prefeituraId: string,
+    @Query('de') de?: string,
+    @Query('ate') ate?: string,
+  ) {
+    const r = await this.aejService.gerar(prefeituraId, de, ate);
+    return { data: r, message: 'AEJ gerado com sucesso!' };
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -36,11 +80,14 @@ export class TimeRecordsController {
 
   @Post('update/:id')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Editar o horário de uma batida de ponto' })
-  @ApiParam({ name: 'id', description: 'ID da batida' })
-  @ApiOkResponse({ description: 'Batida atualizada.' })
+  @ApiOperation({
+    summary:
+      'Solicitar correção de horário (cria um ajuste; não altera a batida original)',
+  })
+  @ApiParam({ name: 'id', description: 'ID da batida original' })
+  @ApiOkResponse({ description: 'Ajuste de correção registrado.' })
   @ApiInternalServerErrorResponse({
-    description: 'Falha ao atualizar a batida.',
+    description: 'Falha ao registrar a correção.',
   })
   async update(@Param('id') id: string, @Body() dto: UpdateTimeRecordDto) {
     return this.timeRecordsService.update(id, dto);
@@ -48,21 +95,25 @@ export class TimeRecordsController {
 
   @Post(':id/aprovar')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Aprovar uma batida de ponto (RH)' })
-  @ApiParam({ name: 'id', description: 'ID da batida' })
-  @ApiOkResponse({ description: 'Batida aprovada.' })
-  @ApiInternalServerErrorResponse({ description: 'Falha ao aprovar a batida.' })
+  @ApiOperation({
+    summary: 'Aprovar um AJUSTE/cancelamento de ponto, aplicando-o à folha (RH)',
+  })
+  @ApiParam({ name: 'id', description: 'ID do registro de ajuste/cancelamento' })
+  @ApiOkResponse({ description: 'Ajuste aplicado.' })
+  @ApiInternalServerErrorResponse({ description: 'Falha ao aprovar o ajuste.' })
   async aprovar(@Param('id') id: string) {
     return this.timeRecordsService.aprovar(id);
   }
 
   @Post(':id/reprovar')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Reprovar uma batida de ponto, com motivo (RH)' })
-  @ApiParam({ name: 'id', description: 'ID da batida' })
-  @ApiOkResponse({ description: 'Batida reprovada.' })
+  @ApiOperation({
+    summary: 'Reprovar um AJUSTE/cancelamento de ponto, com motivo (RH)',
+  })
+  @ApiParam({ name: 'id', description: 'ID do registro de ajuste/cancelamento' })
+  @ApiOkResponse({ description: 'Ajuste reprovado.' })
   @ApiInternalServerErrorResponse({
-    description: 'Falha ao reprovar a batida.',
+    description: 'Falha ao reprovar o ajuste.',
   })
   async reprovar(@Param('id') id: string, @Body() dto: ReprovarTimeRecordDto) {
     return this.timeRecordsService.reprovar(id, dto.motivo);

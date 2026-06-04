@@ -11,6 +11,7 @@ import {
 } from './dto/create-solicitacao-ponto.dto';
 import { NotificacoesService } from '../notificacoes/notificacoes.service';
 import { AbonosService } from '../abonos/abonos.service';
+import { selarRegistro } from '../time-records/ledger';
 
 export type StatusSolicitacao = 'pendente' | 'aprovado' | 'reprovado';
 
@@ -141,32 +142,89 @@ export class SolicitacoesPontoService {
       return { data: doc, message: 'Solicitação já foi avaliada.' };
     }
 
+    const db = this.firebase.getFirestore();
     try {
       if (doc.tipo === 'incluir' && doc.timestampOriginal) {
+        // Inclusão de batida esquecida: entra no ledger como um AJUSTE
+        // (sem `refNsr`, pois não corrige nenhuma original) já aplicado,
+        // com NSR sequencial e hash encadeado (Portaria 671).
         const batidaId = randomUUID();
-        await this.timeRecords.doc(batidaId).set({
-          id: batidaId,
-          prefeituraId: doc.prefeituraId,
-          name: doc.name,
-          tipo: 'entrada',
-          timestampOriginal: doc.timestampOriginal,
-          horaLocalBR: new Date(doc.timestampOriginal).toLocaleString('pt-BR', {
-            timeZone: 'America/Sao_Paulo',
-          }),
-          status: 'aprovado',
-          origem: 'solicitacao-inclusao',
-          solicitacaoId: doc.id,
-          createdAt: new Date().toISOString(),
+        const ts = doc.timestampOriginal;
+        await db.runTransaction(async (tx) => {
+          const selo = await selarRegistro(db, tx, {
+            prefeituraId: doc.prefeituraId,
+            identificador: doc.cpf?.replace(/\D/g, '') || doc.name,
+            tipo: 'entrada',
+            timestampOriginal: ts,
+            registro: 'ajuste',
+            refNsr: null,
+          });
+          tx.set(this.timeRecords.doc(batidaId), {
+            id: batidaId,
+            prefeituraId: doc.prefeituraId,
+            name: doc.name,
+            cpf: doc.cpf ?? null,
+            tipo: 'entrada',
+            timestampOriginal: ts,
+            horaLocalBR: new Date(ts).toLocaleString('pt-BR', {
+              timeZone: 'America/Sao_Paulo',
+            }),
+            registro: 'ajuste' as const,
+            refNsr: null,
+            aplicado: true,
+            origem: 'solicitacao-inclusao',
+            solicitacaoId: doc.id,
+            nsr: selo.nsr,
+            hash: selo.hash,
+            hashAnterior: selo.hashAnterior,
+            createdAt: new Date().toISOString(),
+          });
         });
       } else if (doc.tipo === 'cancelar' && doc.batidaId) {
+        // Cancelamento: NÃO altera a batida original (Portaria 671). Grava um
+        // registro de CANCELAMENTO apontando para a original via refNsr; o
+        // front desconsidera a original ao resolver o ledger.
         const batidaSnap = await this.timeRecords
           .where('id', '==', doc.batidaId)
           .get();
         if (!batidaSnap.empty) {
-          await this.timeRecords.doc(batidaSnap.docs[0].id).update({
-            status: 'cancelado',
-            canceladoPorSolicitacao: doc.id,
-            updatedAt: new Date().toISOString(),
+          const alvo = batidaSnap.docs[0].data() as {
+            prefeituraId: string;
+            name: string;
+            cpf?: string | null;
+            tipo: string;
+            nsr?: number;
+            id: string;
+            timestampOriginal: string;
+          };
+          const cancelId = randomUUID();
+          await db.runTransaction(async (tx) => {
+            const selo = await selarRegistro(db, tx, {
+              prefeituraId: alvo.prefeituraId,
+              identificador: alvo.cpf?.replace(/\D/g, '') || alvo.name,
+              tipo: alvo.tipo,
+              timestampOriginal: alvo.timestampOriginal,
+              registro: 'cancelamento',
+              refNsr: alvo.nsr ?? null,
+            });
+            tx.set(this.timeRecords.doc(cancelId), {
+              id: cancelId,
+              prefeituraId: alvo.prefeituraId,
+              name: alvo.name,
+              cpf: alvo.cpf ?? null,
+              tipo: alvo.tipo,
+              timestampOriginal: alvo.timestampOriginal,
+              registro: 'cancelamento' as const,
+              refNsr: alvo.nsr ?? null,
+              refId: alvo.id,
+              aplicado: true,
+              canceladoPorSolicitacao: doc.id,
+              solicitacaoId: doc.id,
+              nsr: selo.nsr,
+              hash: selo.hash,
+              hashAnterior: selo.hashAnterior,
+              createdAt: new Date().toISOString(),
+            });
           });
         }
       } else if (doc.tipo === 'abono' && doc.data && doc.cpf) {

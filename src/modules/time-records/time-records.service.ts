@@ -9,6 +9,7 @@ import { FirebaseService } from '../../config/firebase.service';
 import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
 import { CreateTimeRecordDto } from './dto/create-time-record.dto';
 import { UpdateTimeRecordDto } from './dto/update-time-record.dto';
+import { selarRegistro } from './ledger';
 
 @Injectable()
 export class TimeRecordsService {
@@ -43,6 +44,11 @@ export class TimeRecordsService {
     return `${data} ${hora}`;
   }
 
+  /**
+   * Registra uma marcação ORIGINAL do trabalhador no ledger imutável.
+   * Recebe NSR sequencial e hash encadeado (Portaria 671). Esse registro
+   * NUNCA é alterado nem apagado depois.
+   */
   async create(dto: CreateTimeRecordDto) {
     if (!(await this.featureFlags.ativo(dto.prefeituraId, 'ponto'))) {
       throw new ForbiddenException(
@@ -50,23 +56,35 @@ export class TimeRecordsService {
       );
     }
     const id = randomUUID();
+    const db = this.firebaseService.getFirestore();
     try {
-      const novo = {
-        id,
-        name: dto.name,
-        photo: dto.photo,
-        prefeituraId: dto.prefeituraId,
-        timestampOriginal: dto.timestampOriginal,
-        horaLocalBR: this.horaLocalBR(dto.timestampOriginal),
-        tipo: dto.tipo,
-        // Batida feita na hora pelo operador entra como APROVADA (com selfie
-        // e timestamp do device, já é a fonte de verdade). Só vira "pendente"
-        // se o operador editar o horário depois — aí o update() rebaixa o
-        // status para o RH avaliar a correção.
-        status: 'aprovado',
-        createdAt: new Date().toISOString(),
-      };
-      await this.collection.doc().set(novo);
+      const novo = await db.runTransaction(async (tx) => {
+        const selo = await selarRegistro(db, tx, {
+          prefeituraId: dto.prefeituraId,
+          identificador: dto.cpf?.trim() || dto.name,
+          tipo: dto.tipo,
+          timestampOriginal: dto.timestampOriginal,
+          registro: 'original',
+        });
+        const doc = {
+          id,
+          name: dto.name,
+          cpf: dto.cpf?.trim() || null,
+          photo: dto.photo,
+          prefeituraId: dto.prefeituraId,
+          timestampOriginal: dto.timestampOriginal,
+          horaLocalBR: this.horaLocalBR(dto.timestampOriginal),
+          tipo: dto.tipo,
+          // Natureza no ledger: marcação original do trabalhador (imutável).
+          registro: 'original' as const,
+          nsr: selo.nsr,
+          hash: selo.hash,
+          hashAnterior: selo.hashAnterior,
+          createdAt: new Date().toISOString(),
+        };
+        tx.set(this.collection.doc(id), doc);
+        return doc;
+      });
       return { data: novo, message: 'Ponto registrado com sucesso!' };
     } catch (error) {
       console.error('Erro ao registrar ponto:', error);
@@ -76,7 +94,14 @@ export class TimeRecordsService {
     }
   }
 
+  /**
+   * Correção de horário pelo operador. NÃO altera a batida original (a
+   * Portaria 671 proíbe). Cria um novo registro de AJUSTE no ledger, apontando
+   * para o NSR da original via `refNsr`, que fica `aplicado: false` até o RH
+   * aprovar. O espelho segue mostrando o horário ORIGINAL como oficial até lá.
+   */
   async update(id: string, dto: UpdateTimeRecordDto) {
+    const db = this.firebaseService.getFirestore();
     try {
       const snap = await this.collection.where('id', '==', id).get();
       if (snap.empty) {
@@ -84,44 +109,85 @@ export class TimeRecordsService {
           'Batida não encontrada para o ID fornecido.',
         );
       }
-      const docId = snap.docs[0].id;
-      // Correção feita pelo operador: SEMPRE rebaixa a batida para
-      // "pendente" — a única forma de uma batida ficar "aprovado" é não
-      // ter sido editada (criada na hora, com selfie). O motivo, se vier,
-      // acompanha a alteração para o RH avaliar com contexto.
-      const patch: Record<string, unknown> = {
-        timestampOriginal: dto.timestampOriginal,
-        horaLocalBR: this.horaLocalBR(dto.timestampOriginal),
-        status: 'pendente',
-        motivoReprovacao: null,
-        updatedAt: new Date().toISOString(),
+      const original = snap.docs[0].data() as {
+        prefeituraId: string;
+        name: string;
+        cpf?: string | null;
+        tipo: string;
+        nsr?: number;
+        id: string;
       };
-      if (dto.motivo?.trim()) {
-        patch.motivoCorrecao = dto.motivo.trim();
-      }
-      await this.collection.doc(docId).update(patch);
-      return { data: {}, message: 'Batida atualizada com sucesso!' };
+
+      const novoId = randomUUID();
+      const ajuste = await db.runTransaction(async (tx) => {
+        const selo = await selarRegistro(db, tx, {
+          prefeituraId: original.prefeituraId,
+          identificador: original.cpf?.trim() || original.name,
+          tipo: original.tipo,
+          timestampOriginal: dto.timestampOriginal,
+          registro: 'ajuste',
+          refNsr: original.nsr ?? null,
+        });
+        const doc = {
+          id: novoId,
+          name: original.name,
+          cpf: original.cpf ?? null,
+          prefeituraId: original.prefeituraId,
+          tipo: original.tipo,
+          timestampOriginal: dto.timestampOriginal,
+          horaLocalBR: this.horaLocalBR(dto.timestampOriginal),
+          registro: 'ajuste' as const,
+          // Alvo da correção: NSR (preferido) e id (fallback p/ legado sem NSR).
+          refNsr: original.nsr ?? null,
+          refId: original.id,
+          // Pendente até o RH aprovar — a original continua valendo no espelho.
+          aplicado: false,
+          motivo: dto.motivo?.trim() || null,
+          createdAt: new Date().toISOString(),
+          nsr: selo.nsr,
+          hash: selo.hash,
+          hashAnterior: selo.hashAnterior,
+        };
+        tx.set(this.collection.doc(novoId), doc);
+        return doc;
+      });
+      return {
+        data: ajuste,
+        message: 'Correção registrada. Aguardando aprovação do RH.',
+      };
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      console.error('Erro ao atualizar ponto:', error);
+      console.error('Erro ao registrar correção de ponto:', error);
       throw new InternalServerErrorException(
-        'Não foi possível atualizar a batida. Tente novamente mais tarde.',
+        'Não foi possível registrar a correção. Tente novamente mais tarde.',
       );
     }
   }
 
-  /** Atualiza o status de avaliação (aprovado/reprovado) de uma batida. */
-  private async avaliar(
+  /**
+   * Aplica/recusa um registro de AJUSTE ou CANCELAMENTO na folha (RH). A
+   * marcação ORIGINAL do trabalhador nunca pode ser avaliada nem alterada
+   * (Portaria 671) — tentar fazê-lo retorna 403. Aprovar/reprovar só alterna
+   * o flag `aplicado` (metadado de tratamento), sem tocar nos dados/hash da
+   * marcação.
+   */
+  private async tratarAjuste(
     id: string,
-    patch: { status: string; motivoReprovacao?: string },
+    patch: { aplicado: boolean; motivoReprovacao: string | null },
   ) {
     const snap = await this.collection.where('id', '==', id).get();
     if (snap.empty) {
-      throw new NotFoundException('Batida não encontrada para o ID fornecido.');
+      throw new NotFoundException('Registro não encontrado para o ID fornecido.');
     }
     const docId = snap.docs[0].id;
+    const data = snap.docs[0].data() as { registro?: string };
+    if ((data.registro ?? 'original') === 'original') {
+      throw new ForbiddenException(
+        'A marcação original do trabalhador não pode ser aprovada, reprovada ou alterada (Portaria 671). Apenas ajustes/cancelamentos podem ser avaliados.',
+      );
+    }
     await this.collection.doc(docId).update({
       ...patch,
       avaliadoEm: new Date().toISOString(),
@@ -131,27 +197,38 @@ export class TimeRecordsService {
 
   async aprovar(id: string) {
     try {
-      return await this.avaliar(id, { status: 'aprovado' });
+      return await this.tratarAjuste(id, {
+        aplicado: true,
+        motivoReprovacao: null,
+      });
     } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      console.error('Erro ao aprovar ponto:', error);
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException
+      )
+        throw error;
+      console.error('Erro ao aprovar ajuste de ponto:', error);
       throw new InternalServerErrorException(
-        'Não foi possível aprovar a batida. Tente novamente mais tarde.',
+        'Não foi possível aprovar o ajuste. Tente novamente mais tarde.',
       );
     }
   }
 
   async reprovar(id: string, motivo: string) {
     try {
-      return await this.avaliar(id, {
-        status: 'reprovado',
+      return await this.tratarAjuste(id, {
+        aplicado: false,
         motivoReprovacao: motivo,
       });
     } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      console.error('Erro ao reprovar ponto:', error);
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException
+      )
+        throw error;
+      console.error('Erro ao reprovar ajuste de ponto:', error);
       throw new InternalServerErrorException(
-        'Não foi possível reprovar a batida. Tente novamente mais tarde.',
+        'Não foi possível reprovar o ajuste. Tente novamente mais tarde.',
       );
     }
   }
@@ -173,4 +250,3 @@ export class TimeRecordsService {
     }
   }
 }
-

@@ -31,4 +31,12 @@ export class CreateTimeRecordDto {
     example: 'entrada',
   })
   tipo!: string;
+
+  @ApiProperty({
+    description:
+      'CPF/PIS do trabalhador (opcional). Quando presente, compõe o identificador do registro no ledger (Portaria 671).',
+    example: '12345678901',
+    required: false,
+  })
+  cpf?: string;
 }

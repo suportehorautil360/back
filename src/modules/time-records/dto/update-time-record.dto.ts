@@ -10,7 +10,7 @@ export class UpdateTimeRecordDto {
 
   @ApiProperty({
     description:
-      'Motivo da correção (opcional). Quando informado, a batida volta para "pendente" de aprovação do RH.',
+      'Motivo da correção (opcional). A correção entra como um registro de AJUSTE separado (a batida original não é alterada) e fica pendente de aprovação do RH.',
     example: 'Esqueci de bater na hora certa, registrei depois.',
     required: false,
   })
