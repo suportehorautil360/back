@@ -56,6 +56,8 @@ export interface DadosEmergenciaWhats {
   operadorNome?: string | null;
   localizacaoGps?: string | null;
   dataHoraIso: string;
+  /** Fotos anexadas (data URL/base64). Enviadas como imagem no WhatsApp. */
+  fotos?: string[] | null;
 }
 
 function normalizeEmergencyStatus(status: string | undefined): EmergencyStatus {
@@ -173,7 +175,23 @@ export class EmergenciesService {
       const ativo = cfg?.alertas?.notificacaoWhatsapp === true;
       const numero = (cfg?.empresa?.whatsappNumero ?? '').trim();
       if (!ativo || !numero) return;
-      await this.whatsapp.enviarMensagem(numero, this.montarMensagem(doc));
+      const texto = this.montarMensagem(doc);
+      const fotos = (Array.isArray(doc.fotos) ? doc.fotos : []).filter(
+        (foto): foto is string => typeof foto === 'string' && foto.length > 0,
+      );
+      if (fotos.length === 0) {
+        await this.whatsapp.enviarMensagem(numero, texto);
+        return;
+      }
+      // A 1ª foto leva o texto como legenda; as demais vão soltas — assim a
+      // emergência chega como uma única notificação com imagem + detalhes.
+      for (let i = 0; i < fotos.length; i++) {
+        await this.whatsapp.enviarImagem(
+          numero,
+          fotos[i],
+          i === 0 ? texto : undefined,
+        );
+      }
     } catch (e) {
       console.warn(
         'Falha ao notificar emergência por WhatsApp:',
