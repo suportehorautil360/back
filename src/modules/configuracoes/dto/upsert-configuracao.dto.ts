@@ -5,6 +5,11 @@ export class EmpresaDto {
   razaoSocial?: string;
   @ApiProperty({ example: '12.345.678/0001-90' })
   cnpj?: string;
+  @ApiProperty({
+    example: '12.345.678/901',
+    description: 'CAEPF/CEI — inscrição alternativa para empregador sem CNPJ.',
+  })
+  caepf?: string;
   @ApiProperty({ example: 'Três Lagoas' })
   cidade?: string;
   @ApiProperty({ example: 'MS' })
