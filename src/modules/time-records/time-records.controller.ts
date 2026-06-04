@@ -6,15 +6,18 @@ import {
   HttpStatus,
   Param,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   ApiInternalServerErrorResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { TimeRecordsService } from './time-records.service';
+import { AfdService } from './afd.service';
 import { CreateTimeRecordDto } from './dto/create-time-record.dto';
 import { UpdateTimeRecordDto } from './dto/update-time-record.dto';
 import { ReprovarTimeRecordDto } from './dto/reprovar-time-record.dto';
@@ -22,7 +25,28 @@ import { ReprovarTimeRecordDto } from './dto/reprovar-time-record.dto';
 @ApiTags('time-records')
 @Controller('time-records')
 export class TimeRecordsController {
-  constructor(private readonly timeRecordsService: TimeRecordsService) {}
+  constructor(
+    private readonly timeRecordsService: TimeRecordsService,
+    private readonly afdService: AfdService,
+  ) {}
+
+  @Get('afd/:prefeituraId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Gerar o AFD (Arquivo Fonte de Dados) da prefeitura — Portaria 671',
+  })
+  @ApiParam({ name: 'prefeituraId', description: 'ID da prefeitura' })
+  @ApiQuery({ name: 'de', required: false, description: 'Data inicial YYYY-MM-DD' })
+  @ApiQuery({ name: 'ate', required: false, description: 'Data final YYYY-MM-DD' })
+  @ApiOkResponse({ description: 'AFD gerado (conteúdo + nome do arquivo).' })
+  async gerarAfd(
+    @Param('prefeituraId') prefeituraId: string,
+    @Query('de') de?: string,
+    @Query('ate') ate?: string,
+  ) {
+    const r = await this.afdService.gerar(prefeituraId, de, ate);
+    return { data: r, message: 'AFD gerado com sucesso!' };
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
