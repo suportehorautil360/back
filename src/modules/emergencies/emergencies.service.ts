@@ -45,6 +45,19 @@ type EmergencyFilters = {
   operator?: string;
 };
 
+/** Dados mínimos de uma emergência para montar/disparar a notificação. */
+export interface DadosEmergenciaWhats {
+  prefeituraId: string;
+  severity: string;
+  chassis?: string | null;
+  idMaquina?: string | null;
+  tipoFalha: string;
+  descricao: string;
+  operadorNome?: string | null;
+  localizacaoGps?: string | null;
+  dataHoraIso: string;
+}
+
 function normalizeEmergencyStatus(status: string | undefined): EmergencyStatus {
   const s = String(status ?? '')
     .trim()
@@ -113,7 +126,7 @@ export class EmergenciesService {
   }
 
   /** Texto da mensagem de WhatsApp para uma emergência. */
-  private montarMensagem(doc: EmergencyDoc): string {
+  private montarMensagem(doc: DadosEmergenciaWhats): string {
     const sev: Record<string, string> = {
       critical: 'Crítica',
       high: 'Alta',
@@ -139,9 +152,11 @@ export class EmergenciesService {
 
   /**
    * Dispara a notificação de WhatsApp se: o WhatsApp está conectado, a empresa
-   * ativou o toggle e cadastrou um número. Nunca lança (best-effort).
+   * ativou o toggle e cadastrou um número. Nunca lança (best-effort). Público
+   * porque a emergência do checklist é gravada direto no Firestore pelo front
+   * (não passa por `create`), então o front chama esta notificação à parte.
    */
-  private async notificarWhatsApp(doc: EmergencyDoc): Promise<void> {
+  async notificarWhatsApp(doc: DadosEmergenciaWhats): Promise<void> {
     try {
       if (!this.whatsapp.estaConectado()) return;
       const snap = await this.firebase
