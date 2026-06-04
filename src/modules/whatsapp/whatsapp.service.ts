@@ -150,6 +150,37 @@ export class WhatsAppService implements OnModuleInit {
     await this.sock.sendMessage(formatarJid(numero), { text: texto });
   }
 
+  /**
+   * Envia uma imagem. `imagem` pode ser uma data URL
+   * (`data:image/jpeg;base64,…`), base64 puro ou uma URL http(s). A legenda é
+   * opcional (vai junto da primeira foto de uma emergência, por exemplo).
+   */
+  async enviarImagem(
+    numero: string,
+    imagem: string,
+    legenda?: string,
+  ): Promise<void> {
+    if (!this.sock || this.status !== 'conectado') {
+      throw new Error('WhatsApp não está conectado.');
+    }
+    const jid = formatarJid(numero);
+    if (/^https?:\/\//i.test(imagem)) {
+      await this.sock.sendMessage(jid, {
+        image: { url: imagem },
+        caption: legenda,
+      });
+      return;
+    }
+    // data URL → corta o prefixo `data:...;base64,`; base64 puro passa direto.
+    const base64 = imagem.includes(',')
+      ? imagem.slice(imagem.indexOf(',') + 1)
+      : imagem;
+    await this.sock.sendMessage(jid, {
+      image: Buffer.from(base64, 'base64'),
+      caption: legenda,
+    });
+  }
+
   async logout(): Promise<void> {
     try {
       await this.sock?.logout();
