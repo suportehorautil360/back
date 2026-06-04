@@ -20,6 +20,132 @@ export class RevisionService {
   private get vehiclesCollection() {
     return this.firebaseService.getFirestore().collection('vehicles');
   }
+  private get configuracoesCollection() {
+    return this.firebaseService.getFirestore().collection('configuracoes');
+  }
+
+  private normalizeTipo(value?: string): string {
+    return (value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
+  }
+
+  private normalizeUnidade(value?: string): 'km' | 'horas' | undefined {
+    const unidade = this.normalizeTipo(value);
+    if (!unidade) return undefined;
+    if (unidade === 'km' || unidade.includes('quilometr')) return 'km';
+    if (
+      unidade === 'h' ||
+      unidade.includes('hora') ||
+      unidade.includes('hour')
+    ) {
+      return 'horas';
+    }
+    return undefined;
+  }
+
+  private resolveTipoKeys(rawTipo?: string): string[] {
+    const tipo = this.normalizeTipo(rawTipo);
+    if (!tipo) return [];
+
+    if (tipo.includes('carro') || tipo === 'car' || tipo.includes('cars')) {
+      return ['carro', 'carros', 'car'];
+    }
+
+    if (
+      tipo.includes('caminhao') ||
+      tipo.includes('caminhoes') ||
+      tipo.includes('truck')
+    ) {
+      return ['caminhao', 'caminhoes', 'truck'];
+    }
+
+    if (
+      tipo.includes('maquina') ||
+      tipo.includes('maquinas') ||
+      tipo.includes('machine')
+    ) {
+      return ['maquina', 'maquinas', 'machine'];
+    }
+
+    if (tipo.includes('ambulancia') || tipo.includes('ambulance')) {
+      return ['ambulancia', 'ambulancias', 'ambulance'];
+    }
+
+    if (tipo.includes('van')) {
+      return ['van', 'vans'];
+    }
+
+    return [];
+  }
+
+  private getIntervaloPorTipo(
+    configuracao: Record<string, unknown> | null,
+    tipoVeiculo?: string,
+  ): { valor: number; unidade?: 'km' | 'horas' } | undefined {
+    if (!configuracao) return undefined;
+
+    const keys = this.resolveTipoKeys(tipoVeiculo);
+    if (!keys.length) return undefined;
+
+    const intervalos = configuracao.intervalos as
+      | Record<string, { valor?: number; unidade?: string }>
+      | undefined;
+
+    for (const key of keys) {
+      const intervalo = intervalos?.[key];
+      const valor = intervalo?.valor;
+      if (typeof valor === 'number' && Number.isFinite(valor) && valor > 0) {
+        return {
+          valor,
+          unidade: this.normalizeUnidade(intervalo?.unidade),
+        };
+      }
+    }
+
+    return undefined;
+  }
+
+  private resolveIntervaloRevisao(
+    configuracao: Record<string, unknown> | null,
+    vehicleData: {
+      type?: string;
+      tipo?: string;
+      maintenanceInterval?: number;
+      intervaloRevisao?: number;
+      maintenanceUnit?: string;
+      unidadeRevisao?: string;
+    },
+  ): { valor: number; unidade: 'km' | 'horas' } {
+    const tipoVeiculo = vehicleData.type ?? vehicleData.tipo;
+    const intervaloConfig = this.getIntervaloPorTipo(configuracao, tipoVeiculo);
+    if (intervaloConfig) {
+      return {
+        valor: intervaloConfig.valor,
+        unidade: intervaloConfig.unidade ?? 'km',
+      };
+    }
+
+    const intervaloVeiculo =
+      vehicleData.maintenanceInterval ?? vehicleData.intervaloRevisao;
+    if (
+      typeof intervaloVeiculo === 'number' &&
+      Number.isFinite(intervaloVeiculo) &&
+      intervaloVeiculo > 0
+    ) {
+      return {
+        valor: intervaloVeiculo,
+        unidade:
+          this.normalizeUnidade(
+            vehicleData.maintenanceUnit ?? vehicleData.unidadeRevisao,
+          ) ?? 'km',
+      };
+    }
+
+    return { valor: 1000, unidade: 'km' };
+  }
 
   async create(createRevisionDto: CreateRevisionDto) {
     const revisionId = randomUUID();
@@ -46,13 +172,35 @@ export class RevisionService {
       const vehicleData = vehicleRef.docs[0].data() as {
         currentMeter: number;
         lastRevisionOdometerReading: number;
+        maintenanceInterval?: number;
+        intervaloRevisao?: number;
+        maintenanceUnit?: string;
+        unidadeRevisao?: string;
+        type?: string;
+        tipo?: string;
       };
 
       const lastOdometer = vehicleData?.lastRevisionOdometerReading || 0;
+      const configRef = await this.configuracoesCollection
+        .where('prefeituraId', '==', createRevisionDto.prefeituraId)
+        .get();
+      const configuracao = configRef.empty
+        ? null
+        : (configRef.docs[0].data() as Record<string, unknown>);
+      const intervaloRevisao = this.resolveIntervaloRevisao(
+        configuracao,
+        vehicleData,
+      );
+      const unidadeMensagem = intervaloRevisao.unidade;
+      const descricaoMedicao =
+        unidadeMensagem === 'horas' ? 'A medição' : 'A quilometragem';
 
-      if (createRevisionDto.odometerReading <= lastOdometer + 1000) {
+      if (
+        createRevisionDto.odometerReading <=
+        lastOdometer + intervaloRevisao.valor
+      ) {
         throw new BadRequestException(
-          `A quilometragem deve ser pelo menos 1.000 km maior que a última revisão (${lastOdometer} km).`,
+          `${descricaoMedicao} deve ser pelo menos ${intervaloRevisao.valor} ${unidadeMensagem} maior que a última revisão (${lastOdometer} ${unidadeMensagem}).`,
         );
       }
 
@@ -176,4 +324,3 @@ export class RevisionService {
     }
   }
 }
-

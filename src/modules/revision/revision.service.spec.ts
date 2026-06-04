@@ -12,21 +12,33 @@ import { CreateRevisionDto } from './dto/create-revision.dto';
  *   collection(name).doc().set()    → grava revisão
  *   collection(name).doc(id).update() → atualiza veículo
  */
-function makeFirestore(vehicleSnap: {
-  empty: boolean;
-  docs: { id: string; data: () => unknown }[];
-}) {
+function makeFirestore(
+  vehicleSnap: {
+    empty: boolean;
+    docs: { id: string; data: () => unknown }[];
+  },
+  configSnap?: {
+    empty: boolean;
+    docs: { id: string; data: () => unknown }[];
+  },
+) {
   const setDoc = jest.fn().mockResolvedValue(undefined);
   const updateDoc = jest.fn().mockResolvedValue(undefined);
-  const getDocs = jest.fn().mockResolvedValue(vehicleSnap);
-  const collection = jest.fn(() => ({
-    where: jest.fn(() => ({ get: getDocs })),
+  const getVehicleDocs = jest.fn().mockResolvedValue(vehicleSnap);
+  const getConfigDocs = jest
+    .fn()
+    .mockResolvedValue(configSnap ?? { empty: true, docs: [] });
+
+  const collection = jest.fn((name: string) => ({
+    where: jest.fn(() => ({
+      get: name === 'configuracoes' ? getConfigDocs : getVehicleDocs,
+    })),
     doc: jest.fn(() => ({ set: setDoc, update: updateDoc })),
   }));
   const firebaseService = {
     getFirestore: () => ({ collection }),
   } as unknown as FirebaseService;
-  return { firebaseService, setDoc, updateDoc, getDocs };
+  return { firebaseService, setDoc, updateDoc, getVehicleDocs, getConfigDocs };
 }
 
 const dto: CreateRevisionDto = {
@@ -136,5 +148,87 @@ describe('RevisionService.create', () => {
     await expect(service.create(dto)).rejects.toBeInstanceOf(
       BadRequestException,
     );
+  });
+
+  it('usa intervalo por tipo vindo das configurações da prefeitura', async () => {
+    const { firebaseService } = makeFirestore(
+      {
+        empty: false,
+        docs: [
+          {
+            id: 'doc-1',
+            data: () => ({
+              currentMeter: 0,
+              lastRevisionOdometerReading: 14500,
+              type: 'caminhão',
+              maintenanceInterval: 1000,
+            }),
+          },
+        ],
+      },
+      {
+        empty: false,
+        docs: [
+          {
+            id: 'cfg-1',
+            data: () => ({
+              prefeituraId: 'pref-1',
+              intervalos: {
+                caminhao: { valor: 2000, unidade: 'km' },
+              },
+            }),
+          },
+        ],
+      },
+    );
+
+    const service = new RevisionService(firebaseService);
+
+    // 15000 não é > 14500 + 2000 → recusa pela regra de configuração.
+    await expect(service.create(dto)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
+  it('aceita alias de tipo (truck) e usa unidade das configurações', async () => {
+    const { firebaseService } = makeFirestore(
+      {
+        empty: false,
+        docs: [
+          {
+            id: 'doc-1',
+            data: () => ({
+              currentMeter: 0,
+              lastRevisionOdometerReading: 14500,
+              type: 'truck',
+            }),
+          },
+        ],
+      },
+      {
+        empty: false,
+        docs: [
+          {
+            id: 'cfg-1',
+            data: () => ({
+              prefeituraId: 'pref-1',
+              intervalos: {
+                caminhao: { valor: 2000, unidade: 'horas' },
+              },
+            }),
+          },
+        ],
+      },
+    );
+
+    const service = new RevisionService(firebaseService);
+
+    try {
+      await service.create(dto);
+      fail('Era esperado BadRequestException para revisão abaixo do intervalo');
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect((error as BadRequestException).message).toContain('2000 horas');
+    }
   });
 });
