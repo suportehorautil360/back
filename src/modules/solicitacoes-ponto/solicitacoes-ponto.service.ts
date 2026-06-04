@@ -227,22 +227,45 @@ export class SolicitacoesPontoService {
             });
           });
         }
-      } else if (doc.tipo === 'abono' && doc.data && doc.cpf) {
+      } else if (doc.tipo === 'abono' && doc.data) {
         // Aprovar abono cria um registro na coleção `abonos` — o front
-        // consulta para classificar o dia como 'abonado' em vez de 'falta'
-        // e respeitar o saldo. Sem CPF não dá pra casar o dia com o
-        // funcionário, então a aprovação só muda o status (RH age fora).
-        try {
-          await this.abonos.criar({
-            prefeituraId: doc.prefeituraId,
-            funcionarioCpf: doc.cpf.replace(/\D/g, ''),
-            funcionarioNome: doc.name,
-            data: doc.data,
-            motivo: doc.observacao ?? null,
-            solicitacaoId: doc.id,
-          });
-        } catch (abonoErr) {
-          console.warn('Não foi possível criar abono:', abonoErr);
+        // consulta para classificar o dia como 'abonado'. Precisa do CPF para
+        // casar com o funcionário: usa o da solicitação ou, se faltar, resolve
+        // pelo cadastro de operadores (pelo nome). Se ainda assim não houver
+        // CPF, AVISA (não falha calado).
+        let cpf = (doc.cpf ?? '').replace(/\D/g, '');
+        if (!cpf && doc.name?.trim()) {
+          try {
+            const opSnap = await db
+              .collection('operadores')
+              .where('prefeituraId', '==', doc.prefeituraId)
+              .get();
+            const alvo = doc.name.trim().toLowerCase();
+            const op = opSnap.docs
+              .map((d) => d.data() as { nome?: string; cpf?: string })
+              .find((o) => (o.nome ?? '').trim().toLowerCase() === alvo);
+            cpf = (op?.cpf ?? '').replace(/\D/g, '');
+          } catch (lookupErr) {
+            console.warn('Falha ao resolver CPF do operador:', lookupErr);
+          }
+        }
+        if (cpf) {
+          try {
+            await this.abonos.criar({
+              prefeituraId: doc.prefeituraId,
+              funcionarioCpf: cpf,
+              funcionarioNome: doc.name,
+              data: doc.data,
+              motivo: doc.observacao ?? null,
+              solicitacaoId: doc.id,
+            });
+          } catch (abonoErr) {
+            console.warn('Não foi possível criar abono:', abonoErr);
+          }
+        } else {
+          console.warn(
+            `Abono aprovado SEM criar registro: CPF não encontrado (solicitação ${doc.id}, "${doc.name}"). Cadastre o CPF do funcionário.`,
+          );
         }
       }
 
