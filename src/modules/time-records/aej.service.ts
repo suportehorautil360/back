@@ -87,8 +87,13 @@ export class AejService {
   ): Promise<ResultadoAEJ> {
     const db = this.firebase.getFirestore();
 
-    const cfgSnap = await db.collection('configuracoes').doc(prefeituraId).get();
-    const empDoc = (cfgSnap.data()?.empresa as EmpresaDoc) ?? {};
+    // A configuração é armazenada com id automático + campo `prefeituraId`
+    // (não keyed pelo prefeituraId), então buscamos pela query.
+    const cfgSnap = await db
+      .collection('configuracoes')
+      .where('prefeituraId', '==', prefeituraId)
+      .get();
+    const empDoc = (cfgSnap.docs[0]?.data()?.empresa as EmpresaDoc) ?? {};
     const cnpj = (empDoc.cnpj ?? '').replace(/\D/g, '');
     const caepf = (empDoc.caepf ?? '').replace(/\D/g, '');
     const razaoSocial = (empDoc.razaoSocial ?? '').trim();

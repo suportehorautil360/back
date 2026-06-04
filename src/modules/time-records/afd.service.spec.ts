@@ -30,7 +30,9 @@ function makeFirebase(
   const collection = jest.fn((name: string) => {
     if (name === 'configuracoes') {
       return {
-        doc: () => ({ get: async () => ({ data: () => ({ empresa }) }) }),
+        where: () => ({
+          get: async () => ({ docs: [{ data: () => ({ empresa }) }] }),
+        }),
       };
     }
     // timeRecords

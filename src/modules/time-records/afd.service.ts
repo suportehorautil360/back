@@ -80,9 +80,14 @@ export class AfdService {
 
     // Empregador (configuracoes). Sem razão social + (CNPJ ou CAEPF) o AFD não
     // identifica o empregador — barra com 400 (Portaria 671).
-    const cfgSnap = await db.collection('configuracoes').doc(prefeituraId).get();
+    // A configuração é armazenada com id automático + campo `prefeituraId`
+    // (não keyed pelo prefeituraId), então buscamos pela query.
+    const cfgSnap = await db
+      .collection('configuracoes')
+      .where('prefeituraId', '==', prefeituraId)
+      .get();
     const empresaDoc =
-      ((cfgSnap.data()?.empresa as EmpresaDoc) ?? {}) as EmpresaDoc;
+      ((cfgSnap.docs[0]?.data()?.empresa as EmpresaDoc) ?? {}) as EmpresaDoc;
     const cnpj = (empresaDoc.cnpj ?? '').replace(/\D/g, '');
     const caepf = (empresaDoc.caepf ?? '').replace(/\D/g, '');
     const razaoSocial = (empresaDoc.razaoSocial ?? '').trim();
