@@ -1,7 +1,26 @@
 import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as forge from 'node-forge';
 import { AfdService } from './afd.service';
 import { FirebaseService } from '../../config/firebase.service';
+
+/** PFX autoassinado (base64) só para teste — substitui o ICP real. */
+function gerarPfxBase64(senha: string): string {
+  const keys = forge.pki.rsa.generateKeyPair(1024);
+  const cert = forge.pki.createCertificate();
+  cert.publicKey = keys.publicKey;
+  cert.serialNumber = '01';
+  cert.validity.notBefore = new Date('2026-01-01T00:00:00Z');
+  cert.validity.notAfter = new Date('2030-01-01T00:00:00Z');
+  const attrs = [{ name: 'commonName', value: 'Teste' }];
+  cert.setSubject(attrs);
+  cert.setIssuer(attrs);
+  cert.sign(keys.privateKey, forge.md.sha256.create());
+  const p12 = forge.pkcs12.toPkcs12Asn1(keys.privateKey, [cert], senha, {
+    algorithm: '3des',
+  });
+  return forge.util.encode64(forge.asn1.toDer(p12).getBytes());
+}
 
 /** Mock do Firestore: roteia por nome de coleção. */
 function makeFirebase(
@@ -98,5 +117,56 @@ describe('AfdService', () => {
 
     const r = await svc.gerar('pref-1', '2026-05-20', '2026-05-31');
     expect(r.totalMarcacoes).toBe(1);
+  });
+
+  it('sem certificado configurado, retorna assinado:false', async () => {
+    const svc = new AfdService(
+      makeFirebase(empresaOk, [
+        {
+          registro: 'original',
+          nsr: 1,
+          timestampOriginal: '2026-05-25T11:00:00Z',
+          cpf: '12345678901',
+          createdAt: '2026-05-25T11:00:00Z',
+        },
+      ]),
+      config,
+    );
+    const r = await svc.gerar('pref-1');
+    expect(r.assinado).toBe(false);
+    expect(r.assinaturaP7sBase64).toBeUndefined();
+  });
+
+  it('com certificado configurado, assina e devolve o .p7s em base64', async () => {
+    const senha = 'segredo';
+    const pfx = gerarPfxBase64(senha);
+    const cfgComCert = {
+      get: (k: string) =>
+        k === 'AFD_CERT_PFX_BASE64'
+          ? pfx
+          : k === 'AFD_CERT_PFX_PASSWORD'
+            ? senha
+            : undefined,
+    } as unknown as ConfigService;
+
+    const svc = new AfdService(
+      makeFirebase(empresaOk, [
+        {
+          registro: 'original',
+          nsr: 1,
+          timestampOriginal: '2026-05-25T11:00:00Z',
+          cpf: '12345678901',
+          createdAt: '2026-05-25T11:00:00Z',
+        },
+      ]),
+      cfgComCert,
+    );
+    const r = await svc.gerar('pref-1');
+    expect(r.assinado).toBe(true);
+    expect(typeof r.assinaturaP7sBase64).toBe('string');
+    // O base64 decodifica para um PKCS#7 SignedData.
+    const der = forge.util.decode64(r.assinaturaP7sBase64 as string);
+    const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(der));
+    expect(p7.type).toBe(forge.pki.oids.signedData);
   });
 });

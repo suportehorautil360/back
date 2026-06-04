@@ -13,6 +13,11 @@ import {
   type MarcacaoAFD,
   type ResultadoAFD,
 } from './afd';
+import {
+  assinaturaConfigurada,
+  assinarP7sDestacado,
+  carregarCertificado,
+} from './afd-signer';
 
 interface EmpresaDoc {
   razaoSocial?: string;
@@ -36,6 +41,30 @@ export class AfdService {
       documento: this.config.get<string>('AFD_FABRICANTE_DOC') ?? '',
       modelo: this.config.get<string>('AFD_FABRICANTE_MODELO') ?? '',
     };
+  }
+
+  /**
+   * Assina o AFD com o certificado ICP-Brasil (se configurado). Sem certificado,
+   * devolve sem assinatura (assinado:false) — o `.txt` continua válido para
+   * conferência. Certificado configurado mas inválido → erro claro (não engole).
+   */
+  private assinar(afd: ResultadoAFD): ResultadoAFD {
+    if (!assinaturaConfigurada(this.config)) return afd;
+    try {
+      const cred = carregarCertificado(
+        this.config.get<string>('AFD_CERT_PFX_BASE64') ?? '',
+        this.config.get<string>('AFD_CERT_PFX_PASSWORD') ?? '',
+      );
+      const p7s = assinarP7sDestacado(afd.conteudo, cred);
+      return { ...afd, assinado: true, assinaturaP7sBase64: p7s.toString('base64') };
+    } catch (e) {
+      console.error('Erro ao assinar o AFD:', e);
+      throw new InternalServerErrorException(
+        `Não foi possível assinar o AFD com o certificado configurado: ${
+          e instanceof Error ? e.message : 'erro desconhecido'
+        }`,
+      );
+    }
   }
 
   /**
@@ -92,12 +121,14 @@ export class AfdService {
           createdAt: (r.createdAt as string) ?? (r.timestampOriginal as string),
         }));
 
-      return montarAFD({
+      const afd = montarAFD({
         empresa,
         fabricante: this.fabricante(),
         marcacoes,
         dataGeracaoIso: new Date().toISOString(),
       });
+
+      return this.assinar(afd);
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
       console.error('Erro ao gerar AFD:', error);

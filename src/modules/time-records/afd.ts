@@ -211,6 +211,10 @@ export interface ResultadoAFD {
   nome: string;
   totalMarcacoes: number;
   semCpf: number;
+  /** Se o AFD foi assinado com certificado ICP-Brasil (etapa 4). */
+  assinado: boolean;
+  /** Assinatura destacada (.p7s) em base64, quando assinado. */
+  assinaturaP7sBase64?: string;
 }
 
 /**
@@ -256,5 +260,6 @@ export function montarAFD(opts: {
     nome: nomeArquivoAFD(opts.fabricante.inpi, opts.empresa.documento),
     totalMarcacoes: marcacoes.length,
     semCpf,
+    assinado: false,
   };
 }
