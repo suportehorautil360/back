@@ -18,6 +18,7 @@ import {
 } from '@nestjs/swagger';
 import { TimeRecordsService } from './time-records.service';
 import { AfdService } from './afd.service';
+import { AejService } from './aej.service';
 import { CreateTimeRecordDto } from './dto/create-time-record.dto';
 import { UpdateTimeRecordDto } from './dto/update-time-record.dto';
 import { ReprovarTimeRecordDto } from './dto/reprovar-time-record.dto';
@@ -28,6 +29,7 @@ export class TimeRecordsController {
   constructor(
     private readonly timeRecordsService: TimeRecordsService,
     private readonly afdService: AfdService,
+    private readonly aejService: AejService,
   ) {}
 
   @Get('afd/:prefeituraId')
@@ -46,6 +48,24 @@ export class TimeRecordsController {
   ) {
     const r = await this.afdService.gerar(prefeituraId, de, ate);
     return { data: r, message: 'AFD gerado com sucesso!' };
+  }
+
+  @Get('aej/:prefeituraId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Gerar o AEJ (Arquivo Eletrônico de Jornada) — Portaria 671',
+  })
+  @ApiParam({ name: 'prefeituraId', description: 'ID da prefeitura' })
+  @ApiQuery({ name: 'de', required: false, description: 'Data inicial YYYY-MM-DD' })
+  @ApiQuery({ name: 'ate', required: false, description: 'Data final YYYY-MM-DD' })
+  @ApiOkResponse({ description: 'AEJ gerado (conteúdo + nome do arquivo).' })
+  async gerarAej(
+    @Param('prefeituraId') prefeituraId: string,
+    @Query('de') de?: string,
+    @Query('ate') ate?: string,
+  ) {
+    const r = await this.aejService.gerar(prefeituraId, de, ate);
+    return { data: r, message: 'AEJ gerado com sucesso!' };
   }
 
   @Post()
