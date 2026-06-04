@@ -11,7 +11,10 @@ import {
 import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateEmergencyDto } from './dto/create-emergency.dto';
 import { UpdateEmergencyStatusDto } from './dto/update-emergency-status.dto';
-import { EmergenciesService } from './emergencies.service';
+import {
+  EmergenciesService,
+  type DadosEmergenciaWhats,
+} from './emergencies.service';
 
 @ApiTags('emergencies')
 @Controller('emergencies')
@@ -23,6 +26,18 @@ export class EmergenciesController {
   @ApiOperation({ summary: 'Registrar emergência manual ou automática' })
   async create(@Body() dto: CreateEmergencyDto) {
     return this.service.create(dto);
+  }
+
+  @Post('notificar-whatsapp')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Dispara a notificação de WhatsApp de uma emergência (best-effort). ' +
+      'Usado pelo checklist, que grava a emergência direto no Firestore.',
+  })
+  async notificarWhatsApp(@Body() dto: DadosEmergenciaWhats) {
+    await this.service.notificarWhatsApp(dto);
+    return { data: {}, message: 'Notificação de WhatsApp processada.' };
   }
 
   @Get(':prefeituraId')

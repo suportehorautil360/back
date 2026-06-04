@@ -16,6 +16,11 @@ export class EmpresaDto {
   estado?: string;
   @ApiProperty({ example: 'gestor@empresa.com.br' })
   emailAlertas?: string;
+  @ApiProperty({
+    example: '67 99999-9999',
+    description: 'Número de WhatsApp que recebe as notificações de emergência.',
+  })
+  whatsappNumero?: string;
 }
 
 export class AlertasDto {
@@ -24,6 +29,8 @@ export class AlertasDto {
   @ApiProperty() abastecimentoIrregular?: boolean;
   @ApiProperty() cnhProximaVencimento?: boolean;
   @ApiProperty() relatorioSemanal?: boolean;
+  @ApiProperty({ description: 'Notificar emergências por WhatsApp.' })
+  notificacaoWhatsapp?: boolean;
 }
 
 export class IntervaloTipoDto {
