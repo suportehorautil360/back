@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
+import { WhatsAppService } from '../whatsapp/whatsapp.service';
 import {
   CreateEmergencyDto,
   EmergencySeverity,
@@ -56,7 +57,10 @@ function normalizeEmergencyStatus(status: string | undefined): EmergencyStatus {
 
 @Injectable()
 export class EmergenciesService {
-  constructor(private firebase: FirebaseService) {}
+  constructor(
+    private firebase: FirebaseService,
+    private whatsapp: WhatsAppService,
+  ) {}
 
   private get collection() {
     return this.firebase.getFirestore().collection('emergenciasRegistros');
@@ -97,11 +101,68 @@ export class EmergenciesService {
 
     try {
       await this.collection.doc(id).set(doc);
+      // Notifica a empresa por WhatsApp (não bloqueia nem derruba a criação).
+      void this.notificarWhatsApp(doc);
       return { data: doc, message: 'Emergência registrada com sucesso.' };
     } catch (error) {
       console.error('Erro ao registrar emergência:', error);
       throw new InternalServerErrorException(
         'Não foi possível registrar a emergência.',
+      );
+    }
+  }
+
+  /** Texto da mensagem de WhatsApp para uma emergência. */
+  private montarMensagem(doc: EmergencyDoc): string {
+    const sev: Record<string, string> = {
+      critical: 'Crítica',
+      high: 'Alta',
+      medium: 'Média',
+      low: 'Baixa',
+    };
+    const dataBr = new Date(doc.dataHoraIso).toLocaleString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+    });
+    return [
+      '🚨 *Emergência registrada — Hora Útil 360*',
+      `Severidade: ${sev[doc.severity] ?? doc.severity}`,
+      `Equipamento: ${doc.chassis || doc.idMaquina || '—'}`,
+      `Falha: ${doc.tipoFalha}`,
+      doc.descricao ? `Descrição: ${doc.descricao}` : '',
+      doc.operadorNome ? `Operador: ${doc.operadorNome}` : '',
+      doc.localizacaoGps ? `Local: ${doc.localizacaoGps}` : '',
+      `Data: ${dataBr}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  /**
+   * Dispara a notificação de WhatsApp se: o WhatsApp está conectado, a empresa
+   * ativou o toggle e cadastrou um número. Nunca lança (best-effort).
+   */
+  private async notificarWhatsApp(doc: EmergencyDoc): Promise<void> {
+    try {
+      if (!this.whatsapp.estaConectado()) return;
+      const snap = await this.firebase
+        .getFirestore()
+        .collection('configuracoes')
+        .where('prefeituraId', '==', doc.prefeituraId)
+        .get();
+      const cfg = snap.docs[0]?.data() as
+        | {
+            empresa?: { whatsappNumero?: string };
+            alertas?: { notificacaoWhatsapp?: boolean };
+          }
+        | undefined;
+      const ativo = cfg?.alertas?.notificacaoWhatsapp === true;
+      const numero = (cfg?.empresa?.whatsappNumero ?? '').trim();
+      if (!ativo || !numero) return;
+      await this.whatsapp.enviarMensagem(numero, this.montarMensagem(doc));
+    } catch (e) {
+      console.warn(
+        'Falha ao notificar emergência por WhatsApp:',
+        (e as Error).message,
       );
     }
   }

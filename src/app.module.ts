@@ -18,6 +18,7 @@ import { EquipamentosModule } from './modules/equipamentos/equipamentos.module';
 import { FuncionariosModule } from './modules/funcionarios/funcionarios.module';
 import { ConfiguracoesModule } from './modules/configuracoes/configuracoes.module';
 import { AbastecimentosModule } from './modules/abastecimentos/abastecimentos.module';
+import { WhatsAppModule } from './modules/whatsapp/whatsapp.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { AbastecimentosModule } from './modules/abastecimentos/abastecimentos.mo
     ChecklistsModule,
     RiskTriageModule,
     UserModule,
+    WhatsAppModule,
     // ... outros módulos
   ],
   controllers: [],
