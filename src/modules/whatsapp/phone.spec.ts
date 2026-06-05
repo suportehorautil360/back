@@ -13,6 +13,16 @@ describe('whatsapp/phone', () => {
     expect(formatarJid('5567999999999')).toBe('5567999999999@s.whatsapp.net');
   });
 
+  it('mantém E.164 com + (BR) sem duplicar o DDI', () => {
+    expect(formatarJid('+55 67 99999-9999')).toBe(
+      '5567999999999@s.whatsapp.net',
+    );
+  });
+
+  it('mantém E.164 internacional (US) sem prefixar 55', () => {
+    expect(formatarJid('+1 415 555 1234')).toBe('14155551234@s.whatsapp.net');
+  });
+
   it('numeroValido exige ao menos 10 dígitos', () => {
     expect(numeroValido('67 99999-9999')).toBe(true);
     expect(numeroValido('123')).toBe(false);
