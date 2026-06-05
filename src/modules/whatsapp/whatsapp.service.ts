@@ -5,6 +5,8 @@ import type { WASocket } from '@whiskeysockets/baileys';
 import { FirebaseService } from '../../config/firebase.service';
 import { useFirestoreAuthState } from './firestore-auth-state';
 import { formatarJid } from './phone';
+import { WhatsAppMetricsService } from './whatsapp-metrics.service';
+import { calcularDisponibilidade, montarOverview, type WhatsappOverview } from './whatsapp-metrics';
 
 export type WhatsAppStatus =
   | 'desconectado'
@@ -27,8 +29,14 @@ export class WhatsAppService implements OnModuleInit {
   /** Falhas consecutivas sem chegar a QR/conexão (evita martelar o WhatsApp). */
   private tentativas = 0;
   private static readonly MAX_TENTATIVAS = 5;
+  private conectadoDesde: string | null = null;
+  private ultimaAtividade: string | null = null;
+  private versaoSessao: string | null = null;
 
-  constructor(private firebase: FirebaseService) {}
+  constructor(
+    private firebase: FirebaseService,
+    private metrics: WhatsAppMetricsService,
+  ) {}
 
   private get docRef() {
     return this.firebase
@@ -44,6 +52,9 @@ export class WhatsAppService implements OnModuleInit {
       const credsRaw = (snap.data() as { creds?: string } | undefined)?.creds;
       const registered =
         !!credsRaw && !!(JSON.parse(credsRaw) as { registered?: boolean })?.registered;
+      const data = snap.data() as { conectadoDesde?: string; versaoSessao?: string } | undefined;
+      if (data?.conectadoDesde) this.conectadoDesde = data.conectadoDesde;
+      if (data?.versaoSessao) this.versaoSessao = data.versaoSessao;
       if (registered) {
         this.logger.log('Sessão WhatsApp encontrada — reconectando…');
         await this.connect();
@@ -74,6 +85,8 @@ export class WhatsAppService implements OnModuleInit {
       // Sem a versão atual do WhatsApp Web o handshake é rejeitado
       // ("Connection Failure") e o QR nunca aparece.
       const { version } = await fetchLatestBaileysVersion();
+      this.versaoSessao = version.join('.');
+      void this.metrics.registrarEvento('sessao_iniciada', 'sucesso');
 
       this.status = 'conectando';
       const sock = makeWASocket({
@@ -91,11 +104,16 @@ export class WhatsAppService implements OnModuleInit {
           this.qrAtual = qr;
           this.status = 'aguardando_qr';
           this.tentativas = 0;
+          void this.metrics.registrarEvento('qr_gerado', 'sucesso');
         }
         if (connection === 'open') {
           this.status = 'conectado';
           this.qrAtual = null;
           this.tentativas = 0;
+          this.conectadoDesde = new Date().toISOString();
+          this.ultimaAtividade = this.conectadoDesde;
+          void this.persistirSessao();
+          void this.metrics.registrarEvento('conectado', 'sucesso');
           this.logger.log('WhatsApp conectado.');
         } else if (connection === 'close') {
           const err = lastDisconnect?.error;
@@ -106,10 +124,13 @@ export class WhatsAppService implements OnModuleInit {
           this.qrAtual = null;
           if (loggedOut) {
             this.status = 'desconectado';
+            this.conectadoDesde = null;
+            void this.metrics.registrarEvento('sessao_encerrada', 'aviso');
             this.logger.warn('WhatsApp deslogado — sessão encerrada.');
             void this.limparSessao();
             return;
           }
+          void this.metrics.registrarEvento('queda', 'aviso');
           this.tentativas += 1;
           if (this.tentativas > WhatsAppService.MAX_TENTATIVAS) {
             this.status = 'desconectado';
@@ -148,6 +169,8 @@ export class WhatsAppService implements OnModuleInit {
       throw new Error('WhatsApp não está conectado.');
     }
     await this.sock.sendMessage(formatarJid(numero), { text: texto });
+    this.ultimaAtividade = new Date().toISOString();
+    await this.metrics.incrementarMensagens(1);
   }
 
   /**
@@ -169,6 +192,8 @@ export class WhatsAppService implements OnModuleInit {
         image: { url: imagem },
         caption: legenda,
       });
+      this.ultimaAtividade = new Date().toISOString();
+      await this.metrics.incrementarMensagens(1);
       return;
     }
     // data URL → corta o prefixo `data:...;base64,`; base64 puro passa direto.
@@ -179,6 +204,8 @@ export class WhatsAppService implements OnModuleInit {
       image: Buffer.from(base64, 'base64'),
       caption: legenda,
     });
+    this.ultimaAtividade = new Date().toISOString();
+    await this.metrics.incrementarMensagens(1);
   }
 
   async logout(): Promise<void> {
@@ -191,6 +218,57 @@ export class WhatsAppService implements OnModuleInit {
     this.status = 'desconectado';
     this.qrAtual = null;
     await this.limparSessao();
+  }
+
+  private async persistirSessao(): Promise<void> {
+    try {
+      await this.docRef.set(
+        { conectadoDesde: this.conectadoDesde, versaoSessao: this.versaoSessao },
+        { merge: true },
+      );
+    } catch {
+      /* best-effort */
+    }
+  }
+
+  private numeroConectado(): string | null {
+    const id = this.sock?.user?.id;
+    return id ? id.split(':')[0].split('@')[0] : null;
+  }
+
+  private nomeSessao(): string | null {
+    return this.sock?.user?.name ?? (this.sock ? 'Hora Útil 360' : null);
+  }
+
+  private ambiente(): 'dev' | 'prod' {
+    return process.env.NODE_ENV === 'production' ? 'prod' : 'dev';
+  }
+
+  async getOverview(): Promise<WhatsappOverview> {
+    const agora = new Date();
+    const base = await this.getStatus(); // status + qrImagem
+    const [empresas, hoje, mes, eventos, eventosJanela] = await Promise.all([
+      this.metrics.contarEmpresasUtilizando(),
+      this.metrics.mensagensHoje(),
+      this.metrics.mensagens30d(agora),
+      this.metrics.eventosRecentes(20),
+      this.metrics.eventosJanela(30, agora),
+    ]);
+    return montarOverview({
+      status: base.status,
+      qrImagem: base.qrImagem,
+      numeroConectado: this.numeroConectado(),
+      nomeSessao: this.nomeSessao(),
+      conectadoDesde: this.conectadoDesde,
+      ultimaAtividade: this.ultimaAtividade,
+      versaoSessao: this.versaoSessao,
+      ambiente: this.ambiente(),
+      empresasUtilizando: empresas,
+      mensagensHoje: hoje,
+      mensagens30d: mes,
+      disponibilidade: calcularDisponibilidade(eventosJanela, agora, 30),
+      eventos,
+    });
   }
 
   private async limparSessao(): Promise<void> {
