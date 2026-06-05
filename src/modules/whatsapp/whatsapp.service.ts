@@ -170,7 +170,7 @@ export class WhatsAppService implements OnModuleInit {
     }
     await this.sock.sendMessage(formatarJid(numero), { text: texto });
     this.ultimaAtividade = new Date().toISOString();
-    await this.metrics.incrementarMensagens(1);
+    void this.metrics.incrementarMensagens(1).catch(() => undefined);
   }
 
   /**
@@ -193,7 +193,7 @@ export class WhatsAppService implements OnModuleInit {
         caption: legenda,
       });
       this.ultimaAtividade = new Date().toISOString();
-      await this.metrics.incrementarMensagens(1);
+      void this.metrics.incrementarMensagens(1).catch(() => undefined);
       return;
     }
     // data URL → corta o prefixo `data:...;base64,`; base64 puro passa direto.
@@ -205,7 +205,7 @@ export class WhatsAppService implements OnModuleInit {
       caption: legenda,
     });
     this.ultimaAtividade = new Date().toISOString();
-    await this.metrics.incrementarMensagens(1);
+    void this.metrics.incrementarMensagens(1).catch(() => undefined);
   }
 
   async logout(): Promise<void> {
