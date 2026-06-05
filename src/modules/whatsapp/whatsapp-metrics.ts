@@ -94,3 +94,66 @@ export function calcularDisponibilidade(
     janelaCompleta,
   };
 }
+
+export interface WhatsappSessao {
+  numeroConectado: string | null;
+  nomeSessao: string | null;
+  conectadoDesde: string | null;
+  ultimaAtividade: string | null;
+  versaoSessao: string | null;
+  ambiente: 'dev' | 'prod';
+}
+export interface WhatsappKpis {
+  empresasUtilizando: number;
+  mensagensHoje: number;
+  mensagens30d: number;
+  disponibilidade: WhatsappDisponibilidade;
+}
+export interface WhatsappOverview {
+  status: WhatsAppStatus;
+  qrImagem?: string;
+  sessao: WhatsappSessao;
+  kpis: WhatsappKpis;
+  eventos: EventoWhats[];
+}
+
+/** Lista de `count` ids de dia (YYYY-MM-DD, UTC), terminando em `ref`, desc. */
+export function ultimosDias(count: number, ref: Date): string[] {
+  const dias: string[] = [];
+  for (let i = 0; i < count; i++) {
+    dias.push(new Date(ref.getTime() - i * MS_DIA).toISOString().slice(0, 10));
+  }
+  return dias;
+}
+
+export interface MontarOverviewArgs extends WhatsappSessao {
+  status: WhatsAppStatus;
+  qrImagem?: string;
+  empresasUtilizando: number;
+  mensagensHoje: number;
+  mensagens30d: number;
+  disponibilidade: WhatsappDisponibilidade;
+  eventos: EventoWhats[];
+}
+
+export function montarOverview(a: MontarOverviewArgs): WhatsappOverview {
+  return {
+    status: a.status,
+    qrImagem: a.qrImagem,
+    sessao: {
+      numeroConectado: a.numeroConectado,
+      nomeSessao: a.nomeSessao,
+      conectadoDesde: a.conectadoDesde,
+      ultimaAtividade: a.ultimaAtividade,
+      versaoSessao: a.versaoSessao,
+      ambiente: a.ambiente,
+    },
+    kpis: {
+      empresasUtilizando: a.empresasUtilizando,
+      mensagensHoje: a.mensagensHoje,
+      mensagens30d: a.mensagens30d,
+      disponibilidade: a.disponibilidade,
+    },
+    eventos: a.eventos,
+  };
+}

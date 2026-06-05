@@ -58,3 +58,37 @@ describe('whatsapp-metrics/calcularDisponibilidade', () => {
     expect(r.desde).toBe('2026-05-06T12:00:00.000Z'); // agora - 30d
   });
 });
+
+import { ultimosDias, montarOverview } from './whatsapp-metrics';
+
+describe('whatsapp-metrics/ultimosDias', () => {
+  it('gera N ids YYYY-MM-DD terminando hoje (desc)', () => {
+    const dias = ultimosDias(3, new Date('2026-06-05T12:00:00.000Z'));
+    expect(dias).toEqual(['2026-06-05', '2026-06-04', '2026-06-03']);
+  });
+});
+
+describe('whatsapp-metrics/montarOverview', () => {
+  it('monta o payload completo', () => {
+    const ov = montarOverview({
+      status: 'conectado',
+      qrImagem: undefined,
+      numeroConectado: '5567999999999',
+      nomeSessao: 'Hora Útil 360',
+      conectadoDesde: '2026-06-05T09:42:00.000Z',
+      ultimaAtividade: '2026-06-05T11:58:00.000Z',
+      versaoSessao: '2.3000.1',
+      ambiente: 'prod',
+      empresasUtilizando: 14,
+      mensagensHoje: 234,
+      mensagens30d: 5120,
+      disponibilidade: { percentual: 99.8, desde: '2026-05-06T12:00:00.000Z', janelaCompleta: true },
+      eventos: [{ id: 'e1', tipo: 'conectado', status: 'sucesso', timestamp: '2026-06-05T09:42:00.000Z' }],
+    });
+    expect(ov.status).toBe('conectado');
+    expect(ov.sessao.numeroConectado).toBe('5567999999999');
+    expect(ov.kpis.empresasUtilizando).toBe(14);
+    expect(ov.kpis.disponibilidade.percentual).toBe(99.8);
+    expect(ov.eventos).toHaveLength(1);
+  });
+});
