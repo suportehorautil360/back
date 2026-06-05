@@ -49,4 +49,10 @@ export class WhatsAppController {
     );
     return { data: {}, message: 'Mensagem de teste enviada.' };
   }
+
+  @Get('overview')
+  @ApiOperation({ summary: 'Visão consolidada do Hub WhatsApp (status, KPIs, eventos)' })
+  async overview() {
+    return { data: await this.wa.getOverview(), message: 'Overview do WhatsApp.' };
+  }
 }
