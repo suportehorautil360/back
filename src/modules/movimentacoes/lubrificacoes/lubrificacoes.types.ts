@@ -18,6 +18,7 @@ export interface LubrificacaoDoc {
   prefeituraId: string;
   equipmentId: string;
   plateOrChassis: string;
+  comboistaNome: string;
   tipo: 'lubrificacao';
   reading: number;
   readingUnit: ReadingUnit;
@@ -36,6 +37,7 @@ export interface LubrificacaoListItem {
     plate: string;
     type: string;
   };
+  comboistaNome: string;
   reading: string;
   greasedPoints: GreasedPoint[];
   observation: string | null;

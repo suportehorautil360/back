@@ -50,3 +50,48 @@ export function parseLiters(value: number): number | null {
   }
   return liters;
 }
+
+export function resolveAbastecimentoPricing(
+  liters: number,
+  pricePerLiter?: number,
+  total?: number,
+): { pricePerLiter: number | null; total: number | null } {
+  const parsedPrice =
+    pricePerLiter !== undefined &&
+    Number.isFinite(Number(pricePerLiter)) &&
+    Number(pricePerLiter) >= 0
+      ? Number(pricePerLiter)
+      : null;
+  const parsedTotal =
+    total !== undefined && Number.isFinite(Number(total)) && Number(total) >= 0
+      ? Number(total)
+      : null;
+
+  if (parsedPrice !== null && parsedTotal !== null) {
+    return {
+      pricePerLiter: parsedPrice,
+      total: roundCurrency(parsedTotal),
+    };
+  }
+  if (parsedPrice !== null) {
+    return {
+      pricePerLiter: parsedPrice,
+      total: roundCurrency(liters * parsedPrice),
+    };
+  }
+  if (parsedTotal !== null) {
+    return {
+      pricePerLiter: liters > 0 ? roundRate(parsedTotal / liters) : null,
+      total: roundCurrency(parsedTotal),
+    };
+  }
+  return { pricePerLiter: null, total: null };
+}
+
+function roundCurrency(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+function roundRate(value: number): number {
+  return Math.round(value * 10000) / 10000;
+}

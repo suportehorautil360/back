@@ -51,6 +51,35 @@ export class CreateAbastecimentoDto {
   @IsString()
   meterPhoto?: string;
 
+  @ApiPropertyOptional({
+    description:
+      'Preço por litro (R$). Se informado sem total, o total é calculado.',
+    example: 6.12,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  pricePerLiter?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Valor total do abastecimento (R$). Se informado sem preço/l, o preço é calculado.',
+    example: 520.2,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  total?: number;
+
+  @ApiPropertyOptional({
+    description: 'Id do posto credenciado vinculado ao abastecimento.',
+  })
+  @IsOptional()
+  @IsString()
+  postoId?: string;
+
   @ApiProperty({ description: 'Latitude capturada automaticamente no app.' })
   @Type(() => Number)
   @IsNumber()

@@ -12,6 +12,7 @@ import {
 import {
   isSupportedMeasurementType,
   parseLiters,
+  resolveAbastecimentoPricing,
 } from './helpers/abastecimentos-create.helper';
 import {
   fetchEquipmentMap,
@@ -34,6 +35,9 @@ export interface AbastecimentoDoc {
   measurementType: TipoMedicao;
   currentReading: number;
   meterPhoto?: string;
+  pricePerLiter?: number | null;
+  total?: number | null;
+  postoId?: string;
   latitude: number;
   longitude: number;
   createdAt: string;
@@ -69,6 +73,12 @@ export class AbastecimentosService {
       input.plateOrChassis,
     );
 
+    const pricing = resolveAbastecimentoPricing(
+      liters,
+      input.pricePerLiter,
+      input.total,
+    );
+
     const id = randomUUID();
     const doc: AbastecimentoDoc = {
       id,
@@ -80,6 +90,9 @@ export class AbastecimentosService {
       measurementType: input.measurementType,
       currentReading: Number(input.currentReading),
       meterPhoto: input.meterPhoto,
+      pricePerLiter: pricing.pricePerLiter,
+      total: pricing.total,
+      postoId: input.postoId?.trim() || undefined,
       latitude: input.latitude,
       longitude: input.longitude,
       createdAt: new Date().toISOString(),
@@ -171,8 +184,12 @@ export class AbastecimentosService {
       vehicle,
       origin: capitalize(doc.tipo),
       liters: doc.liters,
-      value: doc.tipo === 'comboio' ? null : null, // reservado para tipo com valor
+      pricePerLiter: doc.pricePerLiter ?? null,
+      value: doc.total ?? null,
       reading: `${doc.currentReading.toLocaleString('pt-BR')} ${readingUnit}`,
+      currentReading: doc.currentReading,
+      measurementType: doc.measurementType,
+      postoId: doc.postoId ?? null,
       meterPhoto: doc.meterPhoto ?? null,
       local,
       createdAt: doc.createdAt,

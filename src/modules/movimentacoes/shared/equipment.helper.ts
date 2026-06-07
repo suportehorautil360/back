@@ -1,5 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
-import { Query } from 'firebase-admin/firestore';
+import { CollectionReference, Query } from 'firebase-admin/firestore';
 import { matchesPlateOrChassis } from '../abastecimentos/helpers/abastecimentos-create.helper';
 
 export async function resolveEquipmentIdByPlateOrChassis(
@@ -42,21 +42,36 @@ export async function resolveEquipmentIdByPlateOrChassis(
 }
 
 export async function fetchEquipmentMap(
-  equipamentosCollection: Query,
+  equipamentosCollection: CollectionReference,
   ids: string[],
 ): Promise<Map<string, Record<string, unknown>>> {
   const map = new Map<string, Record<string, unknown>>();
-  if (!ids.length) return map;
+  const uniqueIds = [...new Set(ids.filter(Boolean))];
+  if (!uniqueIds.length) return map;
 
-  const snap = await equipamentosCollection
-    .where('id', 'in', ids.slice(0, 30))
-    .get();
+  for (let index = 0; index < uniqueIds.length; index += 30) {
+    const batch = uniqueIds.slice(index, index + 30);
+    const snap = await equipamentosCollection.where('id', 'in', batch).get();
 
-  snap.docs.forEach((doc) => {
-    const raw = doc.data() as Record<string, unknown>;
-    const id = (raw.id as string) ?? doc.id;
-    map.set(id, raw);
-  });
+    snap.docs.forEach((doc) => {
+      const raw = doc.data() as Record<string, unknown>;
+      const id = (raw.id as string) ?? doc.id;
+      map.set(id, raw);
+    });
+  }
+
+  const missing = uniqueIds.filter((id) => !map.has(id));
+  await Promise.all(
+    missing.map(async (id) => {
+      const doc = await equipamentosCollection.doc(id).get();
+      if (!doc.exists) return;
+
+      const raw = doc.data() as Record<string, unknown>;
+      const fieldId = (raw.id as string) ?? doc.id;
+      map.set(fieldId, raw);
+      map.set(id, raw);
+    }),
+  );
 
   return map;
 }

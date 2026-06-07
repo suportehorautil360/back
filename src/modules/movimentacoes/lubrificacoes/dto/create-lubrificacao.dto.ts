@@ -27,6 +27,14 @@ export class CreateLubrificacaoDto {
   @IsNotEmpty()
   plateOrChassis!: string;
 
+  @ApiProperty({
+    description: 'Nome do comboista que realizou a lubrificação.',
+    example: 'João da Silva',
+  })
+  @IsString()
+  @IsNotEmpty()
+  comboistaNome!: string;
+
   @ApiProperty({ description: 'Leitura atual do horímetro ou km.' })
   @Type(() => Number)
   @IsNumber()
