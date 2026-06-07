@@ -17,8 +17,8 @@ import { UserModule } from './modules/user/user.module';
 import { EquipamentosModule } from './modules/equipamentos/equipamentos.module';
 import { FuncionariosModule } from './modules/funcionarios/funcionarios.module';
 import { ConfiguracoesModule } from './modules/configuracoes/configuracoes.module';
-import { AbastecimentosModule } from './modules/abastecimentos/abastecimentos.module';
 import { WhatsAppModule } from './modules/whatsapp/whatsapp.module';
+import { MovimentacoesModule } from './modules/movimentacoes/movimentacoes.module';
 
 @Module({
   imports: [
@@ -29,7 +29,7 @@ import { WhatsAppModule } from './modules/whatsapp/whatsapp.module';
     EquipamentosModule,
     FuncionariosModule,
     ConfiguracoesModule,
-    AbastecimentosModule,
+    MovimentacoesModule,
     RevisionModule,
     WorkFrontModule,
     AllocationsModule,
