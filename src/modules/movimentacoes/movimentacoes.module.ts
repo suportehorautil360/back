@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AbastecimentosModule } from './abastecimentos/abastecimentos.module';
+import { CreditosModule } from './creditos/creditos.module';
 import { ConsumoCustoModule } from './consumo-custo/consumo-custo.module';
 import { HistoricoModule } from './historico/historico.module';
 import { LubrificacoesModule } from './lubrificacoes/lubrificacoes.module';
@@ -16,6 +17,7 @@ import { MovimentacoesService } from './movimentacoes.service';
     LubrificacoesModule,
     ReabastecimentoModule,
     PostosModule,
+    CreditosModule,
   ],
   controllers: [MovimentacoesController],
   providers: [MovimentacoesService],

@@ -5,6 +5,7 @@ import {
 } from '../../postos/helpers/postos-list.helper';
 import type {
   AbastecimentoConsumoInput,
+  ConsumoCustoAbastecimentoHistorico,
   ConsumoCustoCalculoInfo,
   ConsumoCustoIntervalo,
   ConsumoCustoPayload,
@@ -100,6 +101,30 @@ function formatCustoUnit(value: number | null, unit: UnidadeMedicao): string {
 function buildSubtitulo(placa: string, tipo: string, setor: string): string {
   const parts = [placa, tipo, setor].filter((part) => part && part !== '—');
   return parts.join(' · ');
+}
+
+function buildHistoricoAbastecimentos(
+  abastecimentos: AbastecimentoConsumoInput[],
+  unit: UnidadeMedicao,
+): ConsumoCustoAbastecimentoHistorico[] {
+  return [...abastecimentos]
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )
+    .map((item) => ({
+      id: item.id,
+      dateTime: formatDateTime(item.createdAt),
+      litros: item.liters,
+      litrosLabel: formatLitros(item.liters),
+      leituraLabel: `${item.currentReading.toLocaleString('pt-BR')} ${unit}`,
+      currentReading: item.currentReading,
+      gasto: item.total,
+      gastoLabel: item.total !== null ? formatBRL(item.total) : '—',
+      pricePerLiter: item.pricePerLiter ?? null,
+      postoId: item.postoId ?? null,
+      createdAt: item.createdAt,
+    }));
 }
 
 function resolveVehicleIdentity(
@@ -254,6 +279,10 @@ export function buildVeiculoCard(
       gastoExibicao: formatBRL(totalGastoPeriodo),
     },
     historicoIntervalos,
+    historicoAbastecimentos: buildHistoricoAbastecimentos(
+      abastecimentosNoPeriodo,
+      unit,
+    ),
   };
 }
 

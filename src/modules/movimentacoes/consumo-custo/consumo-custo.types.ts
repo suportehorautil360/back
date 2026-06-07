@@ -36,6 +36,20 @@ export interface ConsumoCustoIntervalo {
   custoLabel: string;
 }
 
+export interface ConsumoCustoAbastecimentoHistorico {
+  id: string;
+  dateTime: string;
+  litros: number;
+  litrosLabel: string;
+  leituraLabel: string;
+  currentReading: number;
+  gasto: number | null;
+  gastoLabel: string;
+  pricePerLiter: number | null;
+  postoId: string | null;
+  createdAt: string;
+}
+
 export interface ConsumoCustoVeiculoCard {
   equipmentId: string;
   nome: string;
@@ -51,6 +65,7 @@ export interface ConsumoCustoVeiculoCard {
   totalDestaque: ConsumoCustoTotalDestaque;
   totais: ConsumoCustoTotais;
   historicoIntervalos: ConsumoCustoIntervalo[];
+  historicoAbastecimentos: ConsumoCustoAbastecimentoHistorico[];
 }
 
 export interface ConsumoCustoCalculoInfo {
@@ -81,5 +96,7 @@ export interface AbastecimentoConsumoInput {
   currentReading: number;
   measurementType: TipoMedicaoInterno;
   total: number | null;
+  pricePerLiter?: number | null;
+  postoId?: string | null;
   createdAt: string;
 }

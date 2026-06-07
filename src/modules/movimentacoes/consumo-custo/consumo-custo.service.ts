@@ -74,6 +74,8 @@ export class ConsumoCustoService {
           currentReading: doc.currentReading,
           measurementType: doc.measurementType,
           total: doc.total ?? null,
+          pricePerLiter: doc.pricePerLiter ?? null,
+          postoId: doc.postoId ?? null,
           createdAt: doc.createdAt,
         });
         grouped.set(doc.equipmentId, items);

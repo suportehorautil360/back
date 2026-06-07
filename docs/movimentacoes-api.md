@@ -424,6 +424,21 @@ Tela agregada. **Base:** abastecimentos (não reabastecimentos).
             "consumoLabel": "3,59 L/h",
             "custoLabel": "—"
           }
+        ],
+        "historicoAbastecimentos": [
+          {
+            "id": "abast-001",
+            "dateTime": "30/05, 07:50",
+            "litros": 280,
+            "litrosLabel": "280 L",
+            "leituraLabel": "1.918 h",
+            "currentReading": 1918,
+            "gasto": null,
+            "gastoLabel": "—",
+            "pricePerLiter": null,
+            "postoId": null,
+            "createdAt": "2026-05-30T10:50:00.000Z"
+          }
         ]
       }
     ]

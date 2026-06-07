@@ -55,6 +55,10 @@ export class AbastecimentosService {
     return this.firebaseService.getFirestore().collection('equipamentos');
   }
 
+  private get postosCollection() {
+    return this.firebaseService.getFirestore().collection('postos');
+  }
+
   async create(input: CreateAbastecimentoDto): Promise<AbastecimentoDoc> {
     const liters = parseLiters(input.liters);
     if (liters === null) {
@@ -137,13 +141,21 @@ export class AbastecimentosService {
       const uniqueEquipmentIds = [
         ...new Set(docs.map((d) => d.equipmentId).filter(Boolean)),
       ];
-      const equipmentMap = await fetchEquipmentMap(
-        this.equipamentosCollection,
-        uniqueEquipmentIds,
-      );
+      const uniquePostoIds = [
+        ...new Set(
+          docs.map((d) => d.postoId?.trim()).filter((id): id is string => !!id),
+        ),
+      ];
+
+      const [equipmentMap, postoMap] = await Promise.all([
+        fetchEquipmentMap(this.equipamentosCollection, uniqueEquipmentIds),
+        this.fetchPostoMap(uniquePostoIds),
+      ]);
 
       const data = await Promise.all(
-        docs.map((doc) => this.formatAbastecimento(doc, equipmentMap)),
+        docs.map((doc) =>
+          this.formatAbastecimento(doc, equipmentMap, postoMap),
+        ),
       );
 
       return { data, message: 'Abastecimentos buscados com sucesso!' };
@@ -155,9 +167,51 @@ export class AbastecimentosService {
     }
   }
 
+  private async fetchPostoMap(
+    ids: string[],
+  ): Promise<Map<string, Record<string, unknown>>> {
+    const map = new Map<string, Record<string, unknown>>();
+    if (!ids.length) return map;
+
+    await Promise.all(
+      ids.map(async (id) => {
+        const byField = await this.postosCollection
+          .where('id', '==', id)
+          .limit(1)
+          .get();
+
+        if (!byField.empty) {
+          map.set(id, byField.docs[0].data());
+          return;
+        }
+
+        const byDocId = await this.postosCollection.doc(id).get();
+        if (byDocId.exists) {
+          map.set(id, byDocId.data() as Record<string, unknown>);
+        }
+      }),
+    );
+
+    return map;
+  }
+
+  private resolveOrigin(
+    doc: AbastecimentoDoc,
+    postoMap: Map<string, Record<string, unknown>>,
+  ): string {
+    if (!doc.postoId?.trim()) {
+      return 'Comboio';
+    }
+
+    const posto = postoMap.get(doc.postoId.trim());
+    const name = asString(posto?.nomeFantasia ?? posto?.name) || 'Credenciado';
+    return `Posto ${name}`;
+  }
+
   private async formatAbastecimento(
     doc: AbastecimentoDoc,
     equipmentMap: Map<string, Record<string, unknown>>,
+    postoMap: Map<string, Record<string, unknown>>,
   ) {
     const equipment = equipmentMap.get(doc.equipmentId) ?? {};
 
@@ -182,7 +236,7 @@ export class AbastecimentosService {
       id: doc.id,
       dateTime: formatDateTime(doc.createdAt),
       vehicle,
-      origin: capitalize(doc.tipo),
+      origin: this.resolveOrigin(doc, postoMap),
       liters: doc.liters,
       pricePerLiter: doc.pricePerLiter ?? null,
       value: doc.total ?? null,
@@ -195,11 +249,6 @@ export class AbastecimentosService {
       createdAt: doc.createdAt,
     };
   }
-}
-
-function capitalize(value: string): string {
-  if (!value) return value;
-  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function asString(value: unknown): string {
