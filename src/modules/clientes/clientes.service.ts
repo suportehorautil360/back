@@ -1,6 +1,27 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import { createHash, randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
-import { ClienteOverviewRow, TipoClienteApi } from './clientes.types';
+import {
+  AcessoRow,
+  ClienteOverviewRow,
+  TipoClienteApi,
+} from './clientes.types';
+import { CreateClienteDto } from './dto/create-cliente.dto';
+import { CreateAcessoDto } from './dto/create-acesso.dto';
+
+/** SHA-256 sem salt (espelha utils/hashSenha do front, pra o login bater). */
+function hashSenha(senha: string): string {
+  return createHash('sha256').update(senha, 'utf8').digest('hex');
+}
+
+function booleano(valor: unknown, padrao = false): boolean {
+  return typeof valor === 'boolean' ? valor : padrao;
+}
 
 /** Converte um campo solto do Firestore (unknown) em string segura. */
 function texto(valor: unknown): string {
@@ -66,12 +87,14 @@ export class ClientesService {
         const frota = frotaPorCliente.get(id) ?? { ativos: 0, emManutencao: 0 };
         const tipoCliente: TipoClienteApi =
           d.tipoCliente === 'locacao' ? 'locacao' : 'prefeitura';
+        const contrato = (d.contrato ?? {}) as Record<string, unknown>;
 
         return {
           id,
           nome: texto(d.nome),
           uf: texto(d.uf),
           tipoCliente,
+          email: texto(contrato.emailContratante),
           ativos: frota.ativos,
           emManutencao: frota.emManutencao,
           checklists: checklistsPorCliente.get(id) ?? 0,
@@ -86,6 +109,211 @@ export class ClientesService {
       console.error('Erro ao montar overview de clientes:', error);
       throw new InternalServerErrorException(
         'Não foi possível carregar os clientes.',
+      );
+    }
+  }
+
+  /**
+   * Cria um cliente + contrato. Porta a validação/normalização que antes
+   * vivia no front (useClientes.adicionarCliente), agora no backend.
+   */
+  async criar(dto: CreateClienteDto) {
+    const nome = (dto.nome ?? '').trim();
+    const uf = (dto.uf ?? '')
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z]/g, '')
+      .slice(0, 2);
+    const contrato = dto.contrato;
+
+    if (!nome || uf.length !== 2) {
+      throw new BadRequestException('Informe o município e a UF com 2 letras.');
+    }
+    if (!contrato?.numero?.trim()) {
+      throw new BadRequestException(
+        'Informe o número do instrumento contratual.',
+      );
+    }
+    if (!contrato?.objeto?.trim()) {
+      throw new BadRequestException('Descreva o objeto do contrato.');
+    }
+    if (!contrato?.vigenciaInicio?.trim()) {
+      throw new BadRequestException(
+        'Informe o início da vigência do contrato.',
+      );
+    }
+
+    const id = randomUUID();
+    const tipoCliente: TipoClienteApi =
+      dto.tipoCliente === 'locacao' ? 'locacao' : 'prefeitura';
+    const qtdInicialAtivos =
+      typeof contrato.qtdInicialAtivos === 'number' &&
+      contrato.qtdInicialAtivos >= 0
+        ? contrato.qtdInicialAtivos
+        : 0;
+
+    const dados = {
+      id,
+      adminId: null,
+      criadoEm: new Date().toISOString(),
+      nome,
+      uf,
+      tipoCliente,
+      contrato: {
+        numero: contrato.numero.trim(),
+        processo: contrato.processo ?? '',
+        modalidade: contrato.modalidade ?? 'pregao_eletronico',
+        dataAssinatura: contrato.dataAssinatura ?? '',
+        vigenciaInicio: contrato.vigenciaInicio,
+        vigenciaFim: contrato.vigenciaFim ?? '',
+        objeto: contrato.objeto.trim(),
+        valorMensal: contrato.valorMensal ?? '',
+        valorTotal: contrato.valorTotal ?? '',
+        indiceReajuste: contrato.indiceReajuste ?? '',
+        periodicidadeFaturamento: contrato.periodicidadeFaturamento ?? 'mensal',
+        slaRespostaHoras: contrato.slaRespostaHoras ?? '',
+        responsavelContratante: contrato.responsavelContratante ?? '',
+        cargoContratante: contrato.cargoContratante ?? '',
+        emailContratante: contrato.emailContratante ?? '',
+        telefoneContratante: contrato.telefoneContratante ?? '',
+        observacoes: contrato.observacoes ?? '',
+        status: contrato.status ?? 'ativo',
+        qtdInicialAtivos,
+      },
+    };
+
+    try {
+      await this.firebaseService
+        .getFirestore()
+        .collection('clientes')
+        .doc(id)
+        .set(dados);
+      return { data: dados, message: 'Cliente cadastrado com sucesso.' };
+    } catch (error) {
+      console.error('Erro ao salvar cliente:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível salvar o cliente.',
+      );
+    }
+  }
+
+  /** Lista os acessos (coleção `users`) vinculados a um cliente. */
+  async listarAcessos(clienteId: string): Promise<{ data: AcessoRow[] }> {
+    const db = this.firebaseService.getFirestore();
+    try {
+      const snap = await db
+        .collection('users')
+        .where('prefeituraId', '==', clienteId)
+        .get();
+
+      const data: AcessoRow[] = snap.docs.map((doc) => {
+        const d = doc.data() as Record<string, unknown>;
+        return {
+          id: doc.id,
+          nome: texto(d.nome),
+          usuario: texto(d.usuario),
+          email: texto(d.email),
+          whatsapp: texto(d.whatsapp),
+          perfil: texto(d.perfil) || 'gestor',
+          notificaEmail: booleano(d.notificaEmail, true),
+          notificaWhatsapp: booleano(d.notificaWhatsapp, false),
+        };
+      });
+      return { data };
+    } catch (error) {
+      console.error('Erro ao listar acessos:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível carregar os acessos.',
+      );
+    }
+  }
+
+  /** Cria um acesso (usuário) vinculado a um cliente. */
+  async criarAcesso(clienteId: string, dto: CreateAcessoDto) {
+    const db = this.firebaseService.getFirestore();
+
+    const nome = (dto.nome ?? '').trim();
+    const usuario = (dto.usuario ?? '').trim();
+    const senha = (dto.senha ?? '').trim();
+
+    if (!nome || !usuario || !senha) {
+      throw new BadRequestException('Preencha nome, login e senha inicial.');
+    }
+    if (senha.length < 4) {
+      throw new BadRequestException('A senha deve ter no mínimo 4 caracteres.');
+    }
+
+    const clienteSnap = await db.collection('clientes').doc(clienteId).get();
+    if (!clienteSnap.exists) {
+      throw new NotFoundException('Cliente não encontrado.');
+    }
+    const tipoCliente: TipoClienteApi =
+      (clienteSnap.data() as Record<string, unknown>).tipoCliente === 'locacao'
+        ? 'locacao'
+        : 'prefeitura';
+
+    const duplicado = await db
+      .collection('users')
+      .where('usuario', '==', usuario)
+      .get();
+    if (!duplicado.empty) {
+      throw new BadRequestException('Já existe um usuário com esse login.');
+    }
+
+    const perfil = dto.perfil === 'admin' ? 'admin' : 'gestor';
+    const novo = {
+      id: randomUUID(),
+      nome,
+      usuario,
+      senha: hashSenha(senha),
+      perfil,
+      type: tipoCliente,
+      vinculo: tipoCliente,
+      prefeituraId: clienteId,
+      email: (dto.email ?? '').trim(),
+      whatsapp: (dto.whatsapp ?? '').trim(),
+      notificaEmail: booleano(dto.notificaEmail, true),
+      notificaWhatsapp: booleano(dto.notificaWhatsapp, true),
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      const ref = await db.collection('users').add(novo);
+      const data: AcessoRow = {
+        id: ref.id,
+        nome,
+        usuario,
+        email: novo.email,
+        whatsapp: novo.whatsapp,
+        perfil,
+        notificaEmail: novo.notificaEmail,
+        notificaWhatsapp: novo.notificaWhatsapp,
+      };
+      return { data, message: 'Usuário cadastrado com sucesso.' };
+    } catch (error) {
+      console.error('Erro ao salvar acesso:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível salvar o acesso.',
+      );
+    }
+  }
+
+  /** Remove um acesso (usuário) pelo id do documento. */
+  async removerAcesso(acessoId: string) {
+    if (!acessoId) {
+      throw new BadRequestException('ID inválido.');
+    }
+    try {
+      await this.firebaseService
+        .getFirestore()
+        .collection('users')
+        .doc(acessoId)
+        .delete();
+      return { message: 'Acesso removido.' };
+    } catch (error) {
+      console.error('Erro ao remover acesso:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível remover o acesso.',
       );
     }
   }
