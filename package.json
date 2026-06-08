@@ -8,7 +8,7 @@
   "packageManager": "pnpm@10.33.0",
   "scripts": {
     "build": "nest build",
-    "stop:3000": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$connections = Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue; if ($connections) { $processIds = $connections | Select-Object -ExpandProperty OwningProcess -Unique; foreach ($processId in $processIds) { Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue } }; exit 0\"",
+    "stop:3000": "node scripts/free-port.mjs 3000",
     "dev": "npm run stop:3000 && nest start --watch",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
