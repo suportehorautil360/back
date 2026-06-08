@@ -21,6 +21,7 @@ import { WhatsAppModule } from './modules/whatsapp/whatsapp.module';
 import { MovimentacoesModule } from './modules/movimentacoes/movimentacoes.module';
 import { ClientesModule } from './modules/clientes/clientes.module';
 import { ParceirosModule } from './modules/parceiros/parceiros.module';
+import { FinanceiroModule } from './modules/financeiro/financeiro.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ParceirosModule } from './modules/parceiros/parceiros.module';
     WhatsAppModule,
     ClientesModule,
     ParceirosModule,
+    FinanceiroModule,
     // ... outros módulos
   ],
   controllers: [],
