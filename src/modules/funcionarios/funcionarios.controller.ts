@@ -13,6 +13,7 @@ import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { FuncionariosService } from './funcionarios.service';
 import { CreateFuncionarioDto } from './dto/create-funcionario.dto';
 import { ImportFuncionariosDto } from './dto/import-funcionarios.dto';
+import { AuthFuncionarioDto } from './dto/auth-funcionario.dto';
 
 @ApiTags('funcionarios')
 @Controller('funcionarios')
@@ -20,6 +21,13 @@ export class FuncionariosController {
   constructor(private readonly service: FuncionariosService) {}
 
   // --- Rotas com prefixo estático primeiro (evita colisão com :param) ---
+
+  @Post('auth/login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Login do operador/funcionário (app de campo)' })
+  async autenticar(@Body() dto: AuthFuncionarioDto) {
+    return this.service.autenticar(dto);
+  }
 
   @Post('import')
   @HttpCode(HttpStatus.OK)
