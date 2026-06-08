@@ -20,6 +20,7 @@ import { ConfiguracoesModule } from './modules/configuracoes/configuracoes.modul
 import { WhatsAppModule } from './modules/whatsapp/whatsapp.module';
 import { MovimentacoesModule } from './modules/movimentacoes/movimentacoes.module';
 import { ClientesModule } from './modules/clientes/clientes.module';
+import { ParceirosModule } from './modules/parceiros/parceiros.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { ClientesModule } from './modules/clientes/clientes.module';
     UserModule,
     WhatsAppModule,
     ClientesModule,
+    ParceirosModule,
     // ... outros módulos
   ],
   controllers: [],
