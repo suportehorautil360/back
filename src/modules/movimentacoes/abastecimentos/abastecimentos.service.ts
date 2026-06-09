@@ -18,6 +18,7 @@ import {
   fetchEquipmentMap,
   resolveEquipmentIdByPlateOrChassis,
 } from '../shared/equipment.helper';
+import { ajustarSaldoTanque } from '../shared/tank-saldo.helper';
 import {
   formatDateTime,
   parseDateEnd,
@@ -104,6 +105,14 @@ export class AbastecimentosService {
 
     try {
       await this.collection.doc(id).set(doc);
+      // Abastecimento a partir do comboio (sem posto) desconta do tanque.
+      if (!doc.postoId) {
+        await ajustarSaldoTanque(
+          this.firebaseService.getFirestore(),
+          input.prefeituraId,
+          -liters,
+        );
+      }
       return doc;
     } catch (error) {
       console.error('Erro ao criar abastecimento:', error);
