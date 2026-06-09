@@ -10,6 +10,7 @@ import {
   parseDateEnd,
   parseDateStart,
 } from '../shared/date.helper';
+import { ajustarSaldoTanque } from '../shared/tank-saldo.helper';
 import {
   CreateReabastecimentoDto,
   ReabastecimentoSourceType,
@@ -74,6 +75,12 @@ export class ReabastecimentoService {
 
     try {
       await this.collection.doc(id).set(doc, { merge: true });
+      // Carga no comboio soma no saldo do tanque.
+      await ajustarSaldoTanque(
+        this.firebaseService.getFirestore(),
+        input.prefeituraId,
+        receivedLiters,
+      );
       return doc;
     } catch (error) {
       console.error('Erro ao criar reabastecimento:', error);
