@@ -1841,6 +1841,164 @@ export const SEED_CHECKLIST_DEFINITIONS: SeedChecklistDefinition[] = [
     ],
   },
   {
+    slug: 'picador-de-madeira',
+    nome: 'Picador de Madeira',
+    categoria: 'Picador de Madeira',
+    keywords: ['picador', 'picador de madeira', 'chipper'],
+    itens: [
+      {
+        ordem: 1,
+        texto:
+          'Facas e contrafacas estão sem trincas, quebras ou desgaste excessivo?',
+        severidade: 'impeditivo',
+      },
+      {
+        ordem: 2,
+        texto:
+          'Os parafusos de fixação das facas estão com o torque/aperto correto?',
+        severidade: 'impeditivo',
+      },
+      {
+        ordem: 3,
+        texto:
+          'O rotor/tambor está limpo e livre de detritos ou materiais travados?',
+        severidade: 'impeditivo',
+      },
+      {
+        ordem: 4,
+        texto:
+          'A folga entre faca e contrafaca está dentro do padrão do fabricante?',
+        severidade: 'normal',
+      },
+      {
+        ordem: 5,
+        texto:
+          'O sistema de afiação (se houver) está regulado e com a pedra em bom estado?',
+        severidade: 'normal',
+      },
+      {
+        ordem: 6,
+        texto:
+          'Os rolos alimentadores (mordentes) estão com os dentes inteiros e limpos?',
+        severidade: 'normal',
+      },
+      {
+        ordem: 7,
+        texto:
+          'A mesa de alimentação ou esteira está com a tensão da corrente correta?',
+        severidade: 'normal',
+      },
+      {
+        ordem: 8,
+        texto:
+          'Os cilindros hidráulicos dos rolos estão livres de vazamentos nas vedações?',
+        severidade: 'impeditivo',
+      },
+      {
+        ordem: 9,
+        texto:
+          'As mangueiras de alta pressão da mesa estão sem sinais de atrito ou desgaste?',
+        severidade: 'impeditivo',
+      },
+      {
+        ordem: 10,
+        texto:
+          'Os níveis de fluidos (óleo do motor, radiador, combustível/Arla) estão adequados?',
+        severidade: 'impeditivo',
+      },
+      {
+        ordem: 11,
+        texto:
+          'O pré-filtro e o filtro de ar estão limpos (livres de excesso de serragem)?',
+        severidade: 'normal',
+      },
+      {
+        ordem: 12,
+        texto:
+          'As correias e polias da transmissão estão tensionadas e sem rachaduras?',
+        severidade: 'normal',
+      },
+      {
+        ordem: 13,
+        texto:
+          'A embreagem / PTO (Tomada de Força) aciona suavemente, sem patinar?',
+        severidade: 'normal',
+      },
+      {
+        ordem: 14,
+        texto:
+          'O nível do óleo hidráulico está correto no visor (máquina nivelada)?',
+        severidade: 'impeditivo',
+      },
+      {
+        ordem: 15,
+        texto:
+          'O bloco de válvulas, comandos e conexões estão livres de vazamentos?',
+        severidade: 'impeditivo',
+      },
+      {
+        ordem: 16,
+        texto:
+          'O tubo de descarga (calha/bica) gira e opera o defletor hidráulico normalmente?',
+        severidade: 'normal',
+      },
+      {
+        ordem: 17,
+        texto:
+          'O revestimento interno da bica está sem furos ou desgaste crítico por abrasão?',
+        severidade: 'normal',
+      },
+      {
+        ordem: 18,
+        texto:
+          'A bateria está com cabos firmes, limpos e sem sinais de oxidação (zinabre)?',
+        severidade: 'normal',
+      },
+      {
+        ordem: 19,
+        texto:
+          'O alternador está gerando carga corretamente e a correia está tensionada?',
+        severidade: 'normal',
+      },
+      {
+        ordem: 20,
+        texto:
+          'A chave geral (disjuntor principal) está operando perfeitamente e sem folgas?',
+        severidade: 'impeditivo',
+      },
+      {
+        ordem: 21,
+        texto:
+          'O painel de instrumentos, displays e chicotes estão protegidos e funcionando?',
+        severidade: 'normal',
+      },
+      {
+        ordem: 22,
+        texto:
+          'Todos os botões de emergência (E-Stops) e barras de reversão funcionam?',
+        severidade: 'impeditivo',
+      },
+      {
+        ordem: 23,
+        texto:
+          'As proteções e carenagens de polias, correias e rotor estão fixas e fechadas?',
+        severidade: 'impeditivo',
+      },
+      {
+        ordem: 24,
+        texto:
+          'O sistema de combate a incêndio / extintores estão na carga e desimpedidos?',
+        severidade: 'impeditivo',
+      },
+      {
+        ordem: 25,
+        texto:
+          'O chassi, sapatas estabilizadoras e pneus/esteiras estão sem danos ou trincas?',
+        severidade: 'impeditivo',
+      },
+    ],
+  },
+  {
     slug: 'caminhoes',
     nome: 'Caminhões',
     categoria: 'Caminhões',
