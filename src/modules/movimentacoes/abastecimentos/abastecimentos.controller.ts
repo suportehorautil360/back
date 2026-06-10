@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -46,5 +47,13 @@ export class AbastecimentosController {
     @Query('endDate') endDate?: string,
   ) {
     return this.service.listar(prefeituraId, startDate, endDate);
+  }
+
+  @Delete('item/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Remover um abastecimento pelo id' })
+  @ApiParam({ name: 'id', description: 'Id do abastecimento' })
+  async remover(@Param('id') id: string) {
+    return this.service.remover(id);
   }
 }
