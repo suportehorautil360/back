@@ -13,6 +13,7 @@ import { EscalaModule } from './modules/escala/escala.module';
 import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
 import { EmergenciesModule } from './modules/emergencies/emergencies.module';
 import { ChecklistsModule } from './modules/checklists/checklists.module';
+import { ChecklistDefinitionsModule } from './modules/checklist-definitions/checklist-definitions.module';
 import { RiskTriageModule } from './modules/risk-triage/risk-triage.module';
 import { UserModule } from './modules/user/user.module';
 import { EquipamentosModule } from './modules/equipamentos/equipamentos.module';
@@ -48,6 +49,7 @@ import { AlertasModule } from './modules/alertas/alertas.module';
     FeatureFlagsModule,
     EmergenciesModule,
     ChecklistsModule,
+    ChecklistDefinitionsModule,
     RiskTriageModule,
     UserModule,
     WhatsAppModule,
