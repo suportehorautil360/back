@@ -32,12 +32,19 @@ export class EmergenciesController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
-      'Dispara a notificação de WhatsApp de uma emergência (best-effort). ' +
-      'Usado pelo checklist, que grava a emergência direto no Firestore.',
+      'Dispara a notificação de uma emergência pelos canais disponíveis ' +
+      '(WhatsApp + email), best-effort. Usado pelo checklist, que grava a ' +
+      'emergência direto no Firestore. Nome mantido por compatibilidade.',
   })
   async notificarWhatsApp(@Body() dto: DadosEmergenciaWhats) {
-    await this.service.notificarWhatsApp(dto);
-    return { data: {}, message: 'Notificação de WhatsApp processada.' };
+    await Promise.all([
+      this.service.notificarWhatsApp(dto),
+      this.service.notificarEmail(dto),
+    ]);
+    return {
+      data: {},
+      message: 'Notificações processadas (WhatsApp + email).',
+    };
   }
 
   @Get(':prefeituraId')

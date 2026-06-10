@@ -47,6 +47,13 @@ export class WorkFrontItemDto {
   telefone?: string;
 
   @ApiProperty({
+    description: 'Email da frente de trabalho (responsável)',
+    example: 'frente@empresa.com',
+    required: false,
+  })
+  email?: string;
+
+  @ApiProperty({
     description: 'Lista de equipamentos associados à frente de trabalho',
     type: () => WorkFrontEquipmentDto,
     isArray: true,

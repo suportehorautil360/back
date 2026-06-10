@@ -53,6 +53,17 @@ export class CreateWorkFrontDto {
   telefone?: string;
 
   @ApiProperty({
+    description:
+      'Email da frente de trabalho (responsável). Recebe por email os ' +
+      'alertas de emergência/checklist do equipamento alocado nesta frente.',
+    example: 'frente@empresa.com',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @ApiProperty({
     description: 'Lista de equipamentos associados à frente de trabalho',
     example: ['Retroescavadeira', 'Caminhão basculante'],
     type: [String],
