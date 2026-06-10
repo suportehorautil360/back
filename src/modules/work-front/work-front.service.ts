@@ -104,6 +104,7 @@ export class WorkFrontService {
         'address',
         'responsible',
         'telefone',
+        'email',
         'status',
         'cost',
         'startDate',

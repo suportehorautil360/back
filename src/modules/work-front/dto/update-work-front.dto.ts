@@ -34,6 +34,13 @@ export class UpdateWorkFrontDto {
   @IsString()
   telefone?: string;
 
+  @ApiPropertyOptional({
+    description: 'Email da frente de trabalho (responsável)',
+  })
+  @IsOptional()
+  @IsString()
+  email?: string;
+
   @ApiPropertyOptional({ description: 'Status atual da frente de trabalho' })
   @IsOptional()
   @IsString()

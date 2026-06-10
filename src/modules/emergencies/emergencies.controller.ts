@@ -40,6 +40,19 @@ export class EmergenciesController {
     return { data: {}, message: 'Notificação de WhatsApp processada.' };
   }
 
+  @Post('notificar-email')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Dispara a notificação por EMAIL de uma emergência (best-effort). ' +
+      'Vai para o email da frente alocada + emailAlertas da empresa. ' +
+      'Usado pelo checklist, que grava a emergência direto no Firestore.',
+  })
+  async notificarEmail(@Body() dto: DadosEmergenciaWhats) {
+    await this.service.notificarEmail(dto);
+    return { data: {}, message: 'Notificação por email processada.' };
+  }
+
   @Get(':prefeituraId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Listar emergências por prefeitura' })
