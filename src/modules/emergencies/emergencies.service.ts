@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
 import { WhatsAppService } from '../whatsapp/whatsapp.service';
 import { formatarJid } from '../whatsapp/phone';
+import { MailService } from '../mail/mail.service';
 import {
   CreateEmergencyDto,
   EmergencySeverity,
@@ -78,6 +79,7 @@ export class EmergenciesService {
   constructor(
     private firebase: FirebaseService,
     private whatsapp: WhatsAppService,
+    private mail: MailService,
   ) {}
 
   private get collection() {
@@ -119,8 +121,9 @@ export class EmergenciesService {
 
     try {
       await this.collection.doc(id).set(doc);
-      // Notifica a empresa por WhatsApp (não bloqueia nem derruba a criação).
+      // Notifica a empresa por WhatsApp + email (best-effort, não bloqueia).
       void this.notificarWhatsApp(doc);
+      void this.notificarEmail(doc);
       return { data: doc, message: 'Emergência registrada com sucesso.' };
     } catch (error) {
       console.error('Erro ao registrar emergência:', error);
@@ -260,6 +263,124 @@ export class EmergenciesService {
       .get();
     const telefone = frentes.docs[0]?.data()?.telefone as string | undefined;
     return typeof telefone === 'string' ? telefone.trim() : '';
+  }
+
+  /**
+   * Notifica a emergência por EMAIL: email da frente alocada + `emailAlertas`
+   * da empresa (deduplicados). Best-effort, nunca lança. Pública porque a
+   * emergência do checklist é gravada direto pelo front e chama esta à parte.
+   */
+  async notificarEmail(doc: DadosEmergenciaWhats): Promise<void> {
+    try {
+      if (!this.mail.habilitado()) return;
+      const snap = await this.firebase
+        .getFirestore()
+        .collection('configuracoes')
+        .where('prefeituraId', '==', doc.prefeituraId)
+        .get();
+      const cfg = snap.docs[0]?.data() as
+        | { empresa?: { emailAlertas?: string } }
+        | undefined;
+      const emailEmpresa = (cfg?.empresa?.emailAlertas ?? '').trim();
+      const emailFrente = await this.buscarEmailFrenteDoEquipamento(
+        doc.idMaquina ?? doc.equipamentoId,
+      );
+      const destinos = this.dedupEmails([emailEmpresa, emailFrente]);
+      if (destinos.length === 0) return;
+
+      const r = await this.mail.enviar({
+        to: destinos,
+        subject: `🚨 Emergência — ${doc.tipoFalha} · Hora Útil 360`,
+        html: this.montarEmailHtml(doc),
+      });
+      if (!r.ok) {
+        console.warn('Falha ao enviar email de emergência:', r.erro);
+      }
+    } catch (e) {
+      console.warn(
+        'Falha ao notificar emergência por email:',
+        (e as Error).message,
+      );
+    }
+  }
+
+  /**
+   * Email da frente de trabalho onde o equipamento está alocado.
+   * Caminho: equipamento.id → allocations.vehicleId → allocations.workFrontId →
+   * work-fronts.email. Retorna `''` quando não há alocação/email.
+   */
+  private async buscarEmailFrenteDoEquipamento(
+    equipId?: string | null,
+  ): Promise<string> {
+    const id = (equipId ?? '').trim();
+    if (!id) return '';
+    const db = this.firebase.getFirestore();
+    const alocacoes = await db
+      .collection('allocations')
+      .where('vehicleId', '==', id)
+      .get();
+    const workFrontId = alocacoes.docs[0]?.data()?.workFrontId as
+      | string
+      | undefined;
+    if (!workFrontId) return '';
+    const frentes = await db
+      .collection('work-fronts')
+      .where('id', '==', workFrontId)
+      .get();
+    const email = frentes.docs[0]?.data()?.email as string | undefined;
+    return typeof email === 'string' ? email.trim() : '';
+  }
+
+  /** Remove emails vazios/duplicados (case-insensitive), preservando a ordem. */
+  private dedupEmails(emails: string[]): string[] {
+    const vistos = new Set<string>();
+    const out: string[] = [];
+    for (const e of emails) {
+      const v = e.trim().toLowerCase();
+      if (!v || vistos.has(v)) continue;
+      vistos.add(v);
+      out.push(e.trim());
+    }
+    return out;
+  }
+
+  /** HTML do email de emergência. */
+  private montarEmailHtml(doc: DadosEmergenciaWhats): string {
+    const sev: Record<string, string> = {
+      critical: 'Crítica',
+      high: 'Alta',
+      medium: 'Média',
+      low: 'Baixa',
+    };
+    const severidade =
+      sev[String(doc.severity).toLowerCase()] ?? String(doc.severity);
+    const quando = new Date(doc.dataHoraIso).toLocaleString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+    });
+    const linha = (rotulo: string, valor?: string | null) =>
+      valor
+        ? `<p style="margin:4px 0"><strong>${rotulo}:</strong> ${valor}</p>`
+        : '';
+    const local = doc.localizacaoGps
+      ? `<p style="margin:4px 0"><strong>Local:</strong> <a href="https://maps.google.com/?q=${encodeURIComponent(
+          doc.localizacaoGps,
+        )}">${doc.localizacaoGps}</a></p>`
+      : '';
+    return `
+      <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1f2937">
+        <h2 style="margin:0 0 4px;color:#b91c1c">🚨 Emergência registrada</h2>
+        <p style="margin:0 0 16px;color:#6b7280">Hora Útil 360 · severidade ${severidade}</p>
+        ${linha('Tipo de falha', doc.tipoFalha)}
+        ${linha('Descrição', doc.descricao)}
+        ${linha('Equipamento', doc.chassis)}
+        ${linha('Operador', doc.operadorNome)}
+        ${linha('Quando', quando)}
+        ${local}
+        <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0" />
+        <p style="font-size:12px;color:#9ca3af;margin:0">
+          Notificação automática de emergência da plataforma.
+        </p>
+      </div>`;
   }
 
   /** Remove vazios e duplicatas (comparando pelo JID normalizado). */

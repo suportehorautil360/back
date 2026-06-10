@@ -48,6 +48,13 @@ function makeWhatsapp(conectado = true) {
   };
 }
 
+function makeMail() {
+  return {
+    habilitado: jest.fn(() => false),
+    enviar: jest.fn().mockResolvedValue({ ok: true }),
+  };
+}
+
 const doc: DadosEmergenciaWhats = {
   prefeituraId: 'pref1',
   severity: 'critical',
@@ -69,7 +76,11 @@ describe('EmergenciesService.notificarWhatsApp', () => {
       workFrontId: 'wf1',
       telefoneFrente: '+5511988887777',
     });
-    const svc = new EmergenciesService(firebase, whatsapp as any);
+    const svc = new EmergenciesService(
+      firebase,
+      whatsapp as any,
+      makeMail() as any,
+    );
 
     await svc.notificarWhatsApp(doc);
 
@@ -88,7 +99,11 @@ describe('EmergenciesService.notificarWhatsApp', () => {
       workFrontId: 'wf1',
       telefoneFrente: '+5511988887777',
     });
-    const svc = new EmergenciesService(firebase, whatsapp as any);
+    const svc = new EmergenciesService(
+      firebase,
+      whatsapp as any,
+      makeMail() as any,
+    );
 
     await svc.notificarWhatsApp(doc);
 
@@ -106,7 +121,11 @@ describe('EmergenciesService.notificarWhatsApp', () => {
       workFrontId: 'wf1',
       telefoneFrente: '+5567999999999', // mesmo número em E.164
     });
-    const svc = new EmergenciesService(firebase, whatsapp as any);
+    const svc = new EmergenciesService(
+      firebase,
+      whatsapp as any,
+      makeMail() as any,
+    );
 
     await svc.notificarWhatsApp(doc);
 
@@ -122,7 +141,11 @@ describe('EmergenciesService.notificarWhatsApp', () => {
       },
       workFrontId: null,
     });
-    const svc = new EmergenciesService(firebase, whatsapp as any);
+    const svc = new EmergenciesService(
+      firebase,
+      whatsapp as any,
+      makeMail() as any,
+    );
 
     await svc.notificarWhatsApp(doc);
 
@@ -140,7 +163,11 @@ describe('EmergenciesService.notificarWhatsApp', () => {
       workFrontId: 'wf1',
       telefoneFrente: '+5511988887777',
     });
-    const svc = new EmergenciesService(firebase, whatsapp as any);
+    const svc = new EmergenciesService(
+      firebase,
+      whatsapp as any,
+      makeMail() as any,
+    );
 
     await svc.notificarWhatsApp(doc);
 

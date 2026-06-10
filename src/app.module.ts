@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { RevisionModule } from './modules/revision/revision.module';
 import { WorkFrontModule } from './modules/work-front/work-front.module';
@@ -23,12 +24,14 @@ import { ClientesModule } from './modules/clientes/clientes.module';
 import { ParceirosModule } from './modules/parceiros/parceiros.module';
 import { FinanceiroModule } from './modules/financeiro/financeiro.module';
 import { MailModule } from './modules/mail/mail.module';
+import { AlertasModule } from './modules/alertas/alertas.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     VehiclesModule,
     EquipamentosModule,
     FuncionariosModule,
@@ -52,6 +55,7 @@ import { MailModule } from './modules/mail/mail.module';
     ParceirosModule,
     FinanceiroModule,
     MailModule,
+    AlertasModule,
     // ... outros módulos
   ],
   controllers: [],
