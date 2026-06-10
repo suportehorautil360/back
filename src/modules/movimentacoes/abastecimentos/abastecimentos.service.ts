@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../../config/firebase.service';
@@ -69,6 +70,18 @@ export class AbastecimentosService {
     if (!isSupportedMeasurementType(input.measurementType)) {
       throw new BadRequestException(
         'O campo measurementType deve ser horimetro ou hodometro.',
+      );
+    }
+
+    if (!input.plateOrChassis?.trim()) {
+      throw new BadRequestException(
+        'Informe a placa ou chassi do equipamento.',
+      );
+    }
+
+    if (!Number.isFinite(Number(input.currentReading))) {
+      throw new BadRequestException(
+        'Informe a leitura atual (currentReading).',
       );
     }
 
@@ -172,6 +185,28 @@ export class AbastecimentosService {
       console.error('Erro ao buscar abastecimentos:', error);
       throw new InternalServerErrorException(
         'Não foi possível buscar os abastecimentos.',
+      );
+    }
+  }
+
+  /**
+   * Remove um abastecimento. NÃO reverte o saldo do tanque (uso de limpeza de
+   * registros). Ajuste o tanque manualmente se necessário.
+   */
+  async remover(id: string) {
+    try {
+      const ref = this.collection.doc(id);
+      const snap = await ref.get();
+      if (!snap.exists) {
+        throw new NotFoundException('Abastecimento não encontrado.');
+      }
+      await ref.delete();
+      return { data: { id }, message: 'Abastecimento removido.' };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      console.error('Erro ao remover abastecimento:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível remover o abastecimento.',
       );
     }
   }
