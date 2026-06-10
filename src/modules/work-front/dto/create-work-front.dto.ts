@@ -42,6 +42,17 @@ export class CreateWorkFrontDto {
   responsible!: string;
 
   @ApiProperty({
+    description:
+      'Telefone (WhatsApp) da frente de trabalho, em E.164. Recebe a ' +
+      'notificação de emergência do equipamento alocado nesta frente.',
+    example: '+5511999999999',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  telefone?: string;
+
+  @ApiProperty({
     description: 'Lista de equipamentos associados à frente de trabalho',
     example: ['Retroescavadeira', 'Caminhão basculante'],
     type: [String],

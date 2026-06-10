@@ -6,6 +6,7 @@ import {
 import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
 import { WhatsAppService } from '../whatsapp/whatsapp.service';
+import { formatarJid } from '../whatsapp/phone';
 import {
   CreateEmergencyDto,
   EmergencySeverity,
@@ -50,6 +51,8 @@ export interface DadosEmergenciaWhats {
   prefeituraId: string;
   severity: string;
   chassis?: string | null;
+  /** Id do equipamento — usado para achar a frente alocada e notificá-la. */
+  equipamentoId?: string | null;
   idMaquina?: string | null;
   tipoFalha: string;
   descricao: string;
@@ -172,25 +175,35 @@ export class EmergenciesService {
             alertas?: { notificacaoWhatsapp?: boolean };
           }
         | undefined;
+      // O toggle global gateia tudo: desligado → ninguém é notificado.
       const ativo = cfg?.alertas?.notificacaoWhatsapp === true;
-      const numero = (cfg?.empresa?.whatsappNumero ?? '').trim();
-      if (!ativo || !numero) return;
+      if (!ativo) return;
+
+      // Destinatários: número da empresa + telefone da frente onde o
+      // equipamento está alocado. Deduplicados pelo JID — o mesmo número
+      // escrito de formas diferentes não recebe duas vezes.
+      const numeroEmpresa = (cfg?.empresa?.whatsappNumero ?? '').trim();
+      const numeroFrente = await this.buscarTelefoneFrenteDoEquipamento(
+        doc.idMaquina ?? doc.equipamentoId,
+      );
+      const destinos = this.dedupNumeros([numeroEmpresa, numeroFrente]);
+      if (destinos.length === 0) return;
+
       const texto = this.montarMensagem(doc);
       const fotos = (Array.isArray(doc.fotos) ? doc.fotos : []).filter(
         (foto): foto is string => typeof foto === 'string' && foto.length > 0,
       );
-      if (fotos.length === 0) {
-        await this.whatsapp.enviarMensagem(numero, texto);
-        return;
-      }
-      // A 1ª foto leva o texto como legenda; as demais vão soltas — assim a
-      // emergência chega como uma única notificação com imagem + detalhes.
-      for (let i = 0; i < fotos.length; i++) {
-        await this.whatsapp.enviarImagem(
-          numero,
-          fotos[i],
-          i === 0 ? texto : undefined,
-        );
+
+      // Cada destino é independente: falhar num número não impede o outro.
+      for (const numero of destinos) {
+        try {
+          await this.enviarParaNumero(numero, texto, fotos);
+        } catch (e) {
+          console.warn(
+            `Falha ao notificar ${numero} por WhatsApp:`,
+            (e as Error).message,
+          );
+        }
       }
     } catch (e) {
       console.warn(
@@ -198,6 +211,70 @@ export class EmergenciesService {
         (e as Error).message,
       );
     }
+  }
+
+  /** Envia o texto da emergência (com fotos como imagem, se houver) a um número. */
+  private async enviarParaNumero(
+    numero: string,
+    texto: string,
+    fotos: string[],
+  ): Promise<void> {
+    if (fotos.length === 0) {
+      await this.whatsapp.enviarMensagem(numero, texto);
+      return;
+    }
+    // A 1ª foto leva o texto como legenda; as demais vão soltas — assim a
+    // emergência chega como uma única notificação com imagem + detalhes.
+    for (let i = 0; i < fotos.length; i++) {
+      await this.whatsapp.enviarImagem(
+        numero,
+        fotos[i],
+        i === 0 ? texto : undefined,
+      );
+    }
+  }
+
+  /**
+   * Telefone (WhatsApp) da frente de trabalho onde o equipamento está alocado.
+   * Caminho: equipamento.id → allocations.vehicleId → allocations.workFrontId →
+   * work-fronts.telefone. Retorna `''` quando não há alocação/telefone.
+   */
+  private async buscarTelefoneFrenteDoEquipamento(
+    equipId?: string | null,
+  ): Promise<string> {
+    const id = (equipId ?? '').trim();
+    if (!id) return '';
+    const db = this.firebase.getFirestore();
+    const alocacoes = await db
+      .collection('allocations')
+      .where('vehicleId', '==', id)
+      .get();
+    // allocate() garante no máximo 1 alocação por equipamento.
+    const workFrontId = alocacoes.docs[0]?.data()?.workFrontId as
+      | string
+      | undefined;
+    if (!workFrontId) return '';
+    const frentes = await db
+      .collection('work-fronts')
+      .where('id', '==', workFrontId)
+      .get();
+    const telefone = frentes.docs[0]?.data()?.telefone as string | undefined;
+    return typeof telefone === 'string' ? telefone.trim() : '';
+  }
+
+  /** Remove vazios e duplicatas (comparando pelo JID normalizado). */
+  private dedupNumeros(numeros: string[]): string[] {
+    const vistos = new Set<string>();
+    const saida: string[] = [];
+    for (const numero of numeros) {
+      const limpo = numero.trim();
+      if (!limpo) continue;
+      const chave = formatarJid(limpo);
+      if (vistos.has(chave)) continue;
+      vistos.add(chave);
+      saida.push(limpo);
+    }
+    return saida;
   }
 
   async listByPrefeitura(prefeituraId: string, filters?: EmergencyFilters) {
@@ -364,4 +441,3 @@ export class EmergenciesService {
     return null;
   }
 }
-

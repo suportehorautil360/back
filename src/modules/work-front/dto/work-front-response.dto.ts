@@ -40,6 +40,13 @@ export class WorkFrontItemDto {
   responsible!: string;
 
   @ApiProperty({
+    description: 'Telefone (WhatsApp) da frente de trabalho, em E.164',
+    example: '+5511999999999',
+    required: false,
+  })
+  telefone?: string;
+
+  @ApiProperty({
     description: 'Lista de equipamentos associados à frente de trabalho',
     type: () => WorkFrontEquipmentDto,
     isArray: true,
