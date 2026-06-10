@@ -103,6 +103,7 @@ export class WorkFrontService {
         'name',
         'address',
         'responsible',
+        'telefone',
         'status',
         'cost',
         'startDate',
@@ -174,4 +175,3 @@ export class WorkFrontService {
     };
   }
 }
-
