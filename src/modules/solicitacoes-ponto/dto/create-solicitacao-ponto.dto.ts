@@ -15,6 +15,9 @@ export const TIPOS_SOLICITACAO = [
 ] as const;
 export type TipoSolicitacao = (typeof TIPOS_SOLICITACAO)[number];
 
+export const TIPOS_BATIDA = ['entrada', 'almoco', 'volta', 'saida'] as const;
+export type TipoBatida = (typeof TIPOS_BATIDA)[number];
+
 /**
  * Solicitação de ajuste de ponto. Um único recurso atende quatro fluxos
  * que o operador dispara da folha do dia (Incluir batida, Cancelar batida,
@@ -69,6 +72,17 @@ export class CreateSolicitacaoPontoDto {
   @IsOptional()
   @IsString()
   timestampOriginal?: string;
+
+  @ApiProperty({
+    description:
+      'Para tipo "incluir": qual batida do dia (entrada/almoco/volta/saida). ' +
+      'Default "entrada" quando ausente.',
+    enum: TIPOS_BATIDA,
+    required: false,
+  })
+  @IsOptional()
+  @IsIn(TIPOS_BATIDA)
+  tipoBatida?: TipoBatida;
 
   @ApiProperty({
     description: 'Observação / mensagem livre do operador.',

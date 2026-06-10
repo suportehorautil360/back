@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
 import {
   CreateSolicitacaoPontoDto,
+  TipoBatida,
   TipoSolicitacao,
 } from './dto/create-solicitacao-ponto.dto';
 import { NotificacoesService } from '../notificacoes/notificacoes.service';
@@ -25,6 +26,8 @@ export interface SolicitacaoDoc {
   batidaId?: string | null;
   data?: string | null;
   timestampOriginal?: string | null;
+  /** Para tipo "incluir": qual batida do dia. Default "entrada". */
+  tipoBatida?: TipoBatida | null;
   observacao?: string | null;
   anexoDataUrl?: string | null;
   anexoNome?: string | null;
@@ -73,6 +76,7 @@ export class SolicitacoesPontoService {
         batidaId: dto.batidaId ?? null,
         data: dto.data ?? null,
         timestampOriginal: dto.timestampOriginal ?? null,
+        tipoBatida: dto.tipoBatida ?? null,
         observacao: dto.observacao ?? null,
         anexoDataUrl: dto.anexoDataUrl ?? null,
         anexoNome: dto.anexoNome ?? null,
@@ -150,11 +154,14 @@ export class SolicitacoesPontoService {
         // com NSR sequencial e hash encadeado (Portaria 671).
         const batidaId = randomUUID();
         const ts = doc.timestampOriginal;
+        // Slot da batida pedido pelo operador (entrada/almoco/volta/saida).
+        // Compat. legado: solicitações antigas sem `tipoBatida` caem em 'entrada'.
+        const tipoBatida: TipoBatida = doc.tipoBatida ?? 'entrada';
         await db.runTransaction(async (tx) => {
           const selo = await selarRegistro(db, tx, {
             prefeituraId: doc.prefeituraId,
             identificador: doc.cpf?.replace(/\D/g, '') || doc.name,
-            tipo: 'entrada',
+            tipo: tipoBatida,
             timestampOriginal: ts,
             registro: 'ajuste',
             refNsr: null,
@@ -164,7 +171,7 @@ export class SolicitacoesPontoService {
             prefeituraId: doc.prefeituraId,
             name: doc.name,
             cpf: doc.cpf ?? null,
-            tipo: 'entrada',
+            tipo: tipoBatida,
             timestampOriginal: ts,
             horaLocalBR: new Date(ts).toLocaleString('pt-BR', {
               timeZone: 'America/Sao_Paulo',
@@ -338,4 +345,3 @@ export class SolicitacoesPontoService {
     return { data: updated, message: 'Solicitação reprovada.' };
   }
 }
-
