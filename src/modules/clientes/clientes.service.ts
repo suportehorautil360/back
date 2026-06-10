@@ -159,6 +159,10 @@ export class ClientesService {
       nome,
       uf,
       tipoCliente,
+      cnpj: (dto.cnpj ?? '').trim(),
+      caepf: (dto.caepf ?? '').trim(),
+      cidade: (dto.cidade ?? '').trim(),
+      whatsapp: (dto.whatsapp ?? '').trim(),
       contrato: {
         numero: contrato.numero.trim(),
         processo: contrato.processo ?? '',
@@ -193,6 +197,30 @@ export class ClientesService {
       console.error('Erro ao salvar cliente:', error);
       throw new InternalServerErrorException(
         'Não foi possível salvar o cliente.',
+      );
+    }
+  }
+
+  /**
+   * Dados crus de um cliente por id (= prefeituraId). Usado para pré-preencher
+   * a tela de Configurações da prefeitura com os dados da empresa.
+   */
+  async obter(clienteId: string) {
+    try {
+      const snap = await this.firebaseService
+        .getFirestore()
+        .collection('clientes')
+        .doc(clienteId)
+        .get();
+      if (!snap.exists) {
+        throw new NotFoundException('Cliente não encontrado.');
+      }
+      return { data: snap.data(), message: 'Cliente encontrado.' };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      console.error('Erro ao buscar cliente:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível buscar o cliente.',
       );
     }
   }

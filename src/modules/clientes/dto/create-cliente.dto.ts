@@ -55,6 +55,25 @@ export class CreateClienteDto {
   })
   tipoCliente?: 'prefeitura' | 'locacao';
 
+  // --- Dados da empresa (alimentam a tela de Configurações da prefeitura) ---
+
+  @ApiPropertyOptional({ example: '12.345.678/0001-90' })
+  cnpj?: string;
+
+  @ApiPropertyOptional({
+    description: 'CAEPF/CEI — alternativa ao CNPJ para órgão sem CNPJ.',
+  })
+  caepf?: string;
+
+  @ApiPropertyOptional({ example: 'Campo Grande' })
+  cidade?: string;
+
+  @ApiPropertyOptional({
+    description: 'WhatsApp da empresa (E.164).',
+    example: '+5567999999999',
+  })
+  whatsapp?: string;
+
   @ApiProperty({ type: CreateContratoDto })
   contrato!: CreateContratoDto;
 }

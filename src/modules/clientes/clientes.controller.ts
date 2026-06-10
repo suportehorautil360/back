@@ -30,6 +30,18 @@ export class ClientesController {
     return this.clientesService.criar(dto);
   }
 
+  @Get(':clienteId')
+  @ApiOperation({
+    summary: 'Dados de um cliente por id (= prefeituraId)',
+    description:
+      'Inclui os dados da empresa (cnpj, cidade, whatsapp, etc.) usados para ' +
+      'pré-preencher a tela de Configurações da prefeitura.',
+  })
+  @ApiResponse({ status: 200, description: 'Cliente encontrado.' })
+  async obter(@Param('clienteId') clienteId: string) {
+    return this.clientesService.obter(clienteId);
+  }
+
   @Get(':clienteId/acessos')
   @ApiOperation({
     summary: 'Lista os acessos (usuários) vinculados ao cliente',
