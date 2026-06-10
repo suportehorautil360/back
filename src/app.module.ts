@@ -22,6 +22,7 @@ import { MovimentacoesModule } from './modules/movimentacoes/movimentacoes.modul
 import { ClientesModule } from './modules/clientes/clientes.module';
 import { ParceirosModule } from './modules/parceiros/parceiros.module';
 import { FinanceiroModule } from './modules/financeiro/financeiro.module';
+import { MailModule } from './modules/mail/mail.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { FinanceiroModule } from './modules/financeiro/financeiro.module';
     ClientesModule,
     ParceirosModule,
     FinanceiroModule,
+    MailModule,
     // ... outros módulos
   ],
   controllers: [],
