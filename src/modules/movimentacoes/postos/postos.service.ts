@@ -6,6 +6,7 @@ import {
 import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../../config/firebase.service';
 import { parseDateEnd, parseDateStart } from '../shared/date.helper';
+import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
 import { CreatePostoDto } from './dto/create-posto.dto';
 import {
   AbastecimentoPostoStats,
@@ -75,14 +76,11 @@ export class PostosService {
         ? parseDateEnd(endDate, 'endDate').toISOString()
         : undefined;
 
-      const snap = await this.collection
-        .where('prefeituraId', '==', prefeituraId)
-        .orderBy('createdAt', 'asc')
-        .get();
-
-      const docs = snap.docs
-        .map((doc) => doc.data() as PostoDoc)
-        .filter((doc) => doc.tipoParceiro === 'posto');
+      const docs = (
+        await fetchPrefeituraDocs<PostoDoc>(this.collection, prefeituraId, {
+          order: 'asc',
+        })
+      ).filter((doc) => doc.tipoParceiro === 'posto');
 
       if (docs.length === 0) {
         return { data: [], message: 'Postos buscados com sucesso!' };

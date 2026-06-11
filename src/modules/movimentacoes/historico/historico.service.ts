@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { FirebaseService } from '../../../config/firebase.service';
 import { fetchEquipmentMap } from '../shared/equipment.helper';
+import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
 import type {
   HistoricoGroup,
   HistoricoItem,
@@ -23,30 +24,23 @@ export class HistoricoService {
     limit = 50,
   ): Promise<HistoricoResponse> {
     try {
-      const [abSnap, lubSnap, reaSnap] = await Promise.all([
-        this.db()
-          .collection('abastecimentos')
-          .where('prefeituraId', '==', prefeituraId)
-          .orderBy('createdAt', 'desc')
-          .limit(limit)
-          .get(),
-        this.db()
-          .collection('lubrificacoes')
-          .where('prefeituraId', '==', prefeituraId)
-          .orderBy('createdAt', 'desc')
-          .limit(limit)
-          .get(),
-        this.db()
-          .collection('reabastecimentos')
-          .where('prefeituraId', '==', prefeituraId)
-          .orderBy('createdAt', 'desc')
-          .limit(limit)
-          .get(),
+      const [abDocs, lubDocs, reaDocs] = await Promise.all([
+        fetchPrefeituraDocs<RawDoc & { createdAt: string }>(
+          this.db().collection('abastecimentos'),
+          prefeituraId,
+          { order: 'desc', limit },
+        ),
+        fetchPrefeituraDocs<RawDoc & { createdAt: string }>(
+          this.db().collection('lubrificacoes'),
+          prefeituraId,
+          { order: 'desc', limit },
+        ),
+        fetchPrefeituraDocs<RawDoc & { createdAt: string }>(
+          this.db().collection('reabastecimentos'),
+          prefeituraId,
+          { order: 'desc', limit },
+        ),
       ]);
-
-      const abDocs = abSnap.docs.map((d) => d.data());
-      const lubDocs = lubSnap.docs.map((d) => d.data());
-      const reaDocs = reaSnap.docs.map((d) => d.data());
 
       const allEquipmentIds = [
         ...new Set(

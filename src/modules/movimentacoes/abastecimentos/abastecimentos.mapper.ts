@@ -55,11 +55,13 @@ export function mapAbastecimento(doc: Doc): Abastecimento {
   const origem: OrigemAbastecimento =
     doc.origem === 'comboio' ? 'comboio' : 'posto';
   const leituraUnidade: UnidadeLeitura =
-    doc.leituraUnidade === 'h' || (origem === 'comboio' && doc.leituraUnidade == null)
+    doc.leituraUnidade === 'h' ||
+    (origem === 'comboio' && doc.leituraUnidade == null)
       ? 'h'
       : 'km';
   const leitura = num(doc.leitura ?? doc.km ?? doc.horimetro);
-  const valor = origem === 'comboio' ? 0 : parseValor(doc.valorTotal ?? doc.valor);
+  const valor =
+    origem === 'comboio' ? 0 : parseValor(doc.valorTotal ?? doc.valor);
   const local = str(doc.local ?? doc.postoNome);
 
   return {

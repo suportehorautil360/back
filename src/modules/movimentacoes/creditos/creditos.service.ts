@@ -11,6 +11,7 @@ import {
   fetchEquipmentMap,
   resolveEquipmentIdByPlateOrChassis,
 } from '../shared/equipment.helper';
+import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
 import { CreateCreditoDto } from './dto/create-credito.dto';
 import {
   buildEquipamentoLabel,
@@ -206,14 +207,13 @@ export class CreditosService {
     prefeituraId: string,
   ): Promise<{ data: CreditoListItem[]; message: string }> {
     try {
-      const snap = await this.collection
-        .where('prefeituraId', '==', prefeituraId)
-        .orderBy('createdAt', 'desc')
-        .get();
-
-      const data = snap.docs.map((doc) =>
-        this.mapToListItem(doc.data() as CreditoDoc),
+      const docs = await fetchPrefeituraDocs<CreditoDoc>(
+        this.collection,
+        prefeituraId,
+        { order: 'desc' },
       );
+
+      const data = docs.map((doc) => this.mapToListItem(doc));
 
       return { data, message: 'Créditos buscados com sucesso!' };
     } catch (error) {

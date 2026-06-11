@@ -15,11 +15,8 @@ import {
   fetchEquipmentMap,
   resolveEquipmentIdByPlateOrChassis,
 } from '../shared/equipment.helper';
-import {
-  formatDateTime,
-  parseDateEnd,
-  parseDateStart,
-} from '../shared/date.helper';
+import { formatDateTime } from '../shared/date.helper';
+import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
 import { reverseGeocode } from '../shared/reverse-geocode.helper';
 import { LubrificacaoDoc, LubrificacaoListItem } from './lubrificacoes.types';
 
@@ -94,27 +91,16 @@ export class LubrificacoesService {
     endDate?: string,
   ): Promise<{ data: LubrificacaoListItem[]; message: string }> {
     try {
-      let query = this.collection
-        .where('prefeituraId', '==', prefeituraId)
-        .orderBy('createdAt', 'desc');
+      const docs = await fetchPrefeituraDocs<LubrificacaoDoc>(
+        this.collection,
+        prefeituraId,
+        { startDate, endDate, order: 'desc' },
+      );
 
-      if (startDate) {
-        const start = parseDateStart(startDate, 'startDate');
-        query = query.where('createdAt', '>=', start.toISOString());
-      }
-
-      if (endDate) {
-        const end = parseDateEnd(endDate, 'endDate');
-        query = query.where('createdAt', '<=', end.toISOString());
-      }
-
-      const snap = await query.get();
-
-      if (snap.empty) {
+      if (docs.length === 0) {
         return { data: [], message: 'Lubrificações buscadas com sucesso!' };
       }
 
-      const docs = snap.docs.map((doc) => doc.data() as LubrificacaoDoc);
       const uniqueEquipmentIds = [
         ...new Set(docs.map((doc) => doc.equipmentId).filter(Boolean)),
       ];

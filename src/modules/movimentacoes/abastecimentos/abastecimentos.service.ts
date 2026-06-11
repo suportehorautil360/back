@@ -20,11 +20,8 @@ import {
   resolveEquipmentIdByPlateOrChassis,
 } from '../shared/equipment.helper';
 import { ajustarSaldoTanque } from '../shared/tank-saldo.helper';
-import {
-  formatDateTime,
-  parseDateEnd,
-  parseDateStart,
-} from '../shared/date.helper';
+import { formatDateTime } from '../shared/date.helper';
+import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
 import { reverseGeocode } from '../shared/reverse-geocode.helper';
 
 export interface AbastecimentoDoc {
@@ -138,27 +135,15 @@ export class AbastecimentosService {
   /** Lista os abastecimentos da prefeitura formatados para a tela. */
   async listar(prefeituraId: string, startDate?: string, endDate?: string) {
     try {
-      let query = this.collection
-        .where('prefeituraId', '==', prefeituraId)
-        .orderBy('createdAt', 'desc');
+      const docs = await fetchPrefeituraDocs<AbastecimentoDoc>(
+        this.collection,
+        prefeituraId,
+        { startDate, endDate, order: 'desc' },
+      );
 
-      if (startDate) {
-        const start = parseDateStart(startDate, 'startDate');
-        query = query.where('createdAt', '>=', start.toISOString());
-      }
-
-      if (endDate) {
-        const end = parseDateEnd(endDate, 'endDate');
-        query = query.where('createdAt', '<=', end.toISOString());
-      }
-
-      const snap = await query.get();
-
-      if (snap.empty) {
+      if (docs.length === 0) {
         return { data: [], message: 'Abastecimentos buscados com sucesso!' };
       }
-
-      const docs = snap.docs.map((d) => d.data() as AbastecimentoDoc);
 
       const uniqueEquipmentIds = [
         ...new Set(docs.map((d) => d.equipmentId).filter(Boolean)),
