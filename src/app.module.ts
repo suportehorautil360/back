@@ -26,6 +26,7 @@ import { ParceirosModule } from './modules/parceiros/parceiros.module';
 import { FinanceiroModule } from './modules/financeiro/financeiro.module';
 import { MailModule } from './modules/mail/mail.module';
 import { AlertasModule } from './modules/alertas/alertas.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { AlertasModule } from './modules/alertas/alertas.module';
     FinanceiroModule,
     MailModule,
     AlertasModule,
+    UploadsModule,
     // ... outros módulos
   ],
   controllers: [],
