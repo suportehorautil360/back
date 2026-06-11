@@ -7,6 +7,7 @@ import { FirebaseService } from '../../../config/firebase.service';
 import { AbastecimentoDoc } from '../abastecimentos/abastecimentos.service';
 import { fetchEquipmentMap } from '../shared/equipment.helper';
 import { parseDateEnd, parseDateStart } from '../shared/date.helper';
+import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
 import type {
   AbastecimentoConsumoInput,
   ConsumoCustoPayload,
@@ -48,19 +49,19 @@ export class ConsumoCustoService {
         endDate: endDate ?? null,
       };
 
-      const snap = await this.abastecimentosCollection
-        .where('prefeituraId', '==', prefeituraId)
-        .orderBy('createdAt', 'asc')
-        .get();
+      const docs = await fetchPrefeituraDocs<AbastecimentoDoc>(
+        this.abastecimentosCollection,
+        prefeituraId,
+        { order: 'asc' },
+      );
 
-      if (snap.empty) {
+      if (docs.length === 0) {
         return {
           data: buildConsumoCustoPayload([], periodo),
           message: 'Consumo e custo buscados com sucesso!',
         };
       }
 
-      const docs = snap.docs.map((doc) => doc.data() as AbastecimentoDoc);
       const grouped = new Map<string, AbastecimentoConsumoInput[]>();
 
       for (const doc of docs) {

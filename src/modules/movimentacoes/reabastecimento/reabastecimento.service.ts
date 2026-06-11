@@ -5,11 +5,8 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../../config/firebase.service';
-import {
-  formatDateTime,
-  parseDateEnd,
-  parseDateStart,
-} from '../shared/date.helper';
+import { formatDateTime } from '../shared/date.helper';
+import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
 import { ajustarSaldoTanque } from '../shared/tank-saldo.helper';
 import {
   CreateReabastecimentoDto,
@@ -96,24 +93,13 @@ export class ReabastecimentoService {
     endDate?: string,
   ): Promise<{ data: ReabastecimentoListItem[]; message: string }> {
     try {
-      let query = this.collection
-        .where('prefeituraId', '==', prefeituraId)
-        .orderBy('createdAt', 'desc');
-
-      if (startDate) {
-        const start = parseDateStart(startDate, 'startDate');
-        query = query.where('createdAt', '>=', start.toISOString());
-      }
-
-      if (endDate) {
-        const end = parseDateEnd(endDate, 'endDate');
-        query = query.where('createdAt', '<=', end.toISOString());
-      }
-
-      const snap = await query.get();
-      const data = snap.docs.map((doc) =>
-        this.mapToListItem(doc.data() as ReabastecimentoDoc),
+      const docs = await fetchPrefeituraDocs<ReabastecimentoDoc>(
+        this.collection,
+        prefeituraId,
+        { startDate, endDate, order: 'desc' },
       );
+
+      const data = docs.map((doc) => this.mapToListItem(doc));
 
       return { data, message: 'Reabastecimentos buscados com sucesso!' };
     } catch (error) {
