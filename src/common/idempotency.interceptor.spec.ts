@@ -43,7 +43,10 @@ describe('IdempotencyInterceptor', () => {
     expect(r).toEqual({ data: 'novo' });
     expect(doc.create).toHaveBeenCalled();
     expect(doc.set).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 'concluido', resposta: { data: 'novo' } }),
+      expect.objectContaining({
+        status: 'concluido',
+        resposta: { data: 'novo' },
+      }),
       { merge: true },
     );
   });
@@ -80,7 +83,9 @@ describe('IdempotencyInterceptor', () => {
   it('falha do handler libera a chave e propaga o erro', async () => {
     const { firebase, doc } = firebaseMock();
     const interceptor = new IdempotencyInterceptor(firebase);
-    const next: CallHandler = { handle: () => throwError(() => new Error('boom')) };
+    const next: CallHandler = {
+      handle: () => throwError(() => new Error('boom')),
+    };
     await expect(
       lastValueFrom(
         interceptor.intercept(ctxCom({ 'idempotency-key': 'abc' }), next),

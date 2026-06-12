@@ -7,6 +7,7 @@ import {
   Param,
   Post,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiInternalServerErrorResponse,
@@ -22,6 +23,7 @@ import { AejService } from './aej.service';
 import { CreateTimeRecordDto } from './dto/create-time-record.dto';
 import { UpdateTimeRecordDto } from './dto/update-time-record.dto';
 import { ReprovarTimeRecordDto } from './dto/reprovar-time-record.dto';
+import { IdempotencyInterceptor } from '../../common/idempotency.interceptor';
 
 @ApiTags('time-records')
 @Controller('time-records')
@@ -70,6 +72,7 @@ export class TimeRecordsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: 'Registrar uma batida de ponto (com foto)' })
   @ApiInternalServerErrorResponse({
     description: 'Falha ao registrar o ponto.',

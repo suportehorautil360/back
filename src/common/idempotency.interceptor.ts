@@ -54,7 +54,8 @@ export class IdempotencyInterceptor implements NestInterceptor {
       );
     }
     try {
-      const resposta = await lastValueFrom(next.handle());
+      // `handle()` é Observable<any> no Nest; tratamos como unknown por segurança.
+      const resposta: unknown = await lastValueFrom(next.handle());
       await ref.set(
         { status: 'concluido', resposta: resposta ?? null },
         { merge: true },
