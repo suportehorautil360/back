@@ -304,6 +304,8 @@ Campos gerados: `id`, `createdAt`.
 
 Timeline **unificada**: abastecimentos + lubrificações + reabastecimentos.
 
+Documentação detalhada (campos, summary, tipos, integração front): **[historico-api.md](./historico-api.md)**.
+
 ### GET `/historico/:prefeituraId`
 
 **Query params:**
