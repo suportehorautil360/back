@@ -31,11 +31,26 @@ export class CreateReabastecimentoDto {
   @IsIn(REABASTECIMENTO_SOURCE_TYPES)
   sourceType!: ReabastecimentoSourceType;
 
+  @ApiProperty({
+    description:
+      'Id do comboio (equipamento tipo Comboio) cujo tanque recebe a carga.',
+  })
+  @IsString()
+  @IsNotEmpty()
+  comboioId!: string;
+
   @ApiProperty({ description: 'Received liters. Must be greater than zero.' })
   @Type(() => Number)
   @IsNumber()
   @Min(0.000001)
   receivedLiters!: number;
+
+  @ApiPropertyOptional({
+    description: 'Id do funcionário (comboista) que registrou a carga.',
+  })
+  @IsOptional()
+  @IsString()
+  funcionarioId?: string;
 
   @ApiPropertyOptional({
     description: 'Fiscal note number. Optional in the app flow.',

@@ -7,12 +7,14 @@ import {
   Param,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { EquipamentosService } from './equipamentos.service';
 import { CreateEquipamentoDto } from './dto/create-equipamento.dto';
 import { UpdateEquipamentoDto } from './dto/update-equipamento.dto';
 import { CompleteRevisaoEquipDto } from './dto/complete-revisao-equip.dto';
+import { ComboistaGuard } from '../../common/comboista.guard';
 
 @ApiTags('equipamentos')
 @Controller('equipamentos')
@@ -43,6 +45,26 @@ export class EquipamentosController {
   @ApiParam({ name: 'id', description: 'ID do equipamento' })
   async findOne(@Param('id') id: string) {
     return this.equipamentosService.findById(id);
+  }
+
+  @Get('comboios/:prefeituraId/:motoristaId')
+  @UseGuards(ComboistaGuard)
+  @ApiOperation({
+    summary: 'Listar comboios em que o funcionário é condutor (com tanque)',
+  })
+  @ApiParam({ name: 'prefeituraId', description: 'ID da prefeitura' })
+  @ApiParam({
+    name: 'motoristaId',
+    description: 'ID do funcionário (condutor)',
+  })
+  async findComboios(
+    @Param('prefeituraId') prefeituraId: string,
+    @Param('motoristaId') motoristaId: string,
+  ) {
+    return this.equipamentosService.findComboiosByMotorista(
+      prefeituraId,
+      motoristaId,
+    );
   }
 
   @Get(':prefeituraId')

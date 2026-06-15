@@ -8,10 +8,12 @@ import {
   Param,
   Post,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateAbastecimentoDto } from './dto/create-abastecimento.dto';
 import { AbastecimentosService } from './abastecimentos.service';
+import { IdempotencyInterceptor } from '../../../common/idempotency.interceptor';
 
 @ApiTags('abastecimentos')
 @Controller('abastecimentos')
@@ -20,6 +22,7 @@ export class AbastecimentosController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: 'Criar abastecimento' })
   async create(@Body() dto: CreateAbastecimentoDto) {
     const data = await this.service.create(dto);

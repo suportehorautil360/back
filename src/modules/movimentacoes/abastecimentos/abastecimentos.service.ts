@@ -19,7 +19,7 @@ import {
   fetchEquipmentMap,
   resolveEquipmentIdByPlateOrChassis,
 } from '../shared/equipment.helper';
-import { ajustarSaldoTanque } from '../shared/tank-saldo.helper';
+import { debitarTanqueTx } from '../shared/tank-saldo.helper';
 import { formatDateTime } from '../shared/date.helper';
 import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
 import { reverseGeocode } from '../shared/reverse-geocode.helper';
@@ -37,6 +37,10 @@ export interface AbastecimentoDoc {
   pricePerLiter?: number | null;
   total?: number | null;
   postoId?: string;
+  /** Comboio cujo tanque foi debitado (quando o combustível sai do comboio). */
+  comboioId?: string;
+  /** Funcionário (comboista) que registrou o abastecimento. */
+  funcionarioId?: string;
   latitude: number;
   longitude: number;
   createdAt: string;
@@ -95,6 +99,17 @@ export class AbastecimentosService {
     );
 
     const id = randomUUID();
+    const postoId = input.postoId?.trim() || undefined;
+    const comboioId = input.comboioId?.trim() || undefined;
+
+    // Sem posto, o combustível sai do comboio: precisamos saber qual tanque
+    // debitar (e travar saldo negativo).
+    if (!postoId && !comboioId) {
+      throw new BadRequestException(
+        'Informe o comboio (comboioId) do qual o combustível foi retirado.',
+      );
+    }
+
     const doc: AbastecimentoDoc = {
       id,
       prefeituraId: input.prefeituraId,
@@ -107,24 +122,30 @@ export class AbastecimentosService {
       meterPhoto: input.meterPhoto,
       pricePerLiter: pricing.pricePerLiter,
       total: pricing.total,
-      postoId: input.postoId?.trim() || undefined,
+      postoId,
+      comboioId,
+      funcionarioId: input.funcionarioId?.trim() || undefined,
       latitude: input.latitude,
       longitude: input.longitude,
       createdAt: new Date().toISOString(),
     };
 
+    const firestore = this.firebaseService.getFirestore();
     try {
-      await this.collection.doc(id).set(doc);
-      // Abastecimento a partir do comboio (sem posto) desconta do tanque.
-      if (!doc.postoId) {
-        await ajustarSaldoTanque(
-          this.firebaseService.getFirestore(),
-          input.prefeituraId,
-          -liters,
-        );
+      if (postoId) {
+        // Posto credenciado: o combustível não sai do comboio, não mexe no tanque.
+        await this.collection.doc(id).set(doc);
+      } else {
+        // Sai do comboio: grava o registro e debita o tanque na mesma transação
+        // (rejeita se faltar saldo — o tanque nunca fica negativo).
+        await firestore.runTransaction(async (tx) => {
+          await debitarTanqueTx(tx, firestore, comboioId as string, liters);
+          tx.set(this.collection.doc(id), doc);
+        });
       }
       return doc;
     } catch (error) {
+      if (error instanceof BadRequestException) throw error;
       console.error('Erro ao criar abastecimento:', error);
       throw new InternalServerErrorException(
         'Não foi possível registrar o abastecimento.',
@@ -273,6 +294,8 @@ export class AbastecimentosService {
       currentReading: doc.currentReading,
       measurementType: doc.measurementType,
       postoId: doc.postoId ?? null,
+      comboioId: doc.comboioId ?? null,
+      funcionarioId: doc.funcionarioId ?? null,
       meterPhoto: doc.meterPhoto ?? null,
       local,
       createdAt: doc.createdAt,

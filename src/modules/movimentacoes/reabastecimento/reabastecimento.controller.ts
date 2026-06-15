@@ -7,6 +7,7 @@ import {
   Param,
   Post,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiOkResponse,
@@ -20,6 +21,7 @@ import {
   ReabastecimentoListItem,
   ReabastecimentoService,
 } from './reabastecimento.service';
+import { IdempotencyInterceptor } from '../../../common/idempotency.interceptor';
 
 @ApiTags('reabastecimentos')
 @Controller('reabastecimentos')
@@ -28,6 +30,7 @@ export class ReabastecimentoController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: 'Criar reabastecimento' })
   async create(@Body() dto: CreateReabastecimentoDto) {
     const data = await this.service.create(dto);
