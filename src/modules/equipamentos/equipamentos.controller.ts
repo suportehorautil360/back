@@ -7,12 +7,14 @@ import {
   Param,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { EquipamentosService } from './equipamentos.service';
 import { CreateEquipamentoDto } from './dto/create-equipamento.dto';
 import { UpdateEquipamentoDto } from './dto/update-equipamento.dto';
 import { CompleteRevisaoEquipDto } from './dto/complete-revisao-equip.dto';
+import { ComboistaGuard } from '../../common/comboista.guard';
 
 @ApiTags('equipamentos')
 @Controller('equipamentos')
@@ -46,6 +48,7 @@ export class EquipamentosController {
   }
 
   @Get('comboios/:prefeituraId/:motoristaId')
+  @UseGuards(ComboistaGuard)
   @ApiOperation({
     summary: 'Listar comboios em que o funcionário é condutor (com tanque)',
   })

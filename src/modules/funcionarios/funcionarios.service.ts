@@ -179,6 +179,7 @@ export class FuncionariosService {
           tipo: 'operador',
           cargo: funcionario.cargo,
           prefeituraId: funcionario.prefeituraId,
+          funcionarioId: funcionario.id,
         },
         {
           secret: this.getJwtSecret(),
