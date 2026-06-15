@@ -17,21 +17,10 @@ export async function resolveEquipmentIdByPlateOrChassis(
     return matchesPlateOrChassis(raw, plateOrChassis);
   });
 
+  // Só busca dentro da empresa do operador. Não fazemos varredura global: além
+  // de ser um scan cross-tenant desnecessário, vazaria o prefeituraId de outra
+  // empresa na mensagem de erro. Não encontrou aqui = não encontrado.
   if (!match) {
-    const globalSnap = await equipamentosCollection.get();
-    const globalMatch = globalSnap.docs.find((doc) => {
-      const raw = doc.data() as Record<string, unknown>;
-      return matchesPlateOrChassis(raw, plateOrChassis);
-    });
-
-    if (globalMatch) {
-      const raw = globalMatch.data() as { prefeituraId?: string };
-      const equipmentPrefeituraId = String(raw.prefeituraId ?? '').trim();
-      throw new NotFoundException(
-        `Equipamento encontrado, mas não está cadastrado para esta empresa. Prefeitura do equipamento: ${equipmentPrefeituraId || 'não informada'}.`,
-      );
-    }
-
     throw new NotFoundException(
       'Equipamento não encontrado ou não cadastrado para esta empresa.',
     );
