@@ -35,8 +35,9 @@ export async function fetchPrefeituraDocs<T extends { createdAt: string }>(
   }
 
   const order = options.order ?? 'desc';
+  // Tolera doc legado/incompleto sem `createdAt` (evita quebrar o sort/endpoint).
   items.sort((a, b) => {
-    const diff = a.createdAt.localeCompare(b.createdAt);
+    const diff = (a.createdAt ?? '').localeCompare(b.createdAt ?? '');
     return order === 'desc' ? -diff : diff;
   });
 
