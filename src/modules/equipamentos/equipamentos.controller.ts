@@ -45,6 +45,25 @@ export class EquipamentosController {
     return this.equipamentosService.findById(id);
   }
 
+  @Get('comboios/:prefeituraId/:motoristaId')
+  @ApiOperation({
+    summary: 'Listar comboios em que o funcionário é condutor (com tanque)',
+  })
+  @ApiParam({ name: 'prefeituraId', description: 'ID da prefeitura' })
+  @ApiParam({
+    name: 'motoristaId',
+    description: 'ID do funcionário (condutor)',
+  })
+  async findComboios(
+    @Param('prefeituraId') prefeituraId: string,
+    @Param('motoristaId') motoristaId: string,
+  ) {
+    return this.equipamentosService.findComboiosByMotorista(
+      prefeituraId,
+      motoristaId,
+    );
+  }
+
   @Get(':prefeituraId')
   @ApiOperation({ summary: 'Listar equipamentos de uma prefeitura' })
   @ApiParam({ name: 'prefeituraId', description: 'ID da prefeitura' })

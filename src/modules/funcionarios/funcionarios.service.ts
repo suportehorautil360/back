@@ -69,6 +69,35 @@ export class FuncionariosService {
     return this.firestore.collection(COLECAO);
   }
 
+  /**
+   * O funcionário é condutor responsável de pelo menos um comboio da prefeitura?
+   * Gate do PWA do comboista — só condutores entram. Filtra em memória (sem
+   * exigir índice composto prefeituraId + array-contains).
+   */
+  private async ehCondutorDeComboio(
+    prefeituraId: string,
+    funcionarioId: string,
+  ): Promise<boolean> {
+    if (!prefeituraId || !funcionarioId) return false;
+    const snap = await this.firestore
+      .collection('equipamentos')
+      .where('prefeituraId', '==', prefeituraId)
+      .get();
+    return snap.docs.some((d) => {
+      const data = d.data() as {
+        tipo?: unknown;
+        condutoresResponsaveis?: unknown;
+      };
+      const condutores = Array.isArray(data.condutoresResponsaveis)
+        ? data.condutoresResponsaveis
+        : [];
+      return (
+        String(data.tipo).toLowerCase() === 'comboio' &&
+        condutores.includes(funcionarioId)
+      );
+    });
+  }
+
   private getJwtSecret(): string {
     const jwtSecret = this.configService.get<string>('JWT_SECRET') ?? '';
     if (!jwtSecret) {
@@ -129,6 +158,18 @@ export class FuncionariosService {
         prefeituraId:
           typeof data.prefeituraId === 'string' ? data.prefeituraId : '',
       };
+
+      // Só condutores responsáveis de algum comboio acessam o PWA do comboista.
+      const ehCondutor = await this.ehCondutorDeComboio(
+        funcionario.prefeituraId,
+        funcionario.id,
+      );
+      if (!ehCondutor) {
+        return {
+          ok: false,
+          msg: 'Você não está cadastrado como condutor de nenhum comboio. Procure o gestor.',
+        };
+      }
 
       const expiresIn =
         this.configService.get<string>('JWT_EXPIRES_IN') ?? '24h';

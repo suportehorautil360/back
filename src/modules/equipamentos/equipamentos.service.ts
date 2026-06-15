@@ -9,6 +9,29 @@ import { randomUUID } from 'node:crypto';
 import { CreateEquipamentoDto } from './dto/create-equipamento.dto';
 import { UpdateEquipamentoDto } from './dto/update-equipamento.dto';
 import { CompleteRevisaoEquipDto } from './dto/complete-revisao-equip.dto';
+import {
+  ensureTankForComboio,
+  tankStatus,
+} from '../movimentacoes/shared/tank-saldo.helper';
+
+/** Equipamento é comboio? (tipo `Comboio`, case-insensitive). */
+function ehComboio(tipo: unknown): boolean {
+  return typeof tipo === 'string' && tipo.trim().toLowerCase() === 'comboio';
+}
+
+function txt(valor: unknown): string {
+  return typeof valor === 'string' ? valor : '';
+}
+
+function nmr(valor: unknown): number {
+  const n = Number(valor);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/** Type guard que estreita para `unknown[]` (Array.isArray estreita para any[]). */
+function ehArray(valor: unknown): valor is unknown[] {
+  return Array.isArray(valor);
+}
 
 @Injectable()
 export class EquipamentosService {
@@ -51,6 +74,10 @@ export class EquipamentosService {
         createdAt: new Date().toISOString(),
       };
       await this.collection.doc().set(novo);
+      // Comboio é um equipamento com tanque próprio: garante o doc em `tanks`.
+      if (ehComboio(novo.tipo)) {
+        await ensureTankForComboio(this.firebaseService.getFirestore(), novo);
+      }
       return { data: novo, message: 'Equipamento criado com sucesso!' };
     } catch (error) {
       console.error('Erro ao salvar equipamento:', error);
@@ -87,9 +114,81 @@ export class EquipamentosService {
     }
   }
 
+  /**
+   * Comboios (equipamentos `tipo: Comboio`) da prefeitura em que o funcionário
+   * é condutor responsável — com o tanque resolvido. Alimenta o seletor de
+   * comboio do PWA do comboista (cada turno escolhe qual comboio opera).
+   */
+  async findComboiosByMotorista(prefeituraId: string, motoristaId: string) {
+    try {
+      const ref = await this.collection
+        .where('prefeituraId', '==', prefeituraId)
+        .get();
+
+      const firestore = this.firebaseService.getFirestore();
+      const comboios = ref.docs
+        .map((doc): Record<string, unknown> & { id: string } => {
+          const raw: Record<string, unknown> = doc.data();
+          const id = typeof raw.id === 'string' ? raw.id : doc.id;
+          return { ...raw, id };
+        })
+        .filter((e) => {
+          const condutores = ehArray(e.condutoresResponsaveis)
+            ? e.condutoresResponsaveis
+            : [];
+          return (
+            txt(e.tipo).toLowerCase() === 'comboio' &&
+            condutores.includes(motoristaId)
+          );
+        });
+
+      const data = await Promise.all(
+        comboios.map(async (e) => {
+          const comboioId = e.id;
+          const tankSnap = await firestore
+            .collection('tanks')
+            .doc(comboioId)
+            .get();
+          const t: Record<string, unknown> = tankSnap.data() ?? {};
+          const capacity =
+            t.capacity !== undefined
+              ? nmr(t.capacity)
+              : nmr(e.capacidadeTanque);
+          const currentVolume = nmr(t.currentVolume);
+          const { percentage, status } = tankStatus(capacity, currentVolume);
+          const nome = txt(e.descricao) || txt(e.modelo) || 'Comboio';
+          return {
+            id: comboioId,
+            descricao: nome,
+            placa: txt(e.placa),
+            chassis: txt(e.chassis),
+            tank: {
+              name: nome,
+              fuelType: txt(e.combustivel),
+              capacity,
+              currentVolume,
+              percentage,
+              status,
+              veiculoModelo: txt(e.modelo) || txt(e.descricao),
+              veiculoPlaca: txt(e.placa),
+            },
+          };
+        }),
+      );
+
+      return { data, message: 'Comboios do condutor buscados com sucesso!' };
+    } catch (error) {
+      console.error('Erro ao buscar comboios do condutor:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível buscar os comboios do condutor.',
+      );
+    }
+  }
+
   async updateById(id: string, dto: UpdateEquipamentoDto) {
     try {
       const doc = await this.findDocByField(id);
+      const atual: Record<string, unknown> = doc.data() ?? {};
 
       // Só grava os campos informados (evita sobrescrever com undefined).
       const patch: Record<string, unknown> = {
@@ -100,6 +199,16 @@ export class EquipamentosService {
       }
 
       await this.collection.doc(doc.id).update(patch);
+
+      // Mantém o tanque do comboio sincronizado (capacidade/dados do veículo).
+      const merged: Record<string, unknown> = {
+        ...atual,
+        ...patch,
+        id: typeof atual.id === 'string' ? atual.id : doc.id,
+      };
+      if (ehComboio(merged.tipo)) {
+        await ensureTankForComboio(this.firebaseService.getFirestore(), merged);
+      }
       return { data: {}, message: 'Equipamento atualizado com sucesso!' };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -174,4 +283,3 @@ export class EquipamentosService {
     }
   }
 }
-

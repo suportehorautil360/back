@@ -80,6 +80,22 @@ export class CreateAbastecimentoDto {
   @IsString()
   postoId?: string;
 
+  @ApiPropertyOptional({
+    description:
+      'Id do comboio (equipamento tipo Comboio) cujo tanque é debitado. ' +
+      'Obrigatório quando não há postoId (combustível sai do comboio).',
+  })
+  @IsOptional()
+  @IsString()
+  comboioId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Id do funcionário (comboista) que registrou o abastecimento.',
+  })
+  @IsOptional()
+  @IsString()
+  funcionarioId?: string;
+
   @ApiProperty({ description: 'Latitude capturada automaticamente no app.' })
   @Type(() => Number)
   @IsNumber()
