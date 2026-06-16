@@ -121,7 +121,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
 
     // Daqui em diante a batida já foi gravada: nunca apagar a chave nem
     // propagar erro de persistência — senão um retry duplica o registro.
-    const enxuta = this.semFoto(resposta);
+    const enxuta = this.semBinarios(resposta);
     try {
       await ref.set(
         { status: 'concluido', resposta: enxuta ?? null },
@@ -140,15 +140,20 @@ export class IdempotencyInterceptor implements NestInterceptor {
   }
 
   /**
-   * Cópia da resposta sem a selfie (base64 enorme + PII). O retry do outbox
-   * descarta o corpo, então o replay não precisa da foto.
+   * Cópia da resposta sem os binários pesados (selfie do ponto e anexo da
+   * solicitação — base64 enorme + PII). Sem isso, a resposta gravada poderia
+   * estourar o limite de 1MB do doc no Firestore. O retry do outbox descarta o
+   * corpo, então o replay não precisa deles.
    */
-  private semFoto(resposta: unknown): unknown {
+  private semBinarios(resposta: unknown): unknown {
     if (!resposta || typeof resposta !== 'object') return resposta;
     const data = (resposta as { data?: unknown }).data;
-    if (!data || typeof data !== 'object' || !('photo' in data)) {
-      return resposta;
-    }
-    return { ...resposta, data: { ...data, photo: null } };
+    if (!data || typeof data !== 'object') return resposta;
+    const d = data as Record<string, unknown>;
+    if (!('photo' in d) && !('anexoDataUrl' in d)) return resposta;
+    const limpo: Record<string, unknown> = { ...d };
+    if ('photo' in limpo) limpo.photo = null;
+    if ('anexoDataUrl' in limpo) limpo.anexoDataUrl = null;
+    return { ...resposta, data: limpo };
   }
 }

@@ -37,11 +37,20 @@ export class TimeRecordsController {
   @Get('afd/:prefeituraId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Gerar o AFD (Arquivo Fonte de Dados) da prefeitura — Portaria 671',
+    summary:
+      'Gerar o AFD (Arquivo Fonte de Dados) da prefeitura — Portaria 671',
   })
   @ApiParam({ name: 'prefeituraId', description: 'ID da prefeitura' })
-  @ApiQuery({ name: 'de', required: false, description: 'Data inicial YYYY-MM-DD' })
-  @ApiQuery({ name: 'ate', required: false, description: 'Data final YYYY-MM-DD' })
+  @ApiQuery({
+    name: 'de',
+    required: false,
+    description: 'Data inicial YYYY-MM-DD',
+  })
+  @ApiQuery({
+    name: 'ate',
+    required: false,
+    description: 'Data final YYYY-MM-DD',
+  })
   @ApiOkResponse({ description: 'AFD gerado (conteúdo + nome do arquivo).' })
   async gerarAfd(
     @Param('prefeituraId') prefeituraId: string,
@@ -58,8 +67,16 @@ export class TimeRecordsController {
     summary: 'Gerar o AEJ (Arquivo Eletrônico de Jornada) — Portaria 671',
   })
   @ApiParam({ name: 'prefeituraId', description: 'ID da prefeitura' })
-  @ApiQuery({ name: 'de', required: false, description: 'Data inicial YYYY-MM-DD' })
-  @ApiQuery({ name: 'ate', required: false, description: 'Data final YYYY-MM-DD' })
+  @ApiQuery({
+    name: 'de',
+    required: false,
+    description: 'Data inicial YYYY-MM-DD',
+  })
+  @ApiQuery({
+    name: 'ate',
+    required: false,
+    description: 'Data final YYYY-MM-DD',
+  })
   @ApiOkResponse({ description: 'AEJ gerado (conteúdo + nome do arquivo).' })
   async gerarAej(
     @Param('prefeituraId') prefeituraId: string,
@@ -83,6 +100,7 @@ export class TimeRecordsController {
 
   @Post('update/:id')
   @HttpCode(HttpStatus.OK)
+  @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({
     summary:
       'Solicitar correção de horário (cria um ajuste; não altera a batida original)',
@@ -99,9 +117,13 @@ export class TimeRecordsController {
   @Post(':id/aprovar')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Aprovar um AJUSTE/cancelamento de ponto, aplicando-o à folha (RH)',
+    summary:
+      'Aprovar um AJUSTE/cancelamento de ponto, aplicando-o à folha (RH)',
   })
-  @ApiParam({ name: 'id', description: 'ID do registro de ajuste/cancelamento' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do registro de ajuste/cancelamento',
+  })
   @ApiOkResponse({ description: 'Ajuste aplicado.' })
   @ApiInternalServerErrorResponse({ description: 'Falha ao aprovar o ajuste.' })
   async aprovar(@Param('id') id: string) {
@@ -113,7 +135,10 @@ export class TimeRecordsController {
   @ApiOperation({
     summary: 'Reprovar um AJUSTE/cancelamento de ponto, com motivo (RH)',
   })
-  @ApiParam({ name: 'id', description: 'ID do registro de ajuste/cancelamento' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do registro de ajuste/cancelamento',
+  })
   @ApiOkResponse({ description: 'Ajuste reprovado.' })
   @ApiInternalServerErrorResponse({
     description: 'Falha ao reprovar o ajuste.',
