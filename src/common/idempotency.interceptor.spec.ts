@@ -193,6 +193,33 @@ describe('IdempotencyInterceptor', () => {
     );
   });
 
+  it('grava a resposta sem o anexo (anexoDataUrl: null) — solicitações', async () => {
+    const { firebase, doc } = firebaseMock();
+    const interceptor = new IdempotencyInterceptor(firebase);
+    const next: CallHandler = {
+      handle: () =>
+        of({
+          data: { id: 's1', anexoDataUrl: 'data:application/pdf;base64,yyyy' },
+          message: 'ok',
+        }),
+    };
+    const r = await lastValueFrom(
+      interceptor.intercept(ctxCom({ 'idempotency-key': CHAVE }), next),
+    );
+    // Resposta ao cliente completa; só a cópia gravada perde o anexo pesado.
+    expect(r).toEqual({
+      data: { id: 's1', anexoDataUrl: 'data:application/pdf;base64,yyyy' },
+      message: 'ok',
+    });
+    expect(doc.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'concluido',
+        resposta: { data: { id: 's1', anexoDataUrl: null }, message: 'ok' },
+      }),
+      { merge: true },
+    );
+  });
+
   it('falha do set final não derruba a resposta nem libera a chave', async () => {
     const { firebase, doc } = firebaseMock();
     doc.set
