@@ -26,6 +26,13 @@ export class CreateParceiroDto {
   @ApiPropertyOptional({ example: 'Rua, número, bairro' })
   endereco?: string;
 
+  @ApiPropertyOptional({
+    description:
+      'Credencia o parceiro no município (obrigatório para oficina participar do sorteio de OS).',
+    example: 'pref-abc-123',
+  })
+  prefeituraId?: string;
+
   // ----- Posto -----
   @ApiPropertyOptional({ example: 'Ipiranga' })
   bandeira?: string;

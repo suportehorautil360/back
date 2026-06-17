@@ -12,6 +12,10 @@ import {
   TipoParceiro,
 } from './parceiros.types';
 import { CreateParceiroDto } from './dto/create-parceiro.dto';
+import {
+  especialidadeFromOficinaDoc,
+  nomeFromOficinaDoc,
+} from '../os/helpers/especialidade-oficina.helper';
 
 function texto(valor: unknown): string {
   return typeof valor === 'string' ? valor : '';
@@ -125,6 +129,7 @@ export class ParceirosService {
 
     const fs = this.firebaseService.getFirestore();
     const id = randomUUID();
+    const prefeituraId = (dto.prefeituraId ?? '').trim();
     const comum = {
       id,
       razaoSocial,
@@ -140,6 +145,7 @@ export class ParceirosService {
       observacoesFaturamento: (dto.observacoesFaturamento ?? '').trim(),
       status: 'Ativa',
       createdAt: new Date().toISOString(),
+      ...(prefeituraId ? { prefeituraId, parceiroId: id } : {}),
     };
 
     try {
@@ -156,17 +162,22 @@ export class ParceirosService {
           });
       } else {
         const categorias = listaTexto(dto.categoriasServico);
+        const linhasAtuacao = listaTexto(dto.linhasAtuacao);
+        const dadosOficina = {
+          ...comum,
+          linhasAtuacao,
+          categoriasServico: categorias,
+        };
+        const nome = nomeFromOficinaDoc(dadosOficina, razaoSocial);
+        const especialidade = especialidadeFromOficinaDoc(dadosOficina);
         await fs
           .collection('oficinas')
           .doc(id)
           .set({
-            ...comum,
+            ...dadosOficina,
             tipoParceiro: 'oficina',
-            // compat com o overview legado (nome / especialidade):
-            nome: comum.nomeFantasia || razaoSocial,
-            especialidade: categorias.join(', '),
-            linhasAtuacao: listaTexto(dto.linhasAtuacao),
-            categoriasServico: categorias,
+            nome,
+            especialidade: especialidade || categorias.join(', '),
             especificacoes: (dto.especificacoes ?? '').trim(),
           });
       }

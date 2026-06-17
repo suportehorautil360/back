@@ -27,6 +27,8 @@ import { FinanceiroModule } from './modules/financeiro/financeiro.module';
 import { MailModule } from './modules/mail/mail.module';
 import { AlertasModule } from './modules/alertas/alertas.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
+import { OsModule } from './modules/os/os.module';
+import { PlanosPreventivosModule } from './modules/planos-preventivos/planos-preventivos.module';
 
 @Module({
   imports: [
@@ -60,6 +62,8 @@ import { UploadsModule } from './modules/uploads/uploads.module';
     MailModule,
     AlertasModule,
     UploadsModule,
+    OsModule,
+    PlanosPreventivosModule,
     // ... outros módulos
   ],
   controllers: [],
