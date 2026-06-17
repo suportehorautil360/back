@@ -205,6 +205,86 @@ export class FuncionariosService {
     };
   }
 
+  /**
+   * Credenciais para LOGIN OFFLINE do app de campo. Para cada condutor de
+   * comboio da prefeitura, ativo e com senha, devolve o verificador da senha
+   * (`senhaHash` = SHA-256("<cpf>:<senha>")) + dados mínimos de sessão. O app
+   * pré-cacheia isso e valida a senha localmente, sem rede — assim qualquer
+   * condutor loga offline no aparelho (turnos compartilhados), igual ao operador.
+   *
+   * ⚠️ Expõe o hash da senha. É o mesmo modelo do app do operador (que lê do
+   * Firestore), mas via rota. TODO: gatear a rota (auth) e migrar p/ bcrypt.
+   */
+  async credenciaisOffline(prefeituraId: string): Promise<
+    {
+      id: string;
+      cpf: string;
+      loginGerado: string;
+      nome: string;
+      cargo: string;
+      prefeituraId: string;
+      senhaHash: string;
+    }[]
+  > {
+    if (!prefeituraId) return [];
+
+    // 1) Condutores responsáveis de comboios da prefeitura (um Set de ids).
+    const equipSnap = await this.firestore
+      .collection('equipamentos')
+      .where('prefeituraId', '==', prefeituraId)
+      .get();
+    const condutores = new Set<string>();
+    for (const d of equipSnap.docs) {
+      const data = d.data() as {
+        tipo?: unknown;
+        condutoresResponsaveis?: unknown;
+      };
+      if (String(data.tipo).toLowerCase() !== 'comboio') continue;
+      const lista = Array.isArray(data.condutoresResponsaveis)
+        ? data.condutoresResponsaveis
+        : [];
+      for (const id of lista) if (typeof id === 'string') condutores.add(id);
+    }
+    if (condutores.size === 0) return [];
+
+    // 2) Operadores da prefeitura que são condutores, ativos e com senha.
+    const opSnap = await this.collection
+      .where('prefeituraId', '==', prefeituraId)
+      .get();
+    const creds: {
+      id: string;
+      cpf: string;
+      loginGerado: string;
+      nome: string;
+      cargo: string;
+      prefeituraId: string;
+      senhaHash: string;
+    }[] = [];
+    for (const doc of opSnap.docs) {
+      if (!condutores.has(doc.id)) continue;
+      const data = doc.data() as Record<string, unknown>;
+      const senhaHash =
+        typeof data.senhaHash === 'string' ? data.senhaHash : '';
+      if (!senhaHash) continue;
+      const status = typeof data.status === 'string' ? data.status : 'ativo';
+      if (status !== 'ativo') continue;
+      const cpf = limparCpf(typeof data.cpf === 'string' ? data.cpf : '');
+      const nome = typeof data.nome === 'string' ? data.nome : '';
+      const loginDoc =
+        typeof data.loginGerado === 'string' ? data.loginGerado : '';
+      creds.push({
+        id: doc.id,
+        cpf,
+        loginGerado: loginDoc || gerarLogin(nome, cpf),
+        nome,
+        cargo: typeof data.cargo === 'string' ? data.cargo : '',
+        prefeituraId,
+        senhaHash,
+      });
+    }
+    return creds;
+  }
+
   /** Campos do documento (sem createdAt/senha), compartilhado por criar/editar. */
   private basePayload(input: CreateFuncionarioDto) {
     const cpf = limparCpf(input.cpf);
