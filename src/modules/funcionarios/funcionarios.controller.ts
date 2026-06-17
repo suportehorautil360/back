@@ -80,6 +80,18 @@ export class FuncionariosController {
     return this.service.cpfEmUso(prefeituraId, cpf, ignorarId);
   }
 
+  @Get('credenciais-offline/:prefeituraId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Verificadores p/ login OFFLINE do app de campo (condutores da prefeitura)',
+  })
+  @ApiParam({ name: 'prefeituraId' })
+  async credenciaisOffline(@Param('prefeituraId') prefeituraId: string) {
+    const data = await this.service.credenciaisOffline(prefeituraId);
+    return { data, message: 'Credenciais offline.' };
+  }
+
   // --- Rotas com :param ---
 
   @Post(':prefeituraId')
