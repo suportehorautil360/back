@@ -43,6 +43,32 @@ export function isSupportedMeasurementType(
   return value === 'horimetro' || value === 'hodometro';
 }
 
+/**
+ * Maior `currentReading` entre os abastecimentos do mesmo equipamento (já
+ * filtrados por `equipmentId` na query), considerando só a mesma prefeitura e o
+ * mesmo tipo de medição (horímetro/hodômetro não se comparam). `null` se nenhum
+ * — aí não há leitura anterior e qualquer valor é aceito. Pura — testável.
+ */
+export function maiorLeituraRegistrada(
+  docs: {
+    prefeituraId?: string;
+    measurementType?: string;
+    currentReading?: unknown;
+  }[],
+  prefeituraId: string,
+  measurementType: string,
+): number | null {
+  let max: number | null = null;
+  for (const doc of docs) {
+    if (doc.prefeituraId !== prefeituraId) continue;
+    if (doc.measurementType !== measurementType) continue;
+    const r = Number(doc.currentReading);
+    if (!Number.isFinite(r)) continue;
+    if (max === null || r > max) max = r;
+  }
+  return max;
+}
+
 export function parseLiters(value: number): number | null {
   const liters = Number(value);
   if (!Number.isFinite(liters) || liters <= 0) {

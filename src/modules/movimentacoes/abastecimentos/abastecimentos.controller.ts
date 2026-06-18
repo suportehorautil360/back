@@ -29,6 +29,30 @@ export class AbastecimentosController {
     return { data, message: 'Abastecimento criado com sucesso!' };
   }
 
+  @Get('ultima-leitura/:prefeituraId')
+  @ApiOperation({
+    summary: 'Última leitura registrada do equipamento (p/ validar a próxima)',
+  })
+  @ApiParam({ name: 'prefeituraId' })
+  @ApiQuery({ name: 'plateOrChassis', required: true })
+  @ApiQuery({
+    name: 'measurementType',
+    required: true,
+    description: 'horimetro | hodometro',
+  })
+  async ultimaLeitura(
+    @Param('prefeituraId') prefeituraId: string,
+    @Query('plateOrChassis') plateOrChassis: string,
+    @Query('measurementType') measurementType: string,
+  ) {
+    const data = await this.service.ultimaLeituraPorPlaca(
+      prefeituraId,
+      plateOrChassis,
+      measurementType,
+    );
+    return { data, message: 'Última leitura buscada com sucesso!' };
+  }
+
   @Get(':prefeituraId')
   @ApiOperation({ summary: 'Listar abastecimentos da prefeitura' })
   @ApiParam({ name: 'prefeituraId' })
