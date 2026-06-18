@@ -140,3 +140,57 @@ export async function debitarTanqueTx(
     currentVolume: admin.firestore.FieldValue.increment(-litros),
   });
 }
+
+/**
+ * Soma litros no tanque do comboio (reabastecimento) **dentro de uma transação
+ * já aberta** — lê capacidade + saldo e **trava o estouro da capacidade**: não
+ * deixa encher além do que o tanque comporta. Capacidade ausente/0 = sem limite
+ * (comboio sem `capacidadeTanque` configurado). Em transação do Firestore, as
+ * leituras vêm antes das escritas: chame antes de qualquer `tx.set`/`tx.update`.
+ */
+export async function creditarTanqueTx(
+  tx: Transaction,
+  firestore: Firestore,
+  comboioId: string,
+  litros: number,
+): Promise<void> {
+  if (!comboioId) {
+    throw new BadRequestException(
+      'Comboio não informado para o reabastecimento.',
+    );
+  }
+  if (!Number.isFinite(litros) || litros <= 0) return;
+
+  const ref = tankRef(firestore, comboioId);
+  const snap = await tx.get(ref);
+
+  // Tanque ainda não existe: criar com o volume recebido (sem capacidade a checar).
+  if (!snap.exists) {
+    tx.set(
+      ref,
+      {
+        comboioId,
+        currentVolume: admin.firestore.FieldValue.increment(litros),
+      },
+      { merge: true },
+    );
+    return;
+  }
+
+  const data = snap.data() as { currentVolume?: unknown; capacity?: unknown };
+  const saldo = numero(data.currentVolume);
+  const capacidade = numero(data.capacity);
+
+  // capacidade > 0: trava o estouro. capacidade 0/ausente: sem limite.
+  if (capacidade > 0 && saldo + litros > capacidade) {
+    const cabe = Math.max(0, capacidade - saldo);
+    throw new BadRequestException(
+      `Capacidade do tanque excedida: ${saldo} L no tanque, capacidade ${capacidade} L. ` +
+        `Cabe no máximo ${cabe} L (tentou adicionar ${litros} L).`,
+    );
+  }
+
+  tx.update(ref, {
+    currentVolume: admin.firestore.FieldValue.increment(litros),
+  });
+}
