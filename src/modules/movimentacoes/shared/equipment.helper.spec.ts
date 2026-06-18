@@ -1,5 +1,8 @@
 import { NotFoundException } from '@nestjs/common';
-import { resolveEquipmentIdByPlateOrChassis } from './equipment.helper';
+import {
+  resolveEquipmentByPlateOrChassis,
+  resolveEquipmentIdByPlateOrChassis,
+} from './equipment.helper';
 
 type Row = Record<string, unknown>;
 
@@ -30,5 +33,22 @@ describe('resolveEquipmentIdByPlateOrChassis', () => {
     await expect(
       resolveEquipmentIdByPlateOrChassis(q, 'pref-1', 'ABC-1234'),
     ).rejects.not.toThrow(/Prefeitura do equipamento/);
+  });
+});
+
+describe('resolveEquipmentByPlateOrChassis (id + capacidade)', () => {
+  it('devolve a capacidade do tanque do equipamento', async () => {
+    const q = fakeQuery([
+      { id: 'eq-1', placa: 'ABC-1234', capacidadeTanque: 300 },
+    ]);
+    await expect(
+      resolveEquipmentByPlateOrChassis(q, 'pref-1', 'ABC-1234'),
+    ).resolves.toMatchObject({ id: 'eq-1', capacidadeTanque: 300 });
+  });
+
+  it('capacidade ausente/inválida → 0 (sem limite)', async () => {
+    const q = fakeQuery([{ id: 'eq-1', placa: 'ABC-1234' }]);
+    const r = await resolveEquipmentByPlateOrChassis(q, 'pref-1', 'ABC-1234');
+    expect(r.capacidadeTanque).toBe(0);
   });
 });

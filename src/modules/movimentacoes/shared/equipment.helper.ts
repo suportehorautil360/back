@@ -2,11 +2,22 @@ import { NotFoundException } from '@nestjs/common';
 import { CollectionReference, Query } from 'firebase-admin/firestore';
 import { matchesPlateOrChassis } from '../abastecimentos/helpers/abastecimentos-create.helper';
 
-export async function resolveEquipmentIdByPlateOrChassis(
+export interface ResolvedEquipment {
+  id: string;
+  /** Capacidade do tanque do equipamento (L); 0/ausente = sem limite. */
+  capacidadeTanque: number;
+  raw: Record<string, unknown>;
+}
+
+/**
+ * Resolve o equipamento (dentro da empresa) por placa/chassi e devolve o id + a
+ * capacidade do tanque. Use quando precisar validar o quanto cabe (abastecimento).
+ */
+export async function resolveEquipmentByPlateOrChassis(
   equipamentosCollection: Query,
   prefeituraId: string,
   plateOrChassis: string,
-): Promise<string> {
+): Promise<ResolvedEquipment> {
   const normalizedPrefeituraId = prefeituraId.trim();
   const snap = await equipamentosCollection
     .where('prefeituraId', '==', normalizedPrefeituraId)
@@ -26,8 +37,26 @@ export async function resolveEquipmentIdByPlateOrChassis(
     );
   }
 
-  const raw = match.data() as { id?: string };
-  return raw.id ?? match.id;
+  const raw = match.data() as Record<string, unknown>;
+  const capacidade = Number(raw.capacidadeTanque);
+  return {
+    id: (raw.id as string) ?? match.id,
+    capacidadeTanque: Number.isFinite(capacidade) ? capacidade : 0,
+    raw,
+  };
+}
+
+export async function resolveEquipmentIdByPlateOrChassis(
+  equipamentosCollection: Query,
+  prefeituraId: string,
+  plateOrChassis: string,
+): Promise<string> {
+  const equip = await resolveEquipmentByPlateOrChassis(
+    equipamentosCollection,
+    prefeituraId,
+    plateOrChassis,
+  );
+  return equip.id;
 }
 
 export async function fetchEquipmentMap(
