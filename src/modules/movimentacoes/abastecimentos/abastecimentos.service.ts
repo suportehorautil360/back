@@ -12,6 +12,7 @@ import {
 } from './dto/create-abastecimento.dto';
 import {
   isSupportedMeasurementType,
+  maiorLeituraRegistrada,
   parseLiters,
   resolveAbastecimentoPricing,
 } from './helpers/abastecimentos-create.helper';
@@ -106,6 +107,22 @@ export class AbastecimentosService {
       );
     }
 
+    // A leitura (horímetro/km) não pode ser igual ou menor que a última já
+    // registrada para o equipamento — horímetro e hodômetro só aumentam.
+    const leituraNova = Number(input.currentReading);
+    const ultima = await this.ultimaLeitura(
+      input.prefeituraId,
+      equipmentId,
+      input.measurementType,
+    );
+    if (ultima !== null && leituraNova <= ultima) {
+      const unidade = input.measurementType === 'horimetro' ? 'h' : 'km';
+      throw new BadRequestException(
+        `A leitura (${leituraNova.toLocaleString('pt-BR')} ${unidade}) deve ser maior ` +
+          `que a última registrada para este equipamento (${ultima.toLocaleString('pt-BR')} ${unidade}).`,
+      );
+    }
+
     const pricing = resolveAbastecimentoPricing(
       liters,
       input.pricePerLiter,
@@ -164,6 +181,59 @@ export class AbastecimentosService {
       throw new InternalServerErrorException(
         'Não foi possível registrar o abastecimento.',
       );
+    }
+  }
+
+  /**
+   * Maior leitura já registrada para o equipamento naquele tipo de medição
+   * (horímetro/hodômetro). `null` se ainda não houver nenhum abastecimento — aí
+   * não há referência e qualquer leitura é aceita. Filtra em memória (sem índice
+   * composto), no padrão do módulo.
+   */
+  async ultimaLeitura(
+    prefeituraId: string,
+    equipmentId: string,
+    measurementType: TipoMedicao,
+  ): Promise<number | null> {
+    if (!equipmentId) return null;
+    const snap = await this.collection
+      .where('equipmentId', '==', equipmentId)
+      .get();
+    const docs = snap.docs.map((d) => d.data() as AbastecimentoDoc);
+    return maiorLeituraRegistrada(docs, prefeituraId, measurementType);
+  }
+
+  /**
+   * Última leitura por placa/chassi — para o app validar a próxima leitura antes
+   * de enviar. Equipamento fora do cadastro ou tipo inválido → `null` (sem
+   * referência, não bloqueia no app; o create é o gate final).
+   */
+  async ultimaLeituraPorPlaca(
+    prefeituraId: string,
+    plateOrChassis: string,
+    measurementType: string,
+  ): Promise<{ ultimaLeitura: number | null; measurementType: string }> {
+    if (
+      !plateOrChassis?.trim() ||
+      !isSupportedMeasurementType(measurementType)
+    ) {
+      return { ultimaLeitura: null, measurementType };
+    }
+    try {
+      const equip = await resolveEquipmentByPlateOrChassis(
+        this.equipamentosCollection,
+        prefeituraId,
+        plateOrChassis,
+      );
+      const ultimaLeitura = await this.ultimaLeitura(
+        prefeituraId,
+        equip.id,
+        measurementType,
+      );
+      return { ultimaLeitura, measurementType };
+    } catch {
+      // Equipamento não encontrado: sem referência (o app não bloqueia).
+      return { ultimaLeitura: null, measurementType };
     }
   }
 
