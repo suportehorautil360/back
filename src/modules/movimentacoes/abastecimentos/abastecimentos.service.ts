@@ -11,6 +11,7 @@ import {
   TipoMedicao,
 } from './dto/create-abastecimento.dto';
 import {
+  deveAtualizarMedicaoAtual,
   isSupportedMeasurementType,
   maiorLeituraRegistrada,
   parseLiters,
@@ -174,6 +175,25 @@ export class AbastecimentosService {
           tx.set(this.collection.doc(id), doc);
         });
       }
+
+      // Mantém a "KM/horímetro atual" (medicaoAtual) do equipamento em dia com a
+      // leitura do abastecimento — alimenta o painel e serve de baseline offline
+      // no app. Best-effort (denormalizado): se falhar, não derruba o registro.
+      if (
+        deveAtualizarMedicaoAtual(
+          equipamento.raw.unidadeRevisao,
+          input.measurementType,
+          equipamento.raw.medicaoAtual,
+          leituraNova,
+        )
+      ) {
+        await equipamento.ref
+          .set({ medicaoAtual: leituraNova }, { merge: true })
+          .catch((e) =>
+            console.error('Falha ao atualizar medicaoAtual do equipamento:', e),
+          );
+      }
+
       return doc;
     } catch (error) {
       if (error instanceof BadRequestException) throw error;

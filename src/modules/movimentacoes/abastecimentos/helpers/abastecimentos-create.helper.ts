@@ -43,6 +43,33 @@ export function isSupportedMeasurementType(
   return value === 'horimetro' || value === 'hodometro';
 }
 
+/** Unidade do equipamento (`unidadeRevisao`) equivalente a cada tipo de medição. */
+const UNIDADE_POR_MEDICAO: Record<string, 'km' | 'h'> = {
+  hodometro: 'km',
+  horimetro: 'h',
+};
+
+/**
+ * Decide se o abastecimento deve atualizar a `medicaoAtual` (KM/horímetro atual)
+ * do equipamento. Só quando a unidade do equipamento BATE com o tipo de medição
+ * do abastecimento (ou a unidade é desconhecida) e a nova leitura é maior que a
+ * atual — nunca regride nem mistura km com h. Pura — testável.
+ */
+export function deveAtualizarMedicaoAtual(
+  unidadeRevisao: unknown,
+  measurementType: string,
+  medicaoAtual: unknown,
+  leituraNova: number,
+): boolean {
+  const esperada = UNIDADE_POR_MEDICAO[measurementType];
+  if (!esperada) return false;
+  const unidade =
+    unidadeRevisao === 'km' || unidadeRevisao === 'h' ? unidadeRevisao : null;
+  if (unidade !== null && unidade !== esperada) return false;
+  const atual = Number(medicaoAtual);
+  return !Number.isFinite(atual) || leituraNova > atual;
+}
+
 /**
  * Maior `currentReading` entre os abastecimentos do mesmo equipamento (já
  * filtrados por `equipmentId` na query), considerando só a mesma prefeitura e o
