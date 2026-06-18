@@ -17,7 +17,7 @@ import {
 } from './helpers/abastecimentos-create.helper';
 import {
   fetchEquipmentMap,
-  resolveEquipmentIdByPlateOrChassis,
+  resolveEquipmentByPlateOrChassis,
 } from '../shared/equipment.helper';
 import { debitarTanqueTx } from '../shared/tank-saldo.helper';
 import { formatDateTime } from '../shared/date.helper';
@@ -86,11 +86,25 @@ export class AbastecimentosService {
       );
     }
 
-    const equipmentId = await resolveEquipmentIdByPlateOrChassis(
+    const equipamento = await resolveEquipmentByPlateOrChassis(
       this.equipamentosCollection,
       input.prefeituraId,
       input.plateOrChassis,
     );
+    const equipmentId = equipamento.id;
+
+    // Não abastecer mais do que o tanque do equipamento comporta (vale com ou
+    // sem posto — o destino é sempre o tanque do equipamento). Capacidade
+    // ausente/0 = sem limite (equipamento sem capacidadeTanque cadastrada).
+    if (
+      equipamento.capacidadeTanque > 0 &&
+      liters > equipamento.capacidadeTanque
+    ) {
+      throw new BadRequestException(
+        `Acima da capacidade do tanque do equipamento: ${liters} L solicitado(s), ` +
+          `capacidade ${equipamento.capacidadeTanque} L.`,
+      );
+    }
 
     const pricing = resolveAbastecimentoPricing(
       liters,
