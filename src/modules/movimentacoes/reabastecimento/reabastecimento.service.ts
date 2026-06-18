@@ -7,7 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../../config/firebase.service';
 import { formatDateTime } from '../shared/date.helper';
 import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
-import { creditarTanque } from '../shared/tank-saldo.helper';
+import { creditarTanqueTx } from '../shared/tank-saldo.helper';
 import {
   CreateReabastecimentoDto,
   ReabastecimentoSourceType,
@@ -81,16 +81,21 @@ export class ReabastecimentoService {
       createdAt: new Date().toISOString(),
     };
 
+    const firestore = this.firebaseService.getFirestore();
     try {
-      await this.collection.doc(id).set(doc, { merge: true });
-      // Carga no comboio soma no saldo do tanque do comboio.
-      await creditarTanque(
-        this.firebaseService.getFirestore(),
-        comboioId,
-        receivedLiters,
-      );
+      // Carga no comboio soma no saldo do tanque, mas TRAVA o estouro da
+      // capacidade. Grava o registro e credita o tanque na mesma transação
+      // (rejeita se passar do limite — o tanque nunca passa da capacidade).
+      await firestore.runTransaction(async (tx) => {
+        await creditarTanqueTx(tx, firestore, comboioId, receivedLiters);
+        tx.set(this.collection.doc(id), doc, { merge: true });
+      });
       return doc;
     } catch (error) {
+      // Capacidade excedida vem como BadRequestException (400): propaga para o
+      // cliente. Se virasse 500, o outbox do app trataria como erro transitório
+      // e ficaria em loop de retry de um item que nunca passa.
+      if (error instanceof BadRequestException) throw error;
       console.error('Erro ao criar reabastecimento:', error);
       throw new InternalServerErrorException(
         'Não foi possível registrar o reabastecimento.',

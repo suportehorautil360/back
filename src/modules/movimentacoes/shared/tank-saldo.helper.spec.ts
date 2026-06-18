@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import {
   creditarTanque,
+  creditarTanqueTx,
   debitarTanqueTx,
   ensureTankForComboio,
   tankStatus,
@@ -105,6 +106,87 @@ describe('tank-saldo.helper', () => {
       const { tx, firestore } = cenario(100);
       await debitarTanqueTx(tx as never, firestore as never, 'comb-1', 0);
       expect(tx.get).not.toHaveBeenCalled();
+      expect(tx.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('creditarTanqueTx (travar capacidade)', () => {
+    function cenario(opts: {
+      currentVolume?: number;
+      capacity?: number;
+      existe?: boolean;
+    }) {
+      const { currentVolume, capacity, existe = true } = opts;
+      const ref = { id: 'comb-1' };
+      const snap = existe
+        ? { exists: true, data: () => ({ currentVolume, capacity }) }
+        : { exists: false, data: () => undefined };
+      const tx = {
+        get: jest.fn().mockResolvedValue(snap),
+        update: jest.fn(),
+        set: jest.fn(),
+      };
+      return { tx, firestore: firestoreComDoc(ref) };
+    }
+
+    it('rejeita sem comboioId', async () => {
+      const { tx, firestore } = cenario({ currentVolume: 0, capacity: 100 });
+      await expect(
+        creditarTanqueTx(tx as never, firestore as never, '', 10),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('ignora litros <= 0 (não lê nem escreve)', async () => {
+      const { tx, firestore } = cenario({ currentVolume: 0, capacity: 100 });
+      await creditarTanqueTx(tx as never, firestore as never, 'comb-1', 0);
+      expect(tx.get).not.toHaveBeenCalled();
+      expect(tx.update).not.toHaveBeenCalled();
+    });
+
+    it('rejeita acima da capacidade (não escreve)', async () => {
+      const { tx, firestore } = cenario({ currentVolume: 250, capacity: 300 });
+      await expect(
+        creditarTanqueTx(tx as never, firestore as never, 'comb-1', 100),
+      ).rejects.toThrow(/capacidade/i);
+      expect(tx.update).not.toHaveBeenCalled();
+    });
+
+    it('aceita encher exatamente até a capacidade', async () => {
+      const { tx, firestore } = cenario({ currentVolume: 200, capacity: 300 });
+      await creditarTanqueTx(tx as never, firestore as never, 'comb-1', 100);
+      expect(tx.update).toHaveBeenCalledTimes(1);
+    });
+
+    it('aceita abaixo da capacidade', async () => {
+      const { tx, firestore } = cenario({ currentVolume: 100, capacity: 300 });
+      await creditarTanqueTx(tx as never, firestore as never, 'comb-1', 50);
+      expect(tx.update).toHaveBeenCalledTimes(1);
+    });
+
+    it('capacidade 0 = sem limite (não trava)', async () => {
+      const { tx, firestore } = cenario({ currentVolume: 100, capacity: 0 });
+      await creditarTanqueTx(tx as never, firestore as never, 'comb-1', 9999);
+      expect(tx.update).toHaveBeenCalledTimes(1);
+    });
+
+    it('capacidade ausente = sem limite (não trava)', async () => {
+      const { tx, firestore } = cenario({ currentVolume: 100 });
+      await creditarTanqueTx(tx as never, firestore as never, 'comb-1', 9999);
+      expect(tx.update).toHaveBeenCalledTimes(1);
+    });
+
+    it('cria via set merge quando o tanque não existe', async () => {
+      const { tx, firestore } = cenario({ existe: false });
+      await creditarTanqueTx(tx as never, firestore as never, 'comb-1', 80);
+      expect(tx.set).toHaveBeenCalledTimes(1);
+      const [, payload, setOpts] = tx.set.mock.calls[0] as [
+        unknown,
+        Record<string, unknown>,
+        unknown,
+      ];
+      expect(payload.comboioId).toBe('comb-1');
+      expect(payload.currentVolume).toBeDefined();
+      expect(setOpts).toEqual({ merge: true });
       expect(tx.update).not.toHaveBeenCalled();
     });
   });
