@@ -290,8 +290,13 @@ export class AbastecimentosService {
       liters: doc.liters,
       pricePerLiter: doc.pricePerLiter ?? null,
       value: doc.total ?? null,
-      reading: `${doc.currentReading.toLocaleString('pt-BR')} ${readingUnit}`,
-      currentReading: doc.currentReading,
+      // Docs legados podem não ter currentReading — um só não pode derrubar a
+      // listagem inteira (500). Tolera ausência.
+      reading:
+        doc.currentReading != null
+          ? `${Number(doc.currentReading).toLocaleString('pt-BR')} ${readingUnit}`
+          : '—',
+      currentReading: doc.currentReading ?? null,
       measurementType: doc.measurementType,
       postoId: doc.postoId ?? null,
       comboioId: doc.comboioId ?? null,
