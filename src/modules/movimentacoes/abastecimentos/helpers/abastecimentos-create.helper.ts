@@ -148,3 +148,24 @@ function roundCurrency(value: number): number {
 function roundRate(value: number): number {
   return Math.round(value * 10000) / 10000;
 }
+
+/** Comboio? (case-insensitive, igual ao módulo equipamentos). */
+export function ehComboio(tipo: unknown): boolean {
+  return typeof tipo === 'string' && tipo.trim().toLowerCase() === 'comboio';
+}
+
+/**
+ * Capacidade-alvo (teto de litros) ao abastecer um equipamento:
+ * - comboio → `capacidadeTanqueCaminhao` (tanque do próprio caminhão);
+ * - demais  → `capacidadeTanque` (tanque do equipamento).
+ * 0/ausente/inválida = 0 (sem limite). Pura — testável.
+ */
+export function capacidadeAlvoAbastecimento(
+  rawEquipment: Record<string, unknown>,
+): number {
+  const campo = ehComboio(rawEquipment.tipo)
+    ? rawEquipment.capacidadeTanqueCaminhao
+    : rawEquipment.capacidadeTanque;
+  const n = Number(campo);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}

@@ -11,7 +11,9 @@ import {
   TipoMedicao,
 } from './dto/create-abastecimento.dto';
 import {
+  capacidadeAlvoAbastecimento,
   deveAtualizarMedicaoAtual,
+  ehComboio,
   isSupportedMeasurementType,
   maiorLeituraRegistrada,
   parseLiters,
@@ -100,16 +102,18 @@ export class AbastecimentosService {
     );
     const equipmentId = equipamento.id;
 
-    // Não abastecer mais do que o tanque do equipamento comporta (vale com ou
-    // sem posto — o destino é sempre o tanque do equipamento). Capacidade
-    // ausente/0 = sem limite (equipamento sem capacidadeTanque cadastrada).
-    if (
-      equipamento.capacidadeTanque > 0 &&
-      liters > equipamento.capacidadeTanque
-    ) {
+    // Não abastecer mais do que o tanque ALVO comporta. Para comboio o alvo é o
+    // tanque do próprio caminhão (capacidadeTanqueCaminhao); para os demais, o
+    // tanque do equipamento (capacidadeTanque). A origem (reservatório/posto) é
+    // tratada à parte. Capacidade ausente/0 = sem limite.
+    const capacidadeAlvo = capacidadeAlvoAbastecimento(equipamento.raw);
+    if (capacidadeAlvo > 0 && liters > capacidadeAlvo) {
+      const ondeCabe = ehComboio(equipamento.raw.tipo)
+        ? 'tanque do caminhão do comboio'
+        : 'tanque do equipamento';
       throw new BadRequestException(
-        `Acima da capacidade do tanque do equipamento: ${liters} L solicitado(s), ` +
-          `capacidade ${equipamento.capacidadeTanque} L.`,
+        `Acima da capacidade do ${ondeCabe}: ${liters} L solicitado(s), ` +
+          `capacidade ${capacidadeAlvo} L.`,
       );
     }
 
