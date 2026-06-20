@@ -1,5 +1,9 @@
 import { NotFoundException } from '@nestjs/common';
-import { CollectionReference, Query } from 'firebase-admin/firestore';
+import {
+  CollectionReference,
+  DocumentReference,
+  Query,
+} from 'firebase-admin/firestore';
 import { matchesPlateOrChassis } from '../abastecimentos/helpers/abastecimentos-create.helper';
 
 export interface ResolvedEquipment {
@@ -7,6 +11,8 @@ export interface ResolvedEquipment {
   /** Capacidade do tanque do equipamento (L); 0/ausente = sem limite. */
   capacidadeTanque: number;
   raw: Record<string, unknown>;
+  /** Referência do doc — p/ atualizar o equipamento (ex.: medicaoAtual). */
+  ref: DocumentReference;
 }
 
 /**
@@ -43,6 +49,7 @@ export async function resolveEquipmentByPlateOrChassis(
     id: (raw.id as string) ?? match.id,
     capacidadeTanque: Number.isFinite(capacidade) ? capacidade : 0,
     raw,
+    ref: match.ref,
   };
 }
 
