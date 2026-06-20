@@ -1,4 +1,8 @@
-import { mapAbastecimento } from './abastecimentos.mapper';
+import {
+  formatReadingLabel,
+  mapAbastecimento,
+  resolveCurrentReading,
+} from './abastecimentos.mapper';
 
 describe('abastecimentos/mapAbastecimento', () => {
   it('mapeia um registro de Posto (km + R$ + posto)', () => {
@@ -43,6 +47,26 @@ describe('abastecimentos/mapAbastecimento', () => {
     expect(r.valor).toBe(0); // comboio não tem valor
     expect(r.local).toBe('Talhão Norte');
     expect(r.km).toBe(0); // km só quando a unidade é km
+  });
+
+  it('resolve leitura do formato novo (currentReading)', () => {
+    expect(
+      resolveCurrentReading({ currentReading: 12500, km: 99 }),
+    ).toBe(12500);
+    expect(
+      formatReadingLabel({
+        currentReading: 12500,
+        measurementType: 'hodometro',
+      }),
+    ).toBe('12.500 km');
+  });
+
+  it('resolve leitura legada sem currentReading', () => {
+    expect(formatReadingLabel({ km: 85260 })).toBe('85.260 km');
+    expect(formatReadingLabel({ leitura: 4690, leituraUnidade: 'h' })).toBe(
+      '4.690 h',
+    );
+    expect(formatReadingLabel({ id: 'x' })).toBeNull();
   });
 
   it('campos ausentes viram defaults seguros', () => {

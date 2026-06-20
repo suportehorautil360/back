@@ -51,6 +51,43 @@ function parseValor(v: unknown): number {
  * Hoje os registros são de Posto; o mapper já entende `origem: 'comboio'`,
  * `leituraUnidade: 'h'` e `local` para quando a captura do comboio existir.
  */
+/** Leitura atual (novo: currentReading; legado: leitura / km / horimetro). */
+export function resolveCurrentReading(doc: Doc): number | null {
+  if (
+    typeof doc.currentReading === 'number' &&
+    Number.isFinite(doc.currentReading)
+  ) {
+    return doc.currentReading;
+  }
+  if (
+    doc.leitura != null ||
+    doc.km != null ||
+    doc.horimetro != null
+  ) {
+    return num(doc.leitura ?? doc.km ?? doc.horimetro);
+  }
+  return null;
+}
+
+export function resolveReadingUnit(doc: Doc): UnidadeLeitura {
+  if (doc.measurementType === 'horimetro') return 'h';
+  if (doc.measurementType === 'hodometro') return 'km';
+  if (doc.leituraUnidade === 'h') return 'h';
+  if (doc.origem === 'comboio' && doc.leituraUnidade == null) return 'h';
+  return 'km';
+}
+
+export function formatReadingLabel(doc: Doc): string | null {
+  const reading = resolveCurrentReading(doc);
+  if (reading === null) return null;
+  const unit = resolveReadingUnit(doc);
+  return `${reading.toLocaleString('pt-BR')} ${unit}`;
+}
+
+export function resolveLiters(doc: Doc): number {
+  return num(doc.liters ?? doc.litros);
+}
+
 export function mapAbastecimento(doc: Doc): Abastecimento {
   const origem: OrigemAbastecimento =
     doc.origem === 'comboio' ? 'comboio' : 'posto';
