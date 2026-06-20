@@ -7,7 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../../config/firebase.service';
 import { formatDateTime } from '../shared/date.helper';
 import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
-import { ajustarSaldoTanque } from '../shared/tank-saldo.helper';
+import { creditarTanqueTx } from '../shared/tank-saldo.helper';
 import {
   CreateReabastecimentoDto,
   ReabastecimentoSourceType,
@@ -20,9 +20,11 @@ import {
 export interface ReabastecimentoDoc {
   id: string;
   prefeituraId: string;
+  comboioId: string;
   sourceType: ReabastecimentoSourceType;
   receivedLiters: number;
   invoiceNumber?: string;
+  funcionarioId?: string;
   clientRequestId?: string;
   createdAt: string;
 }
@@ -30,9 +32,11 @@ export interface ReabastecimentoDoc {
 export interface ReabastecimentoListItem {
   id: string;
   dateTime: string;
+  comboioId: string | null;
   sourceType: ReabastecimentoSourceType;
   receivedLiters: number;
   invoiceNumber: string | null;
+  funcionarioId: string | null;
   createdAt: string;
 }
 
@@ -58,28 +62,40 @@ export class ReabastecimentoService {
       );
     }
 
+    const comboioId = input.comboioId?.trim();
+    if (!comboioId) {
+      throw new BadRequestException('Informe o comboio (comboioId) da carga.');
+    }
+
     const id = randomUUID();
 
     const doc: ReabastecimentoDoc = {
       id,
       prefeituraId: input.prefeituraId,
+      comboioId,
       sourceType: input.sourceType,
       receivedLiters,
       invoiceNumber: input.invoiceNumber,
+      funcionarioId: input.funcionarioId?.trim() || undefined,
       clientRequestId: input.clientRequestId,
       createdAt: new Date().toISOString(),
     };
 
+    const firestore = this.firebaseService.getFirestore();
     try {
-      await this.collection.doc(id).set(doc, { merge: true });
-      // Carga no comboio soma no saldo do tanque.
-      await ajustarSaldoTanque(
-        this.firebaseService.getFirestore(),
-        input.prefeituraId,
-        receivedLiters,
-      );
+      // Carga no comboio soma no saldo do tanque, mas TRAVA o estouro da
+      // capacidade. Grava o registro e credita o tanque na mesma transação
+      // (rejeita se passar do limite — o tanque nunca passa da capacidade).
+      await firestore.runTransaction(async (tx) => {
+        await creditarTanqueTx(tx, firestore, comboioId, receivedLiters);
+        tx.set(this.collection.doc(id), doc, { merge: true });
+      });
       return doc;
     } catch (error) {
+      // Capacidade excedida vem como BadRequestException (400): propaga para o
+      // cliente. Se virasse 500, o outbox do app trataria como erro transitório
+      // e ficaria em loop de retry de um item que nunca passa.
+      if (error instanceof BadRequestException) throw error;
       console.error('Erro ao criar reabastecimento:', error);
       throw new InternalServerErrorException(
         'Não foi possível registrar o reabastecimento.',
@@ -117,9 +133,11 @@ export class ReabastecimentoService {
     return {
       id: doc.id,
       dateTime: formatDateTime(doc.createdAt),
+      comboioId: doc.comboioId ?? null,
       sourceType: doc.sourceType,
       receivedLiters: doc.receivedLiters,
       invoiceNumber: doc.invoiceNumber ?? null,
+      funcionarioId: doc.funcionarioId ?? null,
       createdAt: doc.createdAt,
     };
   }

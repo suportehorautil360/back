@@ -7,6 +7,7 @@ import {
   Param,
   Post,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiOkResponse,
@@ -18,6 +19,7 @@ import {
 import { CreateLubrificacaoDto } from './dto/create-lubrificacao.dto';
 import { LubrificacaoListItem } from './lubrificacoes.types';
 import { LubrificacoesService } from './lubrificacoes.service';
+import { IdempotencyInterceptor } from '../../../common/idempotency.interceptor';
 
 @ApiTags('lubrificacoes')
 @Controller('lubrificacoes')
@@ -26,6 +28,7 @@ export class LubrificacoesController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: 'Criar lubrificação' })
   async create(@Body() dto: CreateLubrificacaoDto) {
     const data = await this.service.create(dto);

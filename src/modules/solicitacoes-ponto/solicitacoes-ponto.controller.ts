@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiInternalServerErrorResponse,
@@ -17,6 +18,7 @@ import {
 import { SolicitacoesPontoService } from './solicitacoes-ponto.service';
 import { CreateSolicitacaoPontoDto } from './dto/create-solicitacao-ponto.dto';
 import { ReprovarSolicitacaoDto } from './dto/reprovar-solicitacao.dto';
+import { IdempotencyInterceptor } from '../../common/idempotency.interceptor';
 
 @ApiTags('solicitacoes-ponto')
 @Controller('solicitacoes-ponto')
@@ -25,6 +27,7 @@ export class SolicitacoesPontoController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({
     summary:
       'Criar solicitação de ajuste de ponto (incluir / cancelar / abono / mensagem)',

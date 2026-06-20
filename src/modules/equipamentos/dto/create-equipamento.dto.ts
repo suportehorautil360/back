@@ -209,4 +209,14 @@ export class CreateEquipamentoDto {
 
   @ApiProperty({ description: 'Condutor responsável', required: false })
   condutorResponsavel?: string;
+
+  @ApiProperty({
+    description:
+      'Condutores responsáveis (ids de funcionários, cargo Motorista). Usado ' +
+      'no comboio: define quem pode operá-lo no PWA do comboista.',
+    required: false,
+    type: [String],
+    example: ['func-001', 'func-002'],
+  })
+  condutoresResponsaveis?: string[];
 }

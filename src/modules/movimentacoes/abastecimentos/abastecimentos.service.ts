@@ -11,15 +11,17 @@ import {
   TipoMedicao,
 } from './dto/create-abastecimento.dto';
 import {
+  deveAtualizarMedicaoAtual,
   isSupportedMeasurementType,
+  maiorLeituraRegistrada,
   parseLiters,
   resolveAbastecimentoPricing,
 } from './helpers/abastecimentos-create.helper';
 import {
   fetchEquipmentMap,
-  resolveEquipmentIdByPlateOrChassis,
+  resolveEquipmentByPlateOrChassis,
 } from '../shared/equipment.helper';
-import { ajustarSaldoTanque } from '../shared/tank-saldo.helper';
+import { debitarTanqueTx } from '../shared/tank-saldo.helper';
 import { formatDateTime } from '../shared/date.helper';
 import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
 import { reverseGeocode } from '../shared/reverse-geocode.helper';
@@ -42,6 +44,10 @@ export interface AbastecimentoDoc {
   pricePerLiter?: number | null;
   total?: number | null;
   postoId?: string;
+  /** Comboio cujo tanque foi debitado (quando o combustível sai do comboio). */
+  comboioId?: string;
+  /** Funcionário (comboista) que registrou o abastecimento. */
+  funcionarioId?: string;
   latitude: number;
   longitude: number;
   createdAt: string;
@@ -87,11 +93,41 @@ export class AbastecimentosService {
       );
     }
 
-    const equipmentId = await resolveEquipmentIdByPlateOrChassis(
+    const equipamento = await resolveEquipmentByPlateOrChassis(
       this.equipamentosCollection,
       input.prefeituraId,
       input.plateOrChassis,
     );
+    const equipmentId = equipamento.id;
+
+    // Não abastecer mais do que o tanque do equipamento comporta (vale com ou
+    // sem posto — o destino é sempre o tanque do equipamento). Capacidade
+    // ausente/0 = sem limite (equipamento sem capacidadeTanque cadastrada).
+    if (
+      equipamento.capacidadeTanque > 0 &&
+      liters > equipamento.capacidadeTanque
+    ) {
+      throw new BadRequestException(
+        `Acima da capacidade do tanque do equipamento: ${liters} L solicitado(s), ` +
+          `capacidade ${equipamento.capacidadeTanque} L.`,
+      );
+    }
+
+    // A leitura (horímetro/km) não pode ser igual ou menor que a última já
+    // registrada para o equipamento — horímetro e hodômetro só aumentam.
+    const leituraNova = Number(input.currentReading);
+    const ultima = await this.ultimaLeitura(
+      input.prefeituraId,
+      equipmentId,
+      input.measurementType,
+    );
+    if (ultima !== null && leituraNova <= ultima) {
+      const unidade = input.measurementType === 'horimetro' ? 'h' : 'km';
+      throw new BadRequestException(
+        `A leitura (${leituraNova.toLocaleString('pt-BR')} ${unidade}) deve ser maior ` +
+          `que a última registrada para este equipamento (${ultima.toLocaleString('pt-BR')} ${unidade}).`,
+      );
+    }
 
     const pricing = resolveAbastecimentoPricing(
       liters,
@@ -100,6 +136,17 @@ export class AbastecimentosService {
     );
 
     const id = randomUUID();
+    const postoId = input.postoId?.trim() || undefined;
+    const comboioId = input.comboioId?.trim() || undefined;
+
+    // Sem posto, o combustível sai do comboio: precisamos saber qual tanque
+    // debitar (e travar saldo negativo).
+    if (!postoId && !comboioId) {
+      throw new BadRequestException(
+        'Informe o comboio (comboioId) do qual o combustível foi retirado.',
+      );
+    }
+
     const doc: AbastecimentoDoc = {
       id,
       prefeituraId: input.prefeituraId,
@@ -112,28 +159,106 @@ export class AbastecimentosService {
       meterPhoto: input.meterPhoto,
       pricePerLiter: pricing.pricePerLiter,
       total: pricing.total,
-      postoId: input.postoId?.trim() || undefined,
+      postoId,
+      comboioId,
+      funcionarioId: input.funcionarioId?.trim() || undefined,
       latitude: input.latitude,
       longitude: input.longitude,
       createdAt: new Date().toISOString(),
     };
 
+    const firestore = this.firebaseService.getFirestore();
     try {
-      await this.collection.doc(id).set(doc);
-      // Abastecimento a partir do comboio (sem posto) desconta do tanque.
-      if (!doc.postoId) {
-        await ajustarSaldoTanque(
-          this.firebaseService.getFirestore(),
-          input.prefeituraId,
-          -liters,
-        );
+      if (postoId) {
+        // Posto credenciado: o combustível não sai do comboio, não mexe no tanque.
+        await this.collection.doc(id).set(doc);
+      } else {
+        // Sai do comboio: grava o registro e debita o tanque na mesma transação
+        // (rejeita se faltar saldo — o tanque nunca fica negativo).
+        await firestore.runTransaction(async (tx) => {
+          await debitarTanqueTx(tx, firestore, comboioId as string, liters);
+          tx.set(this.collection.doc(id), doc);
+        });
       }
+
+      // Mantém a "KM/horímetro atual" (medicaoAtual) do equipamento em dia com a
+      // leitura do abastecimento — alimenta o painel e serve de baseline offline
+      // no app. Best-effort (denormalizado): se falhar, não derruba o registro.
+      if (
+        deveAtualizarMedicaoAtual(
+          equipamento.raw.unidadeRevisao,
+          input.measurementType,
+          equipamento.raw.medicaoAtual,
+          leituraNova,
+        )
+      ) {
+        await equipamento.ref
+          .set({ medicaoAtual: leituraNova }, { merge: true })
+          .catch((e) =>
+            console.error('Falha ao atualizar medicaoAtual do equipamento:', e),
+          );
+      }
+
       return doc;
     } catch (error) {
+      if (error instanceof BadRequestException) throw error;
       console.error('Erro ao criar abastecimento:', error);
       throw new InternalServerErrorException(
         'Não foi possível registrar o abastecimento.',
       );
+    }
+  }
+
+  /**
+   * Maior leitura já registrada para o equipamento naquele tipo de medição
+   * (horímetro/hodômetro). `null` se ainda não houver nenhum abastecimento — aí
+   * não há referência e qualquer leitura é aceita. Filtra em memória (sem índice
+   * composto), no padrão do módulo.
+   */
+  async ultimaLeitura(
+    prefeituraId: string,
+    equipmentId: string,
+    measurementType: TipoMedicao,
+  ): Promise<number | null> {
+    if (!equipmentId) return null;
+    const snap = await this.collection
+      .where('equipmentId', '==', equipmentId)
+      .get();
+    const docs = snap.docs.map((d) => d.data() as AbastecimentoDoc);
+    return maiorLeituraRegistrada(docs, prefeituraId, measurementType);
+  }
+
+  /**
+   * Última leitura por placa/chassi — para o app validar a próxima leitura antes
+   * de enviar. Equipamento fora do cadastro ou tipo inválido → `null` (sem
+   * referência, não bloqueia no app; o create é o gate final).
+   */
+  async ultimaLeituraPorPlaca(
+    prefeituraId: string,
+    plateOrChassis: string,
+    measurementType: string,
+  ): Promise<{ ultimaLeitura: number | null; measurementType: string }> {
+    if (
+      !plateOrChassis?.trim() ||
+      !isSupportedMeasurementType(measurementType)
+    ) {
+      return { ultimaLeitura: null, measurementType };
+    }
+    try {
+      const equip = await resolveEquipmentByPlateOrChassis(
+        this.equipamentosCollection,
+        prefeituraId,
+        plateOrChassis,
+      );
+      const ultimaLeitura = await this.ultimaLeitura(
+        prefeituraId,
+        equip.id,
+        measurementType,
+      );
+      return { ultimaLeitura, measurementType };
+    } catch {
+      // Equipamento não encontrado: sem referência (o app não bloqueia).
+      return { ultimaLeitura: null, measurementType };
     }
   }
 
@@ -298,10 +423,15 @@ export class AbastecimentosService {
       liters: resolveLiters(raw),
       pricePerLiter: doc.pricePerLiter ?? null,
       value: doc.total ?? null,
+      // Docs legados podem não ter currentReading — os helpers resolvem leitura
+      // (currentReading/leitura/km/horimetro) e devolvem null/'—' sem derrubar a
+      // listagem inteira (500).
       reading: readingLabel ?? '—',
       currentReading,
       measurementType: doc.measurementType ?? null,
       postoId: doc.postoId ?? null,
+      comboioId: doc.comboioId ?? null,
+      funcionarioId: doc.funcionarioId ?? null,
       meterPhoto: doc.meterPhoto ?? null,
       local,
       createdAt: doc.createdAt,

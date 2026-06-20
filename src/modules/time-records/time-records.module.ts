@@ -5,10 +5,17 @@ import { AfdService } from './afd.service';
 import { AejService } from './aej.service';
 import { FirebaseService } from '../../config/firebase.service';
 import { FeatureFlagsModule } from '../feature-flags/feature-flags.module';
+import { IdempotencyInterceptor } from '../../common/idempotency.interceptor';
 
 @Module({
   imports: [FeatureFlagsModule],
   controllers: [TimeRecordsController],
-  providers: [TimeRecordsService, AfdService, AejService, FirebaseService],
+  providers: [
+    TimeRecordsService,
+    AfdService,
+    AejService,
+    FirebaseService,
+    IdempotencyInterceptor,
+  ],
 })
 export class TimeRecordsModule {}

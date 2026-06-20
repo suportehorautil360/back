@@ -1,12 +1,29 @@
 import { NotFoundException } from '@nestjs/common';
-import { CollectionReference, Query } from 'firebase-admin/firestore';
+import {
+  CollectionReference,
+  DocumentReference,
+  Query,
+} from 'firebase-admin/firestore';
 import { matchesPlateOrChassis } from '../abastecimentos/helpers/abastecimentos-create.helper';
 
-export async function resolveEquipmentIdByPlateOrChassis(
+export interface ResolvedEquipment {
+  id: string;
+  /** Capacidade do tanque do equipamento (L); 0/ausente = sem limite. */
+  capacidadeTanque: number;
+  raw: Record<string, unknown>;
+  /** Referência do doc — p/ atualizar o equipamento (ex.: medicaoAtual). */
+  ref: DocumentReference;
+}
+
+/**
+ * Resolve o equipamento (dentro da empresa) por placa/chassi e devolve o id + a
+ * capacidade do tanque. Use quando precisar validar o quanto cabe (abastecimento).
+ */
+export async function resolveEquipmentByPlateOrChassis(
   equipamentosCollection: Query,
   prefeituraId: string,
   plateOrChassis: string,
-): Promise<string> {
+): Promise<ResolvedEquipment> {
   const normalizedPrefeituraId = prefeituraId.trim();
   const snap = await equipamentosCollection
     .where('prefeituraId', '==', normalizedPrefeituraId)
@@ -17,28 +34,36 @@ export async function resolveEquipmentIdByPlateOrChassis(
     return matchesPlateOrChassis(raw, plateOrChassis);
   });
 
+  // Só busca dentro da empresa do operador. Não fazemos varredura global: além
+  // de ser um scan cross-tenant desnecessário, vazaria o prefeituraId de outra
+  // empresa na mensagem de erro. Não encontrou aqui = não encontrado.
   if (!match) {
-    const globalSnap = await equipamentosCollection.get();
-    const globalMatch = globalSnap.docs.find((doc) => {
-      const raw = doc.data() as Record<string, unknown>;
-      return matchesPlateOrChassis(raw, plateOrChassis);
-    });
-
-    if (globalMatch) {
-      const raw = globalMatch.data() as { prefeituraId?: string };
-      const equipmentPrefeituraId = String(raw.prefeituraId ?? '').trim();
-      throw new NotFoundException(
-        `Equipamento encontrado, mas não está cadastrado para esta empresa. Prefeitura do equipamento: ${equipmentPrefeituraId || 'não informada'}.`,
-      );
-    }
-
     throw new NotFoundException(
       'Equipamento não encontrado ou não cadastrado para esta empresa.',
     );
   }
 
-  const raw = match.data() as { id?: string };
-  return raw.id ?? match.id;
+  const raw = match.data() as Record<string, unknown>;
+  const capacidade = Number(raw.capacidadeTanque);
+  return {
+    id: (raw.id as string) ?? match.id,
+    capacidadeTanque: Number.isFinite(capacidade) ? capacidade : 0,
+    raw,
+    ref: match.ref,
+  };
+}
+
+export async function resolveEquipmentIdByPlateOrChassis(
+  equipamentosCollection: Query,
+  prefeituraId: string,
+  plateOrChassis: string,
+): Promise<string> {
+  const equip = await resolveEquipmentByPlateOrChassis(
+    equipamentosCollection,
+    prefeituraId,
+    plateOrChassis,
+  );
+  return equip.id;
 }
 
 export async function fetchEquipmentMap(

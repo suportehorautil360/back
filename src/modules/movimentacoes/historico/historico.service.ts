@@ -24,7 +24,7 @@ export class HistoricoService {
     limit = 50,
   ): Promise<HistoricoResponse> {
     try {
-      const [abDocs, lubDocs, reaDocs] = await Promise.all([
+      const [abDocsRaw, lubDocsRaw, reaDocsRaw] = await Promise.all([
         fetchPrefeituraDocs<RawDoc & { createdAt: string }>(
           this.db().collection('abastecimentos'),
           prefeituraId,
@@ -41,6 +41,14 @@ export class HistoricoService {
           { order: 'desc', limit },
         ),
       ]);
+
+      // Ignora docs legados/incompletos sem createdAt: não dá para datar/agrupar
+      // no histórico e quebrariam o summary, a ordenação e os formatadores.
+      const temData = (d: RawDoc): d is RawDoc & { createdAt: string } =>
+        typeof d.createdAt === 'string' && d.createdAt !== '';
+      const abDocs = abDocsRaw.filter(temData);
+      const lubDocs = lubDocsRaw.filter(temData);
+      const reaDocs = reaDocsRaw.filter(temData);
 
       const allEquipmentIds = [
         ...new Set(

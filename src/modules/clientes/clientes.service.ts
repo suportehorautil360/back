@@ -12,6 +12,7 @@ import {
   TipoClienteApi,
 } from './clientes.types';
 import { CreateClienteDto } from './dto/create-cliente.dto';
+import { UpdateClienteDto } from './dto/update-cliente.dto';
 import { CreateAcessoDto } from './dto/create-acesso.dto';
 
 /** SHA-256 sem salt (espelha utils/hashSenha do front, pra o login bater). */
@@ -197,6 +198,74 @@ export class ClientesService {
       console.error('Erro ao salvar cliente:', error);
       throw new InternalServerErrorException(
         'Não foi possível salvar o cliente.',
+      );
+    }
+  }
+
+  /**
+   * Atualização parcial de um cliente. Só grava os campos informados (merge),
+   * preservando o resto — inclusive o contrato, que é mesclado campo a campo.
+   * Fonte única dos dados da empresa: o admin e a tela de Configurações da
+   * prefeitura editam este mesmo documento.
+   */
+  async atualizar(clienteId: string, dto: UpdateClienteDto) {
+    const ref = this.firebaseService
+      .getFirestore()
+      .collection('clientes')
+      .doc(clienteId);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      throw new NotFoundException('Cliente não encontrado.');
+    }
+    const atual = (snap.data() ?? {}) as Record<string, unknown>;
+
+    const patch: Record<string, unknown> = {
+      atualizadoEm: new Date().toISOString(),
+    };
+
+    if (dto.nome !== undefined) {
+      const nome = (dto.nome ?? '').trim();
+      if (!nome) throw new BadRequestException('Informe o município/nome.');
+      patch.nome = nome;
+    }
+    if (dto.uf !== undefined) {
+      const uf = (dto.uf ?? '')
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z]/g, '')
+        .slice(0, 2);
+      if (uf.length !== 2) {
+        throw new BadRequestException('Informe a UF com 2 letras.');
+      }
+      patch.uf = uf;
+    }
+    if (dto.tipoCliente !== undefined) {
+      patch.tipoCliente =
+        dto.tipoCliente === 'locacao' ? 'locacao' : 'prefeitura';
+    }
+    for (const campo of ['cnpj', 'caepf', 'cidade', 'whatsapp'] as const) {
+      if (dto[campo] !== undefined) patch[campo] = (dto[campo] ?? '').trim();
+    }
+
+    if (dto.contrato) {
+      const contratoAtual = (atual.contrato ?? {}) as Record<string, unknown>;
+      const merged: Record<string, unknown> = { ...contratoAtual };
+      for (const [chave, valor] of Object.entries(dto.contrato)) {
+        if (valor !== undefined) merged[chave] = valor;
+      }
+      patch.contrato = merged;
+    }
+
+    try {
+      await ref.set(patch, { merge: true });
+      return {
+        data: { id: clienteId, ...atual, ...patch },
+        message: 'Cliente atualizado com sucesso.',
+      };
+    } catch (error) {
+      console.error('Erro ao atualizar cliente:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível atualizar o cliente.',
       );
     }
   }

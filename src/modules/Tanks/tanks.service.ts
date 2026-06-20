@@ -1,5 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { FirebaseService } from 'src/config/firebase.service';
+import { tankStatus } from '../movimentacoes/shared/tank-saldo.helper';
 
 function texto(valor: unknown): string {
   return typeof valor === 'string' ? valor : '';
@@ -86,6 +87,65 @@ export class TanksService {
       console.error('Error fetching tanks:', error);
       throw new InternalServerErrorException(
         'Não foi possível buscar os tanques.',
+      );
+    }
+  }
+
+  /**
+   * Tanque de um comboio específico (doc `tanks` keyed pelo `comboioId`), com
+   * nível/status e o modelo/placa resolvidos da coleção `equipamentos`.
+   * Alimenta a home do PWA quando o comboista escolhe qual comboio opera.
+   */
+  async findByComboio(comboioId: string) {
+    try {
+      const snap = await this.firestore
+        .collection('tanks')
+        .doc(comboioId)
+        .get();
+      if (!snap.exists) {
+        return { data: null, message: 'Tanque do comboio não encontrado.' };
+      }
+
+      const d = snap.data() as Record<string, unknown>;
+      const capacity = numero(d.capacity);
+      const currentVolume = numero(d.currentVolume);
+      const { percentage, status } = tankStatus(capacity, currentVolume);
+
+      let veiculoModelo = texto(d.veiculoModelo);
+      let veiculoPlaca = texto(d.veiculoPlaca);
+      if (!veiculoModelo || !veiculoPlaca) {
+        const eqSnap = await this.firestore
+          .collection('equipamentos')
+          .where('id', '==', comboioId)
+          .limit(1)
+          .get();
+        const e = eqSnap.empty
+          ? null
+          : (eqSnap.docs[0].data() as Record<string, unknown>);
+        if (e) {
+          veiculoModelo =
+            veiculoModelo || texto(e.modelo) || texto(e.descricao);
+          veiculoPlaca = veiculoPlaca || texto(e.placa);
+        }
+      }
+
+      return {
+        data: {
+          id: snap.id,
+          ...d,
+          capacity,
+          currentVolume,
+          percentage,
+          status,
+          veiculoModelo,
+          veiculoPlaca,
+        },
+        message: 'Tanque do comboio encontrado com sucesso.',
+      };
+    } catch (error) {
+      console.error('Error fetching tank by comboio:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível buscar o tanque do comboio.',
       );
     }
   }
