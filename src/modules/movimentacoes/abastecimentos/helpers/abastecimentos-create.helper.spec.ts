@@ -1,5 +1,7 @@
 import {
+  capacidadeAlvoAbastecimento,
   deveAtualizarMedicaoAtual,
+  ehComboio,
   isSupportedMeasurementType,
   maiorLeituraRegistrada,
   matchesPlateOrChassis,
@@ -129,6 +131,43 @@ describe('abastecimentos-create.helper', () => {
 
     it('measurementType inválido => não atualiza', () => {
       expect(deveAtualizarMedicaoAtual('km', 'odometro', 0, 999)).toBe(false);
+    });
+  });
+
+  describe('ehComboio', () => {
+    it('reconhece comboio ignorando caixa e espaços', () => {
+      expect(ehComboio('Comboio')).toBe(true);
+      expect(ehComboio('  comboio ')).toBe(true);
+      expect(ehComboio('Caminhões')).toBe(false);
+      expect(ehComboio(undefined)).toBe(false);
+    });
+  });
+
+  describe('capacidadeAlvoAbastecimento', () => {
+    it('comboio usa capacidadeTanqueCaminhao (não o reservatório)', () => {
+      expect(
+        capacidadeAlvoAbastecimento({
+          tipo: 'Comboio',
+          capacidadeTanque: 5000,
+          capacidadeTanqueCaminhao: 400,
+        }),
+      ).toBe(400);
+    });
+
+    it('equipamento comum usa capacidadeTanque', () => {
+      expect(
+        capacidadeAlvoAbastecimento({ tipo: 'Caminhões', capacidadeTanque: 300 }),
+      ).toBe(300);
+    });
+
+    it('0 / ausente / inválida = sem limite (0)', () => {
+      expect(
+        capacidadeAlvoAbastecimento({ tipo: 'Comboio', capacidadeTanqueCaminhao: 0 }),
+      ).toBe(0);
+      expect(capacidadeAlvoAbastecimento({ tipo: 'Comboio' })).toBe(0);
+      expect(
+        capacidadeAlvoAbastecimento({ tipo: 'Caminhões', capacidadeTanque: 'x' }),
+      ).toBe(0);
     });
   });
 });
