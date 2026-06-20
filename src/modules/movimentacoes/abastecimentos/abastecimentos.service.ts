@@ -23,6 +23,11 @@ import { ajustarSaldoTanque } from '../shared/tank-saldo.helper';
 import { formatDateTime } from '../shared/date.helper';
 import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
 import { reverseGeocode } from '../shared/reverse-geocode.helper';
+import {
+  formatReadingLabel,
+  resolveCurrentReading,
+  resolveLiters,
+} from './abastecimentos.mapper';
 
 export interface AbastecimentoDoc {
   id: string;
@@ -146,7 +151,14 @@ export class AbastecimentosService {
       }
 
       const uniqueEquipmentIds = [
-        ...new Set(docs.map((d) => d.equipmentId).filter(Boolean)),
+        ...new Set(
+          docs
+            .map((d) => {
+              const raw = d as unknown as Record<string, unknown>;
+              return asString(d.equipmentId ?? raw.equipamentoId);
+            })
+            .filter(Boolean),
+        ),
       ];
       const uniquePostoIds = [
         ...new Set(
@@ -228,7 +240,15 @@ export class AbastecimentosService {
     doc: AbastecimentoDoc,
     postoMap: Map<string, Record<string, unknown>>,
   ): string {
+    const raw = doc as unknown as Record<string, unknown>;
     if (!doc.postoId?.trim()) {
+      if (raw.origem === 'comboio' || raw.tipo === 'comboio') {
+        return 'Comboio';
+      }
+      const postoNome = asString(raw.postoNome ?? raw.local);
+      if (postoNome) {
+        return `Posto ${postoNome}`;
+      }
       return 'Comboio';
     }
 
@@ -242,36 +262,45 @@ export class AbastecimentosService {
     equipmentMap: Map<string, Record<string, unknown>>,
     postoMap: Map<string, Record<string, unknown>>,
   ) {
-    const equipment = equipmentMap.get(doc.equipmentId) ?? {};
+    const raw = doc as unknown as Record<string, unknown>;
+    const equipmentId = asString(doc.equipmentId ?? raw.equipamentoId);
+    const equipment = equipmentMap.get(equipmentId) ?? {};
+    const plateOrChassis = asString(
+      doc.plateOrChassis ?? raw.placa ?? raw.chassis,
+    );
 
     const vehicle = {
       name: asString(
-        equipment.descricao ?? equipment.label ?? doc.plateOrChassis,
+        equipment.descricao ??
+          equipment.label ??
+          raw.veiculo ??
+          plateOrChassis,
       ),
       plate: asString(
-        equipment.placa ?? equipment.chassis ?? doc.plateOrChassis,
+        equipment.placa ?? equipment.chassis ?? plateOrChassis,
       ),
-      type: asString(equipment.tipo ?? equipment.linha ?? '—'),
+      type: asString(equipment.tipo ?? equipment.linha ?? raw.tipoVeiculo ?? '—'),
     };
 
-    const readingUnit = doc.measurementType === 'horimetro' ? 'h' : 'km';
+    const readingLabel = formatReadingLabel(raw);
+    const currentReading = resolveCurrentReading(raw);
 
     const local =
       doc.latitude && doc.longitude
         ? await reverseGeocode(doc.latitude, doc.longitude)
-        : null;
+        : asString(raw.local) || null;
 
     return {
       id: doc.id,
       dateTime: formatDateTime(doc.createdAt),
       vehicle,
       origin: this.resolveOrigin(doc, postoMap),
-      liters: doc.liters,
+      liters: resolveLiters(raw),
       pricePerLiter: doc.pricePerLiter ?? null,
       value: doc.total ?? null,
-      reading: `${doc.currentReading.toLocaleString('pt-BR')} ${readingUnit}`,
-      currentReading: doc.currentReading,
-      measurementType: doc.measurementType,
+      reading: readingLabel ?? '—',
+      currentReading,
+      measurementType: doc.measurementType ?? null,
       postoId: doc.postoId ?? null,
       meterPhoto: doc.meterPhoto ?? null,
       local,
