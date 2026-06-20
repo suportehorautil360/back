@@ -165,6 +165,15 @@ export class CreateEquipamentoDto {
   })
   capacidadeTanque?: number;
 
+  @ApiProperty({
+    description:
+      'Capacidade do tanque do próprio caminhão do comboio (litros). Só se ' +
+      'aplica a tipo Comboio; usada como teto ao abastecer o caminhão.',
+    required: false,
+    example: 400,
+  })
+  capacidadeTanqueCaminhao?: number;
+
   @ApiProperty({ description: 'Motorização', required: false })
   motorizacao?: string;
 
