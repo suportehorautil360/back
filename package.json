@@ -9,6 +9,7 @@
   "scripts": {
     "build": "nest build",
     "stop:3000": "node scripts/free-port.mjs 3000",
+    "sanear:current-reading": "node scripts/sanear-current-reading.mjs",
     "dev": "npm run stop:3000 && nest start --watch",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",

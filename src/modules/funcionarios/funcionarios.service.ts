@@ -69,6 +69,35 @@ export class FuncionariosService {
     return this.firestore.collection(COLECAO);
   }
 
+  /**
+   * O funcionário é condutor responsável de pelo menos um comboio da prefeitura?
+   * Gate do PWA do comboista — só condutores entram. Filtra em memória (sem
+   * exigir índice composto prefeituraId + array-contains).
+   */
+  private async ehCondutorDeComboio(
+    prefeituraId: string,
+    funcionarioId: string,
+  ): Promise<boolean> {
+    if (!prefeituraId || !funcionarioId) return false;
+    const snap = await this.firestore
+      .collection('equipamentos')
+      .where('prefeituraId', '==', prefeituraId)
+      .get();
+    return snap.docs.some((d) => {
+      const data = d.data() as {
+        tipo?: unknown;
+        condutoresResponsaveis?: unknown;
+      };
+      const condutores = Array.isArray(data.condutoresResponsaveis)
+        ? data.condutoresResponsaveis
+        : [];
+      return (
+        String(data.tipo).toLowerCase() === 'comboio' &&
+        condutores.includes(funcionarioId)
+      );
+    });
+  }
+
   private getJwtSecret(): string {
     const jwtSecret = this.configService.get<string>('JWT_SECRET') ?? '';
     if (!jwtSecret) {
@@ -130,6 +159,18 @@ export class FuncionariosService {
           typeof data.prefeituraId === 'string' ? data.prefeituraId : '',
       };
 
+      // Só condutores responsáveis de algum comboio acessam o PWA do comboista.
+      const ehCondutor = await this.ehCondutorDeComboio(
+        funcionario.prefeituraId,
+        funcionario.id,
+      );
+      if (!ehCondutor) {
+        return {
+          ok: false,
+          msg: 'Você não está cadastrado como condutor de nenhum comboio. Procure o gestor.',
+        };
+      }
+
       const expiresIn =
         this.configService.get<string>('JWT_EXPIRES_IN') ?? '24h';
       const accessToken = await this.jwtService.signAsync(
@@ -138,6 +179,7 @@ export class FuncionariosService {
           tipo: 'operador',
           cargo: funcionario.cargo,
           prefeituraId: funcionario.prefeituraId,
+          funcionarioId: funcionario.id,
         },
         {
           secret: this.getJwtSecret(),
@@ -161,6 +203,86 @@ export class FuncionariosService {
         ? 'Identificador ou senha incorretos.'
         : 'Funcionário sem senha cadastrada. Procure o gestor.',
     };
+  }
+
+  /**
+   * Credenciais para LOGIN OFFLINE do app de campo. Para cada condutor de
+   * comboio da prefeitura, ativo e com senha, devolve o verificador da senha
+   * (`senhaHash` = SHA-256("<cpf>:<senha>")) + dados mínimos de sessão. O app
+   * pré-cacheia isso e valida a senha localmente, sem rede — assim qualquer
+   * condutor loga offline no aparelho (turnos compartilhados), igual ao operador.
+   *
+   * ⚠️ Expõe o hash da senha. É o mesmo modelo do app do operador (que lê do
+   * Firestore), mas via rota. TODO: gatear a rota (auth) e migrar p/ bcrypt.
+   */
+  async credenciaisOffline(prefeituraId: string): Promise<
+    {
+      id: string;
+      cpf: string;
+      loginGerado: string;
+      nome: string;
+      cargo: string;
+      prefeituraId: string;
+      senhaHash: string;
+    }[]
+  > {
+    if (!prefeituraId) return [];
+
+    // 1) Condutores responsáveis de comboios da prefeitura (um Set de ids).
+    const equipSnap = await this.firestore
+      .collection('equipamentos')
+      .where('prefeituraId', '==', prefeituraId)
+      .get();
+    const condutores = new Set<string>();
+    for (const d of equipSnap.docs) {
+      const data = d.data() as {
+        tipo?: unknown;
+        condutoresResponsaveis?: unknown;
+      };
+      if (String(data.tipo).toLowerCase() !== 'comboio') continue;
+      const lista = Array.isArray(data.condutoresResponsaveis)
+        ? data.condutoresResponsaveis
+        : [];
+      for (const id of lista) if (typeof id === 'string') condutores.add(id);
+    }
+    if (condutores.size === 0) return [];
+
+    // 2) Operadores da prefeitura que são condutores, ativos e com senha.
+    const opSnap = await this.collection
+      .where('prefeituraId', '==', prefeituraId)
+      .get();
+    const creds: {
+      id: string;
+      cpf: string;
+      loginGerado: string;
+      nome: string;
+      cargo: string;
+      prefeituraId: string;
+      senhaHash: string;
+    }[] = [];
+    for (const doc of opSnap.docs) {
+      if (!condutores.has(doc.id)) continue;
+      const data = doc.data() as Record<string, unknown>;
+      const senhaHash =
+        typeof data.senhaHash === 'string' ? data.senhaHash : '';
+      if (!senhaHash) continue;
+      const status = typeof data.status === 'string' ? data.status : 'ativo';
+      if (status !== 'ativo') continue;
+      const cpf = limparCpf(typeof data.cpf === 'string' ? data.cpf : '');
+      const nome = typeof data.nome === 'string' ? data.nome : '';
+      const loginDoc =
+        typeof data.loginGerado === 'string' ? data.loginGerado : '';
+      creds.push({
+        id: doc.id,
+        cpf,
+        loginGerado: loginDoc || gerarLogin(nome, cpf),
+        nome,
+        cargo: typeof data.cargo === 'string' ? data.cargo : '',
+        prefeituraId,
+        senhaHash,
+      });
+    }
+    return creds;
   }
 
   /** Campos do documento (sem createdAt/senha), compartilhado por criar/editar. */

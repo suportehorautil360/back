@@ -165,6 +165,15 @@ export class CreateEquipamentoDto {
   })
   capacidadeTanque?: number;
 
+  @ApiProperty({
+    description:
+      'Capacidade do tanque do próprio caminhão do comboio (litros). Só se ' +
+      'aplica a tipo Comboio; usada como teto ao abastecer o caminhão.',
+    required: false,
+    example: 400,
+  })
+  capacidadeTanqueCaminhao?: number;
+
   @ApiProperty({ description: 'Motorização', required: false })
   motorizacao?: string;
 
@@ -209,4 +218,14 @@ export class CreateEquipamentoDto {
 
   @ApiProperty({ description: 'Condutor responsável', required: false })
   condutorResponsavel?: string;
+
+  @ApiProperty({
+    description:
+      'Condutores responsáveis (ids de funcionários, cargo Motorista). Usado ' +
+      'no comboio: define quem pode operá-lo no PWA do comboista.',
+    required: false,
+    type: [String],
+    example: ['func-001', 'func-002'],
+  })
+  condutoresResponsaveis?: string[];
 }

@@ -3,6 +3,7 @@ import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ClientesOficinasService } from './clientes-oficinas.service';
 import { ClientesService } from './clientes.service';
 import { CreateClienteDto } from './dto/create-cliente.dto';
+import { UpdateClienteDto } from './dto/update-cliente.dto';
 import { CreateAcessoDto } from './dto/create-acesso.dto';
 
 @ApiTags('clientes')
@@ -32,6 +33,21 @@ export class ClientesController {
   @ApiResponse({ status: 201, description: 'Cliente cadastrado.' })
   async criar(@Body() dto: CreateClienteDto) {
     return this.clientesService.criar(dto);
+  }
+
+  @Post('update/:clienteId')
+  @ApiOperation({
+    summary: 'Atualizar (parcial) os dados de um cliente / empresa',
+    description:
+      'Edição completa no admin ou só os dados da empresa pela tela de ' +
+      'Configurações da prefeitura — fonte única (coleção clientes).',
+  })
+  @ApiResponse({ status: 200, description: 'Cliente atualizado.' })
+  async atualizar(
+    @Param('clienteId') clienteId: string,
+    @Body() dto: UpdateClienteDto,
+  ) {
+    return this.clientesService.atualizar(clienteId, dto);
   }
 
   @Get(':prefeituraId/oficinas')

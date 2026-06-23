@@ -8,10 +8,12 @@ import {
   Param,
   Post,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateAbastecimentoDto } from './dto/create-abastecimento.dto';
 import { AbastecimentosService } from './abastecimentos.service';
+import { IdempotencyInterceptor } from '../../../common/idempotency.interceptor';
 
 @ApiTags('abastecimentos')
 @Controller('abastecimentos')
@@ -20,10 +22,35 @@ export class AbastecimentosController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: 'Criar abastecimento' })
   async create(@Body() dto: CreateAbastecimentoDto) {
     const data = await this.service.create(dto);
     return { data, message: 'Abastecimento criado com sucesso!' };
+  }
+
+  @Get('ultima-leitura/:prefeituraId')
+  @ApiOperation({
+    summary: 'Última leitura registrada do equipamento (p/ validar a próxima)',
+  })
+  @ApiParam({ name: 'prefeituraId' })
+  @ApiQuery({ name: 'plateOrChassis', required: true })
+  @ApiQuery({
+    name: 'measurementType',
+    required: true,
+    description: 'horimetro | hodometro',
+  })
+  async ultimaLeitura(
+    @Param('prefeituraId') prefeituraId: string,
+    @Query('plateOrChassis') plateOrChassis: string,
+    @Query('measurementType') measurementType: string,
+  ) {
+    const data = await this.service.ultimaLeituraPorPlaca(
+      prefeituraId,
+      plateOrChassis,
+      measurementType,
+    );
+    return { data, message: 'Última leitura buscada com sucesso!' };
   }
 
   @Get(':prefeituraId')

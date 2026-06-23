@@ -76,6 +76,7 @@ export async function fetchPrefeituraDocs<T extends { createdAt: string }>(
   }
 
   const order = options.order ?? 'desc';
+  // Tolera doc legado/incompleto sem `createdAt` (compareCreatedAt joga vazios pro fim).
   items.sort((a, b) => compareCreatedAt(a.createdAt, b.createdAt, order));
 
   if (options.limit !== undefined && options.limit > 0) {
