@@ -29,6 +29,10 @@ import { AlertasModule } from './modules/alertas/alertas.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { OsModule } from './modules/os/os.module';
 import { PlanosPreventivosModule } from './modules/planos-preventivos/planos-preventivos.module';
+import { OficinasModule } from './modules/oficinas/oficinas.module';
+import { ChecklistChegadaModule } from './modules/checklist-chegada/checklist-chegada.module';
+import { ChecklistDevolucaoModule } from './modules/checklist-devolucao/checklist-devolucao.module';
+import { GarantiasModule } from './modules/garantias/garantias.module';
 
 @Module({
   imports: [
@@ -64,6 +68,10 @@ import { PlanosPreventivosModule } from './modules/planos-preventivos/planos-pre
     UploadsModule,
     OsModule,
     PlanosPreventivosModule,
+    OficinasModule,
+    ChecklistChegadaModule,
+    ChecklistDevolucaoModule,
+    GarantiasModule,
     // ... outros módulos
   ],
   controllers: [],

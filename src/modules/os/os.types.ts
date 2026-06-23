@@ -10,6 +10,8 @@ export type OsType = (typeof OS_TYPE_OPTIONS)[number];
 
 export const SOLICITACAO_STATUS_OPTIONS = [
   'aguardando_orcamento',
+  'em_orcamento',
+  'pregao',
   'aguardando_aprovacao',
   'aprovado',
   'concluido',
@@ -21,6 +23,19 @@ export interface OficinaAtiva {
   id: string;
   nome: string;
   especialidade: string;
+}
+
+export interface LanceOs {
+  oficinaId: string;
+  valor: number;
+  prazoDias: number;
+  ordemServicoId?: string;
+  atualizadoEm?: string;
+}
+
+export interface OrcamentoItemFirestore {
+  descricao: string;
+  valor: number;
 }
 
 export interface SolicitacaoOsFirestore {
@@ -35,6 +50,7 @@ export interface SolicitacaoOsFirestore {
   oficinas: string[];
   oficinasIds: string[];
   oficinasResponderam: string[];
+  lances?: LanceOs[];
   status: string;
   tipoOs?: string;
   serviceType?: OsServiceType;
@@ -65,7 +81,55 @@ export interface SolicitacaoOsListItem {
   relato: string;
   oficinas: string[];
   oficinasIds: string[];
+  oficinasResponderam: string[];
+  lances: LanceOs[];
+  valorOrcado: number | null;
   criadoEm: { seconds: number } | null;
+}
+
+export interface CreateOrcamentoResult {
+  id: string;
+  protocol: string;
+  valorTotal: number;
+  prazoDias: number;
+  solicitacaoStatus: string;
+}
+
+export interface AprovarSolicitacaoResult {
+  solicitacaoId: string;
+  approvedOrdemId: string;
+  status: string;
+}
+
+export interface OrdemOrcamentoListItem {
+  id: string;
+  protocol: string;
+  protocolo: string;
+  solicitacaoOsId: string;
+  oficinaId: string;
+  workshopName: string;
+  oficinaNome: string;
+  operator: string;
+  operador: string;
+  equipment: string;
+  equipamento: string;
+  defect: string;
+  defeito: string;
+  items: Array<{ description: string; descricao: string; value: number; valor: number }>;
+  itens: Array<{ description: string; descricao: string; value: number; valor: number }>;
+  totalValue: number;
+  valorTotal: number;
+  prazoDias: number;
+  status: string;
+  createdAt: string;
+  criadoEm: { seconds: number } | null;
+}
+
+export interface SolicitacaoComOrcamentosListItem extends SolicitacaoOsListItem {
+  quotes: OrdemOrcamentoListItem[];
+  orcamentos: OrdemOrcamentoListItem[];
+  quotesReceived: number;
+  invitedCount: number;
 }
 
 export interface InvitedWorkshop {

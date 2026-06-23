@@ -4,6 +4,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import WebSocket from 'ws';
 
 export type FotoUpload = {
   /** Identificador da foto dentro do checklist (ex.: "horimetro", "item-3"). */
@@ -44,7 +45,16 @@ export class UploadsService {
         'Upload de fotos indisponível: SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY não configuradas.',
       );
     }
-    this.cliente ??= createClient(url, key);
+    this.cliente ??= createClient(url, key, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+      realtime: {
+        // Tipos de @types/ws divergem do WebSocketLike do Supabase; funciona em runtime.
+        transport: WebSocket as unknown as typeof globalThis.WebSocket,
+      },
+    });
     return this.cliente;
   }
 
