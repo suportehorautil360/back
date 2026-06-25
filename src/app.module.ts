@@ -35,6 +35,8 @@ import { ChecklistDevolucaoModule } from './modules/checklist-devolucao/checklis
 import { GarantiasModule } from './modules/garantias/garantias.module';
 import { NotasFiscaisModule } from './modules/notas-fiscais/notas-fiscais.module';
 import { SuporteModule } from './modules/suporte/suporte.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -76,6 +78,8 @@ import { SuporteModule } from './modules/suporte/suporte.module';
     GarantiasModule,
     NotasFiscaisModule,
     SuporteModule,
+    AuthModule,
+    UsersModule,
     // ... outros módulos
   ],
   controllers: [],
