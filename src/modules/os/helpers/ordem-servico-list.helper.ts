@@ -20,6 +20,22 @@ function numero(valor: unknown): number {
 function mapItens(raw: unknown): OrdemOrcamentoListItem['items'] {
   if (!Array.isArray(raw)) return [];
 
+  const optionalKeys = [
+    'category',
+    'code',
+    'brand',
+    'quantity',
+    'unitValue',
+    'hourType',
+    'hours',
+    'hourlyRate',
+    'km',
+    'valuePerKm',
+    'travelHours',
+    'travelHourlyRate',
+    'fees',
+  ] as const;
+
   return raw
     .map((item) => {
       if (!item || typeof item !== 'object') return null;
@@ -27,12 +43,22 @@ function mapItens(raw: unknown): OrdemOrcamentoListItem['items'] {
       const descricao = texto(rec.descricao) || texto(rec.description);
       const valor = numero(rec.valor ?? rec.value);
       if (!descricao) return null;
-      return {
+
+      const mapped: OrdemOrcamentoListItem['items'][number] = {
         description: descricao,
         descricao,
         value: valor,
         valor,
       };
+
+      for (const key of optionalKeys) {
+        const value = rec[key];
+        if (value !== undefined && value !== null && value !== '') {
+          (mapped as Record<string, unknown>)[key] = value;
+        }
+      }
+
+      return mapped;
     })
     .filter((item): item is OrdemOrcamentoListItem['items'][number] => item !== null);
 }

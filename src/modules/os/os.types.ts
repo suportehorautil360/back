@@ -62,6 +62,15 @@ export interface SolicitacaoOsListItem {
   id: string;
   protocol: string;
   equipment: string;
+  equipmentId: string;
+  chassis: string;
+  /** Medição formatada (ex.: "6.890,2 h" ou "12.500 km"). */
+  horimetro: string;
+  hourMeter: string;
+  currentKm: string;
+  km: string;
+  medicaoAtual: number | null;
+  unidadeRevisao: 'km' | 'h' | '';
   line: string;
   operator: string;
   report: string;
@@ -76,6 +85,8 @@ export interface SolicitacaoOsListItem {
   /** Campos legados PT para compatibilidade com o front atual. */
   protocolo: string;
   equipamento: string;
+  equipamentoId: string;
+  chassi: string;
   linha: string;
   operador: string;
   relato: string;
