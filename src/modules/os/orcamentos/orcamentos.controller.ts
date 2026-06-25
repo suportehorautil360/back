@@ -5,11 +5,13 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateOrcamentoDto } from './dto/create-orcamento.dto';
+import { UpdateOrcamentoDto } from './dto/update-orcamento.dto';
 import { OrcamentosService } from './orcamentos.service';
 
 @ApiTags('os')
@@ -30,6 +32,26 @@ export class OrcamentosController {
     return {
       data,
       message: 'Orçamento enviado com sucesso.',
+    };
+  }
+
+  @Patch(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Oficina edita orçamento já enviado',
+    description:
+      'Atualiza itens e valor em ordensServico e sincroniza o lance em solicitacoesOS. Permitido em em_orcamento ou pregao.',
+  })
+  @ApiParam({ name: 'id', description: 'ID do documento em ordensServico' })
+  @ApiResponse({ status: 200, description: 'Orçamento atualizado.' })
+  async atualizar(
+    @Param('id') id: string,
+    @Body() dto: UpdateOrcamentoDto,
+  ) {
+    const data = await this.service.atualizar(id, dto);
+    return {
+      data,
+      message: 'Orçamento atualizado com sucesso.',
     };
   }
 

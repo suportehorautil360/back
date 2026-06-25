@@ -33,6 +33,8 @@ import { OficinasModule } from './modules/oficinas/oficinas.module';
 import { ChecklistChegadaModule } from './modules/checklist-chegada/checklist-chegada.module';
 import { ChecklistDevolucaoModule } from './modules/checklist-devolucao/checklist-devolucao.module';
 import { GarantiasModule } from './modules/garantias/garantias.module';
+import { NotasFiscaisModule } from './modules/notas-fiscais/notas-fiscais.module';
+import { SuporteModule } from './modules/suporte/suporte.module';
 
 @Module({
   imports: [
@@ -72,6 +74,8 @@ import { GarantiasModule } from './modules/garantias/garantias.module';
     ChecklistChegadaModule,
     ChecklistDevolucaoModule,
     GarantiasModule,
+    NotasFiscaisModule,
+    SuporteModule,
     // ... outros módulos
   ],
   controllers: [],

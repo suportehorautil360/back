@@ -12,6 +12,11 @@ import {
   parseDateEnd,
   parseDateStart,
 } from '../../movimentacoes/shared/date.helper';
+import { fetchEquipmentMap } from '../../movimentacoes/shared/equipment.helper';
+import {
+  enrichSolicitacoesWithEquipamento,
+  parseHorimetroMedicaoFields,
+} from '../helpers/enrich-solicitacoes-equipamento.helper';
 import { nextProtocoloOs } from '../helpers/gerar-protocolo.helper';
 import {
   normalizeOsServiceType,
@@ -259,6 +264,8 @@ export class SolicitacoesService {
 
       items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
+      items = await this.enrichWithEquipamentoChassis(items);
+
       return {
         data: items,
         message: 'Service order requests for workshop loaded successfully.',
@@ -467,6 +474,8 @@ export class SolicitacoesService {
 
       items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
+      items = await this.enrichWithEquipamentoChassis(items);
+
       return {
         data: items,
         message: 'Service order requests loaded successfully.',
@@ -494,11 +503,22 @@ export class SolicitacoesService {
     const valorOrcado = oficinaIdContext
       ? valorOrcadoForOficina(lances, oficinaIdContext)
       : null;
+    const equipmentId = texto(raw.equipamentoId);
+    const horimetro = texto(raw.horimetro);
+    const medicaoSnapshot = parseHorimetroMedicaoFields(horimetro);
 
     return {
       id,
       protocol: protocolo,
       equipment: texto(raw.equipamento),
+      equipmentId,
+      chassis: '',
+      horimetro,
+      hourMeter: medicaoSnapshot.hourMeter,
+      currentKm: medicaoSnapshot.currentKm,
+      km: medicaoSnapshot.km,
+      medicaoAtual: null,
+      unidadeRevisao: medicaoSnapshot.unidadeRevisao,
       line: texto(raw.linha),
       operator: texto(raw.operador),
       report: texto(raw.relato),
@@ -512,6 +532,8 @@ export class SolicitacoesService {
       createdAt,
       protocolo,
       equipamento: texto(raw.equipamento),
+      equipamentoId: equipmentId,
+      chassi: '',
       linha: texto(raw.linha),
       operador: texto(raw.operador),
       relato: texto(raw.relato),
@@ -522,6 +544,23 @@ export class SolicitacoesService {
       valorOrcado,
       criadoEm: timestampToSeconds(raw.criadoEm),
     };
+  }
+
+  private async enrichWithEquipamentoChassis(
+    items: SolicitacaoOsListItem[],
+  ): Promise<SolicitacaoOsListItem[]> {
+    const equipmentIds = items
+      .map((item) => item.equipmentId || item.equipamentoId)
+      .filter(Boolean);
+
+    if (!equipmentIds.length) return items;
+
+    const equipmentMap = await fetchEquipmentMap(
+      this.equipamentosCollection,
+      equipmentIds,
+    );
+
+    return enrichSolicitacoesWithEquipamento(items, equipmentMap);
   }
 
   private async findEquipamento(

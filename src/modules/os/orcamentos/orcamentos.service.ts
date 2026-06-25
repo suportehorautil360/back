@@ -16,7 +16,13 @@ import {
 } from '../helpers/lances-os.helper';
 import type { CreateOrcamentoResult, LanceOs } from '../os.types';
 import { CreateOrcamentoDto } from './dto/create-orcamento.dto';
+import { UpdateOrcamentoDto } from './dto/update-orcamento.dto';
 import { mapOrdemServicoListItem } from '../helpers/ordem-servico-list.helper';
+import {
+  ordemPermiteEdicao,
+  solicitacaoPermiteEdicaoOrcamento,
+} from './helpers/editar-orcamento.helper';
+import { parseOrcamentoItemsFromDto } from './helpers/orcamento-items.helper';
 import {
   mapOrdemToOrcamentoApi,
   type OrcamentoApiItem,
@@ -46,20 +52,7 @@ export class OrcamentosService {
     const solicitacaoOsId = dto.solicitacaoOsId.trim();
     const oficinaId = dto.oficinaId.trim();
 
-    const itens = dto.items.map((item) => ({
-      descricao: item.description.trim(),
-      valor: item.value,
-    }));
-
-    if (itens.some((item) => !item.descricao)) {
-      throw new BadRequestException('Cada item deve ter descrição.');
-    }
-
-    const valorTotal = itens.reduce((acc, item) => acc + item.valor, 0);
-    if (valorTotal <= 0) {
-      throw new BadRequestException('O valor total do orçamento deve ser maior que zero.');
-    }
-
+    const { itens, valorTotal } = parseOrcamentoItemsFromDto(dto.items);
     const prazoDias = dto.prazoDias ?? 7;
     const solRef = this.solicitacoesCollection.doc(solicitacaoOsId);
     const oficinaSnap = await this.oficinasCollection.doc(oficinaId).get();
@@ -179,6 +172,138 @@ export class OrcamentosService {
       console.error('Erro ao enviar orçamento:', error);
       throw new InternalServerErrorException(
         'Não foi possível enviar o orçamento.',
+      );
+    }
+  }
+
+  async atualizar(
+    id: string,
+    dto: UpdateOrcamentoDto,
+  ): Promise<CreateOrcamentoResult> {
+    const ordemId = id.trim();
+    const oficinaId = dto.oficinaId.trim();
+
+    if (!ordemId) {
+      throw new BadRequestException('id inválido.');
+    }
+    if (!oficinaId) {
+      throw new BadRequestException('oficinaId inválido.');
+    }
+
+    const { itens, valorTotal } = parseOrcamentoItemsFromDto(dto.items);
+    const ordemRef = this.ordensCollection.doc(ordemId);
+
+    try {
+      const result = await this.firebaseService
+        .getFirestore()
+        .runTransaction(async (tx) => {
+          const ordemSnap = await tx.get(ordemRef);
+          if (!ordemSnap.exists) {
+            throw new NotFoundException('Orçamento não encontrado.');
+          }
+
+          const ordem = ordemSnap.data() as Record<string, unknown>;
+          const ordemOficinaId = texto(ordem.oficinaId);
+
+          if (ordemOficinaId !== oficinaId) {
+            throw new BadRequestException(
+              'Esta oficina não pode editar este orçamento.',
+            );
+          }
+
+          if (!ordemPermiteEdicao(ordem.status)) {
+            throw new BadRequestException(
+              'Este orçamento não pode mais ser editado.',
+            );
+          }
+
+          const solicitacaoOsId = texto(ordem.solicitacaoOsId);
+          if (!solicitacaoOsId) {
+            throw new BadRequestException(
+              'Orçamento sem vínculo com solicitação de OS.',
+            );
+          }
+
+          const solRef = this.solicitacoesCollection.doc(solicitacaoOsId);
+          const solSnap = await tx.get(solRef);
+          if (!solSnap.exists) {
+            throw new NotFoundException('Solicitação de OS não encontrada.');
+          }
+
+          const sol = solSnap.data() as Record<string, unknown>;
+          const statusAtual = texto(sol.status) || 'aguardando_orcamento';
+
+          if (!solicitacaoPermiteEdicaoOrcamento(statusAtual)) {
+            throw new BadRequestException(
+              'Esta solicitação não permite edição de orçamento.',
+            );
+          }
+
+          const oficinasIds = parseOficinasIds(sol.oficinasIds);
+          if (!oficinasIds.includes(oficinaId)) {
+            throw new BadRequestException(
+              'Esta oficina não foi convidada para esta OS.',
+            );
+          }
+
+          const responderam = parseOficinasResponderam(sol.oficinasResponderam);
+          if (!responderam.includes(oficinaId)) {
+            throw new BadRequestException(
+              'Esta oficina ainda não enviou orçamento para esta OS.',
+            );
+          }
+
+          const prazoDias =
+            dto.prazoDias ??
+            Math.max(1, Math.round(Number(ordem.prazoDias) || 7));
+          const protocolo =
+            texto(ordem.protocolo) || texto(ordem.protocol) || ordemId;
+          const agora = new Date().toISOString();
+
+          tx.update(ordemRef, {
+            itens,
+            valorTotal,
+            prazoDias,
+            atualizadoEm: agora,
+          });
+
+          const lance: LanceOs = {
+            oficinaId,
+            valor: valorTotal,
+            prazoDias,
+            ordemServicoId: ordemId,
+            atualizadoEm: agora,
+          };
+
+          const lancesAtualizados = mergeLance(
+            Array.isArray(sol.lances) ? (sol.lances as LanceOs[]) : [],
+            lance,
+          );
+
+          tx.update(solRef, {
+            lances: lancesAtualizados,
+          });
+
+          return {
+            id: ordemId,
+            protocol: protocolo,
+            valorTotal,
+            prazoDias,
+            solicitacaoStatus: statusAtual,
+          };
+        });
+
+      return result;
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      console.error('Erro ao atualizar orçamento:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível atualizar o orçamento.',
       );
     }
   }
