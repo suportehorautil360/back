@@ -1,5 +1,5 @@
 import type { SuporteMensagemApi } from '../suporte.types';
-import { buildWelcomeMessage } from './suporte-welcome.helper';
+import { buildWelcomeMessage, buildPostoWelcomeMessages } from './suporte-welcome.helper';
 import { isWelcomeMessageId } from './suporte-channel.helper';
 import type { SuporteChannel } from '../suporte.types';
 
@@ -41,4 +41,22 @@ export function withWelcomeMessage(
   }
 
   return [welcome, ...withoutWelcome];
+}
+
+/** Boas-vindas do posto (várias mensagens no canal financeiro). */
+export function withPostoWelcomeMessages(
+  postoId: string,
+  channel: SuporteChannel,
+  messages: SuporteMensagemApi[],
+): SuporteMensagemApi[] {
+  const welcome = buildPostoWelcomeMessages(postoId, channel);
+  const withoutWelcome = messages.filter(
+    (message) => !isWelcomeMessageId(message.id),
+  );
+
+  if (withoutWelcome.length === 0) {
+    return welcome;
+  }
+
+  return [...welcome, ...withoutWelcome];
 }
