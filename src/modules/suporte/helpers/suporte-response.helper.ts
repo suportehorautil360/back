@@ -23,11 +23,25 @@ export function mapMensagemToApi(
 
   return {
     id: texto(raw.id) || id,
-    oficinaId: texto(raw.oficinaId),
+    ...(texto(raw.oficinaId) ? { oficinaId: texto(raw.oficinaId) } : {}),
+    ...(texto(raw.postoId) ? { postoId: texto(raw.postoId) } : {}),
+    ...(texto(raw.prefeituraId) ? { prefeituraId: texto(raw.prefeituraId) } : {}),
     channel: texto(raw.channel) as SuporteChannel,
     sender: texto(raw.sender) as SuporteSender,
     text: texto(raw.text),
     createdAt,
-    ...(readAt !== undefined ? { readAt } : {}),
+    ...(Object.prototype.hasOwnProperty.call(raw, 'readAt') ||
+    Object.prototype.hasOwnProperty.call(raw, 'lidoEm')
+      ? { readAt }
+      : {}),
+    ...(Object.prototype.hasOwnProperty.call(raw, 'adminReadAt')
+      ? {
+          adminReadAt:
+            raw.adminReadAt === null
+              ? null
+              : timestampToIso(raw.adminReadAt) || texto(raw.adminReadAt) || null,
+        }
+      : {}),
+    ...(raw.autoReply === true ? { autoReply: true } : {}),
   };
 }
