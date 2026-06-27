@@ -1,7 +1,11 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ParceirosService } from './parceiros.service';
 import { CreateParceiroDto } from './dto/create-parceiro.dto';
+import {
+  CreateParceiroLoginDto,
+  ResetParceiroLoginSenhaDto,
+} from './dto/create-parceiro-login.dto';
 
 @ApiTags('parceiros')
 @Controller('parceiros')
@@ -16,8 +20,8 @@ export class ParceirosController {
       'cidade/UF do parceiro (ou derivada do cliente vinculado).',
   })
   @ApiResponse({ status: 200, description: 'Postos e oficinas credenciados.' })
-  async overview() {
-    return this.parceirosService.overview();
+  async overview(@Query('prefeituraId') prefeituraId?: string) {
+    return this.parceirosService.overview(prefeituraId);
   }
 
   @Post()
@@ -31,5 +35,43 @@ export class ParceirosController {
   @ApiOperation({ summary: 'Remover parceiro (posto/oficina) pelo id' })
   async remover(@Param('tipo') tipo: string, @Param('id') id: string) {
     return this.parceirosService.remover(tipo, id);
+  }
+
+  @Get(':tipo/:parceiroId/logins')
+  @ApiOperation({ summary: 'Listar logins operacionais do posto ou oficina' })
+  @ApiParam({ name: 'tipo', enum: ['posto', 'oficina'] })
+  @ApiParam({ name: 'parceiroId' })
+  listarLogins(
+    @Param('tipo') tipo: string,
+    @Param('parceiroId') parceiroId: string,
+  ) {
+    return this.parceirosService.listarLogins(tipo, parceiroId);
+  }
+
+  @Post(':tipo/:parceiroId/logins')
+  @ApiOperation({ summary: 'Criar login operacional para posto ou oficina' })
+  @ApiParam({ name: 'tipo', enum: ['posto', 'oficina'] })
+  @ApiParam({ name: 'parceiroId' })
+  criarLogin(
+    @Param('tipo') tipo: string,
+    @Param('parceiroId') parceiroId: string,
+    @Body() dto: CreateParceiroLoginDto,
+  ) {
+    return this.parceirosService.criarLogin(tipo, parceiroId, dto);
+  }
+
+  @Patch('logins/:acessoId/senha')
+  @ApiOperation({ summary: 'Redefinir senha de um login operacional' })
+  resetarLoginSenha(
+    @Param('acessoId') acessoId: string,
+    @Body() dto: ResetParceiroLoginSenhaDto,
+  ) {
+    return this.parceirosService.resetarLoginSenha(acessoId, dto);
+  }
+
+  @Delete('logins/:acessoId')
+  @ApiOperation({ summary: 'Remover login operacional' })
+  removerLogin(@Param('acessoId') acessoId: string) {
+    return this.parceirosService.removerLogin(acessoId);
   }
 }
