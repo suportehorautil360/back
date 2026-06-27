@@ -32,3 +32,15 @@ export function formatDateBrFromIso(iso: string): string {
   if (Number.isNaN(date.getTime())) return '—';
   return date.toLocaleDateString('pt-BR');
 }
+
+export function formatDateTimeBrFromIso(iso: string): string {
+  if (!iso) return '—';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  const data = date.toLocaleDateString('pt-BR');
+  const hora = date.toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  return `${data} ${hora}`;
+}

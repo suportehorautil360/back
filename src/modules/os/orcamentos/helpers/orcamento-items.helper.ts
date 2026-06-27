@@ -2,7 +2,9 @@ import { BadRequestException } from '@nestjs/common';
 import type { OrcamentoItemDto } from '../dto/create-orcamento.dto';
 
 function texto(valor: unknown): string {
-  return typeof valor === 'string' ? valor.trim() : '';
+  if (typeof valor === 'string') return valor.trim();
+  if (typeof valor === 'number' && Number.isFinite(valor)) return String(valor);
+  return '';
 }
 
 function numero(valor: unknown): number | undefined {
@@ -29,8 +31,10 @@ export function mapDtoItemsToFirestore(
   items: OrcamentoItemDto[],
 ): Record<string, unknown>[] {
   return items.map((item) => {
-    const descricao = item.description.trim();
-    const valor = item.value;
+    const raw = item as unknown as Record<string, unknown>;
+    const descricao =
+      texto(item.description) || texto(raw.descricao) || texto(raw.description);
+    const valor = numero(item.value ?? raw.valor ?? raw.value) ?? 0;
     const record: Record<string, unknown> = {
       descricao,
       valor,
@@ -38,17 +42,38 @@ export function mapDtoItemsToFirestore(
       value: valor,
     };
 
-    const category = texto(item.category);
+    const category =
+      texto(item.category) || texto(raw.categoria) || texto(raw.category);
     if (category) record.category = category;
 
-    const code = texto(item.code);
-    if (code) record.code = code;
+    const code =
+      texto(item.code) ||
+      texto(raw.codigo) ||
+      texto(raw.produto) ||
+      texto(raw.codigoPeca);
+    if (code) {
+      record.code = code;
+      record.codigo = code;
+    }
 
-    const brand = texto(item.brand);
-    if (brand) record.brand = brand;
+    const brand = texto(item.brand) || texto(raw.marca) || texto(raw.brand);
+    if (brand) {
+      record.brand = brand;
+      record.marca = brand;
+    }
 
-    assignOptionalNumber(record, 'quantity', item.quantity);
-    assignOptionalNumber(record, 'unitValue', item.unitValue);
+    const quantity = item.quantity ?? numero(raw.quantidade ?? raw.quantity);
+    if (quantity !== undefined) {
+      record.quantity = quantity;
+      record.quantidade = quantity;
+    }
+
+    const unitValue =
+      item.unitValue ?? numero(raw.valorUnitario ?? raw.unitValue);
+    if (unitValue !== undefined) {
+      record.unitValue = unitValue;
+      record.valorUnitario = unitValue;
+    }
 
     const hourType = texto(item.hourType);
     if (hourType) record.hourType = hourType;
