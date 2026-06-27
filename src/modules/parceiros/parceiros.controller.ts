@@ -31,10 +31,20 @@ export class ParceirosController {
     return this.parceirosService.criar(dto);
   }
 
-  @Delete(':tipo/:id')
-  @ApiOperation({ summary: 'Remover parceiro (posto/oficina) pelo id' })
-  async remover(@Param('tipo') tipo: string, @Param('id') id: string) {
-    return this.parceirosService.remover(tipo, id);
+  /** Rotas de login antes de `:tipo/:id` — senão DELETE /logins/:id cai em remover parceiro. */
+  @Patch('logins/:acessoId/senha')
+  @ApiOperation({ summary: 'Redefinir senha de um login operacional' })
+  resetarLoginSenha(
+    @Param('acessoId') acessoId: string,
+    @Body() dto: ResetParceiroLoginSenhaDto,
+  ) {
+    return this.parceirosService.resetarLoginSenha(acessoId, dto);
+  }
+
+  @Delete('logins/:acessoId')
+  @ApiOperation({ summary: 'Remover login operacional' })
+  removerLogin(@Param('acessoId') acessoId: string) {
+    return this.parceirosService.removerLogin(acessoId);
   }
 
   @Get(':tipo/:parceiroId/logins')
@@ -60,18 +70,9 @@ export class ParceirosController {
     return this.parceirosService.criarLogin(tipo, parceiroId, dto);
   }
 
-  @Patch('logins/:acessoId/senha')
-  @ApiOperation({ summary: 'Redefinir senha de um login operacional' })
-  resetarLoginSenha(
-    @Param('acessoId') acessoId: string,
-    @Body() dto: ResetParceiroLoginSenhaDto,
-  ) {
-    return this.parceirosService.resetarLoginSenha(acessoId, dto);
-  }
-
-  @Delete('logins/:acessoId')
-  @ApiOperation({ summary: 'Remover login operacional' })
-  removerLogin(@Param('acessoId') acessoId: string) {
-    return this.parceirosService.removerLogin(acessoId);
+  @Delete(':tipo/:id')
+  @ApiOperation({ summary: 'Remover parceiro (posto/oficina) pelo id' })
+  async remover(@Param('tipo') tipo: string, @Param('id') id: string) {
+    return this.parceirosService.remover(tipo, id);
   }
 }
