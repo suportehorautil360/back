@@ -70,9 +70,30 @@ export class FuncionariosService {
   }
 
   /**
+   * O funcionário é condutor responsável de algum equipamento da prefeitura?
+   * Gate do PWA FleetFuel (motorista). Filtra em memória (sem índice composto).
+   */
+  private async ehCondutorDeEquipamento(
+    prefeituraId: string,
+    funcionarioId: string,
+  ): Promise<boolean> {
+    if (!prefeituraId || !funcionarioId) return false;
+    const snap = await this.firestore
+      .collection('equipamentos')
+      .where('prefeituraId', '==', prefeituraId)
+      .get();
+    return snap.docs.some((d) => {
+      const data = d.data() as { condutoresResponsaveis?: unknown };
+      const condutores = Array.isArray(data.condutoresResponsaveis)
+        ? data.condutoresResponsaveis
+        : [];
+      return condutores.includes(funcionarioId);
+    });
+  }
+
+  /**
    * O funcionário é condutor responsável de pelo menos um comboio da prefeitura?
-   * Gate do PWA do comboista — só condutores entram. Filtra em memória (sem
-   * exigir índice composto prefeituraId + array-contains).
+   * Gate do PWA do comboista — só condutores de comboio entram.
    */
   private async ehCondutorDeComboio(
     prefeituraId: string,
@@ -159,15 +180,22 @@ export class FuncionariosService {
           typeof data.prefeituraId === 'string' ? data.prefeituraId : '',
       };
 
-      // Só condutores responsáveis de algum comboio acessam o PWA do comboista.
-      const ehCondutor = await this.ehCondutorDeComboio(
-        funcionario.prefeituraId,
-        funcionario.id,
-      );
+      const appMotorista = dto.app === 'motorista';
+      const ehCondutor = appMotorista
+        ? await this.ehCondutorDeEquipamento(
+            funcionario.prefeituraId,
+            funcionario.id,
+          )
+        : await this.ehCondutorDeComboio(
+            funcionario.prefeituraId,
+            funcionario.id,
+          );
       if (!ehCondutor) {
         return {
           ok: false,
-          msg: 'Você não está cadastrado como condutor de nenhum comboio. Procure o gestor.',
+          msg: appMotorista
+            ? 'Você não está cadastrado como condutor de nenhum equipamento. Procure o gestor.'
+            : 'Você não está cadastrado como condutor de nenhum comboio. Procure o gestor.',
         };
       }
 
