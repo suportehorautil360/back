@@ -181,7 +181,7 @@ describe('NotasFiscaisService — listagem por prefeitura (360)', () => {
       file: pdf(),
     });
 
-    const { data } = await service.listarPorPrefeitura('pref-1');
+    const { data } = await service.listarCombustivelPorPrefeitura('pref-1');
     expect(data).toHaveLength(1);
     expect(data[0].postoId).toBe('posto-1');
   });
