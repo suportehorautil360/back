@@ -62,6 +62,7 @@ export function mapGarantiaParaLista(
   return {
     id: doc.id,
     osOrigem: doc.osOrigem,
+    checklistDevolucaoId: doc.checklistDevolucaoId || undefined,
     dataExec: formatDataBr(doc.dataExecucao),
     tipo: doc.tipo,
     tipoLabel: tipoLabel(doc.tipo),

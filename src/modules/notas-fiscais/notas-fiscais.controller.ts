@@ -9,6 +9,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -18,9 +19,11 @@ import {
   ApiConsumes,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { ListNotasFiscaisPrefeituraQueryDto } from './dto/list-notas-fiscais-prefeitura-query.dto';
 import { NotasFiscaisService } from './notas-fiscais.service';
 
 const MAX_PDF_BYTES = 10 * 1024 * 1024;
@@ -125,14 +128,31 @@ export class NotasFiscaisController {
     };
   }
 
+  @Get('prefeitura/:prefeituraId/oficinas')
+  @ApiOperation({
+    summary: 'Listar NF das oficinas (O.S.)',
+    description:
+      'Retorna NF-e/NFC-e anexadas pelas oficinas, com nome da oficina, protocolo da O.S. e resumo agregado.',
+  })
+  @ApiParam({ name: 'prefeituraId' })
+  @ApiQuery({ name: 'busca', required: false })
+  @ApiQuery({ name: 'oficinaId', required: false })
+  @ApiQuery({ name: 'status', required: false, example: 'pendente' })
+  @ApiQuery({ name: 'startDate', required: false, example: '2026-06-01' })
+  @ApiQuery({ name: 'endDate', required: false, example: '2026-06-30' })
+  listarOficinasPorPrefeitura(
+    @Param('prefeituraId') prefeituraId: string,
+    @Query() query: ListNotasFiscaisPrefeituraQueryDto,
+  ) {
+    return this.service.listarOficinasPorPrefeitura(prefeituraId, query);
+  }
+
   @Get('oficina/:oficinaId')
   @ApiOperation({ summary: 'Listar notas fiscais da oficina' })
   @ApiParam({ name: 'oficinaId' })
   listar(@Param('oficinaId') oficinaId: string) {
     return this.service.listarPorOficina(oficinaId);
   }
-
-  // --- Notas fiscais de combustível enviadas pelo posto (posto-web) ---
 
   @Post('posto/:postoId')
   @HttpCode(HttpStatus.CREATED)
@@ -178,13 +198,13 @@ export class NotasFiscaisController {
     return this.service.listarPorPosto(postoId);
   }
 
-  @Get('prefeitura/:prefeituraId')
+  @Get('prefeitura/:prefeituraId/combustivel')
   @ApiOperation({
     summary: 'Listar notas fiscais de combustível dos postos da prefeitura',
   })
   @ApiParam({ name: 'prefeituraId' })
-  listarPrefeitura(@Param('prefeituraId') prefeituraId: string) {
-    return this.service.listarPorPrefeitura(prefeituraId);
+  listarCombustivelPorPrefeitura(@Param('prefeituraId') prefeituraId: string) {
+    return this.service.listarCombustivelPorPrefeitura(prefeituraId);
   }
 
   @Patch(':id/status')

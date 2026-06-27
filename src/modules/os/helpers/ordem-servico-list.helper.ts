@@ -58,6 +58,25 @@ function mapItens(raw: unknown): OrdemOrcamentoListItem['items'] {
         }
       }
 
+      // API usa `code`; legado Firestore pode gravar outros nomes.
+      if (!(mapped as Record<string, unknown>).code) {
+        for (const key of [
+          'codigo',
+          'produto',
+          'codigoPeca',
+          'codPeca',
+          'partNumber',
+          'part_number',
+          'numeroPeca',
+        ] as const) {
+          const codigo = texto(rec[key]);
+          if (codigo) {
+            (mapped as Record<string, unknown>).code = codigo;
+            break;
+          }
+        }
+      }
+
       return mapped;
     })
     .filter((item): item is OrdemOrcamentoListItem['items'][number] => item !== null);

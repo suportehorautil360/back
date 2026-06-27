@@ -16,6 +16,11 @@ export class OrcamentoItemDto {
   @IsString()
   description!: string;
 
+  @ApiPropertyOptional({ description: 'Alias PT de description' })
+  @IsOptional()
+  @IsString()
+  descricao?: string;
+
   @ApiProperty({ example: 4200 })
   @IsNumber()
   @Min(0.01)
@@ -31,10 +36,20 @@ export class OrcamentoItemDto {
   @IsString()
   code?: string;
 
+  @ApiPropertyOptional({ description: 'Alias PT de code' })
+  @IsOptional()
+  @IsString()
+  codigo?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   brand?: string;
+
+  @ApiPropertyOptional({ description: 'Alias PT de brand' })
+  @IsOptional()
+  @IsString()
+  marca?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -42,11 +57,23 @@ export class OrcamentoItemDto {
   @Min(0)
   quantity?: number;
 
+  @ApiPropertyOptional({ description: 'Alias PT de quantity' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  quantidade?: number;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsNumber()
   @Min(0)
   unitValue?: number;
+
+  @ApiPropertyOptional({ description: 'Alias PT de unitValue' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  valorUnitario?: number;
 
   @ApiPropertyOptional()
   @IsOptional()

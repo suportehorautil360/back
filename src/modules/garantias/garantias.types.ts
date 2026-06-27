@@ -28,6 +28,7 @@ export interface GarantiaDoc {
 export interface GarantiaListItem {
   id: string;
   osOrigem: string;
+  checklistDevolucaoId?: string;
   dataExec: string;
   tipo: GarantiaTipo;
   tipoLabel: string;

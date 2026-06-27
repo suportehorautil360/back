@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import type { OrcamentoItemDto } from '../dto/create-orcamento.dto';
 import {
   mapDtoItemsToFirestore,
   parseOrcamentoItemsFromDto,
@@ -23,9 +24,34 @@ describe('orcamento-items.helper', () => {
       valor: 120,
       category: 'part',
       code: 'FLT-01',
+      codigo: 'FLT-01',
       brand: 'Mann',
+      marca: 'Mann',
       quantity: 2,
+      quantidade: 2,
       unitValue: 60,
+      valorUnitario: 60,
+    });
+  });
+
+  it('aceita campos em português no item', () => {
+    const [item] = mapDtoItemsToFirestore([
+      {
+        descricao: 'Retentor',
+        valor: 85,
+        codigo: '992-0034',
+        marca: 'Komatsu',
+        quantidade: 1,
+        valorUnitario: 85,
+      } as unknown as OrcamentoItemDto,
+    ]);
+
+    expect(item).toMatchObject({
+      descricao: 'Retentor',
+      codigo: '992-0034',
+      code: '992-0034',
+      marca: 'Komatsu',
+      brand: 'Komatsu',
     });
   });
 
