@@ -10,14 +10,17 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiOperation,
   ApiParam,
   ApiQuery,
   ApiResponse,
+  ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
+import { AdminSecretGuard } from '../whatsapp/admin-secret.guard';
 import { CreateMensagemSuporteDto } from './dto/create-mensagem.dto';
 import { CreateMensagemSuportePostoDto } from './dto/create-mensagem-posto.dto';
 import { ResponderSuporteDto } from './dto/responder-suporte.dto';
@@ -236,6 +239,68 @@ export class SuporteController {
   @ApiParam({ name: 'prefeituraId' })
   @ApiParam({ name: 'postoId' })
   marcarLidasAdmin(
+    @Param('postoId') postoId: string,
+    @Body() dto: MarcarMensagensLidasDto,
+  ) {
+    return this.service.marcarLidasAdmin(postoId, dto.channel);
+  }
+
+  // --- Inbox admin Hora Útil (hub mestre) ---
+
+  @Get('admin/inbox')
+  @UseGuards(AdminSecretGuard)
+  @ApiSecurity('x-admin-secret')
+  @ApiOperation({ summary: 'Inbox global de suporte dos postos (Hora Útil)' })
+  @ApiQuery({ name: 'channel', required: false, enum: ['financeiro', 'ti'] })
+  listarInboxAdmin(@Query('channel') channel?: string) {
+    return this.service.listarInboxAdmin(channel);
+  }
+
+  @Get('admin/pendentes')
+  @UseGuards(AdminSecretGuard)
+  @ApiSecurity('x-admin-secret')
+  @ApiOperation({ summary: 'Total de mensagens de postos pendentes de leitura' })
+  contarPendentesAdmin() {
+    return this.service.contarPendentesAdmin();
+  }
+
+  @Get('admin/posto/:postoId/mensagens')
+  @UseGuards(AdminSecretGuard)
+  @ApiSecurity('x-admin-secret')
+  @ApiOperation({ summary: 'Histórico do chat posto (visão admin Hora Útil)' })
+  @ApiParam({ name: 'postoId' })
+  @ApiQuery({ name: 'channel', enum: ['financeiro', 'ti'] })
+  listarMensagensAdmin(
+    @Param('postoId') postoId: string,
+    @Query() query: ListMensagensSuporteQueryDto,
+  ) {
+    return this.service.listarMensagensAdmin(
+      postoId,
+      query.channel,
+      query.limit,
+      query.before,
+    );
+  }
+
+  @Post('admin/posto/:postoId/responder')
+  @HttpCode(HttpStatus.CREATED)
+  @UseGuards(AdminSecretGuard)
+  @ApiSecurity('x-admin-secret')
+  @ApiOperation({ summary: 'Equipe Hora Útil responde mensagem do posto' })
+  @ApiParam({ name: 'postoId' })
+  responderAdmin(
+    @Param('postoId') postoId: string,
+    @Body() dto: ResponderSuporteDto,
+  ) {
+    return this.service.responderComoAdmin(postoId, dto);
+  }
+
+  @Patch('admin/posto/:postoId/admin-lidas')
+  @UseGuards(AdminSecretGuard)
+  @ApiSecurity('x-admin-secret')
+  @ApiOperation({ summary: 'Admin marca mensagens do operador como lidas' })
+  @ApiParam({ name: 'postoId' })
+  marcarLidasAdminHub(
     @Param('postoId') postoId: string,
     @Body() dto: MarcarMensagensLidasDto,
   ) {

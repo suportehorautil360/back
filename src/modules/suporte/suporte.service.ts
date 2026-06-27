@@ -499,6 +499,7 @@ export class SuporteService {
 
       batch.set(userRef, {
         ...userMessage,
+        destino: 'hora-util',
         ...(prefeituraId ? { prefeituraId } : {}),
       });
 
@@ -647,36 +648,21 @@ export class SuporteService {
     }
   }
 
-  // --- Inbox do gestor (web-360) ---
+  // --- Inbox do gestor (web-360) — descontinuado: suporte do posto vai ao admin Hora Útil ---
 
   async listarInboxPrefeitura(
     prefeituraId: string,
-    channelRaw?: unknown,
+    _channelRaw?: unknown,
   ): Promise<{ data: SuporteThreadApi[]; message: string }> {
     const id = prefeituraId.trim();
     if (!id) {
       throw new BadRequestException('prefeituraId inválido.');
     }
-
-    const channelFilter =
-      typeof channelRaw === 'string' && channelRaw.trim()
-        ? parseSuporteChannel(channelRaw)
-        : null;
-
-    try {
-      const messages = await this.loadMensagensPrefeitura(id);
-      let threads = agruparThreadsPosto(messages);
-      if (channelFilter) {
-        threads = threads.filter((t) => t.channel === channelFilter);
-      }
-      return { data: threads, message: 'Inbox carregado com sucesso.' };
-    } catch (error) {
-      if (error instanceof BadRequestException) throw error;
-      console.error('Erro ao listar inbox de suporte:', error);
-      throw new InternalServerErrorException(
-        'Não foi possível carregar o inbox de suporte.',
-      );
-    }
+    return {
+      data: [],
+      message:
+        'Suporte dos postos é atendido pela equipe Hora Útil no painel admin.',
+    };
   }
 
   async listarMensagensGestor(
@@ -792,6 +778,126 @@ export class SuporteService {
       console.error('Erro ao marcar lidas (admin):', error);
       throw new InternalServerErrorException(
         'Não foi possível marcar as mensagens como lidas.',
+      );
+    }
+  }
+
+  // --- Inbox admin Hora Útil (hub mestre) ---
+
+  private async loadMensagensAdminPostos(): Promise<SuporteMensagemApi[]> {
+    const snap = await this.mensagensCollection.get();
+    const mapa = new Map<string, SuporteMensagemApi>();
+    for (const doc of snap.docs) {
+      const m = mapMensagemToApi(
+        doc.id,
+        doc.data() as Record<string, unknown>,
+      );
+      if (m.postoId) mapa.set(m.id, m);
+    }
+    return [...mapa.values()];
+  }
+
+  async listarInboxAdmin(channelRaw?: unknown): Promise<{
+    data: SuporteThreadApi[];
+    message: string;
+  }> {
+    const channelFilter =
+      typeof channelRaw === 'string' && channelRaw.trim()
+        ? parseSuporteChannel(channelRaw)
+        : null;
+
+    try {
+      const messages = await this.loadMensagensAdminPostos();
+      let threads = agruparThreadsPosto(messages);
+      if (channelFilter) {
+        threads = threads.filter((t) => t.channel === channelFilter);
+      }
+      return { data: threads, message: 'Inbox admin carregado com sucesso.' };
+    } catch (error) {
+      console.error('Erro ao listar inbox admin de suporte:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível carregar o inbox de suporte.',
+      );
+    }
+  }
+
+  async contarPendentesAdmin(): Promise<{ data: { total: number }; message: string }> {
+    const { data } = await this.listarInboxAdmin();
+    const total = data.reduce((s, t) => s + t.unreadUserCount, 0);
+    return { data: { total }, message: 'ok' };
+  }
+
+  async listarMensagensAdmin(
+    postoId: string,
+    channelRaw: unknown,
+    limitRaw?: number,
+    before?: string,
+  ): Promise<{
+    data: { channel: SuporteChannel; messages: SuporteMensagemApi[] };
+    message: string;
+  }> {
+    const posto = postoId.trim();
+    const channel = parseSuporteChannel(channelRaw);
+    const limit = Math.min(Math.max(limitRaw ?? DEFAULT_LIMIT, 1), 100);
+
+    if (!posto) throw new BadRequestException('postoId inválido.');
+
+    try {
+      const persisted = await this.loadChannelMessagesPosto(posto, channel);
+      const page = paginateMensagens(persisted, limit, before);
+      const messages = withPostoWelcomeMessages(posto, channel, page);
+      return {
+        data: { channel, messages },
+        message: 'Mensagens carregadas com sucesso.',
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      console.error('Erro ao listar mensagens (admin):', error);
+      throw new InternalServerErrorException(
+        'Não foi possível carregar as mensagens.',
+      );
+    }
+  }
+
+  async responderComoAdmin(
+    postoId: string,
+    dto: ResponderSuporteDto,
+  ): Promise<{ data: SuporteMensagemApi; message: string }> {
+    const posto = postoId.trim();
+    const channel = parseSuporteChannel(dto.channel);
+    const text = dto.text.trim();
+
+    if (!posto) throw new BadRequestException('postoId inválido.');
+    if (!text) throw new BadRequestException('text não pode ser vazio.');
+
+    let prefeituraId: string | undefined;
+    const postoSnap = await this.postosCollection.doc(posto).get();
+    if (postoSnap.exists) {
+      prefeituraId =
+        texto(postoSnap.data()?.prefeituraId) || undefined;
+    }
+
+    const id = randomUUID();
+    const createdAt = new Date().toISOString();
+    const payload: SuporteMensagemApi = {
+      id,
+      postoId: posto,
+      ...(prefeituraId ? { prefeituraId } : {}),
+      channel,
+      sender: 'support',
+      text,
+      createdAt,
+      readAt: null,
+      autoReply: false,
+    };
+
+    try {
+      await this.mensagensCollection.doc(id).set(payload);
+      return { data: payload, message: 'Resposta enviada com sucesso.' };
+    } catch (error) {
+      console.error('Erro ao responder mensagem (admin):', error);
+      throw new InternalServerErrorException(
+        'Não foi possível enviar a resposta.',
       );
     }
   }
