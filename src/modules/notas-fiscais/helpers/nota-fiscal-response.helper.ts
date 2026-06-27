@@ -23,6 +23,7 @@ export function mapNotaFiscalToApi(
   return {
     id: texto(raw.id) || id,
     oficinaId: texto(raw.oficinaId),
+    ...(texto(raw.postoId) ? { postoId: texto(raw.postoId) } : {}),
     ...(texto(raw.parceiroId) ? { parceiroId: texto(raw.parceiroId) } : {}),
     ...(texto(raw.prefeituraId) ? { prefeituraId: texto(raw.prefeituraId) } : {}),
     ...(texto(raw.solicitacaoOsId)

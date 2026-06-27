@@ -194,14 +194,18 @@ export class UploadsService {
     return urls;
   }
 
+  /**
+   * Sobe o PDF da nota fiscal e devolve a URL pública. `ownerId` é o 1º segmento
+   * do path (ex.: id da oficina ou `posto-<postoId>`), apenas para organização.
+   */
   async uploadNotaFiscalPdf(
-    oficinaId: string,
+    ownerId: string,
     notaId: string,
     file: { buffer: Buffer; mimetype: string; originalname: string },
   ): Promise<string> {
     const ext = file.originalname.toLowerCase().endsWith('.pdf') ? 'pdf' : 'pdf';
     const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '-');
-    const relativePath = `${sanitizar(oficinaId)}/${sanitizar(notaId)}/${Date.now()}-${safeName || `nota.${ext}`}`;
+    const relativePath = `${sanitizar(ownerId)}/${sanitizar(notaId)}/${Date.now()}-${safeName || `nota.${ext}`}`;
     const attempts = this.buildNotaFiscalUploadAttempts(relativePath);
 
     let lastError: unknown = null;

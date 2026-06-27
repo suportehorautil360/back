@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
   UploadedFile,
@@ -127,12 +128,11 @@ export class NotasFiscaisController {
     };
   }
 
-  @Get('prefeitura/:prefeituraId')
+  @Get('prefeitura/:prefeituraId/oficinas')
   @ApiOperation({
-    summary: 'Listar notas fiscais enviadas pelas oficinas (prefeitura)',
+    summary: 'Listar NF das oficinas (O.S.)',
     description:
-      'Retorna NF-e/NFC-e anexadas pelas oficinas vinculadas à prefeitura, ' +
-      'com nome da oficina e protocolo/equipamento da O.S.',
+      'Retorna NF-e/NFC-e anexadas pelas oficinas, com nome da oficina, protocolo da O.S. e resumo agregado.',
   })
   @ApiParam({ name: 'prefeituraId' })
   @ApiQuery({ name: 'busca', required: false })
@@ -140,11 +140,11 @@ export class NotasFiscaisController {
   @ApiQuery({ name: 'status', required: false, example: 'pendente' })
   @ApiQuery({ name: 'startDate', required: false, example: '2026-06-01' })
   @ApiQuery({ name: 'endDate', required: false, example: '2026-06-30' })
-  listarPorPrefeitura(
+  listarOficinasPorPrefeitura(
     @Param('prefeituraId') prefeituraId: string,
     @Query() query: ListNotasFiscaisPrefeituraQueryDto,
   ) {
-    return this.service.listarPorPrefeitura(prefeituraId, query);
+    return this.service.listarOficinasPorPrefeitura(prefeituraId, query);
   }
 
   @Get('oficina/:oficinaId')
@@ -152,5 +152,75 @@ export class NotasFiscaisController {
   @ApiParam({ name: 'oficinaId' })
   listar(@Param('oficinaId') oficinaId: string) {
     return this.service.listarPorOficina(oficinaId);
+  }
+
+  @Post('posto/:postoId')
+  @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: MAX_PDF_BYTES } }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Enviar PDF de nota fiscal de combustível (posto)',
+    description:
+      'Recebe o PDF da DANFE (NF-e mod. 55) ou NFC-e (mod. 65). O backend extrai chave, valor, emitente, data e tipo.',
+  })
+  @ApiParam({ name: 'postoId' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        prefeituraId: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Nota fiscal enviada.' })
+  async uploadPosto(
+    @Param('postoId') postoId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('prefeituraId') prefeituraId?: string,
+    @Headers('x-prefeitura-id') headerPrefeituraId?: string,
+  ) {
+    const data = await this.service.uploadPorPosto({
+      postoId,
+      prefeituraId: texto(prefeituraId) || texto(headerPrefeituraId) || undefined,
+      file,
+    });
+    return { data, message: 'Nota fiscal enviada com sucesso.' };
+  }
+
+  @Get('posto/:postoId')
+  @ApiOperation({ summary: 'Listar notas fiscais de combustível do posto' })
+  @ApiParam({ name: 'postoId' })
+  listarPosto(@Param('postoId') postoId: string) {
+    return this.service.listarPorPosto(postoId);
+  }
+
+  @Get('prefeitura/:prefeituraId/combustivel')
+  @ApiOperation({
+    summary: 'Listar notas fiscais de combustível dos postos da prefeitura',
+  })
+  @ApiParam({ name: 'prefeituraId' })
+  listarCombustivelPorPrefeitura(@Param('prefeituraId') prefeituraId: string) {
+    return this.service.listarCombustivelPorPrefeitura(prefeituraId);
+  }
+
+  @Patch(':id/status')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Aprovar/rejeitar uma nota fiscal (gestor)' })
+  @ApiParam({ name: 'id' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['status'],
+      properties: {
+        status: { type: 'string', enum: ['pendente', 'aprovada', 'rejeitada'] },
+      },
+    },
+  })
+  atualizarStatus(@Param('id') id: string, @Body('status') status: string) {
+    return this.service.atualizarStatus(id, status);
   }
 }

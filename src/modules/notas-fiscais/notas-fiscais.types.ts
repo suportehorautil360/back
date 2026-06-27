@@ -15,6 +15,8 @@ export type NotaFiscalDocumentType = (typeof NOTA_FISCAL_DOCUMENT_TYPE)[number];
 export interface NotaFiscalApiItem {
   id: string;
   oficinaId: string;
+  /** Dono quando a nota é enviada por um posto (combustível), não por oficina. */
+  postoId?: string;
   parceiroId?: string;
   prefeituraId?: string;
   solicitacaoOsId?: string;
@@ -36,7 +38,8 @@ export interface NotaFiscalApiItem {
 
 export interface NotaFiscalFirestore {
   id: string;
-  oficinaId: string;
+  oficinaId?: string;
+  postoId?: string;
   parceiroId?: string;
   prefeituraId?: string;
   solicitacaoOsId?: string;
