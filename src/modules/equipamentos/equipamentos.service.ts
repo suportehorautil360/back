@@ -28,6 +28,26 @@ function nmr(valor: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+/** Equipamento em que o funcionário é condutor responsável? */
+function ehCondutorDoEquipamento(
+  e: Record<string, unknown>,
+  motoristaId: string,
+): boolean {
+  const condutores = ehArray(e.condutoresResponsaveis)
+    ? e.condutoresResponsaveis
+    : [];
+  return condutores.some((id) => id === motoristaId);
+}
+
+function mapDocEquipamento(doc: {
+  id: string;
+  data: () => Record<string, unknown>;
+}): Record<string, unknown> & { id: string } {
+  const raw = doc.data();
+  const id = typeof raw.id === 'string' ? raw.id : doc.id;
+  return { ...raw, id };
+}
+
 /** Type guard que estreita para `unknown[]` (Array.isArray estreita para any[]). */
 function ehArray(valor: unknown): valor is unknown[] {
   return Array.isArray(valor);
@@ -115,6 +135,78 @@ export class EquipamentosService {
   }
 
   /**
+   * Equipamentos da prefeitura em que o funcionário é condutor responsável.
+   * Alimenta o seletor de veículo do PWA FleetFuel (motorista).
+   */
+  async findEquipamentosByMotorista(
+    prefeituraId: string,
+    motoristaId: string,
+  ) {
+    try {
+      const ref = await this.collection
+        .where('prefeituraId', '==', prefeituraId)
+        .get();
+
+      const firestore = this.firebaseService.getFirestore();
+      const equipamentos = ref.docs
+        .map(mapDocEquipamento)
+        .filter((e) => ehCondutorDoEquipamento(e, motoristaId));
+
+      const data = await Promise.all(
+        equipamentos.map(async (e) => {
+          const equipId = e.id;
+          const nome =
+            txt(e.descricao) || txt(e.modelo) || txt(e.tipo) || 'Equipamento';
+          const base = {
+            id: equipId,
+            descricao: nome,
+            placa: txt(e.placa),
+            chassis: txt(e.chassis),
+            tipo: txt(e.tipo),
+          };
+
+          if (!ehComboio(e.tipo)) return base;
+
+          const tankSnap = await firestore
+            .collection('tanks')
+            .doc(equipId)
+            .get();
+          const t: Record<string, unknown> = tankSnap.data() ?? {};
+          const capacity =
+            t.capacity !== undefined
+              ? nmr(t.capacity)
+              : nmr(e.capacidadeTanque);
+          const currentVolume = nmr(t.currentVolume);
+          const { percentage, status } = tankStatus(capacity, currentVolume);
+          return {
+            ...base,
+            tank: {
+              name: nome,
+              fuelType: txt(e.combustivel),
+              capacity,
+              currentVolume,
+              percentage,
+              status,
+              veiculoModelo: txt(e.modelo) || txt(e.descricao),
+              veiculoPlaca: txt(e.placa),
+            },
+          };
+        }),
+      );
+
+      return {
+        data,
+        message: 'Equipamentos do condutor buscados com sucesso!',
+      };
+    } catch (error) {
+      console.error('Erro ao buscar equipamentos do condutor:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível buscar os equipamentos do condutor.',
+      );
+    }
+  }
+
+  /**
    * Comboios (equipamentos `tipo: Comboio`) da prefeitura em que o funcionário
    * é condutor responsável — com o tanque resolvido. Alimenta o seletor de
    * comboio do PWA do comboista (cada turno escolhe qual comboio opera).
@@ -127,20 +219,12 @@ export class EquipamentosService {
 
       const firestore = this.firebaseService.getFirestore();
       const comboios = ref.docs
-        .map((doc): Record<string, unknown> & { id: string } => {
-          const raw: Record<string, unknown> = doc.data();
-          const id = typeof raw.id === 'string' ? raw.id : doc.id;
-          return { ...raw, id };
-        })
-        .filter((e) => {
-          const condutores = ehArray(e.condutoresResponsaveis)
-            ? e.condutoresResponsaveis
-            : [];
-          return (
+        .map(mapDocEquipamento)
+        .filter(
+          (e) =>
             txt(e.tipo).toLowerCase() === 'comboio' &&
-            condutores.includes(motoristaId)
-          );
-        });
+            ehCondutorDoEquipamento(e, motoristaId),
+        );
 
       const data = await Promise.all(
         comboios.map(async (e) => {
