@@ -8,6 +8,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -17,9 +18,11 @@ import {
   ApiConsumes,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { ListNotasFiscaisPrefeituraQueryDto } from './dto/list-notas-fiscais-prefeitura-query.dto';
 import { NotasFiscaisService } from './notas-fiscais.service';
 
 const MAX_PDF_BYTES = 10 * 1024 * 1024;
@@ -122,6 +125,26 @@ export class NotasFiscaisController {
       data,
       message: 'Nota fiscal enviada com sucesso.',
     };
+  }
+
+  @Get('prefeitura/:prefeituraId')
+  @ApiOperation({
+    summary: 'Listar notas fiscais enviadas pelas oficinas (prefeitura)',
+    description:
+      'Retorna NF-e/NFC-e anexadas pelas oficinas vinculadas à prefeitura, ' +
+      'com nome da oficina e protocolo/equipamento da O.S.',
+  })
+  @ApiParam({ name: 'prefeituraId' })
+  @ApiQuery({ name: 'busca', required: false })
+  @ApiQuery({ name: 'oficinaId', required: false })
+  @ApiQuery({ name: 'status', required: false, example: 'pendente' })
+  @ApiQuery({ name: 'startDate', required: false, example: '2026-06-01' })
+  @ApiQuery({ name: 'endDate', required: false, example: '2026-06-30' })
+  listarPorPrefeitura(
+    @Param('prefeituraId') prefeituraId: string,
+    @Query() query: ListNotasFiscaisPrefeituraQueryDto,
+  ) {
+    return this.service.listarPorPrefeitura(prefeituraId, query);
   }
 
   @Get('oficina/:oficinaId')

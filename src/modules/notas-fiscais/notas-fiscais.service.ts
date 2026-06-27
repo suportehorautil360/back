@@ -8,7 +8,16 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
 import { UploadsService } from '../uploads/uploads.service';
+import type { ListNotasFiscaisPrefeituraQueryDto } from './dto/list-notas-fiscais-prefeitura-query.dto';
 import { mapNotaFiscalToApi } from './helpers/nota-fiscal-response.helper';
+import {
+  buildOsResolucaoMaps,
+  chunkArray,
+  enriquecerNotaFiscalPrefeitura,
+  filtrarNotasFiscaisPrefeitura,
+  type NotaFiscalPrefeituraListItem,
+} from './helpers/notas-fiscais-prefeitura.helper';
+import { calcularResumoNotasFiscais } from './helpers/notas-fiscais-resumo.helper';
 import { parseDanfePdf } from './helpers/parse-danfe-pdf.helper';
 import type { NotaFiscalApiItem } from './notas-fiscais.types';
 
@@ -35,6 +44,18 @@ export class NotasFiscaisService {
 
   private get collection() {
     return this.firebaseService.getFirestore().collection('notasFiscais');
+  }
+
+  private get oficinasCollection() {
+    return this.firebaseService.getFirestore().collection('oficinas');
+  }
+
+  private get solicitacoesCollection() {
+    return this.firebaseService.getFirestore().collection('solicitacoesOS');
+  }
+
+  private get ordensCollection() {
+    return this.firebaseService.getFirestore().collection('ordensServico');
   }
 
   async upload(input: UploadNotaFiscalInput): Promise<NotaFiscalApiItem> {
@@ -130,6 +151,121 @@ export class NotasFiscaisService {
         'Não foi possível salvar a nota fiscal.',
       );
     }
+  }
+
+  async listarPorPrefeitura(
+    prefeituraId: string,
+    query: ListNotasFiscaisPrefeituraQueryDto = {},
+  ): Promise<{
+    data: NotaFiscalPrefeituraListItem[];
+    resumo: ReturnType<typeof calcularResumoNotasFiscais>;
+    message: string;
+  }> {
+    const id = prefeituraId.trim();
+    if (!id) {
+      throw new BadRequestException('prefeituraId inválido.');
+    }
+
+    try {
+      const [solSnap, ordensSnap, oficinasSnap, nfPorPref] = await Promise.all([
+        this.solicitacoesCollection.where('prefeituraId', '==', id).get(),
+        this.ordensCollection.where('prefeituraId', '==', id).get(),
+        this.oficinasCollection.where('prefeituraId', '==', id).get(),
+        this.collection.where('prefeituraId', '==', id).get(),
+      ]);
+
+      const oficinaIdsPref = oficinasSnap.docs.map((doc) => doc.id);
+      const oficinaIdsOrdens = ordensSnap.docs
+        .map((doc) => texto(doc.data().oficinaId))
+        .filter(Boolean);
+      const oficinaIdsCredenciadas = [
+        ...new Set([...oficinaIdsPref, ...oficinaIdsOrdens]),
+      ];
+
+      const nfDocs = new Map<
+        string,
+        (typeof nfPorPref.docs)[number]
+      >();
+      for (const doc of nfPorPref.docs) {
+        nfDocs.set(doc.id, doc);
+      }
+
+      for (const chunk of chunkArray(oficinaIdsCredenciadas, 30)) {
+        if (chunk.length === 0) continue;
+        const extraSnap = await this.collection
+          .where('oficinaId', 'in', chunk)
+          .get();
+        for (const doc of extraSnap.docs) {
+          if (!nfDocs.has(doc.id)) {
+            nfDocs.set(doc.id, doc);
+          }
+        }
+      }
+
+      const oficinaIdsCredSet = new Set(oficinaIdsCredenciadas);
+      const base = [...nfDocs.values()]
+        .map((doc) =>
+          mapNotaFiscalToApi(doc.id, doc.data() as Record<string, unknown>),
+        )
+        .filter((nf) => {
+          if (texto(nf.prefeituraId) === id) return true;
+          return oficinaIdsCredSet.has(nf.oficinaId);
+        })
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+      const osMaps = buildOsResolucaoMaps(
+        solSnap.docs.map((doc) => ({
+          id: doc.id,
+          data: doc.data() as Record<string, unknown>,
+        })),
+        ordensSnap.docs.map((doc) => ({
+          id: doc.id,
+          data: doc.data() as Record<string, unknown>,
+        })),
+      );
+
+      const oficinaIds = [
+        ...new Set(base.map((n) => n.oficinaId).filter(Boolean)),
+      ];
+      const oficinasMap = await this.carregarOficinasMap(oficinaIds);
+
+      const enriquecidas = base.map((item) =>
+        enriquecerNotaFiscalPrefeitura(
+          item,
+          osMaps,
+          oficinasMap.get(item.oficinaId),
+        ),
+      );
+
+      const filtradas = filtrarNotasFiscaisPrefeitura(enriquecidas, query);
+
+      return {
+        data: filtradas,
+        resumo: calcularResumoNotasFiscais(filtradas),
+        message: 'Notas fiscais carregadas com sucesso.',
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      console.error('Erro ao listar notas fiscais da prefeitura:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível carregar as notas fiscais.',
+      );
+    }
+  }
+
+  private async carregarOficinasMap(
+    ids: string[],
+  ): Promise<Map<string, Record<string, unknown>>> {
+    const map = new Map<string, Record<string, unknown>>();
+    await Promise.all(
+      ids.map(async (oficinaId) => {
+        const snap = await this.oficinasCollection.doc(oficinaId).get();
+        if (snap.exists) {
+          map.set(oficinaId, snap.data() as Record<string, unknown>);
+        }
+      }),
+    );
+    return map;
   }
 
   async listarPorOficina(
