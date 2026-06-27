@@ -8,12 +8,14 @@ import {
   Param,
   Post,
   Query,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateAbastecimentoDto } from './dto/create-abastecimento.dto';
 import { AbastecimentosService } from './abastecimentos.service';
 import { IdempotencyInterceptor } from '../../../common/idempotency.interceptor';
+import { PostoGuard } from '../../../common/posto.guard';
 
 @ApiTags('abastecimentos')
 @Controller('abastecimentos')
@@ -51,6 +53,32 @@ export class AbastecimentosController {
       measurementType,
     );
     return { data, message: 'Última leitura buscada com sucesso!' };
+  }
+
+  @Get('posto/:postoId')
+  @UseGuards(PostoGuard)
+  @ApiOperation({
+    summary: 'Listar abastecimentos do posto (portal posto-web)',
+  })
+  @ApiParam({ name: 'postoId', description: 'ID do posto credenciado' })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    description: 'Início do período (ISO 8601 ou YYYY-MM-DD)',
+    example: '2026-06-01',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    description: 'Fim do período (ISO 8601 ou YYYY-MM-DD)',
+    example: '2026-06-30',
+  })
+  async listarPorPosto(
+    @Param('postoId') postoId: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.service.listarPorPosto(postoId, startDate, endDate);
   }
 
   @Get(':prefeituraId')
