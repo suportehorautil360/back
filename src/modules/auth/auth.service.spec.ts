@@ -9,9 +9,10 @@ import type { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { FirebaseService } from '../../config/firebase.service';
+import { hashSenhaOperacional } from '../parceiros/helpers/parceiro-login.helper';
 
 function makeFirestore({
-  usersSnap = { empty: true, docs: [] as { data: () => unknown }[] },
+  usersSnap = { empty: true, docs: [] as { id: string; data: () => unknown }[] },
   oficinasDoc = { exists: false, data: () => null },
 } = {}) {
   return {
@@ -60,6 +61,16 @@ const activeUser = {
   prefeituraId: 'pref-1',
 };
 
+const operacionalUser = {
+  id: 'uuid-payload',
+  nome: 'Gestor Oficina',
+  usuario: 'oficina.teste',
+  senha: hashSenhaOperacional('senha123'),
+  vinculo: 'oficina',
+  officinaId: 'of-1',
+  prefeituraId: 'pref-1',
+};
+
 beforeEach(() => jest.clearAllMocks());
 
 describe('AuthService.login', () => {
@@ -71,7 +82,6 @@ describe('AuthService.login', () => {
       service.login({ email: 'nao@existe.com', password: '123' }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
 
-    // bcrypt.compare deve ser chamado mesmo sem usuário (proteção de timing)
     expect(bcrypt.compare).toHaveBeenCalledTimes(1);
   });
 
@@ -80,7 +90,7 @@ describe('AuthService.login', () => {
     const service = makeService({
       usersSnap: {
         empty: false,
-        docs: [{ data: () => activeUser }],
+        docs: [{ id: 'user-1', data: () => activeUser }],
       },
     });
 
@@ -94,7 +104,7 @@ describe('AuthService.login', () => {
     const service = makeService({
       usersSnap: {
         empty: false,
-        docs: [{ data: () => ({ ...activeUser, status: 'INACTIVE' }) }],
+        docs: [{ id: 'user-1', data: () => ({ ...activeUser, status: 'INACTIVE' }) }],
       },
     });
 
@@ -108,16 +118,17 @@ describe('AuthService.login', () => {
     );
   });
 
-  it('credenciais válidas → retorna token e user sem passwordHash', async () => {
+  it('credenciais válidas por email → retorna token e user sem passwordHash', async () => {
     (bcrypt.compare as jest.Mock).mockResolvedValue(true);
     const service = makeService({
       usersSnap: {
         empty: false,
-        docs: [{ data: () => activeUser }],
+        docs: [{ id: 'user-1', data: () => activeUser }],
       },
       oficinasDoc: {
         exists: true,
         data: () => ({
+          nomeFantasia: 'Mecânica Silva',
           credChecklist: {
             fisc_cndt: true,
             fisc_estadual: false,
@@ -151,5 +162,38 @@ describe('AuthService.login', () => {
       email: 'joao@of.com',
       oficinaId: 'of-1',
     });
+    expect(result.oficina?.nome).toBe('Mecânica Silva');
+  });
+
+  it('credenciais operacionais válidas → retorna token e oficina', async () => {
+    const service = makeService({
+      usersSnap: {
+        empty: false,
+        docs: [{ id: 'doc-operacional', data: () => operacionalUser }],
+      },
+      oficinasDoc: {
+        exists: true,
+        data: () => ({
+          nomeFantasia: 'Auto Center',
+          status: 'Ativa',
+          prefeituraId: 'pref-1',
+        }),
+      },
+    });
+
+    const result = await service.login({
+      usuario: operacionalUser.usuario,
+      password: 'senha123',
+    });
+
+    expect(result.token).toBe('jwt_token');
+    expect(result.user).toMatchObject({
+      id: 'doc-operacional',
+      name: 'Gestor Oficina',
+      usuario: 'oficina.teste',
+      oficinaId: 'of-1',
+      prefeituraId: 'pref-1',
+    });
+    expect(result.oficina?.nome).toBe('Auto Center');
   });
 });

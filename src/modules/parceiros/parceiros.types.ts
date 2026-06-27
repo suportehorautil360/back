@@ -3,6 +3,7 @@ export type TipoParceiro = 'posto' | 'oficina';
 /** Posto de combustível credenciado (rede de parceiros). */
 export interface PostoParceiro {
   id: string;
+  prefeituraId: string;
   nome: string;
   razaoSocial: string;
   cidadeUf: string;
@@ -15,6 +16,7 @@ export interface PostoParceiro {
 /** Oficina mecânica credenciada (rede de parceiros). */
 export interface OficinaParceiro {
   id: string;
+  prefeituraId: string;
   nome: string;
   razaoSocial: string;
   cidadeUf: string;

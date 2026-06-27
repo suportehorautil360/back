@@ -72,7 +72,15 @@ export class UsersService {
 
   async me(userId: string, credLevel?: string) {
     try {
-      const userDoc = await this.usersCollection.doc(userId).get();
+      let userDoc = await this.usersCollection.doc(userId).get();
+
+      if (!userDoc.exists) {
+        const snap = await this.usersCollection
+          .where('id', '==', userId)
+          .limit(1)
+          .get();
+        userDoc = snap.empty ? userDoc : snap.docs[0];
+      }
 
       if (!userDoc.exists) {
         throw new NotFoundException('Usuário não encontrado.');
@@ -81,18 +89,23 @@ export class UsersService {
       const raw = userDoc.data() as Record<string, unknown>;
       const toStr = (v: unknown) => (typeof v === 'string' ? v : '');
 
+      const oficinaId =
+        toStr(raw.oficinaId) ||
+        toStr(raw.officinaId);
+
       const user = {
-        id: toStr(raw.id),
-        name: toStr(raw.name),
+        id: userDoc.id,
+        name: toStr(raw.name) || toStr(raw.nome),
         email: toStr(raw.email),
-        oficinaId: toStr(raw.oficinaId),
+        usuario: toStr(raw.usuario),
+        oficinaId,
         prefeituraId: toStr(raw.prefeituraId),
-        status: toStr(raw.status),
+        status: toStr(raw.status) || 'ACTIVE',
         credLevel,
       };
 
       const oficinasDoc = await this.oficinasCollection
-        .doc(user.oficinaId)
+        .doc(oficinaId)
         .get();
       const oficina = oficinasDoc.exists
         ? { id: oficinasDoc.id, ...oficinasDoc.data() }
