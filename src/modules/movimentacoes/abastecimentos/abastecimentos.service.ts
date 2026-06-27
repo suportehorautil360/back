@@ -24,8 +24,15 @@ import {
   resolveEquipmentByPlateOrChassis,
 } from '../shared/equipment.helper';
 import { debitarTanqueTx } from '../shared/tank-saldo.helper';
-import { formatDateTime } from '../shared/date.helper';
-import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
+import {
+  formatDateTime,
+  parseDateEnd,
+  parseDateStart,
+} from '../shared/date.helper';
+import {
+  createdAtToIso,
+  fetchPrefeituraDocs,
+} from '../shared/prefeitura-query.helper';
 import { reverseGeocode } from '../shared/reverse-geocode.helper';
 import {
   formatReadingLabel,
@@ -275,37 +282,7 @@ export class AbastecimentosService {
         { startDate, endDate, order: 'desc' },
       );
 
-      if (docs.length === 0) {
-        return { data: [], message: 'Abastecimentos buscados com sucesso!' };
-      }
-
-      const uniqueEquipmentIds = [
-        ...new Set(
-          docs
-            .map((d) => {
-              const raw = d as unknown as Record<string, unknown>;
-              return asString(d.equipmentId ?? raw.equipamentoId);
-            })
-            .filter(Boolean),
-        ),
-      ];
-      const uniquePostoIds = [
-        ...new Set(
-          docs.map((d) => d.postoId?.trim()).filter((id): id is string => !!id),
-        ),
-      ];
-
-      const [equipmentMap, postoMap] = await Promise.all([
-        fetchEquipmentMap(this.equipamentosCollection, uniqueEquipmentIds),
-        this.fetchPostoMap(uniquePostoIds),
-      ]);
-
-      const data = await Promise.all(
-        docs.map((doc) =>
-          this.formatAbastecimento(doc, equipmentMap, postoMap),
-        ),
-      );
-
+      const data = await this.formatAbastecimentosDocs(docs);
       return { data, message: 'Abastecimentos buscados com sucesso!' };
     } catch (error) {
       console.error('Erro ao buscar abastecimentos:', error);
@@ -313,6 +290,83 @@ export class AbastecimentosService {
         'Não foi possível buscar os abastecimentos.',
       );
     }
+  }
+
+  /** Histórico do posto credenciado (portal posto-web). */
+  async listarPorPosto(
+    postoId: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
+    const id = postoId.trim();
+    if (!id) {
+      throw new BadRequestException('postoId inválido.');
+    }
+
+    try {
+      const snap = await this.collection.where('postoId', '==', id).get();
+
+      let docs = snap.docs.map((doc) => {
+        const data = doc.data() as Record<string, unknown>;
+        return {
+          ...data,
+          id: asString(data.id) || doc.id,
+          createdAt: createdAtToIso(data.createdAt) || createdAtToIso(data.criadoEm),
+        } as AbastecimentoDoc;
+      });
+
+      if (startDate) {
+        const startIso = parseDateStart(startDate, 'startDate').toISOString();
+        docs = docs.filter((d) => d.createdAt && d.createdAt >= startIso);
+      }
+      if (endDate) {
+        const endIso = parseDateEnd(endDate, 'endDate').toISOString();
+        docs = docs.filter((d) => d.createdAt && d.createdAt <= endIso);
+      }
+
+      docs.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+
+      const data = await this.formatAbastecimentosDocs(docs);
+      return {
+        data,
+        message: 'Abastecimentos do posto buscados com sucesso!',
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      console.error('Erro ao buscar abastecimentos do posto:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível buscar os abastecimentos do posto.',
+      );
+    }
+  }
+
+  private async formatAbastecimentosDocs(docs: AbastecimentoDoc[]) {
+    if (docs.length === 0) return [];
+
+    const uniqueEquipmentIds = [
+      ...new Set(
+        docs
+          .map((d) => {
+            const raw = d as unknown as Record<string, unknown>;
+            return asString(d.equipmentId ?? raw.equipamentoId);
+          })
+          .filter(Boolean),
+      ),
+    ];
+    const uniquePostoIds = [
+      ...new Set(
+        docs.map((d) => d.postoId?.trim()).filter((pid): pid is string => !!pid),
+      ),
+    ];
+
+    const [equipmentMap, postoMap] = await Promise.all([
+      fetchEquipmentMap(this.equipamentosCollection, uniqueEquipmentIds),
+      this.fetchPostoMap(uniquePostoIds),
+    ]);
+
+    return Promise.all(
+      docs.map((doc) => this.formatAbastecimento(doc, equipmentMap, postoMap)),
+    );
   }
 
   /**
@@ -424,6 +478,15 @@ export class AbastecimentosService {
       dateTime: formatDateTime(doc.createdAt),
       vehicle,
       origin: this.resolveOrigin(doc, postoMap),
+      fuelType:
+        asString(raw.tipoCombustivel) ||
+        asString(raw.combustivel) ||
+        asString(equipment.combustivel) ||
+        null,
+      motoristaNome:
+        asString(raw.motoristaNome) ||
+        asString(raw.motorista) ||
+        null,
       liters: resolveLiters(raw),
       pricePerLiter: doc.pricePerLiter ?? null,
       value: doc.total ?? null,
