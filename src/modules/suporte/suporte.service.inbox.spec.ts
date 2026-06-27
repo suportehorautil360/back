@@ -87,7 +87,7 @@ function makeService() {
   return { service: new SuporteService(firebase), store };
 }
 
-describe('SuporteService — inbox do gestor', () => {
+describe('SuporteService — inbox admin Hora Útil', () => {
   it('lista threads com mensagens não lidas pelo admin', async () => {
     const { service } = makeService();
     await service.enviarMensagemPosto('posto-1', {
@@ -97,14 +97,27 @@ describe('SuporteService — inbox do gestor', () => {
       prefeituraId: 'pref-1',
     });
 
-    const { data } = await service.listarInboxPrefeitura('pref-1');
+    const { data } = await service.listarInboxAdmin();
     expect(data.length).toBe(1);
     expect(data[0].postoId).toBe('posto-1');
     expect(data[0].channel).toBe('financeiro');
     expect(data[0].unreadUserCount).toBe(1);
   });
 
-  it('filtra inbox por canal', async () => {
+  it('inbox da prefeitura fica vazio (suporte vai ao admin)', async () => {
+    const { service } = makeService();
+    await service.enviarMensagemPosto('posto-1', {
+      postoId: 'posto-1',
+      channel: 'financeiro',
+      text: 'Dúvida NF',
+      prefeituraId: 'pref-1',
+    });
+
+    const { data } = await service.listarInboxPrefeitura('pref-1');
+    expect(data).toHaveLength(0);
+  });
+
+  it('filtra inbox admin por canal', async () => {
     const { service } = makeService();
     await service.enviarMensagemPosto('posto-1', {
       postoId: 'posto-1',
@@ -119,7 +132,7 @@ describe('SuporteService — inbox do gestor', () => {
       prefeituraId: 'pref-1',
     });
 
-    const { data } = await service.listarInboxPrefeitura('pref-1', 'ti');
+    const { data } = await service.listarInboxAdmin('ti');
     expect(data).toHaveLength(1);
     expect(data[0].channel).toBe('ti');
   });
@@ -133,18 +146,18 @@ describe('SuporteService — inbox do gestor', () => {
       prefeituraId: 'pref-1',
     });
 
-    const antes = await service.listarInboxPrefeitura('pref-1');
+    const antes = await service.listarInboxAdmin();
     expect(antes.data[0].unreadUserCount).toBe(1);
 
     await service.marcarLidasAdmin('posto-1', 'ti');
 
-    const depois = await service.listarInboxPrefeitura('pref-1');
+    const depois = await service.listarInboxAdmin();
     expect(depois.data[0].unreadUserCount).toBe(0);
   });
 
-  it('gestor responde sem autoReply', async () => {
+  it('admin responde sem autoReply', async () => {
     const { service, store } = makeService();
-    const { data } = await service.responderComoGestor('pref-1', 'posto-1', {
+    const { data } = await service.responderComoAdmin('posto-1', {
       channel: 'financeiro',
       text: 'Resposta humana',
     });

@@ -13,23 +13,29 @@ const AUTO_REPLIES: Record<SuporteChannel, string> = {
   ti: 'Recebemos sua mensagem. A equipe de TI vai analisar e retornar em breve.',
 };
 
-/** Textos de boas-vindas do chat do posto (posto-web), alinhados ao mock. */
+const POSTO_AUTO_REPLIES: Record<SuporteChannel, string> = {
+  financeiro:
+    'Recebemos sua mensagem. A equipe Hora Útil 360 vai responder em breve.',
+  ti: 'Recebemos sua mensagem. O suporte Hora Útil 360 vai analisar e retornar em breve.',
+};
+
+/** Textos de boas-vindas do chat do posto (posto-web) — suporte Hora Útil. */
 const POSTO_WELCOME: Record<SuporteChannel, Array<{ text: string; hour: number; minute: number }>> = {
   financeiro: [
     {
-      text: 'Olá! Aqui é o setor financeiro. Pode tirar dúvidas sobre lançamento de notas e prazos de reembolso.',
+      text: 'Olá! Aqui é o suporte Hora Útil 360. Tire dúvidas sobre notas fiscais, repasses e o portal do posto.',
       hour: 8,
       minute: 14,
     },
     {
-      text: 'Lembrando: notas acima de R$ 500 precisam de aprovação do gestor antes do pagamento.',
+      text: 'Horário de atendimento: dias úteis, 8h às 18h. Fora desse horário respondemos no próximo dia útil.',
       hour: 8,
       minute: 15,
     },
   ],
   ti: [
     {
-      text: 'Suporte de TI na escuta. Se o sistema travar ou der erro de leitura de QR, é só chamar.',
+      text: 'Suporte técnico Hora Útil 360. Problemas no sistema, login ou leitura de QR — estamos aqui.',
       hour: 9,
       minute: 2,
     },
@@ -97,7 +103,7 @@ export function buildAutoReplyForPosto(
     postoId,
     channel,
     sender: 'support',
-    text: AUTO_REPLIES[channel],
+    text: POSTO_AUTO_REPLIES[channel],
     createdAt,
     autoReply: true,
   };
