@@ -1,14 +1,23 @@
-import { createHash } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { createHash, randomBytes } from 'node:crypto';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { StringValue } from 'ms';
 import { FirebaseService } from '../../config/firebase.service';
+import { MailService } from '../mail/mail.service';
+import { BoasVindasPostoDto } from './dto/boas-vindas-posto.dto';
+import { EsqueciSenhaDto } from './dto/esqueci-senha.dto';
 import { LoginUserDto } from './dto/login-user.dto';
+import { RedefinirSenhaDto } from './dto/redefinir-senha.dto';
+import {
+  htmlBoasVindasPosto,
+  htmlResetSenhaPosto,
+} from './helpers/user-mail.helper';
 
 type UsuarioAuth = {
   nome: string;
   usuario: string;
+  email?: string;
   senha: string;
   perfil: string;
   vinculo: string;
@@ -16,16 +25,27 @@ type UsuarioAuth = {
   postoId?: string;
 };
 
+type UsuarioDoc = UsuarioAuth & { id: string };
+
+const RESET_EXPIRA_HORAS = 1;
+
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
+
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
     private readonly firebase: FirebaseService,
+    private readonly mail: MailService,
   ) {}
 
   private get usersCollection() {
     return this.firebase.getFirestore().collection('users');
+  }
+
+  private get resetsCollection() {
+    return this.firebase.getFirestore().collection('user_password_resets');
   }
 
   async login(dto: LoginUserDto) {
@@ -54,9 +74,11 @@ export class UserService {
       },
     );
 
+    const { senha: _s, ...userSafe } = user;
+
     return {
       ok: true,
-      user,
+      user: userSafe,
       accessToken,
       tokenType: 'Bearer',
       expiresIn,
@@ -64,47 +86,208 @@ export class UserService {
     };
   }
 
+  /** Sempre responde ok (não revela se o e-mail existe). */
+  async esqueciSenha(dto: EsqueciSenhaDto) {
+    const email = dto.email.trim().toLowerCase();
+    const user = await this.findUserByEmail(email);
+
+    if (user && user.vinculo === 'posto') {
+      const token = randomBytes(32).toString('hex');
+      const expiresAt = new Date(
+        Date.now() + RESET_EXPIRA_HORAS * 60 * 60 * 1000,
+      ).toISOString();
+
+      await this.resetsCollection.add({
+        token,
+        userId: user.id,
+        email,
+        used: false,
+        expiresAt,
+        createdAt: new Date().toISOString(),
+      });
+
+      const link = `${this.postoWebUrl()}/redefinir-senha?token=${encodeURIComponent(token)}`;
+      const { html, text } = htmlResetSenhaPosto({
+        nome: user.nome,
+        link,
+        expiraHoras: RESET_EXPIRA_HORAS,
+      });
+
+      const envio = await this.mail.enviar({
+        to: email,
+        subject: 'Redefinir senha — Portal do Posto',
+        html,
+        text,
+      });
+
+      if (!envio.ok) {
+        this.logger.warn(
+          `Falha ao enviar e-mail de reset para ${email}: ${envio.erro}`,
+        );
+      }
+    }
+
+    return {
+      ok: true,
+      message:
+        'Se o e-mail estiver cadastrado, você receberá instruções em instantes.',
+    };
+  }
+
+  async redefinirSenha(dto: RedefinirSenhaDto) {
+    const snap = await this.resetsCollection
+      .where('token', '==', dto.token.trim())
+      .limit(1)
+      .get();
+
+    if (snap.empty) {
+      return { ok: false, message: 'Link inválido ou expirado.' };
+    }
+
+    const resetDoc = snap.docs[0];
+    const reset = resetDoc.data() as {
+      userId: string;
+      used?: boolean;
+      expiresAt: string;
+    };
+
+    if (reset.used) {
+      return { ok: false, message: 'Este link já foi utilizado.' };
+    }
+
+    if (new Date(reset.expiresAt).getTime() < Date.now()) {
+      return { ok: false, message: 'Link expirado. Solicite um novo e-mail.' };
+    }
+
+    const userRef = this.usersCollection.doc(reset.userId);
+    const userSnap = await userRef.get();
+    if (!userSnap.exists) {
+      return { ok: false, message: 'Usuário não encontrado.' };
+    }
+
+    const senhaHash = this.hashSenha(dto.novaSenha);
+    await userRef.update({ senha: senhaHash });
+    await resetDoc.ref.update({ used: true, usedAt: new Date().toISOString() });
+
+    return { ok: true, message: 'Senha redefinida com sucesso.' };
+  }
+
+  async enviarBoasVindasPosto(dto: BoasVindasPostoDto) {
+    const loginUrl = this.postoWebUrl();
+    const { html, text } = htmlBoasVindasPosto({
+      nome: dto.nome.trim(),
+      usuario: dto.usuario.trim(),
+      postoNome: dto.postoNome?.trim(),
+      senhaTemporaria: dto.senhaTemporaria,
+      loginUrl,
+    });
+
+    const envio = await this.mail.enviar({
+      to: dto.email.trim().toLowerCase(),
+      subject: 'Seu acesso ao portal do posto — Hora Útil 360',
+      html,
+      text,
+    });
+
+    if (!envio.ok) {
+      return {
+        ok: false,
+        message: envio.erro ?? 'Não foi possível enviar o e-mail.',
+      };
+    }
+
+    return { ok: true, message: 'E-mail de boas-vindas enviado.' };
+  }
+
   private async tryFirestoreLogin(
     dto: LoginUserDto,
   ): Promise<UsuarioAuth | null> {
     try {
-      const snap = await this.usersCollection
-        .where('usuario', '==', dto.usuario)
-        .get();
+      const senhaHash = this.hashSenha(dto.senha);
+      const email = dto.email?.trim().toLowerCase();
+      const usuario = dto.usuario?.trim();
 
-      if (snap.empty) {
-        return null;
+      const candidatos: UsuarioDoc[] = [];
+
+      if (email) {
+        candidatos.push(...(await this.findUsersByEmail(email)));
       }
 
-      const senhaHash = this.hashSenha(dto.senha);
-
-      for (const doc of snap.docs) {
-        const data = doc.data() as Record<string, unknown>;
-        const senhaSalva = this.toSafeString(data.senha);
-        if (senhaSalva !== senhaHash) {
-          continue;
+      if (usuario) {
+        const porUsuario = await this.findUsersByUsuario(usuario);
+        for (const u of porUsuario) {
+          if (!candidatos.some((c) => c.id === u.id)) {
+            candidatos.push(u);
+          }
         }
+        if (usuario.includes('@') && !email) {
+          const porEmail = await this.findUsersByEmail(usuario.toLowerCase());
+          for (const u of porEmail) {
+            if (!candidatos.some((c) => c.id === u.id)) {
+              candidatos.push(u);
+            }
+          }
+        }
+      }
 
-        return {
-          nome: this.toSafeString(data.nome) || dto.usuario,
-          usuario: this.toSafeString(data.usuario) || dto.usuario,
-          senha: senhaSalva,
-          perfil: this.toSafeString(data.perfil) || 'gestor',
-          vinculo:
-            this.toSafeString(data.vinculo) ||
-            this.toSafeString(data.type) ||
-            'prefeitura',
-          prefeituraId: this.toSafeString(data.prefeituraId) || 'tl-ms',
-          ...(this.toSafeString(data.postoId)
-            ? { postoId: this.toSafeString(data.postoId) }
-            : {}),
-        };
+      for (const user of candidatos) {
+        if (user.senha === senhaHash) {
+          const { id: _id, ...auth } = user;
+          return auth;
+        }
       }
 
       return null;
     } catch {
       return null;
     }
+  }
+
+  private async findUserByEmail(email: string): Promise<UsuarioDoc | null> {
+    const users = await this.findUsersByEmail(email);
+    return users[0] ?? null;
+  }
+
+  private async findUsersByEmail(email: string): Promise<UsuarioDoc[]> {
+    const snap = await this.usersCollection
+      .where('email', '==', email)
+      .limit(5)
+      .get();
+    return snap.docs.map((d) => this.docToUsuario(d.id, d.data()));
+  }
+
+  private async findUsersByUsuario(usuario: string): Promise<UsuarioDoc[]> {
+    const snap = await this.usersCollection
+      .where('usuario', '==', usuario)
+      .limit(5)
+      .get();
+    return snap.docs.map((d) => this.docToUsuario(d.id, d.data()));
+  }
+
+  private docToUsuario(id: string, data: Record<string, unknown>): UsuarioDoc {
+    return {
+      id,
+      nome: this.toSafeString(data.nome),
+      usuario: this.toSafeString(data.usuario),
+      email: this.toSafeString(data.email) || undefined,
+      senha: this.toSafeString(data.senha),
+      perfil: this.toSafeString(data.perfil) || 'gestor',
+      vinculo:
+        this.toSafeString(data.vinculo) ||
+        this.toSafeString(data.type) ||
+        'prefeitura',
+      prefeituraId: this.toSafeString(data.prefeituraId) || 'tl-ms',
+      ...(this.toSafeString(data.postoId)
+        ? { postoId: this.toSafeString(data.postoId) }
+        : {}),
+    };
+  }
+
+  private postoWebUrl(): string {
+    const raw =
+      this.configService.get<string>('POSTO_WEB_URL') ??
+      'http://localhost:3004';
+    return raw.replace(/\/$/, '');
   }
 
   private getJwtSecret(): string {
