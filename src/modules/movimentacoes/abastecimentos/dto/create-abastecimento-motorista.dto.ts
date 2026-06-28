@@ -88,15 +88,14 @@ export class CreateAbastecimentoMotoristaDto {
   @Min(0)
   pricePerLiter?: number;
 
-  @ApiPropertyOptional({
-    description: 'Valor total do abastecimento (R$).',
+  @ApiProperty({
+    description: 'Valor total do abastecimento (R$), informado pelo motorista.',
     example: 520.2,
   })
-  @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  @Min(0)
-  total?: number;
+  @Min(0.01)
+  total!: number;
 
   @ApiProperty({ description: 'Latitude capturada no app.' })
   @Type(() => Number)
