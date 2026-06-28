@@ -114,6 +114,8 @@ function demoPostoPdf(): Express.Multer.File {
   } as unknown as Express.Multer.File;
 }
 
+const VALOR_POSTO = 3420;
+
 const PARSED: parser.ParsedDanfeData = {
   description: 'OLEO DIESEL S10',
   category: 'combustivel',
@@ -150,6 +152,7 @@ describe('NotasFiscaisService — PDF demo posto (integração)', () => {
     const nota = await service.uploadPorPosto({
       postoId: 'posto-demo',
       prefeituraId: 'pref-demo',
+      value: '250,50',
       file: demoPostoPdf(),
     });
 
@@ -158,7 +161,7 @@ describe('NotasFiscaisService — PDF demo posto (integração)', () => {
       prefeituraId: 'pref-demo',
       status: 'aprovada',
       accessKey: fixtureParsed.accessKey,
-      value: fixtureParsed.value,
+      value: 250.5,
       documentType: fixtureParsed.documentType,
       parseCompleteness: fixtureParsed.parseCompleteness,
     });
@@ -174,12 +177,20 @@ describe('NotasFiscaisService — PDF demo posto (integração)', () => {
 });
 
 describe('NotasFiscaisService — fluxo do posto', () => {
+  it('exige valor informado no upload do posto', async () => {
+    const { service } = makeService();
+    await expect(
+      service.uploadPorPosto({ postoId: 'posto-1', value: '', file: pdf() }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it('grava a nota do posto já aprovada (sem fluxo de conferência no 360)', async () => {
     const { service, uploads } = makeService();
 
     const nota = await service.uploadPorPosto({
       postoId: 'posto-1',
       prefeituraId: 'pref-1',
+      value: VALOR_POSTO,
       file: pdf(),
     });
 
@@ -199,27 +210,27 @@ describe('NotasFiscaisService — fluxo do posto', () => {
 
   it('rejeita nota duplicada (mesmo posto + chave de acesso)', async () => {
     const { service } = makeService();
-    await service.uploadPorPosto({ postoId: 'posto-1', file: pdf() });
+    await service.uploadPorPosto({ postoId: 'posto-1', value: VALOR_POSTO, file: pdf() });
     await expect(
-      service.uploadPorPosto({ postoId: 'posto-1', file: pdf() }),
+      service.uploadPorPosto({ postoId: 'posto-1', value: VALOR_POSTO, file: pdf() }),
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
   it('postos diferentes podem ter a mesma chave (sem conflito)', async () => {
     const { service } = makeService();
-    await service.uploadPorPosto({ postoId: 'posto-1', file: pdf() });
+    await service.uploadPorPosto({ postoId: 'posto-1', value: VALOR_POSTO, file: pdf() });
     await expect(
-      service.uploadPorPosto({ postoId: 'posto-2', file: pdf() }),
+      service.uploadPorPosto({ postoId: 'posto-2', value: VALOR_POSTO, file: pdf() }),
     ).resolves.toMatchObject({ postoId: 'posto-2' });
   });
 
   it('listarPorPosto traz só as notas daquele posto', async () => {
     const { service } = makeService();
-    await service.uploadPorPosto({ postoId: 'posto-1', file: pdf() });
+    await service.uploadPorPosto({ postoId: 'posto-1', value: VALOR_POSTO, file: pdf() });
     jest
       .spyOn(parser, 'parseDanfePdf')
       .mockResolvedValue({ ...PARSED, accessKey: '2'.repeat(44) });
-    await service.uploadPorPosto({ postoId: 'posto-2', file: pdf() });
+    await service.uploadPorPosto({ postoId: 'posto-2', value: VALOR_POSTO, file: pdf() });
 
     const { data } = await service.listarPorPosto('posto-1');
     expect(data).toHaveLength(1);
@@ -241,6 +252,7 @@ describe('NotasFiscaisService — listagem por prefeitura (360)', () => {
     await service.uploadPorPosto({
       postoId: 'posto-1',
       prefeituraId: 'pref-1',
+      value: VALOR_POSTO,
       file: pdf(),
     });
 
@@ -269,6 +281,7 @@ describe('NotasFiscaisService — atualizarStatus', () => {
     const { service } = makeService();
     const criada = await service.uploadPorPosto({
       postoId: 'posto-1',
+      value: VALOR_POSTO,
       file: pdf(),
     });
     const { data } = await service.atualizarStatus(criada.id, 'aprovada');
