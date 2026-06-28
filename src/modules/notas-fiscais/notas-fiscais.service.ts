@@ -215,6 +215,7 @@ export class NotasFiscaisService {
           ? { prefeituraId: texto(input.prefeituraId) }
           : {}),
         ...this.dadosParseados(parsed),
+        status: 'aprovada' as const,
       },
       input.file,
     );

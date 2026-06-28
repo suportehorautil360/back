@@ -156,7 +156,7 @@ describe('NotasFiscaisService — PDF demo posto (integração)', () => {
     expect(nota).toMatchObject({
       postoId: 'posto-demo',
       prefeituraId: 'pref-demo',
-      status: 'pendente',
+      status: 'aprovada',
       accessKey: fixtureParsed.accessKey,
       value: fixtureParsed.value,
       documentType: fixtureParsed.documentType,
@@ -174,7 +174,7 @@ describe('NotasFiscaisService — PDF demo posto (integração)', () => {
 });
 
 describe('NotasFiscaisService — fluxo do posto', () => {
-  it('grava a nota do posto com status pendente e devolve postoId', async () => {
+  it('grava a nota do posto já aprovada (sem fluxo de conferência no 360)', async () => {
     const { service, uploads } = makeService();
 
     const nota = await service.uploadPorPosto({
@@ -185,7 +185,7 @@ describe('NotasFiscaisService — fluxo do posto', () => {
 
     expect(nota.postoId).toBe('posto-1');
     expect(nota.prefeituraId).toBe('pref-1');
-    expect(nota.status).toBe('pendente');
+    expect(nota.status).toBe('aprovada');
     expect(nota.value).toBe(3420);
     expect(nota.category).toBe('combustivel');
     expect(nota.fileUrl).toBe('https://cdn/exemplo.pdf');
