@@ -1,9 +1,32 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import {
   extractAccessKeys,
   inferNotaFiscalCategory,
   parseAccessKeyFields,
+  parseDanfePdf,
   parseDanfeText,
 } from './parse-danfe-pdf.helper';
+
+const DEMO_POSTO_PDF = join(
+  __dirname,
+  '..',
+  'fixtures',
+  'danfe_posto_combustivel_demo.pdf',
+);
+const DEMO_POSTO_EXTRACTED = join(
+  __dirname,
+  '..',
+  'fixtures',
+  'danfe_posto_combustivel_demo.extracted.txt',
+);
+const DEMO_POSTO_EXPECTED = join(
+  __dirname,
+  '..',
+  'fixtures',
+  'danfe_posto_combustivel_demo.expected.json',
+);
 const SAMPLE_XML = `
 <nfeProc>
   <NFe>
@@ -75,5 +98,49 @@ describe('parse-danfe-pdf.helper', () => {
     expect(parsed.parseCompleteness).toBe('parcial');
     expect(parsed.accessKey).toBe('');
     expect(parsed.description).toBe('NFe004512');
+  });
+
+  describe('fixture danfe_posto_combustivel_demo.pdf', () => {
+    const expected = JSON.parse(
+      readFileSync(DEMO_POSTO_EXPECTED, 'utf8'),
+    ) as ReturnType<typeof parseDanfeText>;
+
+    it('parseia o texto extraído do PDF demo de posto', () => {
+      const extracted = readFileSync(DEMO_POSTO_EXTRACTED, 'utf8');
+      expect(extracted.length).toBeGreaterThan(0);
+
+      const parsed = parseDanfeText(
+        extracted,
+        'danfe_posto_combustivel_demo.pdf',
+      );
+
+      expect(parsed).toMatchObject({
+        accessKey: expected.accessKey,
+        documentType: expected.documentType,
+        number: expected.number,
+        value: expected.value,
+        parseCompleteness: expected.parseCompleteness,
+      });
+      expect(parsed.issuerName).toContain('TRANSPORTES');
+    });
+
+    it('o PDF demo existe e tem tamanho válido', () => {
+      const buffer = readFileSync(DEMO_POSTO_PDF);
+      expect(buffer.length).toBeGreaterThan(1000);
+      expect(buffer.subarray(0, 4).toString()).toBe('%PDF');
+    });
+  });
+
+  it('PDF corrompido não lança — devolve leitura parcial', async () => {
+    const parsed = await parseDanfePdf(
+      Buffer.from('%PDF-1.4 estrutura-invalida'),
+      'nota-corrompida.pdf',
+    );
+
+    expect(parsed).toMatchObject({
+      accessKey: '',
+      parseCompleteness: 'parcial',
+      description: 'nota corrompida',
+    });
   });
 });

@@ -1,7 +1,31 @@
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
+
 import type {
   NotaFiscalCategory,
   NotaFiscalDocumentType,
 } from '../notas-fiscais.types';
+
+const nodeRequire = createRequire(__filename);
+let pdfWorkerConfigured = false;
+
+function ensurePdfWorkerConfigured(PDFParse: PdfParseCtor): void {
+  if (pdfWorkerConfigured) return;
+  pdfWorkerConfigured = true;
+
+  try {
+    const workerPath = nodeRequire.resolve(
+      'pdfjs-dist/legacy/build/pdf.worker.mjs',
+      { paths: [nodeRequire.resolve('pdf-parse')] },
+    );
+    PDFParse.setWorker(pathToFileURL(workerPath).href);
+  } catch (error) {
+    console.warn(
+      'Não foi possível configurar o worker do pdf-parse; leitura de PDF pode falhar.',
+      error,
+    );
+  }
+}
 
 export type NotaFiscalParseCompleteness = 'completo' | 'parcial';
 
@@ -17,15 +41,19 @@ export interface ParsedDanfeData {
   parseCompleteness: NotaFiscalParseCompleteness;
 }
 
-type PdfParseCtor = new (options: { data: Buffer }) => {
-  getText(): Promise<{ text: string }>;
-  destroy(): Promise<void>;
+type PdfParseCtor = {
+  new (options: { data: Buffer }): {
+    getText(): Promise<{ text: string }>;
+    destroy(): Promise<void>;
+  };
+  setWorker(workerSrc?: string): string;
 };
 
 function getPdfParser(): PdfParseCtor {
   // pdf-parse v2 expõe PDFParse via CJS — evita conflito ESM no Nest.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const mod = require('pdf-parse') as { PDFParse: PdfParseCtor };
+  ensurePdfWorkerConfigured(mod.PDFParse);
   return mod.PDFParse;
 }
 
@@ -365,6 +393,11 @@ export async function parseDanfePdf(
   buffer: Buffer,
   fileName: string,
 ): Promise<ParsedDanfeData> {
-  const text = await extractPdfText(buffer);
-  return parseDanfeText(text, fileName);
+  try {
+    const text = await extractPdfText(buffer);
+    return parseDanfeText(text, fileName);
+  } catch (error) {
+    console.error('Falha ao extrair texto do PDF da nota fiscal:', error);
+    return parseDanfeText('', fileName);
+  }
 }
