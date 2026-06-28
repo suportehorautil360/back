@@ -3,6 +3,8 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import type { FirebaseService } from '../../config/firebase.service';
 import type { UploadsService } from '../uploads/uploads.service';
@@ -81,12 +83,34 @@ function makeService() {
   return { service, store, uploads };
 }
 
+const DEMO_POSTO_PDF = join(
+  __dirname,
+  'fixtures',
+  'danfe_posto_combustivel_demo.pdf',
+);
+
+const DEMO_POSTO_EXPECTED = join(
+  __dirname,
+  'fixtures',
+  'danfe_posto_combustivel_demo.expected.json',
+);
+
 function pdf(): Express.Multer.File {
   return {
     buffer: Buffer.from('%PDF-1.4 fake'),
     size: 13,
     mimetype: 'application/pdf',
     originalname: 'nota.pdf',
+  } as unknown as Express.Multer.File;
+}
+
+function demoPostoPdf(): Express.Multer.File {
+  const buffer = readFileSync(DEMO_POSTO_PDF);
+  return {
+    buffer,
+    size: buffer.length,
+    mimetype: 'application/pdf',
+    originalname: 'danfe_posto_combustivel_demo.pdf',
   } as unknown as Express.Multer.File;
 }
 
@@ -108,6 +132,45 @@ beforeEach(() => {
 
 afterEach(() => {
   jest.restoreAllMocks();
+});
+
+describe('NotasFiscaisService — PDF demo posto (integração)', () => {
+  const fixtureParsed = JSON.parse(
+    readFileSync(DEMO_POSTO_EXPECTED, 'utf8'),
+  ) as parser.ParsedDanfeData;
+
+  beforeEach(() => {
+    jest.restoreAllMocks();
+    jest.spyOn(parser, 'parseDanfePdf').mockResolvedValue(fixtureParsed);
+  });
+
+  it('uploadPorPosto persiste campos do danfe_posto_combustivel_demo.pdf', async () => {
+    const { service, uploads } = makeService();
+
+    const nota = await service.uploadPorPosto({
+      postoId: 'posto-demo',
+      prefeituraId: 'pref-demo',
+      file: demoPostoPdf(),
+    });
+
+    expect(nota).toMatchObject({
+      postoId: 'posto-demo',
+      prefeituraId: 'pref-demo',
+      status: 'pendente',
+      accessKey: fixtureParsed.accessKey,
+      value: fixtureParsed.value,
+      documentType: fixtureParsed.documentType,
+      parseCompleteness: fixtureParsed.parseCompleteness,
+    });
+    expect(uploads.uploadNotaFiscalPdf).toHaveBeenCalledWith(
+      'posto-posto-demo',
+      expect.any(String),
+      expect.objectContaining({
+        mimetype: 'application/pdf',
+        originalname: 'danfe_posto_combustivel_demo.pdf',
+      }),
+    );
+  });
 });
 
 describe('NotasFiscaisService — fluxo do posto', () => {

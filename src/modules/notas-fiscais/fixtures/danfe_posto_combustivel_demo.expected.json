@@ -1,0 +1,11 @@
+{
+  "description": "SERVIÇO NCM/SH CST CFOP UNID. QUANT. VALOR UNIT. VALOR TOTAL",
+  "category": "servico",
+  "documentType": "nfe-55",
+  "number": "123",
+  "issuerName": "EMPRESA DE TRANSPORTES E LOGÍSTICA DEMO LTDA",
+  "issuedAt": "2026-06-28T15:00:00.000Z",
+  "accessKey": "35260600000000000000550010000001231000001234",
+  "value": 180,
+  "parseCompleteness": "completo"
+}
