@@ -356,6 +356,11 @@ export async function parseDanfePdf(
   buffer: Buffer,
   fileName: string,
 ): Promise<ParsedDanfeData> {
-  const text = await extractPdfText(buffer);
-  return parseDanfeText(text, fileName);
+  try {
+    const text = await extractPdfText(buffer);
+    return parseDanfeText(text, fileName);
+  } catch (error) {
+    console.error('Falha ao extrair texto do PDF da nota fiscal:', error);
+    return parseDanfeText('', fileName);
+  }
 }
