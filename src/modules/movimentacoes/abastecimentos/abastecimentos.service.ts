@@ -600,6 +600,8 @@ export class AbastecimentosService {
       }
       const postoNome = asString(raw.postoNome ?? raw.local);
       if (postoNome) {
+        const lower = postoNome.toLowerCase();
+        if (lower.startsWith('posto ')) return postoNome;
         return `Posto ${postoNome}`;
       }
       return 'Comboio';
