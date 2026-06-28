@@ -42,7 +42,7 @@ export interface ConsumoCustoAbastecimentoHistorico {
   litros: number;
   litrosLabel: string;
   leituraLabel: string;
-  currentReading: number;
+  currentReading: number | null;
   gasto: number | null;
   gastoLabel: string;
   pricePerLiter: number | null;
@@ -93,7 +93,7 @@ export interface AbastecimentoConsumoInput {
   equipmentId: string;
   plateOrChassis: string;
   liters: number;
-  currentReading: number;
+  currentReading: number | null;
   measurementType: TipoMedicaoInterno;
   total: number | null;
   pricePerLiter?: number | null;
