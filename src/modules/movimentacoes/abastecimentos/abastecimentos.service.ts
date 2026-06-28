@@ -681,6 +681,7 @@ export class AbastecimentosService {
       meterPhoto: doc.meterPhoto ?? null,
       local,
       createdAt: doc.createdAt,
+      status: asString(raw.status) || 'aprovado',
     };
   }
 }

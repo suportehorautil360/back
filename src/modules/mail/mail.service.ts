@@ -33,15 +33,40 @@ export class MailService {
 
   constructor(private config: ConfigService) {
     const apiKey = this.config.get<string>('RESEND_API_KEY');
-    this.from =
-      this.config.get<string>('MAIL_FROM') ??
-      'Hora Útil 360 <onboarding@resend.dev>';
+    this.from = this.resolveFromAddress();
     this.resend = apiKey ? new Resend(apiKey) : null;
     if (!this.resend) {
       this.logger.warn(
         'RESEND_API_KEY ausente — envio de email desativado (no-op).',
       );
+    } else {
+      this.logger.log(`Email remetente: ${this.from}`);
+      if (this.from.includes('@resend.dev')) {
+        this.logger.warn(
+          'MAIL_FROM usa domínio de teste (@resend.dev) — só envia para o e-mail da conta Resend.',
+        );
+      }
     }
+  }
+
+  /**
+   * MAIL_FROM com espaços/nome quebra no .env sem aspas (vira só "Hora").
+   * Preferir MAIL_FROM_EMAIL + MAIL_FROM_NAME ou MAIL_FROM entre aspas.
+   */
+  private resolveFromAddress(): string {
+    const email = this.config.get<string>('MAIL_FROM_EMAIL')?.trim();
+    if (email?.includes('@')) {
+      const name =
+        this.config.get<string>('MAIL_FROM_NAME')?.trim() ?? 'Hora Útil 360';
+      return `${name} <${email}>`;
+    }
+
+    const raw = this.config.get<string>('MAIL_FROM')?.trim();
+    if (raw?.includes('@')) {
+      return raw;
+    }
+
+    return 'Hora Útil 360 <onboarding@resend.dev>';
   }
 
   /** Email habilitado? (chave configurada) */

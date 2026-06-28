@@ -9,6 +9,7 @@ import * as admin from 'firebase-admin';
 import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { resolveMustChangePassword } from '../auth/helpers/user-password.helper';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -46,6 +47,7 @@ export class UsersService {
         oficinaId: dto.oficinaId,
         prefeituraId: dto.prefeituraId,
         status: 'ACTIVE',
+        mustChangePassword: true,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
@@ -101,6 +103,7 @@ export class UsersService {
         oficinaId,
         prefeituraId: toStr(raw.prefeituraId),
         status: toStr(raw.status) || 'ACTIVE',
+        mustChangePassword: resolveMustChangePassword(raw),
         credLevel,
       };
 

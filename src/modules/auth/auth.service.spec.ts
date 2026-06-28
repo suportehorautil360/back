@@ -46,9 +46,14 @@ function makeService(opts?: Parameters<typeof makeFirestore>[0]) {
     signAsync: jest.fn().mockResolvedValue('jwt_token'),
   } as unknown as JwtService;
   const config = {
-    get: jest.fn((key: string) => (key === 'JWT_SECRET' ? 'secret' : '24h')),
+    get: jest.fn((key: string) => {
+      if (key === 'JWT_SECRET') return 'secret';
+      if (key === 'OFICINA_WEB_URL') return 'http://localhost:3001';
+      return '24h';
+    }),
   } as unknown as ConfigService;
-  return new AuthService(firebase, jwtService, config);
+  const mail = { enviar: jest.fn().mockResolvedValue({ ok: true }) };
+  return new AuthService(firebase, jwtService, config, mail as never);
 }
 
 const activeUser = {
@@ -195,5 +200,69 @@ describe('AuthService.login', () => {
       prefeituraId: 'pref-1',
     });
     expect(result.oficina?.nome).toBe('Auto Center');
+  });
+});
+
+describe('AuthService.forgotPassword', () => {
+  function makeForgotPasswordService(userDoc?: {
+    id: string;
+    data: Record<string, unknown>;
+  }) {
+    const addReset = jest.fn().mockResolvedValue(undefined);
+    const mail = { enviar: jest.fn().mockResolvedValue({ ok: true }) };
+    const firebase = {
+      getFirestore: () => ({
+        collection: (name: string) => {
+          if (name === 'user_password_resets') {
+            return { add: addReset };
+          }
+          return {
+            where: jest.fn(() => ({
+              limit: jest.fn(() => ({
+                get: jest.fn().mockResolvedValue({
+                  empty: !userDoc,
+                  docs: userDoc
+                    ? [{ id: userDoc.id, data: () => userDoc.data }]
+                    : [],
+                }),
+              })),
+            })),
+          };
+        },
+      }),
+    } as unknown as FirebaseService;
+
+    const service = new AuthService(
+      firebase,
+      { signAsync: jest.fn() } as unknown as JwtService,
+      {
+        get: jest.fn((key: string) =>
+          key === 'OFICINA_WEB_URL' ? 'http://localhost:3001' : '24h',
+        ),
+      } as unknown as ConfigService,
+      mail as never,
+    );
+
+    return { service, addReset, mail };
+  }
+
+  it('envia link de redefinição para usuário oficina', async () => {
+    const { service, addReset, mail } = makeForgotPasswordService({
+      id: 'of-user',
+      data: {
+        nome: 'Oficina',
+        vinculo: 'oficina',
+        officinaId: 'of-1',
+      },
+    });
+
+    await service.forgotPassword({ email: 'oficina@teste.com' });
+
+    expect(addReset).toHaveBeenCalled();
+    expect(mail.enviar).toHaveBeenCalledWith(
+      expect.objectContaining({
+        html: expect.stringContaining('redefinir-senha?token='),
+      }),
+    );
   });
 });
