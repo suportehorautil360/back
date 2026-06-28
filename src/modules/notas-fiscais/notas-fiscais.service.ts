@@ -33,6 +33,22 @@ function texto(valor: unknown): string {
   return typeof valor === 'string' ? valor.trim() : '';
 }
 
+function parseValorInformado(raw: unknown): number {
+  if (raw == null || String(raw).trim() === '') {
+    throw new BadRequestException('Informe o valor total da nota (R$).');
+  }
+  const normalizado = String(raw)
+    .trim()
+    .replace(/\s/g, '')
+    .replace(/\.(?=\d{3}(\D|$))/g, '')
+    .replace(',', '.');
+  const n = Number(normalizado);
+  if (!Number.isFinite(n) || n <= 0) {
+    throw new BadRequestException('Informe um valor válido maior que zero.');
+  }
+  return n;
+}
+
 export interface UploadNotaFiscalInput {
   oficinaId: string;
   parceiroId?: string;
@@ -44,6 +60,7 @@ export interface UploadNotaFiscalInput {
 export interface UploadNotaFiscalPostoInput {
   postoId: string;
   prefeituraId?: string;
+  value: unknown;
   file: Express.Multer.File;
 }
 
@@ -205,6 +222,8 @@ export class NotasFiscaisService {
       }
     }
 
+    const valorInformado = parseValorInformado(input.value);
+
     const id = randomUUID();
     return this.persistir(
       id,
@@ -215,6 +234,7 @@ export class NotasFiscaisService {
           ? { prefeituraId: texto(input.prefeituraId) }
           : {}),
         ...this.dadosParseados(parsed),
+        value: valorInformado,
         status: 'aprovada' as const,
       },
       input.file,

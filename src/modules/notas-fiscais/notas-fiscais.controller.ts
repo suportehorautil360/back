@@ -169,9 +169,13 @@ export class NotasFiscaisController {
   @ApiBody({
     schema: {
       type: 'object',
-      required: ['file'],
+      required: ['file', 'value'],
       properties: {
         file: { type: 'string', format: 'binary' },
+        value: {
+          type: 'string',
+          description: 'Valor total da nota (R$), ex.: 180,00',
+        },
         prefeituraId: { type: 'string' },
       },
     },
@@ -180,12 +184,14 @@ export class NotasFiscaisController {
   async uploadPosto(
     @Param('postoId') postoId: string,
     @UploadedFile() file: Express.Multer.File,
+    @Body('value') value?: string,
     @Body('prefeituraId') prefeituraId?: string,
     @Headers('x-prefeitura-id') headerPrefeituraId?: string,
   ) {
     const data = await this.service.uploadPorPosto({
       postoId,
       prefeituraId: texto(prefeituraId) || texto(headerPrefeituraId) || undefined,
+      value,
       file,
     });
     return { data, message: 'Nota fiscal enviada com sucesso.' };
