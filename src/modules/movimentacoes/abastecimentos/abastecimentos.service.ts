@@ -10,6 +10,7 @@ import {
   CreateAbastecimentoDto,
   TipoMedicao,
 } from './dto/create-abastecimento.dto';
+import { CreateAbastecimentoMotoristaDto } from './dto/create-abastecimento-motorista.dto';
 import {
   capacidadeAlvoAbastecimento,
   deveAtualizarMedicaoAtual,
@@ -21,6 +22,7 @@ import {
 } from './helpers/abastecimentos-create.helper';
 import {
   fetchEquipmentMap,
+  resolveEquipmentById,
   resolveEquipmentByPlateOrChassis,
 } from '../shared/equipment.helper';
 import { debitarTanqueTx } from '../shared/tank-saldo.helper';
@@ -46,7 +48,7 @@ export interface AbastecimentoDoc {
   equipmentId: string;
   plateOrChassis: string;
   liters: number;
-  tipo: 'comboio';
+  tipo: string;
   measurementType: TipoMedicao;
   currentReading: number;
   meterPhoto?: string;
@@ -57,6 +59,16 @@ export interface AbastecimentoDoc {
   comboioId?: string;
   /** Funcionário (comboista) que registrou o abastecimento. */
   funcionarioId?: string;
+  /** Posto avulso (não credenciado) — nome informado pelo motorista. */
+  postoNome?: string;
+  /** Foto do cupom fiscal. */
+  receiptPhoto?: string;
+  /** manual_motorista | comboio | fleetfuel */
+  origem?: string;
+  /** pendente_aprovacao | aprovado | rejeitado */
+  status?: string;
+  /** Nome do condutor (denormalizado). */
+  motoristaNome?: string;
   latitude: number;
   longitude: number;
   createdAt: string;
@@ -76,6 +88,10 @@ export class AbastecimentosService {
 
   private get postosCollection() {
     return this.firebaseService.getFirestore().collection('postos');
+  }
+
+  private get funcionariosCollection() {
+    return this.firebaseService.getFirestore().collection('funcionarios');
   }
 
   async create(input: CreateAbastecimentoDto): Promise<AbastecimentoDoc> {
@@ -217,6 +233,160 @@ export class AbastecimentosService {
       throw new InternalServerErrorException(
         'Não foi possível registrar o abastecimento.',
       );
+    }
+  }
+
+  /**
+   * Abastecimento manual do motorista em posto avulso (não credenciado).
+   * Fica `pendente_aprovacao` — não debita crédito até aprovação no 360.
+   */
+  async createManualMotorista(
+    input: CreateAbastecimentoMotoristaDto,
+  ): Promise<AbastecimentoDoc> {
+    const liters = parseLiters(input.liters);
+    if (liters === null) {
+      throw new BadRequestException('O campo liters deve ser maior que zero.');
+    }
+
+    if (!isSupportedMeasurementType(input.measurementType)) {
+      throw new BadRequestException(
+        'O campo measurementType deve ser horimetro ou hodometro.',
+      );
+    }
+
+    const postoNome = input.postoNome?.trim();
+    if (!postoNome || postoNome.length < 2) {
+      throw new BadRequestException('Informe o nome do posto.');
+    }
+
+    if (!input.meterPhoto?.trim()) {
+      throw new BadRequestException('A foto do medidor é obrigatória.');
+    }
+    if (!input.receiptPhoto?.trim()) {
+      throw new BadRequestException('A foto do cupom é obrigatória.');
+    }
+
+    if (!Number.isFinite(Number(input.currentReading))) {
+      throw new BadRequestException(
+        'Informe a leitura atual (currentReading).',
+      );
+    }
+
+    const equipamento = await resolveEquipmentById(
+      this.equipamentosCollection,
+      input.prefeituraId,
+      input.equipmentId,
+    );
+    const equipmentId = equipamento.id;
+
+    if (!motoristaEhCondutor(equipamento.raw, input.funcionarioId)) {
+      throw new BadRequestException(
+        'Você não é condutor responsável deste equipamento.',
+      );
+    }
+
+    const plateOrChassis = resolvePlateOrChassis(equipamento.raw);
+    if (!plateOrChassis) {
+      throw new BadRequestException(
+        'Equipamento sem placa ou chassi cadastrado.',
+      );
+    }
+
+    const capacidadeAlvo = capacidadeAlvoAbastecimento(equipamento.raw);
+    if (capacidadeAlvo > 0 && liters > capacidadeAlvo) {
+      const ondeCabe = ehComboio(equipamento.raw.tipo)
+        ? 'tanque do caminhão do comboio'
+        : 'tanque do equipamento';
+      throw new BadRequestException(
+        `Acima da capacidade do ${ondeCabe}: ${liters} L solicitado(s), ` +
+          `capacidade ${capacidadeAlvo} L.`,
+      );
+    }
+
+    const leituraNova = Number(input.currentReading);
+    const ultima = await this.ultimaLeitura(
+      input.prefeituraId,
+      equipmentId,
+      input.measurementType,
+    );
+    if (ultima !== null && leituraNova <= ultima) {
+      const unidade = input.measurementType === 'horimetro' ? 'h' : 'km';
+      throw new BadRequestException(
+        `A leitura (${leituraNova.toLocaleString('pt-BR')} ${unidade}) deve ser maior ` +
+          `que a última registrada para este equipamento (${ultima.toLocaleString('pt-BR')} ${unidade}).`,
+      );
+    }
+
+    const pricing = resolveAbastecimentoPricing(
+      liters,
+      input.pricePerLiter,
+      input.total,
+    );
+
+    const id = input.id?.trim() || randomUUID();
+    const motoristaNome = await this.buscarNomeFuncionario(input.funcionarioId);
+
+    const doc: AbastecimentoDoc = {
+      id,
+      prefeituraId: input.prefeituraId,
+      equipmentId,
+      plateOrChassis,
+      liters,
+      tipo: 'manual_motorista',
+      measurementType: input.measurementType,
+      currentReading: leituraNova,
+      meterPhoto: input.meterPhoto.trim(),
+      receiptPhoto: input.receiptPhoto.trim(),
+      pricePerLiter: pricing.pricePerLiter,
+      total: pricing.total,
+      postoNome,
+      funcionarioId: input.funcionarioId.trim(),
+      motoristaNome,
+      origem: 'manual_motorista',
+      status: 'pendente_aprovacao',
+      latitude: input.latitude,
+      longitude: input.longitude,
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      await this.collection.doc(id).set(doc);
+
+      if (
+        deveAtualizarMedicaoAtual(
+          equipamento.raw.unidadeRevisao,
+          input.measurementType,
+          equipamento.raw.medicaoAtual,
+          leituraNova,
+        )
+      ) {
+        await equipamento.ref
+          .set({ medicaoAtual: leituraNova }, { merge: true })
+          .catch((e) =>
+            console.error('Falha ao atualizar medicaoAtual do equipamento:', e),
+          );
+      }
+
+      return doc;
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      console.error('Erro ao criar abastecimento manual do motorista:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível registrar o abastecimento.',
+      );
+    }
+  }
+
+  private async buscarNomeFuncionario(funcionarioId: string): Promise<string> {
+    const id = funcionarioId.trim();
+    if (!id) return '';
+    try {
+      const snap = await this.funcionariosCollection.doc(id).get();
+      if (!snap.exists) return '';
+      const raw = snap.data() as Record<string, unknown>;
+      return asString(raw.nome);
+    } catch {
+      return '';
     }
   }
 
@@ -508,8 +678,24 @@ export class AbastecimentosService {
 
 function asString(value: unknown): string {
   if (value === null || value === undefined) return '';
-  if (typeof value === 'string') return value;
+  if (typeof value === 'string') return value.trim();
   if (typeof value === 'number' || typeof value === 'boolean')
     return String(value);
   return '';
+}
+
+function motoristaEhCondutor(
+  equipamento: Record<string, unknown>,
+  motoristaId: string,
+): boolean {
+  const lista = Array.isArray(equipamento.condutoresResponsaveis)
+    ? equipamento.condutoresResponsaveis
+    : [];
+  return lista.some((id) => id === motoristaId);
+}
+
+function resolvePlateOrChassis(raw: Record<string, unknown>): string {
+  const placa = asString(raw.placa);
+  if (placa) return placa;
+  return asString(raw.chassis);
 }

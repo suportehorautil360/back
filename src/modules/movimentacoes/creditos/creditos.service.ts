@@ -183,10 +183,14 @@ export class CreditosService {
 
       const data = buildCreditosSaldosPayload({
         creditos,
-        abastecimentos: abastecimentos.map((item) => ({
-          equipmentId: item.equipmentId,
-          total: item.total ?? null,
-        })),
+        abastecimentos: abastecimentos.map((item) => {
+          const raw = item as unknown as Record<string, unknown>;
+          return {
+            equipmentId: item.equipmentId,
+            total: item.total ?? null,
+            status: asString(raw.status) || null,
+          };
+        }),
         allocations: allocations.filter(
           (item) => item.vehicleId && item.workFrontId,
         ),

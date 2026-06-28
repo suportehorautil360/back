@@ -673,7 +673,7 @@ export class FleetfuelService {
     );
     const gasto = somaGastoEquipamento(
       abastecimentosSnap.docs.map(
-        (d) => d.data() as { equipmentId?: string; total?: unknown },
+        (d) => d.data() as { equipmentId?: string; total?: unknown; status?: unknown },
       ),
       equipmentId,
     );
