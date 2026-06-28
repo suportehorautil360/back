@@ -17,16 +17,13 @@ export interface ParsedDanfeData {
   parseCompleteness: NotaFiscalParseCompleteness;
 }
 
-type PdfParseCtor = new (options: { data: Buffer }) => {
-  getText(): Promise<{ text: string }>;
-  destroy(): Promise<void>;
-};
+type PdfParseFn = (buffer: Buffer) => Promise<{ text?: string }>;
 
-function getPdfParser(): PdfParseCtor {
-  // pdf-parse v2 expõe PDFParse via CJS — evita conflito ESM no Nest.
+function getPdfParser(): PdfParseFn {
+  // pdf-parse v1 — só extração de texto, sem @napi-rs/canvas (funciona em Lambda/Vercel).
+  // A v2 quebra em prod com DOMMatrix is not defined.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const mod = require('pdf-parse') as { PDFParse: PdfParseCtor };
-  return mod.PDFParse;
+  return require('pdf-parse') as PdfParseFn;
 }
 
 function texto(valor: unknown): string {
@@ -350,15 +347,9 @@ export function parseDanfeText(
 }
 
 export async function extractPdfText(buffer: Buffer): Promise<string> {
-  const PDFParse = getPdfParser();
-  const parser = new PDFParse({ data: buffer });
-
-  try {
-    const result = await parser.getText();
-    return result.text ?? '';
-  } finally {
-    await parser.destroy();
-  }
+  const pdfParse = getPdfParser();
+  const result = await pdfParse(buffer);
+  return result.text ?? '';
 }
 
 export async function parseDanfePdf(
