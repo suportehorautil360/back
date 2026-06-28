@@ -54,6 +54,11 @@ export function combustivelCompativel(
   return veiculo === bomba;
 }
 
+/** PWA comboio: só abastece equipamentos cadastrados como diesel. */
+export function ehCombustivelDiesel(valor: unknown): boolean {
+  return familiaCombustivel(valor) === 'diesel';
+}
+
 /**
  * Odômetro incoerente: KM informado é MENOR que a última leitura registrada do
  * veículo. Igual é aceito (veículo não rodou). `medicaoAtual` ausente/inválida

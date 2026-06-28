@@ -36,6 +36,7 @@ import {
   fetchPrefeituraDocs,
 } from '../shared/prefeitura-query.helper';
 import { reverseGeocode } from '../shared/reverse-geocode.helper';
+import { ehCombustivelDiesel } from '../../fleetfuel/helpers/fleetfuel-rules.helper';
 import {
   formatReadingLabel,
   resolveCurrentReading,
@@ -124,6 +125,12 @@ export class AbastecimentosService {
       input.plateOrChassis,
     );
     const equipmentId = equipamento.id;
+
+    if (!ehCombustivelDiesel(equipamento.raw.combustivel)) {
+      throw new BadRequestException(
+        'O comboio só abastece equipamentos a diesel. Verifique o combustível cadastrado no equipamento.',
+      );
+    }
 
     // Não abastecer mais do que o tanque ALVO comporta. Para comboio o alvo é o
     // tanque do próprio caminhão (capacidadeTanqueCaminhao); para os demais, o
