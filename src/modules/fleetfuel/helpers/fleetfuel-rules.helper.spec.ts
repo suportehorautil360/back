@@ -2,6 +2,7 @@ import {
   calcularSaldo,
   calcularTotal,
   combustivelCompativel,
+  ehCombustivelDiesel,
   familiaCombustivel,
   limiteRevisao,
   odometroIncoerente,
@@ -37,6 +38,20 @@ describe('fleetfuel-rules.helper', () => {
     it('não bloqueia quando família é desconhecida (flex / sem cadastro)', () => {
       expect(combustivelCompativel('Flex', 'Etanol')).toBe(true);
       expect(combustivelCompativel('', 'Diesel S-10')).toBe(true);
+    });
+  });
+
+  describe('ehCombustivelDiesel', () => {
+    it('aceita diesel e variantes S10/S500', () => {
+      expect(ehCombustivelDiesel('Diesel')).toBe(true);
+      expect(ehCombustivelDiesel('Diesel S10')).toBe(true);
+    });
+    it('rejeita gasolina, etanol, gnv, flex e vazio', () => {
+      expect(ehCombustivelDiesel('Gasolina')).toBe(false);
+      expect(ehCombustivelDiesel('Etanol')).toBe(false);
+      expect(ehCombustivelDiesel('GNV')).toBe(false);
+      expect(ehCombustivelDiesel('Flex')).toBe(false);
+      expect(ehCombustivelDiesel('')).toBe(false);
     });
   });
 
