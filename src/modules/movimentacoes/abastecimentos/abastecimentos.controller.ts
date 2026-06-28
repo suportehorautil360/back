@@ -13,8 +13,10 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateAbastecimentoDto } from './dto/create-abastecimento.dto';
+import { CreateAbastecimentoMotoristaDto } from './dto/create-abastecimento-motorista.dto';
 import { AbastecimentosService } from './abastecimentos.service';
 import { IdempotencyInterceptor } from '../../../common/idempotency.interceptor';
+import { MotoristaGuard } from '../../../common/motorista.guard';
 import { PostoGuard } from '../../../common/posto.guard';
 
 @ApiTags('abastecimentos')
@@ -29,6 +31,20 @@ export class AbastecimentosController {
   async create(@Body() dto: CreateAbastecimentoDto) {
     const data = await this.service.create(dto);
     return { data, message: 'Abastecimento criado com sucesso!' };
+  }
+
+  @Post('motorista')
+  @HttpCode(HttpStatus.CREATED)
+  @UseGuards(MotoristaGuard)
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({
+    summary: 'Registrar abastecimento manual (motorista, posto avulso)',
+    description:
+      'Posto não credenciado: fica pendente_aprovacao e não debita crédito até aprovação no 360.',
+  })
+  async createManualMotorista(@Body() dto: CreateAbastecimentoMotoristaDto) {
+    const data = await this.service.createManualMotorista(dto);
+    return { data, message: 'Abastecimento registrado — aguardando aprovação.' };
   }
 
   @Get('ultima-leitura/:prefeituraId')

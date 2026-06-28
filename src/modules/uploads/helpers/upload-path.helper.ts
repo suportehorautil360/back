@@ -11,9 +11,15 @@ export function sanitizarPathSegmento(valor: string): string {
  */
 export function resolveUploadFolder(params: {
   checklistId?: string;
+  abastecimentoId?: string;
   oficinaId?: string;
   os?: string;
 }): string {
+  const abastecimentoId = params.abastecimentoId?.trim();
+  if (abastecimentoId) {
+    return `abastecimentos/${sanitizarPathSegmento(abastecimentoId)}`;
+  }
+
   const checklistId = params.checklistId?.trim();
   if (checklistId) return sanitizarPathSegmento(checklistId);
 

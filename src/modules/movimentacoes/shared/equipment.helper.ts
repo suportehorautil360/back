@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
   CollectionReference,
   DocumentReference,
@@ -44,6 +44,64 @@ export async function resolveEquipmentByPlateOrChassis(
   }
 
   const raw = match.data() as Record<string, unknown>;
+  const capacidade = Number(raw.capacidadeTanque);
+  return {
+    id: (raw.id as string) ?? match.id,
+    capacidadeTanque: Number.isFinite(capacidade) ? capacidade : 0,
+    raw,
+    ref: match.ref,
+  };
+}
+
+/** Resolve equipamento pelo id (campo `id` ou doc id), dentro da prefeitura. */
+export async function resolveEquipmentById(
+  equipamentosCollection: CollectionReference,
+  prefeituraId: string,
+  equipmentId: string,
+): Promise<ResolvedEquipment> {
+  const pid = prefeituraId.trim();
+  const eid = equipmentId.trim();
+  if (!pid || !eid) {
+    throw new BadRequestException('Equipamento inválido.');
+  }
+
+  const byField = await equipamentosCollection
+    .where('prefeituraId', '==', pid)
+    .where('id', '==', eid)
+    .limit(1)
+    .get();
+
+  let match = !byField.empty ? byField.docs[0] : null;
+  if (!match) {
+    const byDocId = await equipamentosCollection.doc(eid).get();
+    if (byDocId.exists) {
+      const raw = byDocId.data() as Record<string, unknown>;
+      if (String(raw.prefeituraId ?? '').trim() === pid) {
+        return {
+          id: (raw.id as string) ?? byDocId.id,
+          capacidadeTanque: Number.isFinite(Number(raw.capacidadeTanque))
+            ? Number(raw.capacidadeTanque)
+            : 0,
+          raw,
+          ref: byDocId.ref,
+        };
+      }
+    }
+  }
+
+  if (!match) {
+    throw new NotFoundException(
+      'Equipamento não encontrado ou não cadastrado para esta empresa.',
+    );
+  }
+
+  const raw = match.data() as Record<string, unknown>;
+  if (String(raw.prefeituraId ?? '').trim() !== pid) {
+    throw new NotFoundException(
+      'Equipamento não encontrado ou não cadastrado para esta empresa.',
+    );
+  }
+
   const capacidade = Number(raw.capacidadeTanque);
   return {
     id: (raw.id as string) ?? match.id,

@@ -148,6 +148,16 @@ export interface CreditoSaldoInput {
 export interface AbastecimentoGastoInput {
   equipmentId?: string;
   total?: unknown;
+  status?: unknown;
+}
+
+/** Abastecimentos pendentes/rejeitados não entram no gasto de crédito. */
+export function abastecimentoContaNoGasto(
+  item: AbastecimentoGastoInput,
+): boolean {
+  const st = toStr(item.status).toLowerCase();
+  if (st === 'pendente_aprovacao' || st === 'rejeitado') return false;
+  return true;
 }
 
 /**
@@ -184,6 +194,7 @@ export function somaGastoEquipamento(
   let total = 0;
   for (const item of abastecimentos) {
     if (item.equipmentId !== equipmentId) continue;
+    if (!abastecimentoContaNoGasto(item)) continue;
     const valor = Number(item.total);
     if (Number.isFinite(valor) && valor > 0) total += valor;
   }

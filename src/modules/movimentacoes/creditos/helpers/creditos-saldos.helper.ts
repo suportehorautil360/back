@@ -11,6 +11,7 @@ interface AllocationSnapshot {
 interface AbastecimentoGastoInput {
   equipmentId: string;
   total: number | null;
+  status?: string | null;
 }
 
 function roundMoney(value: number): number {
@@ -112,6 +113,8 @@ export function buildCreditosSaldosPayload(input: {
   for (const abastecimento of input.abastecimentos) {
     const gasto = abastecimento.total ?? 0;
     if (gasto <= 0 || !abastecimento.equipmentId) continue;
+    const st = String(abastecimento.status ?? '').toLowerCase();
+    if (st === 'pendente_aprovacao' || st === 'rejeitado') continue;
 
     gastoPorEquipamento.set(
       abastecimento.equipmentId,

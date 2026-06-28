@@ -177,4 +177,57 @@ export class UploadsController {
     ]);
     return { data: { url }, message: 'ok' };
   }
+
+  @Post('abastecimento-foto')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: MAX_BYTES_POR_FOTO } }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Subir foto de abastecimento manual (medidor ou cupom)',
+    description:
+      'Envie abastecimentoId (uuid gerado no app) e nome (medidor | cupom).',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file', 'abastecimentoId'],
+      properties: {
+        abastecimentoId: {
+          type: 'string',
+          description: 'UUID gerado no app antes de registrar o abastecimento',
+        },
+        nome: {
+          type: 'string',
+          example: 'medidor',
+          description: 'Identificador da foto (medidor | cupom)',
+        },
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  async uploadAbastecimentoFoto(
+    @Body('abastecimentoId') abastecimentoId: string | undefined,
+    @Body('nome') nome: string | undefined,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const pasta = resolveUploadFolder({ abastecimentoId });
+    if (!file) {
+      throw new BadRequestException('Envie a imagem no campo "file".');
+    }
+    assertImagens([file]);
+    const label = (nome?.trim() || nomeFromFile(file)).replace(
+      /\.[a-zA-Z0-9]+$/,
+      '',
+    );
+    const [url] = await this.service.uploadChecklistFotos(pasta, [
+      {
+        nome: label,
+        buffer: file.buffer,
+        mimetype: file.mimetype,
+      },
+    ]);
+    return { data: { url }, message: 'ok' };
+  }
 }
