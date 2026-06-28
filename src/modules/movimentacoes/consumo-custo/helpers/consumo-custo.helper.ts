@@ -117,7 +117,10 @@ function buildHistoricoAbastecimentos(
       dateTime: formatDateTime(item.createdAt),
       litros: item.liters,
       litrosLabel: formatLitros(item.liters),
-      leituraLabel: `${item.currentReading.toLocaleString('pt-BR')} ${unit}`,
+      leituraLabel:
+        item.currentReading != null
+          ? `${item.currentReading.toLocaleString('pt-BR')} ${unit}`
+          : '—',
       currentReading: item.currentReading,
       gasto: item.total,
       gastoLabel: item.total !== null ? formatBRL(item.total) : '—',
@@ -125,6 +128,129 @@ function buildHistoricoAbastecimentos(
       postoId: item.postoId ?? null,
       createdAt: item.createdAt,
     }));
+}
+
+function findPreviousValidReading(
+  ordered: AbastecimentoConsumoInput[],
+  beforeIndex: number,
+): { reading: number; item: AbastecimentoConsumoInput } | null {
+  for (let j = beforeIndex - 1; j >= 0; j -= 1) {
+    const reading = ordered[j].currentReading;
+    if (reading != null && Number.isFinite(reading)) {
+      return { reading, item: ordered[j] };
+    }
+  }
+  return null;
+}
+
+function buildIntervalosConsumo(
+  ordered: AbastecimentoConsumoInput[],
+  startIso: string | undefined,
+  endIso: string | undefined,
+  unit: UnidadeMedicao,
+): {
+  historicoIntervalos: ConsumoCustoIntervalo[];
+  totalDistanciaPeriodo: number;
+  totalLitrosIntervalos: number;
+  totalGastoIntervalos: number;
+} {
+  const historicoIntervalos: ConsumoCustoIntervalo[] = [];
+  let totalDistanciaPeriodo = 0;
+  let totalLitrosIntervalos = 0;
+  let totalGastoIntervalos = 0;
+  let litrosAcumulados = 0;
+  let gastoAcumulado = 0;
+  let temGastoAcumulado = false;
+  let chainStart: AbastecimentoConsumoInput | null = null;
+
+  for (let i = 0; i < ordered.length; i += 1) {
+    const current = ordered[i];
+    const currReading = current.currentReading;
+
+    if (chainStart === null && currReading != null) {
+      chainStart = current;
+    }
+
+    if (!isWithinPeriod(current.createdAt, startIso, endIso)) {
+      if (currReading != null) {
+        chainStart = current;
+        litrosAcumulados = 0;
+        gastoAcumulado = 0;
+        temGastoAcumulado = false;
+      } else {
+        litrosAcumulados += current.liters;
+        if (current.total != null && current.total > 0) {
+          gastoAcumulado += current.total;
+          temGastoAcumulado = true;
+        }
+      }
+      continue;
+    }
+
+    const prev = findPreviousValidReading(ordered, i);
+    if (currReading == null) {
+      litrosAcumulados += current.liters;
+      if (current.total != null && current.total > 0) {
+        gastoAcumulado += current.total;
+        temGastoAcumulado = true;
+      }
+      continue;
+    }
+
+    if (prev == null) {
+      chainStart = current;
+      continue;
+    }
+
+    const distancia = currReading - prev.reading;
+    if (distancia <= 0) {
+      litrosAcumulados += current.liters;
+      if (current.total != null && current.total > 0) {
+        gastoAcumulado += current.total;
+        temGastoAcumulado = true;
+      }
+      continue;
+    }
+
+    const litros = current.liters + litrosAcumulados;
+    const gasto =
+      temGastoAcumulado || (current.total != null && current.total > 0)
+        ? (current.total ?? 0) + gastoAcumulado
+        : current.total;
+    const consumo = litros / distancia;
+    const custo =
+      gasto !== null && gasto > 0 ? gasto / distancia : null;
+
+    totalDistanciaPeriodo += distancia;
+    totalLitrosIntervalos += litros;
+    if (gasto !== null && gasto > 0) {
+      totalGastoIntervalos += gasto;
+    }
+
+    const inicio =
+      chainStart && chainStart.id !== current.id ? chainStart : prev.item;
+
+    historicoIntervalos.push({
+      periodoLabel: `${formatDateTime(inicio.createdAt)} → ${formatDateTime(current.createdAt)}`,
+      distanciaLabel: `${formatDecimal(distancia, distancia % 1 === 0 ? 0 : 1)} ${unit}`,
+      consumoLabel: formatConsumoUnit(consumo, unit),
+      custoLabel: formatCustoUnit(custo, unit),
+    });
+
+    litrosAcumulados = 0;
+    gastoAcumulado = 0;
+    temGastoAcumulado = false;
+    chainStart = current;
+  }
+
+  historicoIntervalos.reverse();
+
+  return {
+    historicoIntervalos,
+    totalDistanciaPeriodo,
+    totalLitrosIntervalos,
+    totalGastoIntervalos,
+  };
 }
 
 function resolveVehicleIdentity(
@@ -187,45 +313,20 @@ export function buildVeiculoCard(
     plateOrChassis,
   );
 
-  const historicoIntervalos: ConsumoCustoIntervalo[] = [];
   let totalLitrosPeriodo = 0;
   let totalGastoPeriodo = 0;
-  let totalDistanciaPeriodo = 0;
-  let totalLitrosIntervalos = 0;
-  let totalGastoIntervalos = 0;
 
   for (const item of abastecimentosNoPeriodo) {
     totalLitrosPeriodo += item.liters;
     totalGastoPeriodo += item.total ?? 0;
   }
 
-  for (let index = 1; index < ordered.length; index += 1) {
-    const previous = ordered[index - 1];
-    const current = ordered[index];
-    if (!isWithinPeriod(current.createdAt, startIso, endIso)) continue;
-
-    const distancia = current.currentReading - previous.currentReading;
-    if (distancia <= 0) continue;
-
-    const consumo = current.liters / distancia;
-    const gasto = current.total;
-    const custo = gasto !== null && gasto > 0 ? gasto / distancia : null;
-
-    totalDistanciaPeriodo += distancia;
-    totalLitrosIntervalos += current.liters;
-    if (gasto !== null && gasto > 0) {
-      totalGastoIntervalos += gasto;
-    }
-
-    historicoIntervalos.push({
-      periodoLabel: `${formatDateTime(previous.createdAt)} → ${formatDateTime(current.createdAt)}`,
-      distanciaLabel: `${formatDecimal(distancia, distancia % 1 === 0 ? 0 : 1)} ${unit}`,
-      consumoLabel: formatConsumoUnit(consumo, unit),
-      custoLabel: formatCustoUnit(custo, unit),
-    });
-  }
-
-  historicoIntervalos.reverse();
+  const {
+    historicoIntervalos,
+    totalDistanciaPeriodo,
+    totalLitrosIntervalos,
+    totalGastoIntervalos,
+  } = buildIntervalosConsumo(ordered, startIso, endIso, unit);
 
   const mediaConsumo =
     totalDistanciaPeriodo > 0
