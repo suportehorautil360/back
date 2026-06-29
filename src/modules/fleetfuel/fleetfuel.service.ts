@@ -12,6 +12,11 @@ import type { StringValue } from 'ms';
 import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
 import { AbastecimentoDoc } from '../movimentacoes/abastecimentos/abastecimentos.service';
+import {
+  mensagemIntervaloAbastecimento,
+  ultimoAbastecimentoTimestampMs,
+  verificarIntervaloAbastecimento,
+} from '../movimentacoes/abastecimentos/helpers/intervalo-abastecimento.helper';
 import { resolveEquipmentByPlateOrChassis } from '../movimentacoes/shared/equipment.helper';
 import { TipoMedicao } from '../movimentacoes/abastecimentos/dto/create-abastecimento.dto';
 import { CriarIntencaoDto } from './dto/criar-intencao.dto';
@@ -449,6 +454,19 @@ export class FleetfuelService {
           ),
           intencao.equipmentId,
         );
+
+        const ultimoEmMs = ultimoAbastecimentoTimestampMs(
+          abastecimentosSnap.docs.map((d) => d.data()),
+          intencao.prefeituraId,
+          intencao.equipmentId,
+        );
+        const intervalo = verificarIntervaloAbastecimento(ultimoEmMs);
+        if (!intervalo.liberado && intervalo.proximoEmMs !== null) {
+          throw new BadRequestException(
+            mensagemIntervaloAbastecimento(intervalo.proximoEmMs),
+          );
+        }
+
         const saldo = calcularSaldo(creditado, gasto);
         if (intencao.total > saldo) {
           throw new BadRequestException(
