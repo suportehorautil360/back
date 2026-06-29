@@ -365,9 +365,12 @@ Tela agregada. **Base:** abastecimentos (não reabastecimentos).
 
 **Query params:** `startDate`, `endDate` (opcionais, formato `YYYY-MM-DD`)
 
-**Fórmulas:**
+**Fórmulas (Especificação V2):**
 - Consumo = litros do abastecimento ÷ (leitura atual − leitura anterior)
-- Custo = valor do abastecimento ÷ distância/horas (quando há `total` ou `pricePerLiter`)
+- Gasto = litros × preço/l (quando informado)
+- Custo unitário = consumo médio × preço/l
+- Unidade (km ou h) vem de `unidadeRevisao` do equipamento
+- Totais do card usam apenas litros/gastos **dos intervalos válidos** no período (regra tanque cheio)
 
 **Resposta (`200`):**
 

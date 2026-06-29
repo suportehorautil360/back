@@ -21,6 +21,11 @@ import {
   resolveAbastecimentoPricing,
 } from './helpers/abastecimentos-create.helper';
 import {
+  mensagemIntervaloAbastecimento,
+  ultimoAbastecimentoTimestampMs,
+  verificarIntervaloAbastecimento,
+} from './helpers/intervalo-abastecimento.helper';
+import {
   fetchEquipmentMap,
   resolveEquipmentById,
   resolveEquipmentByPlateOrChassis,
@@ -299,6 +304,11 @@ export class AbastecimentosService {
       );
     }
 
+    await this.assertIntervaloMinimoAbastecimento(
+      input.prefeituraId,
+      equipmentId,
+    );
+
     const capacidadeAlvo = capacidadeAlvoAbastecimento(equipamento.raw);
     if (capacidadeAlvo > 0 && liters > capacidadeAlvo) {
       const ondeCabe = ehComboio(equipamento.raw.tipo)
@@ -394,6 +404,28 @@ export class AbastecimentosService {
       return asString(raw.nome);
     } catch {
       return '';
+    }
+  }
+
+  /** Impede novo abastecimento do mesmo veículo antes de 3 horas. */
+  private async assertIntervaloMinimoAbastecimento(
+    prefeituraId: string,
+    equipmentId: string,
+  ): Promise<void> {
+    const snap = await this.collection
+      .where('equipmentId', '==', equipmentId)
+      .get();
+    const docs = snap.docs.map((d) => d.data() as AbastecimentoDoc);
+    const ultimoEmMs = ultimoAbastecimentoTimestampMs(
+      docs,
+      prefeituraId,
+      equipmentId,
+    );
+    const status = verificarIntervaloAbastecimento(ultimoEmMs);
+    if (!status.liberado && status.proximoEmMs !== null) {
+      throw new BadRequestException(
+        mensagemIntervaloAbastecimento(status.proximoEmMs),
+      );
     }
   }
 
