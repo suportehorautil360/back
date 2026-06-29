@@ -13,16 +13,24 @@ import type {
   ConsumoCustoVeiculoCard,
   MeasurementTypeResponse,
   TipoMedicaoInterno,
+  TipoMedidaFrota,
   UnidadeMedicao,
 } from '../consumo-custo.types';
+import {
+  calcularMetricasIntervalo,
+  resolveGastoAbastecimento,
+  tipoMedidaFromMeasurementType,
+  tipoMedidaFromUnidadeRevisao,
+} from './calcular-metricas-frota.helper';
 
 export const CALCULO_INFO: ConsumoCustoCalculoInfo = {
   titulo: 'Como o consumo e o custo são calculados',
   formulaConsumo:
     'Consumo = litros do abastecimento ÷ (leitura atual − leitura anterior)',
   formulaCusto:
-    'Quando o abastecimento tem valor (R$), o sistema calcula também o custo por km ou hora rodada.',
-  observacao: 'Válido para carros, caminhões e máquinas pesadas.',
+    'Quando há preço por litro, o gasto = litros × preço/l e o custo unitário = consumo médio × preço/l.',
+  observacao:
+    'Válido para carros, caminhões e máquinas pesadas. Em campo, o consumo usa os litros do reabastecimento que completa o tanque.',
 };
 
 export function measurementUnit(
@@ -35,6 +43,27 @@ export function toResponseMeasurementType(
   measurementType: TipoMedicaoInterno,
 ): MeasurementTypeResponse {
   return measurementType === 'horimetro' ? 'horimetro' : 'odometro';
+}
+
+export function resolveTipoMedidaEquipamento(
+  equipment: Record<string, unknown>,
+  abastecimentos: AbastecimentoConsumoInput[],
+): TipoMedidaFrota {
+  const fromEquip = tipoMedidaFromUnidadeRevisao(equipment.unidadeRevisao);
+  if (fromEquip) return fromEquip;
+
+  for (let i = abastecimentos.length - 1; i >= 0; i -= 1) {
+    const fromAbast = tipoMedidaFromMeasurementType(
+      abastecimentos[i].measurementType,
+    );
+    if (fromAbast) return fromAbast;
+  }
+
+  return 'KM';
+}
+
+export function tipoMedidaToInterno(tipo: TipoMedidaFrota): TipoMedicaoInterno {
+  return tipo === 'HORA' ? 'horimetro' : 'hodometro';
 }
 
 export function isWithinPeriod(
@@ -112,22 +141,31 @@ function buildHistoricoAbastecimentos(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     )
-    .map((item) => ({
-      id: item.id,
-      dateTime: formatDateTime(item.createdAt),
-      litros: item.liters,
-      litrosLabel: formatLitros(item.liters),
-      leituraLabel:
-        item.currentReading != null
-          ? `${item.currentReading.toLocaleString('pt-BR')} ${unit}`
-          : '—',
-      currentReading: item.currentReading,
-      gasto: item.total,
-      gastoLabel: item.total !== null ? formatBRL(item.total) : '—',
-      pricePerLiter: item.pricePerLiter ?? null,
-      postoId: item.postoId ?? null,
-      createdAt: item.createdAt,
-    }));
+    .map((item) => {
+      const gasto =
+        resolveGastoAbastecimento(
+          item.liters,
+          item.pricePerLiter,
+          item.total,
+        ) ?? item.total;
+
+      return {
+        id: item.id,
+        dateTime: formatDateTime(item.createdAt),
+        litros: item.liters,
+        litrosLabel: formatLitros(item.liters),
+        leituraLabel:
+          item.currentReading != null
+            ? `${item.currentReading.toLocaleString('pt-BR')} ${unit}`
+            : '—',
+        currentReading: item.currentReading,
+        gasto: gasto ?? null,
+        gastoLabel: gasto !== null ? formatBRL(gasto) : '—',
+        pricePerLiter: item.pricePerLiter ?? null,
+        postoId: item.postoId ?? null,
+        createdAt: item.createdAt,
+      };
+    });
 }
 
 function findPreviousValidReading(
@@ -147,6 +185,7 @@ function buildIntervalosConsumo(
   ordered: AbastecimentoConsumoInput[],
   startIso: string | undefined,
   endIso: string | undefined,
+  tipoMedida: TipoMedidaFrota,
   unit: UnidadeMedicao,
 ): {
   historicoIntervalos: ConsumoCustoIntervalo[];
@@ -179,8 +218,13 @@ function buildIntervalosConsumo(
         temGastoAcumulado = false;
       } else {
         litrosAcumulados += current.liters;
-        if (current.total != null && current.total > 0) {
-          gastoAcumulado += current.total;
+        const gastoParcial = resolveGastoAbastecimento(
+          current.liters,
+          current.pricePerLiter,
+          current.total,
+        );
+        if (gastoParcial != null) {
+          gastoAcumulado += gastoParcial;
           temGastoAcumulado = true;
         }
       }
@@ -190,8 +234,13 @@ function buildIntervalosConsumo(
     const prev = findPreviousValidReading(ordered, i);
     if (currReading == null) {
       litrosAcumulados += current.liters;
-      if (current.total != null && current.total > 0) {
-        gastoAcumulado += current.total;
+      const gastoParcial = resolveGastoAbastecimento(
+        current.liters,
+        current.pricePerLiter,
+        current.total,
+      );
+      if (gastoParcial != null) {
+        gastoAcumulado += gastoParcial;
         temGastoAcumulado = true;
       }
       continue;
@@ -202,29 +251,41 @@ function buildIntervalosConsumo(
       continue;
     }
 
-    const distancia = currReading - prev.reading;
-    if (distancia <= 0) {
-      litrosAcumulados += current.liters;
-      if (current.total != null && current.total > 0) {
-        gastoAcumulado += current.total;
-        temGastoAcumulado = true;
-      }
+    const litros = current.liters + litrosAcumulados;
+    const gastoParcialAtual = resolveGastoAbastecimento(
+      current.liters,
+      current.pricePerLiter,
+      current.total,
+    );
+    const gastoIntervaloBruto =
+      temGastoAcumulado || gastoParcialAtual != null
+        ? gastoAcumulado + (gastoParcialAtual ?? 0)
+        : null;
+
+    const metricas = calcularMetricasIntervalo({
+      tipoMedida,
+      litrosAbastecidos: litros,
+      leituraAtual: currReading,
+      leituraAnterior: prev.reading,
+      precoLitro:
+        litros > 0 && gastoIntervaloBruto != null
+          ? gastoIntervaloBruto / litros
+          : current.pricePerLiter,
+    });
+
+    litrosAcumulados = 0;
+    gastoAcumulado = 0;
+    temGastoAcumulado = false;
+
+    if (metricas == null) {
+      chainStart = current;
       continue;
     }
 
-    const litros = current.liters + litrosAcumulados;
-    const gasto =
-      temGastoAcumulado || (current.total != null && current.total > 0)
-        ? (current.total ?? 0) + gastoAcumulado
-        : current.total;
-    const consumo = litros / distancia;
-    const custo =
-      gasto !== null && gasto > 0 ? gasto / distancia : null;
-
-    totalDistanciaPeriodo += distancia;
+    totalDistanciaPeriodo += metricas.deltaTrabalho;
     totalLitrosIntervalos += litros;
-    if (gasto !== null && gasto > 0) {
-      totalGastoIntervalos += gasto;
+    if (metricas.gastoTotal != null) {
+      totalGastoIntervalos += metricas.gastoTotal;
     }
 
     const inicio =
@@ -232,14 +293,11 @@ function buildIntervalosConsumo(
 
     historicoIntervalos.push({
       periodoLabel: `${formatDateTime(inicio.createdAt)} → ${formatDateTime(current.createdAt)}`,
-      distanciaLabel: `${formatDecimal(distancia, distancia % 1 === 0 ? 0 : 1)} ${unit}`,
-      consumoLabel: formatConsumoUnit(consumo, unit),
-      custoLabel: formatCustoUnit(custo, unit),
+      distanciaLabel: `${formatDecimal(metricas.deltaTrabalho, metricas.deltaTrabalho % 1 === 0 ? 0 : 1)} ${unit}`,
+      consumoLabel: formatConsumoUnit(metricas.consumoMedio, unit),
+      custoLabel: formatCustoUnit(metricas.custoUnitario, unit),
     });
 
-    litrosAcumulados = 0;
-    gastoAcumulado = 0;
-    temGastoAcumulado = false;
     chainStart = current;
   }
 
@@ -294,11 +352,8 @@ export function buildVeiculoCard(
     return null;
   }
 
-  const measurementType =
-    abastecimentosNoPeriodo[abastecimentosNoPeriodo.length - 1]
-      ?.measurementType ??
-    ordered[ordered.length - 1]?.measurementType ??
-    'hodometro';
+  const tipoMedida = resolveTipoMedidaEquipamento(equipment, ordered);
+  const measurementType = tipoMedidaToInterno(tipoMedida);
   const unit = measurementUnit(measurementType);
   const consumoRotulo = unit === 'h' ? 'MÉDIO L/H' : 'MÉDIO L/KM';
   const custoRotulo = unit === 'h' ? 'CUSTO /H' : 'CUSTO /KM';
@@ -313,43 +368,37 @@ export function buildVeiculoCard(
     plateOrChassis,
   );
 
-  let totalLitrosPeriodo = 0;
-  let totalGastoPeriodo = 0;
-
-  for (const item of abastecimentosNoPeriodo) {
-    totalLitrosPeriodo += item.liters;
-    totalGastoPeriodo += item.total ?? 0;
-  }
-
   const {
     historicoIntervalos,
     totalDistanciaPeriodo,
     totalLitrosIntervalos,
     totalGastoIntervalos,
-  } = buildIntervalosConsumo(ordered, startIso, endIso, unit);
+  } = buildIntervalosConsumo(ordered, startIso, endIso, tipoMedida, unit);
 
   const mediaConsumo =
     totalDistanciaPeriodo > 0
       ? totalLitrosIntervalos / totalDistanciaPeriodo
       : null;
   const mediaCusto =
-    totalDistanciaPeriodo > 0 && totalGastoIntervalos > 0
-      ? totalGastoIntervalos / totalDistanciaPeriodo
+    totalDistanciaPeriodo > 0 &&
+    totalGastoIntervalos > 0 &&
+    mediaConsumo != null
+      ? mediaConsumo * (totalGastoIntervalos / totalLitrosIntervalos)
       : null;
 
-  const temCusto = totalGastoPeriodo > 0;
+  const temCusto = totalGastoIntervalos > 0;
   const totalDestaque = temCusto
     ? {
         tipo: 'gasto' as const,
         rotulo: 'GASTO TOTAL',
-        valor: totalGastoPeriodo,
-        valorExibicao: formatBRL(totalGastoPeriodo),
+        valor: totalGastoIntervalos,
+        valorExibicao: formatBRL(totalGastoIntervalos),
       }
     : {
         tipo: 'litros' as const,
         rotulo: 'LITROS TOTAL',
-        valor: totalLitrosPeriodo,
-        valorExibicao: formatLitros(totalLitrosPeriodo),
+        valor: totalLitrosIntervalos,
+        valorExibicao: formatLitros(totalLitrosIntervalos),
       };
 
   return {
@@ -374,10 +423,10 @@ export function buildVeiculoCard(
     },
     totalDestaque,
     totais: {
-      litros: totalLitrosPeriodo,
-      litrosExibicao: formatLitros(totalLitrosPeriodo),
-      gasto: totalGastoPeriodo,
-      gastoExibicao: formatBRL(totalGastoPeriodo),
+      litros: totalLitrosIntervalos,
+      litrosExibicao: formatLitros(totalLitrosIntervalos),
+      gasto: totalGastoIntervalos,
+      gastoExibicao: formatBRL(totalGastoIntervalos),
     },
     historicoIntervalos,
     historicoAbastecimentos: buildHistoricoAbastecimentos(

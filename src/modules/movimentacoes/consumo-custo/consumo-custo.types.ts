@@ -1,5 +1,6 @@
 export type UnidadeMedicao = 'h' | 'km';
 export type TipoMedicaoInterno = 'horimetro' | 'hodometro';
+export type TipoMedidaFrota = 'KM' | 'HORA';
 export type MeasurementTypeResponse = 'horimetro' | 'odometro';
 export type TotalDestaqueTipo = 'litros' | 'gasto';
 
