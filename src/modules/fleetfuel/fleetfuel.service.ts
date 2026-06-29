@@ -49,6 +49,12 @@ interface FleetfuelTokenPayload {
 
 const COLECAO_INTENCOES = 'fleetfuel_intencoes';
 
+/** Prefixo do QR curto — ~40 chars vs ~250 do JWT, muito mais rápido de escanear. */
+const QR_PREFIX = 'ff:';
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 @Injectable()
 export class FleetfuelService {
   constructor(
@@ -95,6 +101,42 @@ export class FleetfuelService {
   private getTokenTtl(): StringValue {
     return (this.configService.get<string>('FLEETFUEL_QR_TTL') ??
       '10m') as StringValue;
+  }
+
+  private formatQrConteudo(intencaoId: string): string {
+    return `${QR_PREFIX}${intencaoId}`;
+  }
+
+  private isUuid(value: string): boolean {
+    return UUID_RE.test(value);
+  }
+
+  /** Resolve intenção a partir do QR curto (`ff:uuid`) ou JWT legado. */
+  private async resolveQrToken(
+    token: string,
+  ): Promise<{ intencaoId: string; jti?: string }> {
+    const trimmed = token.trim();
+    if (!trimmed) {
+      throw new UnauthorizedException('QR inválido ou expirado.');
+    }
+
+    if (trimmed.startsWith(QR_PREFIX)) {
+      const intencaoId = trimmed.slice(QR_PREFIX.length);
+      if (!this.isUuid(intencaoId)) {
+        throw new UnauthorizedException('QR inválido ou expirado.');
+      }
+      return { intencaoId };
+    }
+
+    try {
+      const payload = await this.jwtService.verifyAsync<FleetfuelTokenPayload>(
+        trimmed,
+        { secret: this.getTokenSecret() },
+      );
+      return { intencaoId: payload.intencaoId, jti: payload.jti };
+    } catch {
+      throw new UnauthorizedException('QR inválido ou expirado.');
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -348,7 +390,7 @@ export class FleetfuelService {
       data: {
         intencaoId: id,
         token,
-        qrConteudo: token,
+        qrConteudo: this.formatQrConteudo(id),
         expiresAt: doc.expiresAt,
         resumo: {
           placa: doc.plateOrChassis,
@@ -369,15 +411,7 @@ export class FleetfuelService {
   // ---------------------------------------------------------------------------
 
   async validar(dto: ValidarAbastecimentoDto) {
-    let payload: FleetfuelTokenPayload;
-    try {
-      payload = await this.jwtService.verifyAsync<FleetfuelTokenPayload>(
-        dto.token,
-        { secret: this.getTokenSecret() },
-      );
-    } catch {
-      throw new UnauthorizedException('QR inválido ou expirado.');
-    }
+    const payload = await this.resolveQrToken(dto.token);
 
     const ref = this.intencoesCollection.doc(payload.intencaoId);
     const cpfMotorista = dto.cpf ? limparCpf(dto.cpf) : '';
@@ -392,7 +426,7 @@ export class FleetfuelService {
           jti?: string;
         };
 
-        if (intencao.jti && intencao.jti !== payload.jti) {
+        if (payload.jti && intencao.jti && intencao.jti !== payload.jti) {
           throw new UnauthorizedException(
             'QR não corresponde a este registro.',
           );

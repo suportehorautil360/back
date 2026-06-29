@@ -336,7 +336,7 @@ describe('FleetfuelService.criarIntencao', () => {
     const res = await service.criarIntencao({ ...intencaoBase });
 
     expect(res.data.token).toBeTruthy();
-    expect(res.data.qrConteudo).toBe(res.data.token);
+    expect(res.data.qrConteudo).toBe(`ff:${res.data.intencaoId}`);
     expect(res.data.resumo.total).toBe(600);
 
     const status = await service.statusIntencao(res.data.intencaoId);
@@ -385,7 +385,7 @@ describe('FleetfuelService.validar', () => {
     const intencao = await service.criarIntencao({ ...intencaoBase });
 
     const res = await service.validar({
-      token: intencao.data.token,
+      token: intencao.data.qrConteudo,
       funcionarioId: 'mot-1',
       cpf: '12345678900',
     });
@@ -400,6 +400,19 @@ describe('FleetfuelService.validar', () => {
 
     const status = await service.statusIntencao(intencao.data.intencaoId);
     expect(status.data.status).toBe('concluido');
+  });
+
+  it('aceita JWT legado na validação', async () => {
+    const { service } = setup();
+    const intencao = await service.criarIntencao({ ...intencaoBase });
+
+    const res = await service.validar({
+      token: intencao.data.token,
+      funcionarioId: 'mot-1',
+      cpf: '12345678900',
+    });
+
+    expect(res.data.abastecimentoId).toBeTruthy();
   });
 
   it('rejeita token inválido', async () => {
