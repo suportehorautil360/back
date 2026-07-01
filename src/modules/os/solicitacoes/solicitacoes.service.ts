@@ -25,6 +25,7 @@ import {
   tipoOsLegacyCode,
 } from '../helpers/os-service-type.helper';
 import { mapOficinaCredenciadaDoc } from '../helpers/oficinas-credenciadas.helper';
+import { resolveSegmentoEquipamento } from '../helpers/segmento-equipamento.helper';
 import { selecionarOficinas } from '../helpers/selecionar-oficinas.helper';
 import { solicitacaoStatusLabel } from '../helpers/status-label.helper';
 import {
@@ -41,6 +42,8 @@ import {
 import {
   parseLances,
   parseOficinasResponderam,
+  resolveOficinaVencedoraId,
+  resolveValorAprovado,
   valorOrcadoForOficina,
 } from '../helpers/lances-os.helper';
 import type {
@@ -124,8 +127,15 @@ export class SolicitacoesService {
       );
     }
 
+    const segmento = resolveSegmentoEquipamento(equipamento);
+
     const oficinas = await this.listarOficinasAtivas(prefeituraId);
-    const convidadas = selecionarOficinas(oficinas, linha, 3);
+    const convidadas = selecionarOficinas(
+      oficinas,
+      linha,
+      3,
+      segmento || undefined,
+    );
     if (convidadas.length === 0) {
       throw new UnprocessableEntityException(
         'No credentialed active workshops found for this municipality. ' +
@@ -149,6 +159,7 @@ export class SolicitacoesService {
         equipamentoId: texto(equipamento.id) || equipmentId,
         equipamento: resolveNomeEquipamento(equipamento),
         linha,
+        ...(segmento ? { segmento } : {}),
         operador: operator,
         horimetro: formatHorimetro(equipamento) || undefined,
         relato: report,
@@ -354,6 +365,8 @@ export class SolicitacoesService {
             status: 'aprovado',
             aprovadoEm: agora,
             ordemServicoAprovadaId: ordemId,
+            oficinaVencedoraId: texto(ordem.oficinaId),
+            valorAprovado: numero(ordem.valorTotal),
           });
 
           return {
@@ -503,6 +516,17 @@ export class SolicitacoesService {
     const valorOrcado = oficinaIdContext
       ? valorOrcadoForOficina(lances, oficinaIdContext)
       : null;
+    const rawRecord = raw as unknown as Record<string, unknown>;
+    const ordemServicoAprovadaId = texto(rawRecord.ordemServicoAprovadaId);
+    const oficinaVencedoraId = resolveOficinaVencedoraId(rawRecord, lances);
+    const valorAprovado = resolveValorAprovado(
+      rawRecord,
+      lances,
+      oficinaVencedoraId,
+    );
+    const aprovadoEm = timestampToIso(
+      rawRecord.aprovadoEm as SolicitacaoOsFirestore['criadoEm'],
+    );
     const equipmentId = texto(raw.equipamentoId);
     const horimetro = texto(raw.horimetro);
     const medicaoSnapshot = parseHorimetroMedicaoFields(horimetro);
@@ -542,6 +566,10 @@ export class SolicitacoesService {
       oficinasResponderam,
       lances,
       valorOrcado,
+      ordemServicoAprovadaId: ordemServicoAprovadaId || undefined,
+      oficinaVencedoraId: oficinaVencedoraId || undefined,
+      valorAprovado,
+      aprovadoEm: aprovadoEm || null,
       criadoEm: timestampToSeconds(raw.criadoEm),
     };
   }

@@ -8,6 +8,11 @@ function texto(valor: unknown): string {
   return typeof valor === 'string' ? valor.trim() : '';
 }
 
+function listaTexto(valor: unknown): string[] {
+  if (!Array.isArray(valor)) return [];
+  return valor.filter((v): v is string => typeof v === 'string' && v.trim() !== '');
+}
+
 export function ehOficinaAtiva(status: unknown): boolean {
   return texto(status).toLowerCase().startsWith('ativ');
 }
@@ -24,5 +29,6 @@ export function mapOficinaCredenciadaDoc(
     id: docId,
     nome: nomeFromOficinaDoc(data, docId),
     especialidade: especialidadeFromOficinaDoc(data),
+    segmentosAtuacao: listaTexto(data.segmentosAtuacao),
   };
 }

@@ -1,12 +1,9 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export class CreateParceiroDto {
-  @ApiProperty({ enum: ['posto', 'oficina'], example: 'posto' })
-  tipo!: 'posto' | 'oficina';
-
-  // ----- Dados gerais -----
-  @ApiProperty({ example: 'Auto Posto Três Lagoas Ltda' })
-  razaoSocial!: string;
+/** Campos editáveis de um parceiro (posto ou oficina). */
+export class UpdateParceiroDto {
+  @ApiPropertyOptional({ example: 'Auto Posto Três Lagoas Ltda' })
+  razaoSocial?: string;
 
   @ApiPropertyOptional({ example: 'Posto TL Centro' })
   nomeFantasia?: string;
@@ -26,33 +23,19 @@ export class CreateParceiroDto {
   @ApiPropertyOptional({ example: 'Rua, número, bairro' })
   endereco?: string;
 
-  @ApiPropertyOptional({
-    description:
-      'Credencia o parceiro no município (obrigatório para oficina participar do sorteio de OS).',
-    example: 'pref-abc-123',
-  })
-  prefeituraId?: string;
-
-  // ----- Posto -----
   @ApiPropertyOptional({ example: 'Ipiranga' })
   bandeira?: string;
 
-  @ApiPropertyOptional({ type: [String], example: ['Diesel S10', 'GNV'] })
+  @ApiPropertyOptional({ type: [String], example: ['Diesel S10'] })
   combustiveis?: string[];
 
   @ApiPropertyOptional({ type: [String], example: ['Conveniência'] })
   servicos?: string[];
 
-  // ----- Oficina -----
   @ApiPropertyOptional({ type: [String], example: ['Linha Amarela'] })
   linhasAtuacao?: string[];
 
-  @ApiPropertyOptional({
-    type: [String],
-    example: ['Máquinas linha amarela', 'Carro leve'],
-    description:
-      'Segmentos de equipamento atendidos pela oficina (sorteio de OS).',
-  })
+  @ApiPropertyOptional({ type: [String], example: ['Máquinas linha amarela'] })
   segmentosAtuacao?: string[];
 
   @ApiPropertyOptional({ type: [String], example: ['Mecânica Geral'] })
@@ -61,7 +44,6 @@ export class CreateParceiroDto {
   @ApiPropertyOptional()
   especificacoes?: string;
 
-  // ----- Financeiro / contrato -----
   @ApiPropertyOptional({ example: 'Faturamento Quinzenal' })
   condicaoPagamento?: string;
 
