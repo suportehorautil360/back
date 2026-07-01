@@ -14,6 +14,7 @@ import {
 import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
 import { CreateCreditoDto } from './dto/create-credito.dto';
 import {
+  buildEquipamentoKeywords,
   buildEquipamentoLabel,
   buildFrenteLabel,
   creditTypeLabel,
@@ -352,6 +353,7 @@ export class CreditosService {
         return {
           id,
           label: buildEquipamentoLabel(raw),
+          keywords: buildEquipamentoKeywords(raw),
         };
       })
       .filter((item) => item.id)

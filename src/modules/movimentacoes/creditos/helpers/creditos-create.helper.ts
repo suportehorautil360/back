@@ -47,6 +47,23 @@ export function buildEquipamentoLabel(raw: Record<string, unknown>): string {
   return nome || placa || 'Equipamento';
 }
 
+export function buildEquipamentoKeywords(
+  raw: Record<string, unknown>,
+): string[] {
+  const placa = asString(raw.placa ?? raw.plate);
+  const candidates = [
+    placa,
+    placa.replace(/[^A-Za-z0-9]/g, ''),
+    asString(raw.chassis ?? raw.chassi),
+    asString(raw.patrimonioBase),
+    asString(raw.renavam),
+    asString(raw.numeroSerie),
+    asString(raw.prefixo),
+  ];
+
+  return [...new Set(candidates.filter(Boolean))];
+}
+
 export function buildFrenteLabel(raw: Record<string, unknown>): string {
   return asString(raw.name ?? raw.nome) || 'Frente de trabalho';
 }
