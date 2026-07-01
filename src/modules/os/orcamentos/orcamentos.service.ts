@@ -21,6 +21,7 @@ import { mapOrdemServicoListItem } from '../helpers/ordem-servico-list.helper';
 import {
   ordemPermiteEdicao,
   solicitacaoPermiteEdicaoOrcamento,
+  solicitacaoPermiteNovoOrcamento,
 } from './helpers/editar-orcamento.helper';
 import { parseOrcamentoItemsFromDto } from './helpers/orcamento-items.helper';
 import {
@@ -72,9 +73,9 @@ export class OrcamentosService {
 
           const sol = solSnap.data() as Record<string, unknown>;
           const statusAtual = texto(sol.status) || 'aguardando_orcamento';
-          if (statusAtual !== 'aguardando_orcamento') {
+          if (!solicitacaoPermiteNovoOrcamento(statusAtual)) {
             throw new BadRequestException(
-              'Esta solicitação não está aguardando orçamento.',
+              'Esta solicitação não está aceitando novos orçamentos.',
             );
           }
 

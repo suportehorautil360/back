@@ -1,5 +1,6 @@
 import type { OficinaAtiva } from '../os.types';
 import { especialidadeCompativel } from './norm-esp.helper';
+import { oficinaAtendeSegmento } from './segmento-equipamento.helper';
 
 function shuffle<T>(items: T[]): T[] {
   const copy = [...items];
@@ -12,23 +13,35 @@ function shuffle<T>(items: T[]): T[] {
 
 /**
  * Seleciona até `max` oficinas para convite.
- * 1) Filtra por especialidade compatível com a linha.
- * 2) Se nenhuma match, usa todas as oficinas ativas (fallback do front antigo).
+ * 1) Filtra por segmento do equipamento (quando informado).
+ * 2) Filtra por especialidade compatível com a linha.
+ * 3) Se nenhuma match, usa pool anterior (fallback do front antigo).
  */
 export function selecionarOficinas(
   oficinas: OficinaAtiva[],
   linha: string,
   max = 3,
+  segmento?: string,
 ): OficinaAtiva[] {
   if (oficinas.length === 0) return [];
 
+  let pool = oficinas;
+  const segmentoNorm = segmento?.trim() ?? '';
+
+  if (segmentoNorm) {
+    const porSegmento = pool.filter((oficina) =>
+      oficinaAtendeSegmento(oficina.segmentosAtuacao ?? [], segmentoNorm),
+    );
+    if (porSegmento.length > 0) {
+      pool = porSegmento;
+    }
+  }
+
   const linhaNorm = linha.trim();
   const matches = linhaNorm
-    ? oficinas.filter((o) =>
-        especialidadeCompativel(o.especialidade, linhaNorm),
-      )
+    ? pool.filter((o) => especialidadeCompativel(o.especialidade, linhaNorm))
     : [];
 
-  const pool = matches.length > 0 ? matches : oficinas;
-  return shuffle(pool).slice(0, max);
+  const finalPool = matches.length > 0 ? matches : pool;
+  return shuffle(finalPool).slice(0, max);
 }

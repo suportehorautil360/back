@@ -10,11 +10,13 @@ import type { DocumentReference } from 'firebase-admin/firestore';
 import { FirebaseService } from '../../config/firebase.service';
 import {
   OficinaParceiro,
+  ParceiroDetalhe,
   ParceirosOverview,
   PostoParceiro,
   TipoParceiro,
 } from './parceiros.types';
 import { CreateParceiroDto } from './dto/create-parceiro.dto';
+import { UpdateParceiroDto } from './dto/update-parceiro.dto';
 import {
   CreateParceiroLoginDto,
   ResetParceiroLoginSenhaDto,
@@ -190,9 +192,11 @@ export class ParceirosService {
       } else {
         const categorias = listaTexto(dto.categoriasServico);
         const linhasAtuacao = listaTexto(dto.linhasAtuacao);
+        const segmentosAtuacao = listaTexto(dto.segmentosAtuacao);
         const dadosOficina = {
           ...comum,
           linhasAtuacao,
+          segmentosAtuacao,
           categoriasServico: categorias,
         };
         const nome = nomeFromOficinaDoc(dadosOficina, razaoSocial);
@@ -232,6 +236,173 @@ export class ParceirosService {
         'Não foi possível salvar o parceiro.',
       );
     }
+  }
+
+  /** Detalhe completo de um parceiro para edição no Hub. */
+  async obter(tipoStr: string, id: string): Promise<{ data: ParceiroDetalhe }> {
+    const tipo: TipoParceiro = tipoStr === 'oficina' ? 'oficina' : 'posto';
+    const docId = (id ?? '').trim();
+    if (!docId) throw new BadRequestException('ID inválido.');
+
+    const colecao = tipo === 'oficina' ? 'oficinas' : 'postos';
+    const snap = await this.firebaseService
+      .getFirestore()
+      .collection(colecao)
+      .doc(docId)
+      .get();
+    if (!snap.exists) {
+      throw new NotFoundException('Parceiro não encontrado.');
+    }
+
+    return {
+      data: this.mapDocToDetalhe(
+        docId,
+        tipo,
+        snap.data() as Record<string, unknown>,
+      ),
+    };
+  }
+
+  /** Atualiza dados cadastrais de um parceiro existente. */
+  async atualizar(tipoStr: string, id: string, dto: UpdateParceiroDto) {
+    const tipo: TipoParceiro = tipoStr === 'oficina' ? 'oficina' : 'posto';
+    const docId = (id ?? '').trim();
+    if (!docId) throw new BadRequestException('ID inválido.');
+
+    const colecao = tipo === 'oficina' ? 'oficinas' : 'postos';
+    const ref = this.firebaseService.getFirestore().collection(colecao).doc(docId);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      throw new NotFoundException('Parceiro não encontrado.');
+    }
+
+    const atual = snap.data() as Record<string, unknown>;
+    const razaoSocial = (dto.razaoSocial ?? texto(atual.razaoSocial)).trim();
+    if (!razaoSocial) {
+      throw new BadRequestException('Informe a razão social do parceiro.');
+    }
+
+    const comum: Record<string, unknown> = {
+      razaoSocial,
+      nomeFantasia: (dto.nomeFantasia ?? texto(atual.nomeFantasia)).trim(),
+      cnpj: (dto.cnpj ?? texto(atual.cnpj)).trim(),
+      telefonePrincipal: (dto.telefonePrincipal ?? texto(atual.telefonePrincipal)).trim(),
+      emailComercial: (dto.emailComercial ?? texto(atual.emailComercial)).trim(),
+      cidadeUf: (dto.cidadeUf ?? texto(atual.cidadeUf)).trim(),
+      endereco: (dto.endereco ?? texto(atual.endereco)).trim(),
+      condicaoPagamento: (dto.condicaoPagamento ?? texto(atual.condicaoPagamento)).trim(),
+      limiteCredito:
+        dto.limiteCredito !== undefined
+          ? numero(dto.limiteCredito)
+          : numero(atual.limiteCredito),
+      descontoComercial: (dto.descontoComercial ?? texto(atual.descontoComercial)).trim(),
+      observacoesFaturamento: (
+        dto.observacoesFaturamento ?? texto(atual.observacoesFaturamento)
+      ).trim(),
+    };
+
+    try {
+      if (tipo === 'posto') {
+        await ref.update({
+          ...comum,
+          bandeira: (dto.bandeira ?? texto(atual.bandeira)).trim(),
+          combustiveis:
+            dto.combustiveis !== undefined
+              ? listaTexto(dto.combustiveis)
+              : listaTexto(atual.combustiveis),
+          servicos:
+            dto.servicos !== undefined
+              ? listaTexto(dto.servicos)
+              : listaTexto(atual.servicos),
+        });
+      } else {
+        const linhasAtuacao =
+          dto.linhasAtuacao !== undefined
+            ? listaTexto(dto.linhasAtuacao)
+            : listaTexto(atual.linhasAtuacao);
+        const segmentosAtuacao =
+          dto.segmentosAtuacao !== undefined
+            ? listaTexto(dto.segmentosAtuacao)
+            : listaTexto(atual.segmentosAtuacao);
+        const categorias =
+          dto.categoriasServico !== undefined
+            ? listaTexto(dto.categoriasServico)
+            : listaTexto(atual.categoriasServico);
+
+        if (linhasAtuacao.length === 0) {
+          throw new BadRequestException('Marque ao menos uma linha de atuação.');
+        }
+        if (segmentosAtuacao.length === 0) {
+          throw new BadRequestException(
+            'Marque ao menos um segmento de equipamento.',
+          );
+        }
+
+        const dadosOficina = {
+          ...atual,
+          ...comum,
+          linhasAtuacao,
+          segmentosAtuacao,
+          categoriasServico: categorias,
+        };
+        const nome = nomeFromOficinaDoc(dadosOficina, razaoSocial);
+        const especialidade = especialidadeFromOficinaDoc(dadosOficina);
+
+        await ref.update({
+          ...comum,
+          linhasAtuacao,
+          segmentosAtuacao,
+          categoriasServico: categorias,
+          especificacoes: (dto.especificacoes ?? texto(atual.especificacoes)).trim(),
+          nome,
+          especialidade: especialidade || categorias.join(', '),
+        });
+      }
+
+      return {
+        data: { id: docId, tipo },
+        message: 'Parceiro atualizado.',
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      console.error('Erro ao atualizar parceiro:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível atualizar o parceiro.',
+      );
+    }
+  }
+
+  private mapDocToDetalhe(
+    id: string,
+    tipo: TipoParceiro,
+    d: Record<string, unknown>,
+  ): ParceiroDetalhe {
+    const status = texto(d.status) || 'Ativa';
+    return {
+      id,
+      tipo,
+      prefeituraId: texto(d.prefeituraId),
+      razaoSocial: texto(d.razaoSocial),
+      nomeFantasia: texto(d.nomeFantasia),
+      cnpj: texto(d.cnpj),
+      telefonePrincipal: texto(d.telefonePrincipal),
+      emailComercial: texto(d.emailComercial),
+      cidadeUf: texto(d.cidadeUf),
+      endereco: texto(d.endereco),
+      bandeira: texto(d.bandeira),
+      combustiveis: listaTexto(d.combustiveis),
+      servicos: listaTexto(d.servicos),
+      linhasAtuacao: listaTexto(d.linhasAtuacao),
+      segmentosAtuacao: listaTexto(d.segmentosAtuacao),
+      categoriasServico: listaTexto(d.categoriasServico),
+      especificacoes: texto(d.especificacoes),
+      condicaoPagamento: texto(d.condicaoPagamento),
+      limiteCredito: numero(d.limiteCredito),
+      descontoComercial: texto(d.descontoComercial),
+      observacoesFaturamento: texto(d.observacoesFaturamento),
+      status,
+      ativo: ehAtivo(status),
+    };
   }
 
   /** Remove um parceiro (posto/oficina) pelo id. */

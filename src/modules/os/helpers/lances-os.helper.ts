@@ -79,3 +79,35 @@ export function parseOficinasIds(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
   return raw.filter((v): v is string => typeof v === 'string' && v.trim() !== '');
 }
+
+export function resolveOficinaVencedoraId(
+  raw: Record<string, unknown>,
+  lances: LanceOs[],
+): string {
+  const direct = texto(raw.oficinaVencedoraId);
+  if (direct) return direct;
+
+  const ordemAprovadaId = texto(raw.ordemServicoAprovadaId);
+  if (!ordemAprovadaId) return '';
+
+  const lance = lances.find(
+    (item) => texto(item.ordemServicoId) === ordemAprovadaId,
+  );
+  return lance?.oficinaId ?? '';
+}
+
+export function resolveValorAprovado(
+  raw: Record<string, unknown>,
+  lances: LanceOs[],
+  oficinaVencedoraId: string,
+): number | null {
+  const rawValor = raw.valorAprovado;
+  if (typeof rawValor === 'number' && Number.isFinite(rawValor) && rawValor > 0) {
+    return rawValor;
+  }
+
+  if (!oficinaVencedoraId) return null;
+
+  const lance = lances.find((item) => item.oficinaId === oficinaVencedoraId);
+  return lance && lance.valor > 0 ? lance.valor : null;
+}

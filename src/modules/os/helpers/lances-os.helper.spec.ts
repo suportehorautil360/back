@@ -1,5 +1,7 @@
 import {
   mergeLance,
+  resolveOficinaVencedoraId,
+  resolveValorAprovado,
   statusAposOrcamento,
   valorOrcadoForOficina,
 } from './lances-os.helper';
@@ -30,5 +32,40 @@ describe('lances-os.helper', () => {
     expect(
       statusAposOrcamento(['a', 'b'], ['a', 'b']),
     ).toBe('pregao');
+  });
+
+  it('resolve oficina vencedora pelo orçamento aprovado', () => {
+    const lances = [
+      { oficinaId: 'of-a', valor: 570, prazoDias: 7, ordemServicoId: 'ord-a' },
+      { oficinaId: 'of-b', valor: 519, prazoDias: 10, ordemServicoId: 'ord-b' },
+    ];
+
+    expect(
+      resolveOficinaVencedoraId(
+        { ordemServicoAprovadaId: 'ord-b' },
+        lances,
+      ),
+    ).toBe('of-b');
+  });
+
+  it('prioriza oficinaVencedoraId explícito', () => {
+    expect(
+      resolveOficinaVencedoraId(
+        {
+          oficinaVencedoraId: 'of-a',
+          ordemServicoAprovadaId: 'ord-b',
+        },
+        [{ oficinaId: 'of-b', valor: 100, prazoDias: 5, ordemServicoId: 'ord-b' }],
+      ),
+    ).toBe('of-a');
+  });
+
+  it('resolve valor aprovado da oficina vencedora', () => {
+    const lances = [
+      { oficinaId: 'of-a', valor: 570, prazoDias: 7, ordemServicoId: 'ord-a' },
+      { oficinaId: 'of-b', valor: 519, prazoDias: 10, ordemServicoId: 'ord-b' },
+    ];
+
+    expect(resolveValorAprovado({}, lances, 'of-b')).toBe(519);
   });
 });

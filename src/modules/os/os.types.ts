@@ -23,6 +23,7 @@ export interface OficinaAtiva {
   id: string;
   nome: string;
   especialidade: string;
+  segmentosAtuacao?: string[];
 }
 
 export interface LanceOs {
@@ -95,6 +96,10 @@ export interface SolicitacaoOsListItem {
   oficinasResponderam: string[];
   lances: LanceOs[];
   valorOrcado: number | null;
+  ordemServicoAprovadaId?: string;
+  oficinaVencedoraId?: string;
+  valorAprovado?: number | null;
+  aprovadoEm?: string | null;
   criadoEm: { seconds: number } | null;
 }
 

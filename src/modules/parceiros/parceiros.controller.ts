@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestj
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ParceirosService } from './parceiros.service';
 import { CreateParceiroDto } from './dto/create-parceiro.dto';
+import { UpdateParceiroDto } from './dto/update-parceiro.dto';
 import {
   CreateParceiroLoginDto,
   ResetParceiroLoginSenhaDto,
@@ -68,6 +69,24 @@ export class ParceirosController {
     @Body() dto: CreateParceiroLoginDto,
   ) {
     return this.parceirosService.criarLogin(tipo, parceiroId, dto);
+  }
+
+  @Get(':tipo/:id')
+  @ApiOperation({ summary: 'Detalhe de um parceiro para edição' })
+  @ApiParam({ name: 'tipo', enum: ['posto', 'oficina'] })
+  obter(@Param('tipo') tipo: string, @Param('id') id: string) {
+    return this.parceirosService.obter(tipo, id);
+  }
+
+  @Patch(':tipo/:id')
+  @ApiOperation({ summary: 'Atualizar dados de um parceiro' })
+  @ApiParam({ name: 'tipo', enum: ['posto', 'oficina'] })
+  atualizar(
+    @Param('tipo') tipo: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateParceiroDto,
+  ) {
+    return this.parceirosService.atualizar(tipo, id, dto);
   }
 
   @Delete(':tipo/:id')

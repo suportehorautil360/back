@@ -31,4 +31,19 @@ describe('selecionarOficinas', () => {
     expect(result.length).toBeGreaterThan(0);
     expect(result.length).toBeLessThanOrEqual(3);
   });
+
+  it('prioriza oficinas do segmento do equipamento', () => {
+    const pool = [
+      { id: '1', nome: 'A', especialidade: 'Amarela', segmentosAtuacao: ['Carro leve'] },
+      { id: '2', nome: 'B', especialidade: 'Amarela', segmentosAtuacao: ['Máquinas linha amarela'] },
+      { id: '3', nome: 'C', especialidade: 'Amarela', segmentosAtuacao: ['Máquinas linha amarela'] },
+      { id: '4', nome: 'D', especialidade: 'Amarela', segmentosAtuacao: ['Máquinas linha amarela'] },
+    ];
+    const result = selecionarOficinas(pool, 'Amarela', 3, 'Máquinas linha amarela');
+    expect(
+      result.every((o) =>
+        o.segmentosAtuacao?.includes('Máquinas linha amarela'),
+      ),
+    ).toBe(true);
+  });
 });
