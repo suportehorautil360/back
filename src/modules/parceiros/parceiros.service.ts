@@ -357,6 +357,13 @@ export class ParceirosService {
           nome,
           especialidade: especialidade || categorias.join(', '),
         });
+
+        await this.syncCredenciamentosOficina(docId, {
+          linhasAtuacao,
+          segmentosAtuacao,
+          nome,
+          especialidade: especialidade || categorias.join(', '),
+        });
       }
 
       return {
@@ -403,6 +410,41 @@ export class ParceirosService {
       status,
       ativo: ehAtivo(status),
     };
+  }
+
+  /** Propaga linhas/segmentos para docs de credenciamento municipal. */
+  private async syncCredenciamentosOficina(
+    parceiroId: string,
+    dados: {
+      linhasAtuacao: string[];
+      segmentosAtuacao: string[];
+      nome: string;
+      especialidade: string;
+    },
+  ): Promise<void> {
+    const db = this.firebaseService.getFirestore();
+    const snap = await db.collection('oficinas').get();
+    const batch = db.batch();
+    let alterou = false;
+
+    for (const doc of snap.docs) {
+      const data = doc.data() as Record<string, unknown>;
+      const pid = texto(data.parceiroId);
+      const credenciado =
+        texto(data.prefeituraId) &&
+        (doc.id === parceiroId || pid === parceiroId);
+      if (!credenciado) continue;
+
+      batch.update(doc.ref, {
+        linhasAtuacao: dados.linhasAtuacao,
+        segmentosAtuacao: dados.segmentosAtuacao,
+        nome: dados.nome,
+        especialidade: dados.especialidade,
+      });
+      alterou = true;
+    }
+
+    if (alterou) await batch.commit();
   }
 
   /** Remove um parceiro (posto/oficina) pelo id. */

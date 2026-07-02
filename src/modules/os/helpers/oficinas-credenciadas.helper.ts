@@ -29,6 +29,7 @@ export function mapOficinaCredenciadaDoc(
     id: docId,
     nome: nomeFromOficinaDoc(data, docId),
     especialidade: especialidadeFromOficinaDoc(data),
+    linhasAtuacao: listaTexto(data.linhasAtuacao),
     segmentosAtuacao: listaTexto(data.segmentosAtuacao),
   };
 }

@@ -7,7 +7,9 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
+import { EquipamentosService } from '../equipamentos/equipamentos.service';
 import { GarantiasService } from '../garantias/garantias.service';
+import { parseHorimetro } from '../garantias/helpers/parse-horimetro.helper';
 import { nomeFromOficinaDoc } from '../os/helpers/especialidade-oficina.helper';
 import type { ChecklistDevolucaoDoc } from './checklist-devolucao.types';
 import { ConferirChecklistDevolucaoDto } from './dto/conferir-checklist-devolucao.dto';
@@ -41,6 +43,7 @@ export class ChecklistDevolucaoService {
   constructor(
     private readonly firebaseService: FirebaseService,
     private readonly garantiasService: GarantiasService,
+    private readonly equipamentosService: EquipamentosService,
   ) {}
 
   private get collection() {
@@ -53,6 +56,19 @@ export class ChecklistDevolucaoService {
 
   private get oficinasCollection() {
     return this.firebaseService.getFirestore().collection('oficinas');
+  }
+
+  private async equipamentoIdDaSolicitacao(
+    solicitacaoOsId: string | null,
+  ): Promise<string | null> {
+    const solId = texto(solicitacaoOsId);
+    if (!solId) return null;
+    const snap = await this.solicitacoesCollection.doc(solId).get();
+    if (!snap.exists) return null;
+    const equipamentoId = texto(
+      (snap.data() as Record<string, unknown>).equipamentoId,
+    );
+    return equipamentoId || null;
   }
 
   async criar(body: unknown): Promise<ChecklistDevolucaoDoc> {
@@ -135,6 +151,17 @@ export class ChecklistDevolucaoService {
         );
       }
       await this.collection.doc(id).set(doc);
+
+      const equipamentoId = await this.equipamentoIdDaSolicitacao(
+        doc.solicitacaoOsId,
+      );
+      if (equipamentoId) {
+        await this.equipamentosService.syncMedicaoFromChecklist(equipamentoId, {
+          hourMeter: doc.identification.hourMeter,
+          km: doc.identification.currentKm,
+        });
+      }
+
       return doc;
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
@@ -293,6 +320,9 @@ export class ChecklistDevolucaoService {
           ? (oficinaSnap.data() as Record<string, unknown>)
           : {};
         const fornecedor = nomeFromOficinaDoc(oficinaData, atual.oficinaId);
+        const horimetroAtual =
+          parseHorimetro(atual.identification.hourMeter) ??
+          parseHorimetro(atual.identification.currentKm);
 
         const existentes = await this.firebaseService
           .getFirestore()
@@ -318,7 +348,7 @@ export class ChecklistDevolucaoService {
                 equipamentoId,
                 equipamento,
                 fornecedor,
-                horimetroAtual: null,
+                horimetroAtual,
               },
             );
           garantiasGeradas = registros.length;

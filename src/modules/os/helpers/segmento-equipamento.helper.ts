@@ -8,6 +8,15 @@ export const SEGMENTOS_OFICINA = [
 
 export type SegmentoOficina = (typeof SEGMENTOS_OFICINA)[number];
 
+export const LINHAS_EQUIPAMENTO = [
+  'Linha Leve',
+  'Linha Branca',
+  'Linha Amarela',
+  'Linha Verde',
+] as const;
+
+export type LinhaEquipamento = (typeof LINHAS_EQUIPAMENTO)[number];
+
 function texto(valor: unknown): string {
   return typeof valor === 'string' ? valor.trim() : '';
 }
@@ -31,6 +40,63 @@ function blobEquipamento(raw: Record<string, unknown>): string {
       texto(raw.marca),
     ].join(' '),
   );
+}
+
+function linhaCadastradaValida(valor: string): valor is LinhaEquipamento {
+  return LINHAS_EQUIPAMENTO.includes(valor as LinhaEquipamento);
+}
+
+/** Sugere linha operacional a partir do tipo de veículo. */
+export function inferLinhaFromTipo(tipo: string): LinhaEquipamento | '' {
+  const t = norm(tipo);
+  if (!t) return '';
+
+  if (
+    t === 'carro leve' ||
+    t === 'ambulancia' ||
+    t === 'bau' ||
+    t.includes('ambul')
+  ) {
+    return 'Linha Leve';
+  }
+
+  if (
+    t.includes('caminh') ||
+    t === 'munck' ||
+    t === 'pipa' ||
+    t === 'basculante' ||
+    t === 'betoneira' ||
+    t === 'comboio'
+  ) {
+    return 'Linha Branca';
+  }
+
+  if (
+    t.includes('motoniveladora') ||
+    t.includes('escavadeira') ||
+    t.includes('retroescavadeira') ||
+    t.includes('carregadeira') ||
+    t.includes('compactador')
+  ) {
+    return 'Linha Amarela';
+  }
+
+  if (t.includes('trator') || t.includes('picador')) {
+    return 'Linha Verde';
+  }
+
+  return '';
+}
+
+/** Linha operacional usada no match com especialidade da oficina. */
+export function resolveLinhaEquipamento(
+  raw: Record<string, unknown>,
+): string {
+  const linhaRaw = texto(raw.linha);
+  if (linhaCadastradaValida(linhaRaw)) return linhaRaw;
+
+  const tipo = texto(raw.tipo);
+  return inferLinhaFromTipo(tipo) || inferLinhaFromTipo(linhaRaw) || linhaRaw || tipo;
 }
 
 /** Infere o segmento do equipamento para direcionar oficinas na OS. */
@@ -93,7 +159,7 @@ export function segmentoOficinaValido(valor: string): valor is SegmentoOficina {
   return SEGMENTOS_OFICINA.includes(valor as SegmentoOficina);
 }
 
-/** Oficina legada sem segmentos continua elegível (compatibilidade). */
+/** Oficina precisa ter o segmento cadastrado quando o equipamento tem segmento resolvido. */
 export function oficinaAtendeSegmento(
   segmentosAtuacao: string[],
   segmentoEquipamento: string,
@@ -105,7 +171,7 @@ export function oficinaAtendeSegmento(
     .map((item) => norm(item))
     .filter(Boolean);
 
-  if (cadastrados.length === 0) return true;
+  if (cadastrados.length === 0) return false;
 
   return cadastrados.includes(alvo);
 }

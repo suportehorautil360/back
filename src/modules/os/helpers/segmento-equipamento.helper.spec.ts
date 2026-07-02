@@ -1,5 +1,7 @@
 import {
+  inferLinhaFromTipo,
   oficinaAtendeSegmento,
+  resolveLinhaEquipamento,
   resolveSegmentoEquipamento,
 } from './segmento-equipamento.helper';
 
@@ -31,8 +33,20 @@ describe('segmento-equipamento.helper', () => {
     ).toBe('Caminhão linha branca');
   });
 
-  it('oficina sem segmento cadastrado permanece elegível', () => {
-    expect(oficinaAtendeSegmento([], 'Carro leve')).toBe(true);
+  it('resolve linha operacional a partir do tipo legado', () => {
+    expect(
+      resolveLinhaEquipamento({ tipo: 'Carro Leve', linha: 'Carro Leve' }),
+    ).toBe('Linha Leve');
+  });
+
+  it('mantém linha cadastrada válida', () => {
+    expect(
+      resolveLinhaEquipamento({ tipo: 'Escavadeira', linha: 'Linha Amarela' }),
+    ).toBe('Linha Amarela');
+  });
+
+  it('oficina sem segmento cadastrado não atende quando equipamento tem segmento', () => {
+    expect(oficinaAtendeSegmento([], 'Carro leve')).toBe(false);
   });
 
   it('filtra oficina pelo segmento cadastrado', () => {

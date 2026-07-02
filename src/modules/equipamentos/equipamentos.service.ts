@@ -13,6 +13,11 @@ import {
   ensureTankForComboio,
   tankStatus,
 } from '../movimentacoes/shared/tank-saldo.helper';
+import {
+  deveAplicarMedicaoChecklist,
+  resolverLeituraChecklist,
+  type MedicaoChecklistTexto,
+} from './helpers/sync-medicao-from-texto.helper';
 
 /** Equipamento é comboio? (tipo `Comboio`, case-insensitive). */
 function ehComboio(tipo: unknown): boolean {
@@ -300,6 +305,48 @@ export class EquipamentosService {
       throw new InternalServerErrorException(
         'Não foi possível atualizar o equipamento no banco de dados.',
       );
+    }
+  }
+
+  /**
+   * Atualiza `medicaoAtual` do equipamento quando o checklist informa horímetro
+   * ou KM maior que a leitura cadastrada. Falhas são logadas e não propagadas —
+   * o checklist já foi salvo.
+   */
+  async syncMedicaoFromChecklist(
+    equipamentoId: string,
+    campos: MedicaoChecklistTexto,
+  ): Promise<boolean> {
+    const id = equipamentoId.trim();
+    if (!id) return false;
+
+    const resolvido = resolverLeituraChecklist(campos);
+    if (!resolvido) return false;
+
+    try {
+      const doc = await this.findDocByField(id);
+      const atual = (doc.data() ?? {}) as Record<string, unknown>;
+      if (
+        !deveAplicarMedicaoChecklist(
+          atual,
+          resolvido.measurementType,
+          resolvido.leitura,
+        )
+      ) {
+        return false;
+      }
+
+      await this.collection.doc(doc.id).update({
+        medicaoAtual: resolvido.leitura,
+        updatedAt: new Date().toISOString(),
+      });
+      return true;
+    } catch (error) {
+      console.warn(
+        'Não foi possível sincronizar medição do equipamento após checklist:',
+        { equipamentoId: id, error },
+      );
+      return false;
     }
   }
 

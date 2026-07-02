@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
+import { EquipamentosService } from '../equipamentos/equipamentos.service';
 import type { ChecklistChegadaDoc } from './checklist-chegada.types';
 import { CreateChecklistChegadaDto } from './dto/create-checklist-chegada.dto';
 import { UpdateChecklistChegadaFotosDto } from './dto/update-checklist-chegada-fotos.dto';
@@ -23,10 +24,30 @@ function texto(valor: unknown): string {
 
 @Injectable()
 export class ChecklistChegadaService {
-  constructor(private readonly firebaseService: FirebaseService) {}
+  constructor(
+    private readonly firebaseService: FirebaseService,
+    private readonly equipamentosService: EquipamentosService,
+  ) {}
 
   private get collection() {
     return this.firebaseService.getFirestore().collection('checklistsChegada');
+  }
+
+  private get solicitacoesCollection() {
+    return this.firebaseService.getFirestore().collection('solicitacoesOS');
+  }
+
+  private async equipamentoIdDaSolicitacao(
+    solicitacaoOsId: string | null,
+  ): Promise<string | null> {
+    const solId = texto(solicitacaoOsId);
+    if (!solId) return null;
+    const snap = await this.solicitacoesCollection.doc(solId).get();
+    if (!snap.exists) return null;
+    const equipamentoId = texto(
+      (snap.data() as Record<string, unknown>).equipamentoId,
+    );
+    return equipamentoId || null;
   }
 
   async criar(dto: CreateChecklistChegadaDto): Promise<ChecklistChegadaDoc> {
@@ -48,6 +69,17 @@ export class ChecklistChegadaService {
 
       const doc = buildChecklistChegadaDoc(id, number, dto, createdAt);
       await this.collection.doc(id).set(doc);
+
+      const equipamentoId = await this.equipamentoIdDaSolicitacao(
+        doc.solicitacaoOsId,
+      );
+      if (equipamentoId) {
+        await this.equipamentosService.syncMedicaoFromChecklist(equipamentoId, {
+          hourMeter: doc.identification.hourMeter,
+          km: doc.identification.km,
+        });
+      }
+
       return doc;
     } catch (error) {
       if (error instanceof BadRequestException) throw error;

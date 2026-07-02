@@ -23,6 +23,7 @@ export interface OficinaAtiva {
   id: string;
   nome: string;
   especialidade: string;
+  linhasAtuacao?: string[];
   segmentosAtuacao?: string[];
 }
 
