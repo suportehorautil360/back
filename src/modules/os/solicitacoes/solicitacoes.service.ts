@@ -25,8 +25,8 @@ import {
   tipoOsLegacyCode,
 } from '../helpers/os-service-type.helper';
 import { mapOficinaCredenciadaDoc } from '../helpers/oficinas-credenciadas.helper';
-import { resolveSegmentoEquipamento } from '../helpers/segmento-equipamento.helper';
-import { selecionarOficinas } from '../helpers/selecionar-oficinas.helper';
+import { resolveSegmentoEquipamento, resolveLinhaEquipamento } from '../helpers/segmento-equipamento.helper';
+import { filtrarOficinasElegiveis } from '../helpers/selecionar-oficinas.helper';
 import { solicitacaoStatusLabel } from '../helpers/status-label.helper';
 import {
   formatDateBrFromIso,
@@ -80,10 +80,6 @@ function formatHorimetro(raw: Record<string, unknown>): string {
   return `${medicao.toLocaleString('pt-BR')} ${unidade}`;
 }
 
-function resolveLinhaEquipamento(raw: Record<string, unknown>): string {
-  return texto(raw.linha) || texto(raw.tipo);
-}
-
 function resolveNomeEquipamento(raw: Record<string, unknown>): string {
   return (
     texto(raw.descricao) ||
@@ -130,18 +126,29 @@ export class SolicitacoesService {
     const segmento = resolveSegmentoEquipamento(equipamento);
 
     const oficinas = await this.listarOficinasAtivas(prefeituraId);
-    const convidadas = selecionarOficinas(
-      oficinas,
-      linha,
-      3,
-      segmento || undefined,
-    );
-    if (convidadas.length === 0) {
+    if (oficinas.length === 0) {
       throw new UnprocessableEntityException(
-        'No credentialed active workshops found for this municipality. ' +
-          'Credential a workshop via POST /clientes/:prefeituraId/parceiros/:parceiroId/credenciar',
+        'Nenhuma oficina credenciada e ativa para este município. ' +
+          'Credencie uma oficina via POST /clientes/:prefeituraId/parceiros/:parceiroId/credenciar',
       );
     }
+
+    const elegiveis = filtrarOficinasElegiveis(
+      oficinas,
+      linha,
+      segmento || undefined,
+    );
+    if (elegiveis.length === 0) {
+      const detalheSegmento = segmento
+        ? `segmento "${segmento}" e linha "${linha}"`
+        : `linha "${linha}"`;
+      throw new UnprocessableEntityException(
+        `Nenhuma oficina credenciada atende ${detalheSegmento}. ` +
+          'Revise segmentos de atuação no cadastro da oficina ou a linha do equipamento.',
+      );
+    }
+
+    const convidadas = elegiveis;
 
     const serviceType = normalizeOsServiceType(
       dto.serviceType ?? dto.type,

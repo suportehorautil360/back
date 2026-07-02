@@ -21,6 +21,11 @@ function texto(valor: unknown): string {
   return typeof valor === 'string' ? valor.trim() : '';
 }
 
+function listaTexto(valor: unknown): string[] {
+  if (!Array.isArray(valor)) return [];
+  return valor.filter((v): v is string => typeof v === 'string' && v.trim() !== '');
+}
+
 @Injectable()
 export class ClientesOficinasService {
   constructor(private readonly firebaseService: FirebaseService) {}
@@ -78,6 +83,9 @@ export class ClientesOficinasService {
 
     const prefeituraAtual = texto(parceiro.prefeituraId);
 
+    const linhasAtuacao = listaTexto(parceiro.linhasAtuacao);
+    const segmentosAtuacao = listaTexto(parceiro.segmentosAtuacao);
+
     try {
       if (!prefeituraAtual || prefeituraAtual === prefeituraId) {
         const payload = {
@@ -86,6 +94,8 @@ export class ClientesOficinasService {
           especialidade,
           status: 'Ativa',
           parceiroId,
+          linhasAtuacao,
+          segmentosAtuacao,
           credenciadoEm: new Date().toISOString(),
         };
         await parceiroRef.set(payload, { merge: true });
@@ -101,6 +111,8 @@ export class ClientesOficinasService {
           status: 'Ativa',
           nome,
           especialidade,
+          linhasAtuacao,
+          segmentosAtuacao,
           credenciadoEm: new Date().toISOString(),
         });
         return {
@@ -129,7 +141,8 @@ export class ClientesOficinasService {
           nomeFantasia: texto(parceiro.nomeFantasia),
           cidadeUf: texto(parceiro.cidadeUf),
           endereco: texto(parceiro.endereco),
-          linhasAtuacao: parceiro.linhasAtuacao ?? [],
+          linhasAtuacao,
+          segmentosAtuacao,
           categoriasServico: parceiro.categoriasServico ?? [],
           tipoParceiro: 'oficina',
           credenciadoEm: new Date().toISOString(),
@@ -201,9 +214,8 @@ export class ClientesOficinasService {
       status: texto(data.status) || 'Ativa',
       parceiroId: texto(data.parceiroId) || docId,
       cidadeUf: texto(data.cidadeUf),
-      linhasAtuacao: Array.isArray(data.linhasAtuacao)
-        ? data.linhasAtuacao.filter((v): v is string => typeof v === 'string')
-        : [],
+      linhasAtuacao: listaTexto(data.linhasAtuacao),
+      segmentosAtuacao: mapped.segmentosAtuacao ?? [],
     };
   }
 

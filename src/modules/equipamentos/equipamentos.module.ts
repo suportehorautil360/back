@@ -9,5 +9,6 @@ import { ComboistaGuard } from '../../common/comboista.guard';
   imports: [JwtModule.register({})],
   controllers: [EquipamentosController],
   providers: [EquipamentosService, FirebaseService, ComboistaGuard],
+  exports: [EquipamentosService],
 })
 export class EquipamentosModule {}

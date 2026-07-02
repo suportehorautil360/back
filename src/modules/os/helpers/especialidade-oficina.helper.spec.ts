@@ -50,6 +50,8 @@ describe('oficinas-credenciadas.helper', () => {
       id: 'id1',
       nome: 'Oficina X',
       especialidade: 'Amarela',
+      linhasAtuacao: ['Linha Amarela'],
+      segmentosAtuacao: [],
     });
   });
 

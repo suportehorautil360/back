@@ -6,4 +6,5 @@ export interface OficinaCredenciadaListItem {
   parceiroId: string;
   cidadeUf: string;
   linhasAtuacao: string[];
+  segmentosAtuacao: string[];
 }

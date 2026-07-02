@@ -14,6 +14,7 @@ import { EquipamentosService } from './equipamentos.service';
 import { CreateEquipamentoDto } from './dto/create-equipamento.dto';
 import { UpdateEquipamentoDto } from './dto/update-equipamento.dto';
 import { CompleteRevisaoEquipDto } from './dto/complete-revisao-equip.dto';
+import { SyncMedicaoChecklistDto } from './dto/sync-medicao-checklist.dto';
 import { ComboistaGuard } from '../../common/comboista.guard';
 
 @ApiTags('equipamentos')
@@ -94,6 +95,31 @@ export class EquipamentosController {
   @ApiResponse({ status: 200, description: 'Lista de equipamentos.' })
   async findAll(@Param('prefeituraId') prefeituraId: string) {
     return this.equipamentosService.findAllByPrefeitura(prefeituraId);
+  }
+
+  @Post('sync-medicao/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Atualizar medição do equipamento a partir do checklist de campo',
+    description:
+      'Só avança a leitura quando o valor parseado é maior que a medição atual ' +
+      'e compatível com a unidade do equipamento (h/km).',
+  })
+  @ApiParam({ name: 'id', description: 'ID do equipamento' })
+  async syncMedicaoChecklist(
+    @Param('id') id: string,
+    @Body() dto: SyncMedicaoChecklistDto,
+  ) {
+    const atualizado = await this.equipamentosService.syncMedicaoFromChecklist(
+      id,
+      { hourMeter: dto.leituraTexto },
+    );
+    return {
+      data: { atualizado },
+      message: atualizado
+        ? 'Medição do equipamento atualizada.'
+        : 'Medição não alterada (valor inválido, regressão ou unidade incompatível).',
+    };
   }
 
   @Post('update/:id')

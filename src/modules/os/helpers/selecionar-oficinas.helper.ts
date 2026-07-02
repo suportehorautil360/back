@@ -1,6 +1,8 @@
 import type { OficinaAtiva } from '../os.types';
-import { especialidadeCompativel } from './norm-esp.helper';
-import { oficinaAtendeSegmento } from './segmento-equipamento.helper';
+import {
+  oficinaAtendeLinha,
+  oficinaAtendeSegmentoEquipamento,
+} from './direcionamento-oficina.helper';
 
 function shuffle<T>(items: T[]): T[] {
   const copy = [...items];
@@ -12,15 +14,12 @@ function shuffle<T>(items: T[]): T[] {
 }
 
 /**
- * Seleciona até `max` oficinas para convite.
- * 1) Filtra por segmento do equipamento (quando informado).
- * 2) Filtra por especialidade compatível com a linha.
- * 3) Se nenhuma match, usa pool anterior (fallback do front antigo).
+ * Retorna oficinas compatíveis com segmento (quando informado) e linha do equipamento.
+ * Considera todas as linhas de atuação cadastradas — não só a primeira especialidade.
  */
-export function selecionarOficinas(
+export function filtrarOficinasElegiveis(
   oficinas: OficinaAtiva[],
   linha: string,
-  max = 3,
   segmento?: string,
 ): OficinaAtiva[] {
   if (oficinas.length === 0) return [];
@@ -29,19 +28,38 @@ export function selecionarOficinas(
   const segmentoNorm = segmento?.trim() ?? '';
 
   if (segmentoNorm) {
-    const porSegmento = pool.filter((oficina) =>
-      oficinaAtendeSegmento(oficina.segmentosAtuacao ?? [], segmentoNorm),
+    pool = pool.filter((oficina) =>
+      oficinaAtendeSegmentoEquipamento(
+        oficina.segmentosAtuacao ?? [],
+        oficina.linhasAtuacao ?? [],
+        segmentoNorm,
+      ),
     );
-    if (porSegmento.length > 0) {
-      pool = porSegmento;
-    }
+    if (pool.length === 0) return [];
   }
 
   const linhaNorm = linha.trim();
-  const matches = linhaNorm
-    ? pool.filter((o) => especialidadeCompativel(o.especialidade, linhaNorm))
-    : [];
+  if (!linhaNorm) return pool;
 
-  const finalPool = matches.length > 0 ? matches : pool;
-  return shuffle(finalPool).slice(0, max);
+  return pool.filter((oficina) =>
+    oficinaAtendeLinha(
+      oficina.linhasAtuacao ?? [],
+      oficina.especialidade,
+      linhaNorm,
+    ),
+  );
+}
+
+/** Convida todas as oficinas elegíveis (sem limite). */
+export function selecionarOficinas(
+  oficinas: OficinaAtiva[],
+  linha: string,
+  max?: number,
+  segmento?: string,
+): OficinaAtiva[] {
+  const pool = filtrarOficinasElegiveis(oficinas, linha, segmento);
+  if (pool.length === 0) return [];
+  const ordenadas = shuffle(pool);
+  if (max == null || max <= 0) return ordenadas;
+  return ordenadas.slice(0, max);
 }
