@@ -10,12 +10,20 @@ describe('checklist-devolucao.mapper', () => {
     expect(
       mapGeneralStateItems({
         limpezaInterna: { status: 'ok' },
-        limpezaExterna: { status: 'anomaly', photo: 'https://x/y.jpg' },
+        limpezaExterna: {
+          status: 'anomaly',
+          photo: 'https://x/y.jpg',
+          description: 'Arranhão na lateral',
+        },
         vidros: { status: 'na' },
       }),
     ).toEqual({
       limpezaInterna: { status: 'ok' },
-      limpezaExterna: { status: 'anomaly', photo: 'https://x/y.jpg' },
+      limpezaExterna: {
+        status: 'anomaly',
+        photo: 'https://x/y.jpg',
+        description: 'Arranhão na lateral',
+      },
       vidros: { status: 'na' },
     });
   });

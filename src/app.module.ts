@@ -32,6 +32,7 @@ import { PlanosPreventivosModule } from './modules/planos-preventivos/planos-pre
 import { OficinasModule } from './modules/oficinas/oficinas.module';
 import { ChecklistChegadaModule } from './modules/checklist-chegada/checklist-chegada.module';
 import { ChecklistDevolucaoModule } from './modules/checklist-devolucao/checklist-devolucao.module';
+import { ChecklistsRegistrosModule } from './modules/checklists-registros/checklists-registros.module';
 import { GarantiasModule } from './modules/garantias/garantias.module';
 import { InsumosModule } from './modules/insumos/insumos.module';
 import { OcorrenciasModule } from './modules/ocorrencias/ocorrencias.module';
@@ -78,6 +79,7 @@ import { FleetfuelModule } from './modules/fleetfuel/fleetfuel.module';
     OficinasModule,
     ChecklistChegadaModule,
     ChecklistDevolucaoModule,
+    ChecklistsRegistrosModule,
     GarantiasModule,
     InsumosModule,
     OcorrenciasModule,

@@ -6,12 +6,20 @@ describe('checklist-chegada.mapper', () => {
     expect(
       mapChecklistItems({
         vidros: { status: 'ok' },
-        retrovisores: { status: 'anomaly', photo: 'https://x/y.jpg' },
+        retrovisores: {
+          status: 'anomaly',
+          photo: 'https://x/y.jpg',
+          description: 'Espelho trincado',
+        },
         limpadores: { status: 'na' },
       }),
     ).toEqual({
       vidros: { status: 'ok' },
-      retrovisores: { status: 'anomaly', photo: 'https://x/y.jpg' },
+      retrovisores: {
+        status: 'anomaly',
+        photo: 'https://x/y.jpg',
+        description: 'Espelho trincado',
+      },
       limpadores: { status: 'na' },
     });
   });

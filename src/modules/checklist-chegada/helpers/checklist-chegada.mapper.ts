@@ -18,7 +18,9 @@ function normalizeStatus(raw: unknown): ChecklistChegadaItem['status'] {
 }
 
 export function mapChecklistItems(
-  raw: Record<string, { status?: string; photo?: string }> | undefined,
+  raw:
+    | Record<string, { status?: string; photo?: string; description?: string }>
+    | undefined,
 ): Record<string, ChecklistChegadaItem> {
   if (!raw || typeof raw !== 'object') return {};
 
@@ -30,6 +32,8 @@ export function mapChecklistItems(
     };
     const photo = texto(value.photo);
     if (photo) item.photo = photo;
+    const description = texto(value.description);
+    if (description) item.description = description;
     out[key] = item;
   }
   return out;
@@ -117,10 +121,16 @@ export function mapChecklistChegadaFromFirestore(
       lateralEsquerda: texto(photos.lateralEsquerda),
     },
     inspection: mapChecklistItems(
-      data.inspection as Record<string, { status?: string; photo?: string }>,
+      data.inspection as Record<
+        string,
+        { status?: string; photo?: string; description?: string }
+      >,
     ),
     blocks: mapChecklistItems(
-      data.blocks as Record<string, { status?: string; photo?: string }>,
+      data.blocks as Record<
+        string,
+        { status?: string; photo?: string; description?: string }
+      >,
     ),
     term: {
       symptoms: texto(term.symptoms),
