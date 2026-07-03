@@ -39,6 +39,7 @@ export interface CreditoListItem {
 export interface CreditoOpcaoItem {
   id: string;
   label: string;
+  keywords?: string[];
 }
 
 export interface CreditoFormOpcoes {
