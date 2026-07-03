@@ -16,6 +16,10 @@ import {
   mapChecklistItems,
   mapPhotos,
 } from './helpers/checklist-chegada.mapper';
+import {
+  assertOficinaTemOrcamentoNaSolicitacao,
+  resolveSolicitacaoIdPorProtocolo,
+} from '../os/helpers/oficina-orcamento-solicitacao.helper';
 import { nextNumeroChegada } from './helpers/gerar-numero-chegada.helper';
 
 function texto(valor: unknown): string {
@@ -59,7 +63,25 @@ export class ChecklistChegadaService {
       throw new BadRequestException('identification.os é obrigatório.');
     }
 
-    const id = texto(dto.id) || randomUUID();
+    const solicitacaoOsId =
+      texto(dto.solicitacaoOsId) ||
+      (await resolveSolicitacaoIdPorProtocolo(
+        this.solicitacoesCollection,
+        dto.identification.os,
+      ));
+
+    await assertOficinaTemOrcamentoNaSolicitacao(
+      this.solicitacoesCollection,
+      solicitacaoOsId ?? '',
+      oficinaId,
+    );
+
+    const dtoComSolicitacao =
+      solicitacaoOsId && !texto(dto.solicitacaoOsId)
+        ? { ...dto, solicitacaoOsId }
+        : dto;
+
+    const id = texto(dtoComSolicitacao.id) || randomUUID();
     const createdAt = new Date().toISOString();
 
     try {
@@ -67,7 +89,7 @@ export class ChecklistChegadaService {
         texto(dto.number) ||
         (await nextNumeroChegada(this.collection, oficinaId));
 
-      const doc = buildChecklistChegadaDoc(id, number, dto, createdAt);
+      const doc = buildChecklistChegadaDoc(id, number, dtoComSolicitacao, createdAt);
       await this.collection.doc(id).set(doc);
 
       const equipamentoId = await this.equipamentoIdDaSolicitacao(

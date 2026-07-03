@@ -3,6 +3,7 @@ export type ChecklistItemStatus = 'ok' | 'anomaly' | 'na' | '';
 export interface ChecklistChegadaItem {
   status: ChecklistItemStatus;
   photo?: string;
+  description?: string;
 }
 
 export interface ChecklistChegadaIdentification {

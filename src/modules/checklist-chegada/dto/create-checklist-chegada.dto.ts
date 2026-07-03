@@ -17,6 +17,13 @@ export class ChecklistChegadaItemDto {
   @IsOptional()
   @IsString()
   photo?: string;
+
+  @ApiPropertyOptional({
+    description: 'Descrição da anomalia (obrigatória se anomaly)',
+  })
+  @IsOptional()
+  @IsString()
+  description?: string;
 }
 
 export class ChecklistChegadaIdentificationDto {

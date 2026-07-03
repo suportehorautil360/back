@@ -712,6 +712,14 @@ export class AbastecimentosService {
       funcionarioId: doc.funcionarioId ?? null,
       meterPhoto: doc.meterPhoto ?? null,
       local,
+      latitude:
+        doc.latitude != null && Number.isFinite(Number(doc.latitude))
+          ? Number(doc.latitude)
+          : null,
+      longitude:
+        doc.longitude != null && Number.isFinite(Number(doc.longitude))
+          ? Number(doc.longitude)
+          : null,
       createdAt: doc.createdAt,
       status: asString(raw.status) || 'aprovado',
     };

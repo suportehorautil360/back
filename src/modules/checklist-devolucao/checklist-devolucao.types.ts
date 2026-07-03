@@ -28,6 +28,7 @@ export interface ChecklistDevolucaoIdentification {
 export interface ChecklistDevolucaoStateItem {
   status: ChecklistItemStatus;
   photo?: string;
+  description?: string;
 }
 
 export interface ChecklistDevolucaoModuleItem {

@@ -28,7 +28,7 @@ function normalizeStatus(raw: unknown): ChecklistDevolucaoStateItem['status'] {
 
 export function mapGeneralStateItems(
   raw:
-    | Record<string, { status?: string; photo?: string }>
+    | Record<string, { status?: string; photo?: string; description?: string }>
     | undefined,
 ): Record<string, ChecklistDevolucaoStateItem> {
   if (!raw || typeof raw !== 'object') return {};
@@ -41,6 +41,8 @@ export function mapGeneralStateItems(
     };
     const photo = texto(value.photo);
     if (photo) item.photo = photo;
+    const description = texto(value.description);
+    if (description) item.description = description;
     out[key] = item;
   }
   return out;
@@ -210,7 +212,10 @@ export function mapChecklistDevolucaoFromFirestore(
       fuel: texto(identification.fuel),
     },
     generalState: mapGeneralStateItems(
-      data.generalState as Record<string, { status?: string; photo?: string }>,
+      data.generalState as Record<
+        string,
+        { status?: string; photo?: string; description?: string }
+      >,
     ),
     modules: mapModuleItems(
       data.modules as Record<string, { status?: string }>,

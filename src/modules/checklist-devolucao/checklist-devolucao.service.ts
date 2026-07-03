@@ -11,6 +11,10 @@ import { EquipamentosService } from '../equipamentos/equipamentos.service';
 import { GarantiasService } from '../garantias/garantias.service';
 import { parseHorimetro } from '../garantias/helpers/parse-horimetro.helper';
 import { nomeFromOficinaDoc } from '../os/helpers/especialidade-oficina.helper';
+import {
+  assertOficinaTemOrcamentoNaSolicitacao,
+  resolveSolicitacaoIdPorProtocolo,
+} from '../os/helpers/oficina-orcamento-solicitacao.helper';
 import type { ChecklistDevolucaoDoc } from './checklist-devolucao.types';
 import { ConferirChecklistDevolucaoDto } from './dto/conferir-checklist-devolucao.dto';
 import {
@@ -135,6 +139,27 @@ export class ChecklistDevolucaoService {
       });
     }
 
+    const solicitacaoOsId =
+      texto(dtoNormalizado.solicitacaoOsId) ||
+      texto(dto.solicitacaoOsId) ||
+      (await resolveSolicitacaoIdPorProtocolo(
+        this.solicitacoesCollection,
+        osProtocolo,
+      ));
+
+    await assertOficinaTemOrcamentoNaSolicitacao(
+      this.solicitacoesCollection,
+      solicitacaoOsId ?? '',
+      oficinaId,
+    );
+
+    if (solicitacaoOsId && !texto(dtoNormalizado.solicitacaoOsId)) {
+      dtoNormalizado = {
+        ...dtoNormalizado,
+        solicitacaoOsId,
+      };
+    }
+
     const id = texto(dto.id) || randomUUID();
     const createdAt = new Date().toISOString();
 
@@ -213,7 +238,7 @@ export class ChecklistDevolucaoService {
           ...mapGeneralStateItems(
             raw.generalState as Record<
               string,
-              { status?: string; photo?: string }
+              { status?: string; photo?: string; description?: string }
             >,
           ),
         };
@@ -462,16 +487,45 @@ export class ChecklistDevolucaoService {
     if (!id) throw new BadRequestException('prefeituraId inválido.');
 
     try {
-      const snap = await this.collection.where('prefeituraId', '==', id).get();
+      const [directSnap, solSnap] = await Promise.all([
+        this.collection.where('prefeituraId', '==', id).get(),
+        this.solicitacoesCollection.where('prefeituraId', '==', id).get(),
+      ]);
 
-      const data = snap.docs
-        .map((doc) =>
+      const porId = new Map<string, ChecklistDevolucaoDoc>();
+
+      for (const doc of directSnap.docs) {
+        porId.set(
+          doc.id,
           mapChecklistDevolucaoFromFirestore(
             doc.id,
             doc.data() as Record<string, unknown>,
           ),
-        )
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        );
+      }
+
+      const solIds = solSnap.docs.map((doc) => doc.id);
+      for (let i = 0; i < solIds.length; i += 30) {
+        const chunk = solIds.slice(i, i + 30);
+        if (chunk.length === 0) continue;
+        const linkedSnap = await this.collection
+          .where('solicitacaoOsId', 'in', chunk)
+          .get();
+        for (const doc of linkedSnap.docs) {
+          if (porId.has(doc.id)) continue;
+          porId.set(
+            doc.id,
+            mapChecklistDevolucaoFromFirestore(
+              doc.id,
+              doc.data() as Record<string, unknown>,
+            ),
+          );
+        }
+      }
+
+      const data = Array.from(porId.values()).sort((a, b) =>
+        b.createdAt.localeCompare(a.createdAt),
+      );
 
       return {
         data,
