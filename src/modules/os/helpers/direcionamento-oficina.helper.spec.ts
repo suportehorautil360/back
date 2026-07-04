@@ -5,19 +5,30 @@ import {
 } from './direcionamento-oficina.helper';
 
 describe('direcionamento-oficina.helper', () => {
-  it('infere segmento Carro leve a partir de Linha Leve', () => {
+  it('prioriza segmentos cadastrados', () => {
+    expect(
+      segmentosEfetivosOficina(['Carro leve'], ['Linha Amarela']),
+    ).toEqual(['Carro leve']);
+  });
+
+  it('infere segmentos legados a partir de linhas quando segmentos vazio', () => {
     expect(
       segmentosEfetivosOficina([], ['Linha Leve']),
     ).toEqual(['Carro leve']);
   });
 
-  it('une segmentos cadastrados com inferidos das linhas', () => {
+  it('aceita linha derivada dos segmentos de equipamento', () => {
     expect(
-      segmentosEfetivosOficina(['Caminhão linha branca'], ['Linha Leve']),
-    ).toEqual(['Caminhão linha branca', 'Carro leve']);
+      oficinaAtendeLinha(
+        [],
+        'Amarela',
+        'Linha Amarela',
+        ['Máquinas linha amarela'],
+      ),
+    ).toBe(true);
   });
 
-  it('aceita qualquer linha de atuação marcada, não só a primeira', () => {
+  it('aceita qualquer linha de atuação legada marcada', () => {
     expect(
       oficinaAtendeLinha(
         ['Linha Branca', 'Linha Leve'],
@@ -33,9 +44,13 @@ describe('direcionamento-oficina.helper', () => {
     ).toBe(false);
   });
 
-  it('atende segmento inferido pela linha leve', () => {
+  it('atende segmento cadastrado diretamente', () => {
     expect(
-      oficinaAtendeSegmentoEquipamento([], ['Linha Leve'], 'Carro leve'),
+      oficinaAtendeSegmentoEquipamento(
+        ['Carro leve'],
+        [],
+        'Carro leve',
+      ),
     ).toBe(true);
   });
 });

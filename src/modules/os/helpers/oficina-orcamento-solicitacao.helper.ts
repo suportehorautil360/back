@@ -2,7 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import type { CollectionReference } from 'firebase-admin/firestore';
 import {
   parseLances,
-  parseOficinasResponderam,
+  resolveOficinaVencedoraId,
 } from './lances-os.helper';
 
 function texto(valor: unknown): string {
@@ -16,13 +16,21 @@ export function oficinaEnviouOrcamento(
   const id = texto(oficinaId);
   if (!id) return false;
 
-  const responderam = parseOficinasResponderam(solData.oficinasResponderam);
-  if (responderam.includes(id)) {
-    return true;
-  }
-
   const lances = parseLances(solData.lances);
   return lances.some((lance) => lance.oficinaId === id && lance.valor > 0);
+}
+
+export function oficinaTemOrcamentoAprovado(
+  solData: Record<string, unknown>,
+  oficinaId: string,
+): boolean {
+  const id = texto(oficinaId);
+  if (!id) return false;
+
+  const lances = parseLances(solData.lances);
+  const vencedoraId = resolveOficinaVencedoraId(solData, lances);
+
+  return vencedoraId === id;
 }
 
 export async function assertOficinaTemOrcamentoNaSolicitacao(
@@ -35,7 +43,7 @@ export async function assertOficinaTemOrcamentoNaSolicitacao(
 
   if (!solId) {
     throw new BadRequestException(
-      'Vincule o checklist a uma OS com orçamento enviado.',
+      'Vincule o checklist a uma OS com orçamento aprovado.',
     );
   }
 
@@ -51,9 +59,9 @@ export async function assertOficinaTemOrcamentoNaSolicitacao(
   }
 
   const data = snap.data() as Record<string, unknown>;
-  if (!oficinaEnviouOrcamento(data, oficina)) {
+  if (!oficinaTemOrcamentoAprovado(data, oficina)) {
     throw new BadRequestException(
-      'Só é possível registrar CHE ou CHD quando a OS tiver orçamento enviado por esta oficina.',
+      'Só é possível registrar CHE ou CHD quando o orçamento desta oficina for aprovado pela prefeitura.',
     );
   }
 }

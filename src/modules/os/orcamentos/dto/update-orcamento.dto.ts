@@ -28,4 +28,14 @@ export class UpdateOrcamentoDto {
   @IsInt()
   @Min(1)
   prazoDias?: number;
+
+  @ApiProperty({
+    type: [String],
+    description: 'URLs das fotos de comprovação do orçamento (obrigatório)',
+    example: ['https://storage.example/foto1.jpg'],
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
+  fotosComprovacao!: string[];
 }

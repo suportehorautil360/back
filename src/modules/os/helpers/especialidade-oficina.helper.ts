@@ -1,3 +1,8 @@
+import {
+  segmentoParaEspecialidade,
+  segmentosEfetivosCadastro,
+} from './segmento-equipamento.helper';
+
 function texto(valor: unknown): string {
   return typeof valor === 'string' ? valor.trim() : '';
 }
@@ -14,14 +19,22 @@ export function linhaAtuacaoParaEspecialidade(linha: string): string {
 }
 
 /**
- * Especialidade usada no sorteio OS: campo explícito, primeira linha de atuação
- * ou categorias de serviço.
+ * Especialidade usada no sorteio OS: campo explícito, segmentos de equipamento,
+ * linhas legadas ou categorias de serviço.
  */
 export function especialidadeFromOficinaDoc(
   data: Record<string, unknown>,
 ): string {
   const explicita = texto(data.especialidade);
   if (explicita) return explicita;
+
+  const segmentos = segmentosEfetivosCadastro(
+    listaTexto(data.segmentosAtuacao),
+    listaTexto(data.linhasAtuacao),
+  );
+  if (segmentos.length > 0) {
+    return segmentoParaEspecialidade(segmentos[0]);
+  }
 
   const linhas = listaTexto(data.linhasAtuacao);
   if (linhas.length > 0) {

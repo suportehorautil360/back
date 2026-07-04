@@ -34,6 +34,10 @@ import {
   especialidadeFromOficinaDoc,
   nomeFromOficinaDoc,
 } from '../os/helpers/especialidade-oficina.helper';
+import {
+  linhasAtuacaoFromSegmentos,
+  segmentosEfetivosCadastro,
+} from '../os/helpers/segmento-equipamento.helper';
 
 function texto(valor: unknown): string {
   return typeof valor === 'string' ? valor : '';
@@ -191,8 +195,8 @@ export class ParceirosService {
           });
       } else {
         const categorias = listaTexto(dto.categoriasServico);
-        const linhasAtuacao = listaTexto(dto.linhasAtuacao);
-        const segmentosAtuacao = listaTexto(dto.segmentosAtuacao);
+        const { segmentosAtuacao, linhasAtuacao } =
+          this.resolverOficinaAtuacao(listaTexto(dto.segmentosAtuacao));
         const dadosOficina = {
           ...comum,
           linhasAtuacao,
@@ -316,27 +320,19 @@ export class ParceirosService {
               : listaTexto(atual.servicos),
         });
       } else {
-        const linhasAtuacao =
-          dto.linhasAtuacao !== undefined
-            ? listaTexto(dto.linhasAtuacao)
-            : listaTexto(atual.linhasAtuacao);
-        const segmentosAtuacao =
-          dto.segmentosAtuacao !== undefined
-            ? listaTexto(dto.segmentosAtuacao)
-            : listaTexto(atual.segmentosAtuacao);
         const categorias =
           dto.categoriasServico !== undefined
             ? listaTexto(dto.categoriasServico)
             : listaTexto(atual.categoriasServico);
-
-        if (linhasAtuacao.length === 0) {
-          throw new BadRequestException('Marque ao menos uma linha de atuação.');
-        }
-        if (segmentosAtuacao.length === 0) {
-          throw new BadRequestException(
-            'Marque ao menos um segmento de equipamento.',
-          );
-        }
+        const segmentosInput =
+          dto.segmentosAtuacao !== undefined
+            ? listaTexto(dto.segmentosAtuacao)
+            : segmentosEfetivosCadastro(
+                listaTexto(atual.segmentosAtuacao),
+                listaTexto(atual.linhasAtuacao),
+              );
+        const { segmentosAtuacao, linhasAtuacao } =
+          this.resolverOficinaAtuacao(segmentosInput);
 
         const dadosOficina = {
           ...atual,
@@ -379,12 +375,36 @@ export class ParceirosService {
     }
   }
 
+  private resolverOficinaAtuacao(segmentosInput: string[]): {
+    segmentosAtuacao: string[];
+    linhasAtuacao: string[];
+  } {
+    const segmentosAtuacao = segmentosEfetivosCadastro(segmentosInput);
+    if (segmentosAtuacao.length === 0) {
+      throw new BadRequestException(
+        'Marque ao menos um segmento de equipamento.',
+      );
+    }
+
+    return {
+      segmentosAtuacao,
+      linhasAtuacao: linhasAtuacaoFromSegmentos(segmentosAtuacao),
+    };
+  }
+
   private mapDocToDetalhe(
     id: string,
     tipo: TipoParceiro,
     d: Record<string, unknown>,
   ): ParceiroDetalhe {
     const status = texto(d.status) || 'Ativa';
+    const linhasLegado = listaTexto(d.linhasAtuacao);
+    const segmentosAtuacao = segmentosEfetivosCadastro(
+      listaTexto(d.segmentosAtuacao),
+      linhasLegado,
+    );
+    const linhasAtuacao = linhasAtuacaoFromSegmentos(segmentosAtuacao);
+
     return {
       id,
       tipo,
@@ -399,8 +419,8 @@ export class ParceirosService {
       bandeira: texto(d.bandeira),
       combustiveis: listaTexto(d.combustiveis),
       servicos: listaTexto(d.servicos),
-      linhasAtuacao: listaTexto(d.linhasAtuacao),
-      segmentosAtuacao: listaTexto(d.segmentosAtuacao),
+      linhasAtuacao,
+      segmentosAtuacao,
       categoriasServico: listaTexto(d.categoriasServico),
       especificacoes: texto(d.especificacoes),
       condicaoPagamento: texto(d.condicaoPagamento),

@@ -1,16 +1,11 @@
 import {
   assertOficinaTemOrcamentoNaSolicitacao,
   oficinaEnviouOrcamento,
+  oficinaTemOrcamentoAprovado,
 } from './oficina-orcamento-solicitacao.helper';
 
 describe('oficina-orcamento-solicitacao.helper', () => {
-  it('detecta oficina em oficinasResponderam', () => {
-    expect(
-      oficinaEnviouOrcamento({ oficinasResponderam: ['of-1'] }, 'of-1'),
-    ).toBe(true);
-  });
-
-  it('detecta oficina com lance', () => {
+  it('detecta oficina com lance enviado', () => {
     expect(
       oficinaEnviouOrcamento(
         {
@@ -28,18 +23,99 @@ describe('oficina-orcamento-solicitacao.helper', () => {
     ).toBe(true);
   });
 
-  it('rejeita oficina sem orçamento', () => {
+  it('rejeita oficina sem orçamento enviado', () => {
     expect(
-      oficinaEnviouOrcamento({ oficinasResponderam: ['of-1'] }, 'of-2'),
+      oficinaEnviouOrcamento({ lances: [] }, 'of-2'),
     ).toBe(false);
   });
 
-  it('bloqueia checklist sem orçamento da oficina', async () => {
+  it('detecta oficina vencedora com orçamento aprovado', () => {
+    expect(
+      oficinaTemOrcamentoAprovado(
+        {
+          status: 'aprovado',
+          oficinaVencedoraId: 'of-1',
+          lances: [
+            {
+              oficinaId: 'of-1',
+              valor: 1500,
+              prazoDias: 7,
+              ordemServicoId: 'ord-1',
+            },
+          ],
+        },
+        'of-1',
+      ),
+    ).toBe(true);
+  });
+
+  it('rejeita oficina que só enviou orçamento sem aprovação', () => {
+    expect(
+      oficinaTemOrcamentoAprovado(
+        {
+          status: 'pregao',
+          lances: [
+            {
+              oficinaId: 'of-1',
+              valor: 1500,
+              prazoDias: 7,
+              ordemServicoId: 'ord-1',
+            },
+            {
+              oficinaId: 'of-2',
+              valor: 1400,
+              prazoDias: 5,
+              ordemServicoId: 'ord-2',
+            },
+          ],
+        },
+        'of-1',
+      ),
+    ).toBe(false);
+  });
+
+  it('rejeita oficina perdedora mesmo com lance enviado', () => {
+    expect(
+      oficinaTemOrcamentoAprovado(
+        {
+          status: 'aprovado',
+          oficinaVencedoraId: 'of-2',
+          lances: [
+            {
+              oficinaId: 'of-1',
+              valor: 1500,
+              prazoDias: 7,
+              ordemServicoId: 'ord-1',
+            },
+            {
+              oficinaId: 'of-2',
+              valor: 1400,
+              prazoDias: 5,
+              ordemServicoId: 'ord-2',
+            },
+          ],
+        },
+        'of-1',
+      ),
+    ).toBe(false);
+  });
+
+  it('bloqueia checklist sem orçamento aprovado da oficina', async () => {
     const collection = {
       doc: () => ({
         get: async () => ({
           exists: true,
-          data: () => ({ oficinasResponderam: ['of-1'] }),
+          data: () => ({
+            status: 'pregao',
+            lances: [
+              {
+                oficinaId: 'of-2',
+                valor: 1200,
+                prazoDias: 5,
+                ordemServicoId: 'ord-1',
+              },
+            ],
+          }),
         }),
       }),
     };
@@ -51,7 +127,7 @@ describe('oficina-orcamento-solicitacao.helper', () => {
         'of-2',
       ),
     ).rejects.toThrow(
-      'Só é possível registrar CHE ou CHD quando a OS tiver orçamento enviado por esta oficina.',
+      'Só é possível registrar CHE ou CHD quando o orçamento desta oficina for aprovado pela prefeitura.',
     );
   });
 });

@@ -97,6 +97,12 @@ export function mapOrdemServicoListItem(
     itens.reduce((acc, item) => acc + item.valor, 0);
   const createdAt = timestampToIso(data.criadoEm ?? data.createdAt);
 
+  const fotosComprovacao = Array.isArray(data.fotosComprovacao)
+    ? data.fotosComprovacao.filter(
+        (url): url is string => typeof url === 'string' && url.trim().length > 0,
+      )
+    : [];
+
   return {
     id: docId,
     protocol: protocolo,
@@ -117,6 +123,7 @@ export function mapOrdemServicoListItem(
     valorTotal,
     prazoDias: Math.max(1, Math.round(numero(data.prazoDias) || 7)),
     status: texto(data.status) || 'em_pregao',
+    fotosComprovacao,
     createdAt,
     criadoEm: timestampToSeconds(data.criadoEm ?? data.createdAt),
   };

@@ -5,45 +5,42 @@ import {
 import { linhaAtuacaoParaEspecialidade } from './especialidade-oficina.helper';
 import {
   oficinaAtendeSegmento,
-  type SegmentoOficina,
+  segmentoParaLinhaEquipamento,
+  segmentosEfetivosCadastro,
 } from './segmento-equipamento.helper';
 
 function norm(valor: string): string {
   return normEsp(valor).replace(/\s+/g, ' ').trim();
 }
 
-const LINHA_PARA_SEGMENTO: Record<string, SegmentoOficina> = {
-  'linha leve': 'Carro leve',
-  'linha branca': 'Caminhão linha branca',
-  'linha amarela': 'Máquinas linha amarela',
-  'linha verde': 'Tratores linha verde',
-};
-
-/** Segmentos cadastrados + inferidos pelas linhas de atuação marcadas. */
+/** Segmentos cadastrados; legado infere das linhas só se segmentos estiver vazio. */
 export function segmentosEfetivosOficina(
   segmentosAtuacao: string[],
-  linhasAtuacao: string[],
+  linhasAtuacao: string[] = [],
 ): string[] {
-  const cadastrados = segmentosAtuacao.filter(Boolean);
-  const inferidos = linhasAtuacao
-    .map((linha) => LINHA_PARA_SEGMENTO[norm(linha)] ?? '')
-    .filter(Boolean);
-
-  return [...new Set([...cadastrados, ...inferidos])];
+  return segmentosEfetivosCadastro(segmentosAtuacao, linhasAtuacao);
 }
 
-/** Oficina atende a linha do equipamento (qualquer linha marcada no cadastro). */
+/** Oficina atende a linha do equipamento via segmentos (ou linhas legadas). */
 export function oficinaAtendeLinha(
   linhasAtuacao: string[],
   especialidade: string,
   linhaEquipamento: string,
+  segmentosAtuacao: string[] = [],
 ): boolean {
   const alvo = linhaEquipamento.trim();
   if (!alvo) return true;
 
   const linhas = linhasAtuacao.filter(Boolean);
-  if (linhas.length > 0) {
-    return linhas.some(
+  const linhasEfetivas =
+    linhas.length > 0
+      ? linhas
+      : segmentosAtuacao
+          .map((segmento) => segmentoParaLinhaEquipamento(segmento))
+          .filter(Boolean);
+
+  if (linhasEfetivas.length > 0) {
+    return linhasEfetivas.some(
       (linha) =>
         especialidadeCompativel(linha, alvo) ||
         especialidadeCompativel(linhaAtuacaoParaEspecialidade(linha), alvo),

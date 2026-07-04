@@ -12,6 +12,10 @@ import {
   nomeFromOficinaDoc,
 } from '../os/helpers/especialidade-oficina.helper';
 import {
+  linhasAtuacaoFromSegmentos,
+  segmentosEfetivosCadastro,
+} from '../os/helpers/segmento-equipamento.helper';
+import {
   ehOficinaAtiva,
   mapOficinaCredenciadaDoc,
 } from '../os/helpers/oficinas-credenciadas.helper';
@@ -77,14 +81,17 @@ export class ClientesOficinasService {
     const especialidade = especialidadeFromOficinaDoc(parceiro);
     if (!especialidade) {
       throw new BadRequestException(
-        'Informe especialidade ou linhasAtuacao/categoriasServico no cadastro do parceiro.',
+        'Informe segmentosAtuacao ou categoriasServico no cadastro do parceiro.',
       );
     }
 
     const prefeituraAtual = texto(parceiro.prefeituraId);
 
-    const linhasAtuacao = listaTexto(parceiro.linhasAtuacao);
-    const segmentosAtuacao = listaTexto(parceiro.segmentosAtuacao);
+    const segmentosAtuacao = segmentosEfetivosCadastro(
+      listaTexto(parceiro.segmentosAtuacao),
+      listaTexto(parceiro.linhasAtuacao),
+    );
+    const linhasAtuacao = linhasAtuacaoFromSegmentos(segmentosAtuacao);
 
     try {
       if (!prefeituraAtual || prefeituraAtual === prefeituraId) {
