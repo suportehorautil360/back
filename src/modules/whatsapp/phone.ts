@@ -18,3 +18,13 @@ export function numeroValido(numero: string | null | undefined): boolean {
   const d = (numero ?? '').replace(/\D/g, '');
   return d.length >= 10;
 }
+
+/** Dígitos com DDI para APIs REST (Evolution, etc.) — sem sufixo @s.whatsapp.net */
+export function formatarNumeroEvolution(numero: string | null | undefined): string {
+  const raw = (numero ?? '').trim();
+  let d = raw.replace(/\D/g, '');
+  if (!raw.startsWith('+') && (d.length === 10 || d.length === 11)) {
+    d = `55${d}`;
+  }
+  return d;
+}

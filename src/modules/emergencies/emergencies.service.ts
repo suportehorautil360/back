@@ -166,7 +166,7 @@ export class EmergenciesService {
    */
   async notificarWhatsApp(doc: DadosEmergenciaWhats): Promise<void> {
     try {
-      if (!this.whatsapp.estaConectado()) return;
+      if (!(await this.whatsapp.estaConectado())) return;
       const snap = await this.firebase
         .getFirestore()
         .collection('configuracoes')

@@ -1,4 +1,4 @@
-import { formatarJid, numeroValido } from './phone';
+import { formatarJid, formatarNumeroEvolution, numeroValido } from './phone';
 
 describe('whatsapp/phone', () => {
   it('formata número com DDD (11 díg.) prefixando o DDI 55', () => {
@@ -28,5 +28,10 @@ describe('whatsapp/phone', () => {
     expect(numeroValido('123')).toBe(false);
     expect(numeroValido('')).toBe(false);
     expect(numeroValido(null)).toBe(false);
+  });
+
+  it('formatarNumeroEvolution retorna só dígitos com DDI', () => {
+    expect(formatarNumeroEvolution('67 99999-9999')).toBe('5567999999999');
+    expect(formatarNumeroEvolution('+55 67 99999-9999')).toBe('5567999999999');
   });
 });

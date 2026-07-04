@@ -6,18 +6,22 @@ import { FirebaseService } from '../../config/firebase.service';
 import { useFirestoreAuthState } from './firestore-auth-state';
 import { formatarJid } from './phone';
 import { WhatsAppMetricsService } from './whatsapp-metrics.service';
-import { calcularDisponibilidade, montarOverview, type WhatsappOverview } from './whatsapp-metrics';
+import {
+  calcularDisponibilidade,
+  montarOverview,
+  type WhatsappOverview,
+  type WhatsAppStatus,
+} from './whatsapp-metrics';
+import { WhatsAppRemoteClient } from './whatsapp-remote.client';
+import { WhatsAppEvolutionClient } from './whatsapp-evolution.client';
 
-export type WhatsAppStatus =
-  | 'desconectado'
-  | 'conectando'
-  | 'aguardando_qr'
-  | 'conectado';
+export type { WhatsAppStatus };
+
+type ExternalWhatsAppClient = WhatsAppEvolutionClient | WhatsAppRemoteClient;
 
 /**
- * Conexão WhatsApp (Baileys) — UM remetente para toda a plataforma. Baileys 7 é
- * ESM-only e o backend é CommonJS, então o socket é criado via `import()`
- * dinâmico. A sessão (auth) é persistida no Firestore.
+ * WhatsApp da plataforma: Baileys local, Evolution API ou proxy HTTP genérico.
+ * Emergências e o Hub admin usam esta classe.
  */
 @Injectable()
 export class WhatsAppService implements OnModuleInit {
@@ -36,7 +40,23 @@ export class WhatsAppService implements OnModuleInit {
   constructor(
     private firebase: FirebaseService,
     private metrics: WhatsAppMetricsService,
+    private remote: WhatsAppRemoteClient,
+    private evolution: WhatsAppEvolutionClient,
   ) {}
+
+  private external(): ExternalWhatsAppClient | null {
+    if (this.evolution.isEnabled()) return this.evolution;
+    if (this.remote.isEnabled()) return this.remote;
+    return null;
+  }
+
+  private useExternal(): boolean {
+    return this.external() != null;
+  }
+
+  private externalModeLabel(): string {
+    return this.evolution.isEnabled() ? 'Evolution API' : 'serviço remoto';
+  }
 
   private get docRef() {
     return this.firebase
@@ -45,8 +65,15 @@ export class WhatsAppService implements OnModuleInit {
       .doc('default');
   }
 
-  /** Reconecta automaticamente se já houver uma sessão registrada. */
+  /** Reconecta automaticamente se já houver uma sessão registrada (modo local). */
   async onModuleInit(): Promise<void> {
+    if (this.useExternal()) {
+      this.logger.log(
+        `${this.externalModeLabel()} configurado — Baileys local desativado.`,
+      );
+      return;
+    }
+
     try {
       const snap = await this.docRef.get();
       const credsRaw = (snap.data() as { creds?: string } | undefined)?.creds;
@@ -66,13 +93,22 @@ export class WhatsAppService implements OnModuleInit {
     }
   }
 
-  estaConectado(): boolean {
+  async estaConectado(): Promise<boolean> {
+    const external = this.external();
+    if (external) {
+      return external.estaConectado();
+    }
     return this.status === 'conectado';
   }
 
   async connect(): Promise<void> {
+    const external = this.external();
+    if (external) {
+      await external.connect();
+      return;
+    }
+
     if (this.sock || this.conectando) return;
-    // Conexão manual (estava parado) zera o contador de tentativas.
     if (this.status === 'desconectado') this.tentativas = 0;
     this.conectando = true;
     try {
@@ -82,8 +118,6 @@ export class WhatsAppService implements OnModuleInit {
       ) => WASocket;
       const { DisconnectReason, fetchLatestBaileysVersion } = baileys;
       const { state, saveCreds } = await useFirestoreAuthState(this.docRef);
-      // Sem a versão atual do WhatsApp Web o handshake é rejeitado
-      // ("Connection Failure") e o QR nunca aparece.
       const { version } = await fetchLatestBaileysVersion();
       this.versaoSessao = version.join('.');
       void this.metrics.registrarEvento('sessao_iniciada', 'sucesso');
@@ -143,7 +177,6 @@ export class WhatsAppService implements OnModuleInit {
           this.logger.warn(
             `Conexão WhatsApp caiu — reconectando (tentativa ${this.tentativas})…`,
           );
-          // Backoff: espera antes de tentar de novo (não martela o WhatsApp).
           setTimeout(() => void this.connect(), 3000);
         }
       });
@@ -157,6 +190,11 @@ export class WhatsAppService implements OnModuleInit {
   }
 
   async getStatus(): Promise<{ status: WhatsAppStatus; qrImagem?: string }> {
+    const external = this.external();
+    if (external) {
+      return external.getStatus();
+    }
+
     let qrImagem: string | undefined;
     if (this.status === 'aguardando_qr' && this.qrAtual) {
       qrImagem = await QRCode.toDataURL(this.qrAtual);
@@ -165,6 +203,12 @@ export class WhatsAppService implements OnModuleInit {
   }
 
   async enviarMensagem(numero: string, texto: string): Promise<void> {
+    const external = this.external();
+    if (external) {
+      await external.enviarMensagem(numero, texto);
+      return;
+    }
+
     if (!this.sock || this.status !== 'conectado') {
       throw new Error('WhatsApp não está conectado.');
     }
@@ -173,16 +217,17 @@ export class WhatsAppService implements OnModuleInit {
     void this.metrics.incrementarMensagens(1).catch(() => undefined);
   }
 
-  /**
-   * Envia uma imagem. `imagem` pode ser uma data URL
-   * (`data:image/jpeg;base64,…`), base64 puro ou uma URL http(s). A legenda é
-   * opcional (vai junto da primeira foto de uma emergência, por exemplo).
-   */
   async enviarImagem(
     numero: string,
     imagem: string,
     legenda?: string,
   ): Promise<void> {
+    const external = this.external();
+    if (external) {
+      await external.enviarImagem(numero, imagem, legenda);
+      return;
+    }
+
     if (!this.sock || this.status !== 'conectado') {
       throw new Error('WhatsApp não está conectado.');
     }
@@ -196,7 +241,6 @@ export class WhatsAppService implements OnModuleInit {
       void this.metrics.incrementarMensagens(1).catch(() => undefined);
       return;
     }
-    // data URL → corta o prefixo `data:...;base64,`; base64 puro passa direto.
     const base64 = imagem.includes(',')
       ? imagem.slice(imagem.indexOf(',') + 1)
       : imagem;
@@ -209,6 +253,12 @@ export class WhatsAppService implements OnModuleInit {
   }
 
   async logout(): Promise<void> {
+    const external = this.external();
+    if (external) {
+      await external.logout();
+      return;
+    }
+
     try {
       await this.sock?.logout();
     } catch {
@@ -218,6 +268,38 @@ export class WhatsAppService implements OnModuleInit {
     this.status = 'desconectado';
     this.qrAtual = null;
     await this.limparSessao();
+  }
+
+  async getOverview(): Promise<WhatsappOverview> {
+    const external = this.external();
+    if (external) {
+      return external.getOverview();
+    }
+
+    const agora = new Date();
+    const base = await this.getStatus();
+    const [empresas, hoje, mes, eventos, eventosJanela] = await Promise.all([
+      this.metrics.contarEmpresasUtilizando(),
+      this.metrics.mensagensHoje(),
+      this.metrics.mensagens30d(agora),
+      this.metrics.eventosRecentes(20),
+      this.metrics.eventosJanela(30, agora),
+    ]);
+    return montarOverview({
+      status: base.status,
+      qrImagem: base.qrImagem,
+      numeroConectado: this.numeroConectado(),
+      nomeSessao: this.nomeSessao(),
+      conectadoDesde: this.conectadoDesde,
+      ultimaAtividade: this.ultimaAtividade,
+      versaoSessao: this.versaoSessao,
+      ambiente: this.ambiente(),
+      empresasUtilizando: empresas,
+      mensagensHoje: hoje,
+      mensagens30d: mes,
+      disponibilidade: calcularDisponibilidade(eventosJanela, agora, 30),
+      eventos,
+    });
   }
 
   private async persistirSessao(): Promise<void> {
@@ -242,33 +324,6 @@ export class WhatsAppService implements OnModuleInit {
 
   private ambiente(): 'dev' | 'prod' {
     return process.env.NODE_ENV === 'production' ? 'prod' : 'dev';
-  }
-
-  async getOverview(): Promise<WhatsappOverview> {
-    const agora = new Date();
-    const base = await this.getStatus(); // status + qrImagem
-    const [empresas, hoje, mes, eventos, eventosJanela] = await Promise.all([
-      this.metrics.contarEmpresasUtilizando(),
-      this.metrics.mensagensHoje(),
-      this.metrics.mensagens30d(agora),
-      this.metrics.eventosRecentes(20),
-      this.metrics.eventosJanela(30, agora),
-    ]);
-    return montarOverview({
-      status: base.status,
-      qrImagem: base.qrImagem,
-      numeroConectado: this.numeroConectado(),
-      nomeSessao: this.nomeSessao(),
-      conectadoDesde: this.conectadoDesde,
-      ultimaAtividade: this.ultimaAtividade,
-      versaoSessao: this.versaoSessao,
-      ambiente: this.ambiente(),
-      empresasUtilizando: empresas,
-      mensagensHoje: hoje,
-      mensagens30d: mes,
-      disponibilidade: calcularDisponibilidade(eventosJanela, agora, 30),
-      eventos,
-    });
   }
 
   private async limparSessao(): Promise<void> {
