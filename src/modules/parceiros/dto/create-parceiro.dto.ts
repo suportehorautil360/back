@@ -44,14 +44,19 @@ export class CreateParceiroDto {
   servicos?: string[];
 
   // ----- Oficina -----
-  @ApiPropertyOptional({ type: [String], example: ['Linha Amarela'] })
+  @ApiPropertyOptional({
+    type: [String],
+    deprecated: true,
+    description:
+      'Legado — derivado automaticamente dos segmentos de equipamento.',
+    example: ['Linha Amarela'],
+  })
   linhasAtuacao?: string[];
 
   @ApiPropertyOptional({
     type: [String],
     example: ['Máquinas linha amarela', 'Carro leve'],
-    description:
-      'Segmentos de equipamento atendidos pela oficina (sorteio de OS).',
+    description: 'Segmentos de equipamento atendidos pela oficina.',
   })
   segmentosAtuacao?: string[];
 

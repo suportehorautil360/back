@@ -138,6 +138,7 @@ export interface OrdemOrcamentoListItem {
   valorTotal: number;
   prazoDias: number;
   status: string;
+  fotosComprovacao: string[];
   createdAt: string;
   criadoEm: { seconds: number } | null;
 }

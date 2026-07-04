@@ -46,6 +46,7 @@ export function filtrarOficinasElegiveis(
       oficina.linhasAtuacao ?? [],
       oficina.especialidade,
       linhaNorm,
+      oficina.segmentosAtuacao ?? [],
     ),
   );
 }

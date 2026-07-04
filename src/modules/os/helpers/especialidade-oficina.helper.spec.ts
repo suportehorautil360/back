@@ -18,7 +18,15 @@ describe('especialidade-oficina.helper', () => {
     ).toBe('Pesados');
   });
 
-  it('usa primeira linha de atuação', () => {
+  it('usa primeiro segmento de equipamento', () => {
+    expect(
+      especialidadeFromOficinaDoc({
+        segmentosAtuacao: ['Máquinas linha amarela'],
+      }),
+    ).toBe('Amarela');
+  });
+
+  it('usa primeira linha de atuação legada', () => {
     expect(
       especialidadeFromOficinaDoc({
         linhasAtuacao: ['Linha Amarela', 'Pesados'],

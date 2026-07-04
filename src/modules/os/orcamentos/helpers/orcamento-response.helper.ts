@@ -27,6 +27,7 @@ export interface OrcamentoApiItem {
   equipamento?: string;
   operador?: string;
   solicitacaoStatus?: string;
+  fotosComprovacao?: string[];
   createdAt?: string;
 }
 
@@ -80,6 +81,8 @@ export function mapOrdemToOrcamentoApi(
     equipamento: ordem.equipamento || undefined,
     operador: ordem.operador || undefined,
     solicitacaoStatus,
+    fotosComprovacao:
+      ordem.fotosComprovacao.length > 0 ? ordem.fotosComprovacao : undefined,
     createdAt: ordem.createdAt || undefined,
   };
 }

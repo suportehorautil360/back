@@ -17,6 +17,20 @@ export const LINHAS_EQUIPAMENTO = [
 
 export type LinhaEquipamento = (typeof LINHAS_EQUIPAMENTO)[number];
 
+export const SEGMENTO_PARA_LINHA: Record<SegmentoOficina, LinhaEquipamento> = {
+  'Carro leve': 'Linha Leve',
+  'Máquinas linha amarela': 'Linha Amarela',
+  'Tratores linha verde': 'Linha Verde',
+  'Caminhão linha branca': 'Linha Branca',
+};
+
+const LINHA_PARA_SEGMENTO: Record<string, SegmentoOficina> = {
+  'linha leve': 'Carro leve',
+  'linha branca': 'Caminhão linha branca',
+  'linha amarela': 'Máquinas linha amarela',
+  'linha verde': 'Tratores linha verde',
+};
+
 function texto(valor: unknown): string {
   return typeof valor === 'string' ? valor.trim() : '';
 }
@@ -157,6 +171,59 @@ export function resolveSegmentoEquipamento(
 
 export function segmentoOficinaValido(valor: string): valor is SegmentoOficina {
   return SEGMENTOS_OFICINA.includes(valor as SegmentoOficina);
+}
+
+export function segmentoParaLinhaEquipamento(segmento: string): string {
+  const alvo = norm(segmento);
+  if (!alvo) return '';
+
+  for (const [seg, linha] of Object.entries(SEGMENTO_PARA_LINHA)) {
+    if (norm(seg) === alvo) return linha;
+  }
+
+  return '';
+}
+
+export function segmentoParaEspecialidade(segmento: string): string {
+  const linha = segmentoParaLinhaEquipamento(segmento);
+  if (linha) {
+    return linha.replace(/^linha\s+/i, '').trim();
+  }
+
+  return segmento.trim();
+}
+
+export function linhasAtuacaoFromSegmentos(segmentosAtuacao: string[]): string[] {
+  return [
+    ...new Set(
+      segmentosAtuacao
+        .map((segmento) => segmentoParaLinhaEquipamento(segmento))
+        .filter(Boolean),
+    ),
+  ];
+}
+
+/** Legado: preenche segmentos a partir de linhas de atuação antigas. */
+export function segmentosFromLinhasAtuacao(linhasAtuacao: string[]): string[] {
+  return [
+    ...new Set(
+      linhasAtuacao
+        .map((linha) => LINHA_PARA_SEGMENTO[norm(linha)] ?? '')
+        .filter(Boolean),
+    ),
+  ];
+}
+
+export function segmentosEfetivosCadastro(
+  segmentosAtuacao: string[],
+  linhasAtuacao: string[] = [],
+): string[] {
+  const cadastrados = segmentosAtuacao.filter(Boolean);
+  if (cadastrados.length > 0) {
+    return [...new Set(cadastrados)];
+  }
+
+  return segmentosFromLinhasAtuacao(linhasAtuacao);
 }
 
 /** Oficina precisa ter o segmento cadastrado quando o equipamento tem segmento resolvido. */

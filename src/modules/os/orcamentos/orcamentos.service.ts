@@ -124,6 +124,7 @@ export class OrcamentosService {
             itens,
             valorTotal,
             prazoDias,
+            fotosComprovacao: dto.fotosComprovacao.map((url) => url.trim()),
             status: 'em_pregao',
             criadoEm: FieldValue.serverTimestamp(),
           });
@@ -265,6 +266,7 @@ export class OrcamentosService {
             itens,
             valorTotal,
             prazoDias,
+            fotosComprovacao: dto.fotosComprovacao.map((url) => url.trim()),
             atualizadoEm: agora,
           });
 

@@ -145,6 +145,16 @@ export class CreateOrcamentoDto {
   @Min(1)
   prazoDias?: number;
 
+  @ApiProperty({
+    type: [String],
+    description: 'URLs das fotos de comprovação do orçamento (obrigatório)',
+    example: ['https://storage.example/foto1.jpg'],
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
+  fotosComprovacao!: string[];
+
   @ApiPropertyOptional({
     description: 'Protocolo exibido (padrão: protocolo da solicitação)',
   })
