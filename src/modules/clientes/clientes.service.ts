@@ -14,6 +14,8 @@ import {
 import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
 import { CreateAcessoDto } from './dto/create-acesso.dto';
+import { UpdateAcessoDto } from './dto/update-acesso.dto';
+import { ResetSenhaAcessoDto } from './dto/reset-senha-acesso.dto';
 
 /** SHA-256 sem salt (espelha utils/hashSenha do front, pra o login bater). */
 function hashSenha(senha: string): string {
@@ -27,6 +29,25 @@ function booleano(valor: unknown, padrao = false): boolean {
 /** Converte um campo solto do Firestore (unknown) em string segura. */
 function texto(valor: unknown): string {
   return typeof valor === 'string' ? valor : '';
+}
+
+function isAcessoDoCliente(d: Record<string, unknown>): boolean {
+  if (texto(d.postoId).trim() || texto(d.officinaId).trim()) return false;
+  const vinculo = texto(d.vinculo).trim() || texto(d.type).trim();
+  return vinculo === 'prefeitura' || vinculo === 'locacao';
+}
+
+function mapAcessoRow(id: string, d: Record<string, unknown>): AcessoRow {
+  return {
+    id,
+    nome: texto(d.nome).trim(),
+    usuario: texto(d.usuario).trim(),
+    email: texto(d.email).trim(),
+    whatsapp: texto(d.whatsapp).trim(),
+    perfil: texto(d.perfil).trim() || 'gestor',
+    notificaEmail: booleano(d.notificaEmail, true),
+    notificaWhatsapp: booleano(d.notificaWhatsapp, false),
+  };
 }
 
 @Injectable()
@@ -303,19 +324,13 @@ export class ClientesService {
         .where('prefeituraId', '==', clienteId)
         .get();
 
-      const data: AcessoRow[] = snap.docs.map((doc) => {
-        const d = doc.data() as Record<string, unknown>;
-        return {
-          id: doc.id,
-          nome: texto(d.nome),
-          usuario: texto(d.usuario),
-          email: texto(d.email),
-          whatsapp: texto(d.whatsapp),
-          perfil: texto(d.perfil) || 'gestor',
-          notificaEmail: booleano(d.notificaEmail, true),
-          notificaWhatsapp: booleano(d.notificaWhatsapp, false),
-        };
-      });
+      const data: AcessoRow[] = snap.docs
+        .map((doc) => {
+          const d = doc.data() as Record<string, unknown>;
+          if (!isAcessoDoCliente(d)) return null;
+          return mapAcessoRow(doc.id, d);
+        })
+        .filter((row): row is AcessoRow => row !== null);
       return { data };
     } catch (error) {
       console.error('Erro ao listar acessos:', error);
@@ -371,6 +386,7 @@ export class ClientesService {
       whatsapp: (dto.whatsapp ?? '').trim(),
       notificaEmail: booleano(dto.notificaEmail, true),
       notificaWhatsapp: booleano(dto.notificaWhatsapp, true),
+      mustChangePassword: true,
       createdAt: new Date().toISOString(),
     };
 
@@ -411,6 +427,129 @@ export class ClientesService {
       console.error('Erro ao remover acesso:', error);
       throw new InternalServerErrorException(
         'Não foi possível remover o acesso.',
+      );
+    }
+  }
+
+  private async carregarAcessoDoCliente(clienteId: string, acessoId: string) {
+    const db = this.firebaseService.getFirestore();
+    const ref = db.collection('users').doc(acessoId);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      throw new NotFoundException('Acesso não encontrado.');
+    }
+    const data = snap.data() as Record<string, unknown>;
+    if (texto(data.prefeituraId).trim() !== clienteId.trim()) {
+      throw new BadRequestException('Acesso não pertence a este cliente.');
+    }
+    if (!isAcessoDoCliente(data)) {
+      throw new BadRequestException(
+        'Este usuário não é um acesso de cliente (prefeitura/locação).',
+      );
+    }
+    return { ref, data };
+  }
+
+  /** Atualiza dados de um acesso (sem alterar senha). */
+  async atualizarAcesso(
+    clienteId: string,
+    acessoId: string,
+    dto: UpdateAcessoDto,
+  ) {
+    const { ref, data } = await this.carregarAcessoDoCliente(
+      clienteId,
+      acessoId,
+    );
+
+    const patch: Record<string, unknown> = {};
+
+    if (dto.nome !== undefined) {
+      const nome = dto.nome.trim();
+      if (!nome) throw new BadRequestException('Nome não pode ser vazio.');
+      patch.nome = nome;
+    }
+
+    if (dto.usuario !== undefined) {
+      const usuario = dto.usuario.trim();
+      if (!usuario) throw new BadRequestException('Login não pode ser vazio.');
+      if (usuario !== texto(data.usuario)) {
+        const db = this.firebaseService.getFirestore();
+        const duplicado = await db
+          .collection('users')
+          .where('usuario', '==', usuario)
+          .get();
+        const outro = duplicado.docs.find((doc) => doc.id !== acessoId);
+        if (outro) {
+          throw new BadRequestException('Já existe um usuário com esse login.');
+        }
+      }
+      patch.usuario = usuario;
+    }
+
+    if (dto.perfil !== undefined) {
+      patch.perfil = dto.perfil === 'admin' ? 'admin' : 'gestor';
+    }
+
+    if (dto.email !== undefined) patch.email = dto.email.trim();
+    if (dto.whatsapp !== undefined) patch.whatsapp = dto.whatsapp.trim();
+    if (dto.notificaEmail !== undefined) patch.notificaEmail = dto.notificaEmail;
+    if (dto.notificaWhatsapp !== undefined) {
+      patch.notificaWhatsapp = dto.notificaWhatsapp;
+    }
+
+    if (Object.keys(patch).length === 0) {
+      throw new BadRequestException('Nenhum campo para atualizar.');
+    }
+
+    try {
+      await ref.update(patch);
+      const atualizado = { ...data, ...patch };
+      return {
+        data: mapAcessoRow(acessoId, atualizado),
+        message: 'Acesso atualizado.',
+      };
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      console.error('Erro ao atualizar acesso:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível atualizar o acesso.',
+      );
+    }
+  }
+
+  /** Redefine a senha de um acesso. */
+  async resetarSenhaAcesso(
+    clienteId: string,
+    acessoId: string,
+    dto: ResetSenhaAcessoDto,
+  ) {
+    const { ref } = await this.carregarAcessoDoCliente(clienteId, acessoId);
+    const senha = (dto.senha ?? '').trim();
+    if (senha.length < 4) {
+      throw new BadRequestException('A senha deve ter no mínimo 4 caracteres.');
+    }
+
+    try {
+      await ref.update({
+        senha: hashSenha(senha),
+        mustChangePassword: true,
+      });
+      return { message: 'Senha redefinida com sucesso.' };
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      console.error('Erro ao redefinir senha:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível redefinir a senha.',
       );
     }
   }
