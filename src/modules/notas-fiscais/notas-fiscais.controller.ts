@@ -80,16 +80,20 @@ export class NotasFiscaisController {
   @ApiOperation({
     summary: 'Enviar PDF de nota fiscal (DANFE)',
     description:
-      'Recebe apenas o PDF e contexto da oficina. O backend extrai chave, valor, emitente e demais campos.',
+      'Recebe o PDF, o valor informado pela oficina e o contexto. O backend extrai chave, emitente e demais campos do PDF.',
   })
   @ApiParam({ name: 'oficinaId' })
   @ApiBody({
     schema: {
       type: 'object',
-      required: ['file', 'oficinaId'],
+      required: ['file', 'oficinaId', 'value'],
       properties: {
         file: { type: 'string', format: 'binary' },
         oficinaId: { type: 'string' },
+        value: {
+          type: 'string',
+          description: 'Valor total da nota (R$), ex.: 1.250,00',
+        },
         parceiroId: { type: 'string' },
         prefeituraId: { type: 'string' },
         solicitacaoOsId: { type: 'string' },
@@ -101,6 +105,7 @@ export class NotasFiscaisController {
     @Param('oficinaId') pathOficinaId: string,
     @UploadedFile() file: Express.Multer.File,
     @Body('oficinaId') bodyOficinaId?: string,
+    @Body('value') value?: string,
     @Body('parceiroId') parceiroId?: string,
     @Body('prefeituraId') prefeituraId?: string,
     @Body('solicitacaoOsId') solicitacaoOsId?: string,
@@ -119,6 +124,7 @@ export class NotasFiscaisController {
     const data = await this.service.upload({
       ...context,
       solicitacaoOsId: texto(solicitacaoOsId) || undefined,
+      value,
       file,
     });
 
