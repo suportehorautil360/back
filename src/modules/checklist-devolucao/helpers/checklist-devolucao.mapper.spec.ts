@@ -1,6 +1,7 @@
 import {
   buildChecklistDevolucaoDoc,
   mapGeneralStateItems,
+  mapModuleItems,
   mapPartItems,
 } from './checklist-devolucao.mapper';
 import type { CreateChecklistDevolucaoDto } from '../dto/create-checklist-devolucao.dto';
@@ -25,6 +26,26 @@ describe('checklist-devolucao.mapper', () => {
         description: 'Arranhão na lateral',
       },
       vidros: { status: 'na' },
+    });
+  });
+
+  it('normaliza itens dos módulos com foto e descrição', () => {
+    expect(
+      mapModuleItems({
+        sistemaHidraulico: { status: 'ok' },
+        sistemaEletrico: {
+          status: 'anomaly',
+          photo: 'https://x/mod.jpg',
+          description: 'Fiação exposta',
+        },
+      }),
+    ).toEqual({
+      sistemaHidraulico: { status: 'ok' },
+      sistemaEletrico: {
+        status: 'anomaly',
+        photo: 'https://x/mod.jpg',
+        description: 'Fiação exposta',
+      },
     });
   });
 
