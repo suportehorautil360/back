@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { formatarNumeroEvolution } from './phone';
+import { formatarNumeroEvolution, prepararMediaEvolution } from './phone';
 import { WhatsAppMetricsService } from './whatsapp-metrics.service';
 import {
   calcularDisponibilidade,
@@ -39,6 +39,58 @@ type EvolutionInstanceRecord = {
   owner?: string;
   profileName?: string;
 };
+
+/** Extrai mensagem legível do corpo de erro da Evolution (vários formatos). */
+export function extractEvolutionErrorMessage(
+  json: unknown,
+  status: number,
+): string {
+  if (!json || typeof json !== 'object') {
+    return `HTTP ${status} na Evolution API.`;
+  }
+
+  const obj = json as Record<string, unknown>;
+  const nested =
+    obj.response && typeof obj.response === 'object'
+      ? (obj.response as Record<string, unknown>)
+      : null;
+
+  for (const source of [nested, obj]) {
+    if (!source || !('message' in source)) continue;
+    const raw = source.message;
+    if (typeof raw === 'string' && raw.trim()) return raw.trim();
+    if (Array.isArray(raw)) {
+      const joined = raw
+        .map((item) => String(item).trim())
+        .filter(Boolean)
+        .join('; ');
+      if (joined) return joined;
+    }
+  }
+
+  if (typeof obj.error === 'string' && obj.error.trim()) {
+    return obj.error.trim();
+  }
+
+  return `HTTP ${status} na Evolution API.`;
+}
+
+/** Trunca campos pesados (base64) antes de logar o payload enviado. */
+export function sanitizeEvolutionPayloadForLog(body: unknown): unknown {
+  if (!body || typeof body !== 'object') return body;
+  const copy = { ...(body as Record<string, unknown>) };
+  if (typeof copy.media === 'string') {
+    const media = copy.media;
+    copy.media =
+      media.length > 80
+        ? `${media.slice(0, 40)}…[${media.length} chars]`
+        : media;
+  }
+  if (typeof copy.text === 'string' && copy.text.length > 200) {
+    copy.text = `${copy.text.slice(0, 200)}…[${copy.text.length} chars]`;
+  }
+  return copy;
+}
 
 @Injectable()
 export class WhatsAppEvolutionClient {
@@ -182,17 +234,18 @@ export class WhatsAppEvolutionClient {
       | null;
 
     if (!response.ok) {
-      const message =
-        json && typeof json === 'object' && 'message' in json && json.message
-          ? Array.isArray(json.message)
-            ? json.message.join(', ')
-            : json.message
-          : json &&
-              typeof json === 'object' &&
-              'error' in json &&
-              typeof json.error === 'string'
-            ? json.error
-            : `Erro ${response.status} na Evolution API.`;
+      const message = extractEvolutionErrorMessage(json, response.status);
+      this.logger.warn(
+        [
+          `Evolution API ${method} ${path} → HTTP ${response.status}: ${message}`,
+          json ? `resposta=${JSON.stringify(json)}` : 'resposta=vazia',
+          body !== undefined
+            ? `payload=${JSON.stringify(sanitizeEvolutionPayloadForLog(body))}`
+            : null,
+        ]
+          .filter(Boolean)
+          .join(' | '),
+      );
       throw new Error(message);
     }
 
@@ -276,17 +329,7 @@ export class WhatsAppEvolutionClient {
     legenda?: string,
   ): Promise<void> {
     const instance = await this.resolveInstanceName();
-    let media = imagem.trim();
-    let mimetype = 'image/jpeg';
-
-    if (media.startsWith('data:')) {
-      const match = /^data:([^;]+);base64,/i.exec(media);
-      if (match?.[1]) mimetype = match[1];
-    } else if (/^https?:\/\//i.test(media)) {
-      mimetype = 'image/jpeg';
-    } else {
-      media = `data:image/jpeg;base64,${media}`;
-    }
+    const { media, mimetype } = prepararMediaEvolution(imagem);
 
     await this.request<Record<string, unknown>>(
       'POST',

@@ -1,6 +1,7 @@
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
@@ -76,6 +77,8 @@ function normalizeEmergencyStatus(status: string | undefined): EmergencyStatus {
 
 @Injectable()
 export class EmergenciesService {
+  private readonly logger = new Logger(EmergenciesService.name);
+
   constructor(
     private firebase: FirebaseService,
     private whatsapp: WhatsAppService,
@@ -166,7 +169,12 @@ export class EmergenciesService {
    */
   async notificarWhatsApp(doc: DadosEmergenciaWhats): Promise<void> {
     try {
-      if (!(await this.whatsapp.estaConectado())) return;
+      if (!(await this.whatsapp.estaConectado())) {
+        this.logger.warn(
+          `WhatsApp desconectado — emergência ${doc.prefeituraId} não notificada por zap.`,
+        );
+        return;
+      }
       const snap = await this.firebase
         .getFirestore()
         .collection('configuracoes')
@@ -180,7 +188,12 @@ export class EmergenciesService {
         | undefined;
       // O toggle global gateia tudo: desligado → ninguém é notificado.
       const ativo = cfg?.alertas?.notificacaoWhatsapp === true;
-      if (!ativo) return;
+      if (!ativo) {
+        this.logger.warn(
+          `Toggle notificacaoWhatsapp desligado — prefeitura ${doc.prefeituraId}.`,
+        );
+        return;
+      }
 
       // Destinatários: número da empresa + telefone da frente onde o
       // equipamento está alocado. Deduplicados pelo JID — o mesmo número
@@ -190,11 +203,23 @@ export class EmergenciesService {
         doc.idMaquina ?? doc.equipamentoId,
       );
       const destinos = this.dedupNumeros([numeroEmpresa, numeroFrente]);
-      if (destinos.length === 0) return;
+      if (destinos.length === 0) {
+        this.logger.warn(
+          `Nenhum WhatsApp de destino — prefeitura ${doc.prefeituraId} ` +
+            `(empresa="${numeroEmpresa || '—'}", frente="${numeroFrente || '—'}").`,
+        );
+        return;
+      }
 
       const texto = this.montarMensagem(doc);
       const fotos = (Array.isArray(doc.fotos) ? doc.fotos : []).filter(
         (foto): foto is string => typeof foto === 'string' && foto.length > 0,
+      );
+
+      this.logger.log(
+        `Notificando emergência por WhatsApp — prefeitura=${doc.prefeituraId}, ` +
+          `destinos=[${destinos.join(', ')}], fotos=${fotos.length}, ` +
+          `tipoFalha="${doc.tipoFalha}".`,
       );
 
       // Cada destino é independente: falhar num número não impede o outro.
@@ -202,16 +227,16 @@ export class EmergenciesService {
         try {
           await this.enviarParaNumero(numero, texto, fotos);
         } catch (e) {
-          console.warn(
-            `Falha ao notificar ${numero} por WhatsApp:`,
-            (e as Error).message,
+          this.logger.warn(
+            `Falha ao notificar ${numero} por WhatsApp (prefeitura=${doc.prefeituraId}, ` +
+              `fotos=${fotos.length}): ${(e as Error).message}`,
           );
         }
       }
     } catch (e) {
-      console.warn(
-        'Falha ao notificar emergência por WhatsApp:',
-        (e as Error).message,
+      this.logger.warn(
+        `Falha ao notificar emergência por WhatsApp (prefeitura=${doc.prefeituraId}): ` +
+          `${(e as Error).message}`,
       );
     }
   }
@@ -223,15 +248,21 @@ export class EmergenciesService {
     fotos: string[],
   ): Promise<void> {
     if (fotos.length === 0) {
+      this.logger.debug(`WhatsApp sendText → ${numero}`);
       await this.whatsapp.enviarMensagem(numero, texto);
       return;
     }
     // A 1ª foto leva o texto como legenda; as demais vão soltas — assim a
     // emergência chega como uma única notificação com imagem + detalhes.
     for (let i = 0; i < fotos.length; i++) {
+      const foto = fotos[i];
+      this.logger.debug(
+        `WhatsApp sendMedia → ${numero} (foto ${i + 1}/${fotos.length}, ` +
+          `${foto.length} chars)`,
+      );
       await this.whatsapp.enviarImagem(
         numero,
-        fotos[i],
+        foto,
         i === 0 ? texto : undefined,
       );
     }
