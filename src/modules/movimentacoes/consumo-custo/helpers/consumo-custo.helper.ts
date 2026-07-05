@@ -19,6 +19,7 @@ import type {
 import {
   calcularMetricasIntervalo,
   resolveGastoAbastecimento,
+  tipoMedidaFromEquipamento,
   tipoMedidaFromMeasurementType,
   tipoMedidaFromUnidadeRevisao,
 } from './calcular-metricas-frota.helper';
@@ -26,11 +27,11 @@ import {
 export const CALCULO_INFO: ConsumoCustoCalculoInfo = {
   titulo: 'Como o consumo e o custo são calculados',
   formulaConsumo:
-    'Consumo = litros do abastecimento ÷ (leitura atual − leitura anterior)',
+    'Veículos: L/km = litros ÷ km rodados. Máquinas: L/h = litros ÷ horas de uso (horímetro).',
   formulaCusto:
     'Quando há preço por litro, o gasto = litros × preço/l e o custo unitário = consumo médio × preço/l.',
   observacao:
-    'Válido para carros, caminhões e máquinas pesadas. Em campo, o consumo usa os litros do reabastecimento que completa o tanque.',
+    'Máquinas (Linha Amarela / horímetro) exibem litros por hora. Carros e caminhões usam litros por km. Em campo, o consumo usa os litros do reabastecimento que completa o tanque.',
 };
 
 export function measurementUnit(
@@ -51,6 +52,9 @@ export function resolveTipoMedidaEquipamento(
 ): TipoMedidaFrota {
   const fromEquip = tipoMedidaFromUnidadeRevisao(equipment.unidadeRevisao);
   if (fromEquip) return fromEquip;
+
+  const fromPerfil = tipoMedidaFromEquipamento(equipment);
+  if (fromPerfil) return fromPerfil;
 
   for (let i = abastecimentos.length - 1; i >= 0; i -= 1) {
     const fromAbast = tipoMedidaFromMeasurementType(

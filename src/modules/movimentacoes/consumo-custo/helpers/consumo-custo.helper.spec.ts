@@ -86,6 +86,41 @@ describe('consumo-custo.helper', () => {
       expect(card!.totais.gasto).toBe(0);
     });
 
+    it('infere L/h para escavadeira sem unidadeRevisao (tipo + linha amarela)', () => {
+      const abastecimentos: AbastecimentoConsumoInput[] = [
+        abast({
+          id: 'a0',
+          createdAt: '2025-06-01T08:00:00.000Z',
+          liters: 100,
+          currentReading: 1000,
+          measurementType: 'hodometro',
+        }),
+        abast({
+          id: 'a1',
+          createdAt: '2025-06-10T18:00:00.000Z',
+          liters: 80,
+          currentReading: 1010,
+          measurementType: 'hodometro',
+        }),
+      ];
+
+      const card = buildVeiculoCard(
+        'eq-1',
+        abastecimentos,
+        {
+          descricao: 'Escavadeira CAT 320',
+          linha: 'Linha Amarela',
+          tipo: 'Escavadeira',
+        },
+        '2025-06-01T00:00:00.000Z',
+        '2025-06-30T23:59:59.999Z',
+      );
+
+      expect(card!.unidadeMedicao).toBe('h');
+      expect(card!.consumoMedio.valor).toBeCloseTo(8, 2);
+      expect(card!.consumoMedio.valorExibicao).toContain('L/h');
+    });
+
     it('usa unidadeRevisao do equipamento (h) mesmo com abastecimento hodometro', () => {
       const abastecimentos: AbastecimentoConsumoInput[] = [
         abast({

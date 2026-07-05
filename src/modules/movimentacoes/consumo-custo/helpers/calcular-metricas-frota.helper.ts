@@ -39,6 +39,46 @@ export function tipoMedidaFromMeasurementType(
   return null;
 }
 
+function normalizarTextoEquipamento(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  const texto = String(value).trim();
+  if (!texto) return '';
+  return texto
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+/** Infere horímetro a partir de tipo/linha/descrição quando `unidadeRevisao` não veio. */
+export function tipoMedidaFromEquipamento(
+  equipment: Record<string, unknown>,
+): TipoMedidaFrota | null {
+  const texto = [
+    equipment.tipo,
+    equipment.linha,
+    equipment.descricao,
+    equipment.label,
+    equipment.nome,
+  ]
+    .map(normalizarTextoEquipamento)
+    .filter(Boolean)
+    .join(' ');
+
+  if (!texto) return null;
+
+  if (
+    texto.includes('linha amarela') ||
+    texto.includes('maquina') ||
+    /escav|retro|trator|carregadeira|rolo|motonivel|patrola|pa carreg|guindaste|miniescav|compactador/.test(
+      texto,
+    )
+  ) {
+    return 'HORA';
+  }
+
+  return null;
+}
+
 export function resolvePrecoLitro(
   litros: number,
   pricePerLiter?: number | null,

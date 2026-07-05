@@ -1,6 +1,7 @@
 import {
   calcularMetricasIntervalo,
   resolveGastoAbastecimento,
+  tipoMedidaFromEquipamento,
 } from './calcular-metricas-frota.helper';
 
 describe('calcular-metricas-frota (spec V2)', () => {
@@ -49,5 +50,20 @@ describe('calcular-metricas-frota (spec V2)', () => {
 
   it('resolveGastoAbastecimento a partir de total ÷ litros', () => {
     expect(resolveGastoAbastecimento(45, null, 269.55)).toBeCloseTo(269.55, 2);
+  });
+
+  it('tipoMedidaFromEquipamento identifica máquinas pela linha/tipo', () => {
+    expect(
+      tipoMedidaFromEquipamento({
+        descricao: 'Komatsu PC210',
+        linha: 'Linha Amarela',
+      }),
+    ).toBe('HORA');
+    expect(
+      tipoMedidaFromEquipamento({
+        descricao: 'Fiat Uno',
+        tipo: 'Carro',
+      }),
+    ).toBeNull();
   });
 });
