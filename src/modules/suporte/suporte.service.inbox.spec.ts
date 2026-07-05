@@ -168,3 +168,73 @@ describe('SuporteService — inbox admin Hora Útil', () => {
     expect(store.has(data.id)).toBe(true);
   });
 });
+
+describe('SuporteService — inbox admin oficinas', () => {
+  function seedOficina(store: Map<string, Doc>, oficinaId: string) {
+    store.set(oficinaId, { id: oficinaId, nome: 'Oficina teste' });
+  }
+
+  it('lista threads de oficina com mensagens não lidas', async () => {
+    const { service, store } = makeService();
+    seedOficina(store, 'oficina-1');
+    await service.enviarMensagem('oficina-1', {
+      oficinaId: 'oficina-1',
+      channel: 'ti',
+      text: 'Sistema travou',
+    });
+
+    const { data } = await service.listarInboxAdminOficinas();
+    expect(data.length).toBe(1);
+    expect(data[0].oficinaId).toBe('oficina-1');
+    expect(data[0].unreadUserCount).toBe(1);
+  });
+
+  it('admin responde oficina sem autoReply', async () => {
+    const { service, store } = makeService();
+    seedOficina(store, 'oficina-1');
+    const { data } = await service.responderComoAdminOficina('oficina-1', {
+      channel: 'financeiro',
+      text: 'Vamos verificar o repasse',
+    });
+
+    expect(data.autoReply).toBe(false);
+    expect(data.oficinaId).toBe('oficina-1');
+    expect(store.has(data.id)).toBe(true);
+  });
+
+  it('marca mensagens da oficina como lidas pelo admin', async () => {
+    const { service, store } = makeService();
+    seedOficina(store, 'oficina-1');
+    await service.enviarMensagem('oficina-1', {
+      oficinaId: 'oficina-1',
+      channel: 'financeiro',
+      text: 'NF pendente',
+    });
+
+    await service.marcarLidasAdminOficina('oficina-1', 'financeiro');
+    const { data } = await service.listarInboxAdminOficinas();
+    expect(data[0].unreadUserCount).toBe(0);
+  });
+
+  it('não envia auto-resposta na segunda mensagem da oficina', async () => {
+    const { service, store } = makeService();
+    seedOficina(store, 'oficina-1');
+    await service.enviarMensagem('oficina-1', {
+      oficinaId: 'oficina-1',
+      channel: 'ti',
+      text: 'primeira',
+    });
+    const { data } = await service.enviarMensagem('oficina-1', {
+      oficinaId: 'oficina-1',
+      channel: 'ti',
+      text: 'segunda',
+    });
+
+    expect(data.messages).toHaveLength(1);
+    expect(data.messages[0].text).toBe('segunda');
+    const autoReplies = [...store.values()].filter(
+      (d) => d.sender === 'support' && d.autoReply === true,
+    );
+    expect(autoReplies).toHaveLength(1);
+  });
+});

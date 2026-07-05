@@ -23,3 +23,12 @@ export function welcomeMessageId(channel: SuporteChannel): string {
 export function isWelcomeMessageId(id: string): boolean {
   return id.startsWith('welcome-');
 }
+
+/** Auto-resposta só na primeira mensagem real do parceiro no canal. */
+export function canalJaTemMensagemDoUsuario(
+  messages: Array<{ id: string; sender: string }>,
+): boolean {
+  return messages.some(
+    (m) => m.sender === 'user' && !isWelcomeMessageId(m.id),
+  );
+}

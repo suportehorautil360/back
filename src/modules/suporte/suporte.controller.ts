@@ -306,4 +306,72 @@ export class SuporteController {
   ) {
     return this.service.marcarLidasAdmin(postoId, dto.channel);
   }
+
+  // --- Inbox admin Hora Útil — oficinas (postoapp) ---
+
+  @Get('admin/oficina/inbox')
+  @UseGuards(AdminSecretGuard)
+  @ApiSecurity('x-admin-secret')
+  @ApiOperation({ summary: 'Inbox global de suporte das oficinas (Hora Útil)' })
+  @ApiQuery({ name: 'channel', required: false, enum: ['financeiro', 'ti'] })
+  listarInboxAdminOficinas(@Query('channel') channel?: string) {
+    return this.service.listarInboxAdminOficinas(channel);
+  }
+
+  @Get('admin/oficina/pendentes')
+  @UseGuards(AdminSecretGuard)
+  @ApiSecurity('x-admin-secret')
+  @ApiOperation({
+    summary: 'Total de mensagens de oficinas pendentes de leitura',
+  })
+  contarPendentesAdminOficinas() {
+    return this.service.contarPendentesAdminOficinas();
+  }
+
+  @Get('admin/oficina/:oficinaId/mensagens')
+  @UseGuards(AdminSecretGuard)
+  @ApiSecurity('x-admin-secret')
+  @ApiOperation({
+    summary: 'Histórico do chat da oficina (visão admin Hora Útil)',
+  })
+  @ApiParam({ name: 'oficinaId' })
+  @ApiQuery({ name: 'channel', enum: ['financeiro', 'ti'] })
+  listarMensagensAdminOficina(
+    @Param('oficinaId') oficinaId: string,
+    @Query() query: ListMensagensSuporteQueryDto,
+  ) {
+    return this.service.listarMensagensAdminOficina(
+      oficinaId,
+      query.channel,
+      query.limit,
+      query.before,
+    );
+  }
+
+  @Post('admin/oficina/:oficinaId/responder')
+  @HttpCode(HttpStatus.CREATED)
+  @UseGuards(AdminSecretGuard)
+  @ApiSecurity('x-admin-secret')
+  @ApiOperation({
+    summary: 'Equipe Hora Útil responde mensagem da oficina',
+  })
+  @ApiParam({ name: 'oficinaId' })
+  responderAdminOficina(
+    @Param('oficinaId') oficinaId: string,
+    @Body() dto: ResponderSuporteDto,
+  ) {
+    return this.service.responderComoAdminOficina(oficinaId, dto);
+  }
+
+  @Patch('admin/oficina/:oficinaId/admin-lidas')
+  @UseGuards(AdminSecretGuard)
+  @ApiSecurity('x-admin-secret')
+  @ApiOperation({ summary: 'Admin marca mensagens da oficina como lidas' })
+  @ApiParam({ name: 'oficinaId' })
+  marcarLidasAdminOficina(
+    @Param('oficinaId') oficinaId: string,
+    @Body() dto: MarcarMensagensLidasDto,
+  ) {
+    return this.service.marcarLidasAdminOficina(oficinaId, dto.channel);
+  }
 }
