@@ -42,7 +42,7 @@ function makeFirebase(opts: {
 
 function makeWhatsapp(conectado = true) {
   return {
-    estaConectado: jest.fn(() => conectado),
+    estaConectado: jest.fn().mockResolvedValue(conectado),
     enviarMensagem: jest.fn().mockResolvedValue(undefined),
     enviarImagem: jest.fn().mockResolvedValue(undefined),
   };

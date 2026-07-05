@@ -7,9 +7,35 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
 import { WhatsAppService } from './whatsapp.service';
 import { AdminSecretGuard } from './admin-secret.guard';
+
+class EnviarMensagemDto {
+  @ApiProperty({ example: '+5567999999999' })
+  @IsString()
+  numero!: string;
+
+  @ApiProperty()
+  @IsString()
+  texto!: string;
+}
+
+class EnviarImagemDto {
+  @ApiProperty({ example: '+5567999999999' })
+  @IsString()
+  numero!: string;
+
+  @ApiProperty({ description: 'Data URL, base64 ou URL http(s)' })
+  @IsString()
+  imagem!: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  legenda?: string;
+}
 
 @ApiTags('whatsapp')
 @Controller('whatsapp')
@@ -48,6 +74,22 @@ export class WhatsAppController {
       'Teste de notificação — Hora Útil 360 ✅',
     );
     return { data: {}, message: 'Mensagem de teste enviada.' };
+  }
+
+  @Post('enviar-mensagem')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Envia texto para um número (uso interno / serviço remoto)' })
+  async enviarMensagem(@Body() dto: EnviarMensagemDto) {
+    await this.wa.enviarMensagem(dto.numero, dto.texto);
+    return { data: {}, message: 'Mensagem enviada.' };
+  }
+
+  @Post('enviar-imagem')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Envia imagem para um número (uso interno / serviço remoto)' })
+  async enviarImagem(@Body() dto: EnviarImagemDto) {
+    await this.wa.enviarImagem(dto.numero, dto.imagem, dto.legenda);
+    return { data: {}, message: 'Imagem enviada.' };
   }
 
   @Get('overview')
