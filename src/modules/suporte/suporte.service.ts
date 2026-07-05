@@ -7,7 +7,10 @@ import {
 import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
 import type { CreateMensagemSuporteDto } from './dto/create-mensagem.dto';
-import { parseSuporteChannel } from './helpers/suporte-channel.helper';
+import {
+  parseSuporteChannel,
+  canalJaTemMensagemDoUsuario,
+} from './helpers/suporte-channel.helper';
 import {
   paginateMensagens,
   withPostoWelcomeMessages,
@@ -18,7 +21,7 @@ import {
   buildAutoReplyForPosto,
   buildAutoReplyMessage,
 } from './helpers/suporte-welcome.helper';
-import { agruparThreadsPosto } from './helpers/suporte-inbox.helper';
+import { agruparThreadsPosto, agruparThreadsOficina } from './helpers/suporte-inbox.helper';
 import type { CreateMensagemSuportePostoDto } from './dto/create-mensagem-posto.dto';
 import type { ResponderSuporteDto } from './dto/responder-suporte.dto';
 import type {
@@ -26,6 +29,7 @@ import type {
   SuporteMensagemApi,
   SuporteResumoApi,
   SuporteThreadApi,
+  SuporteThreadOficinaApi,
 } from './suporte.types';
 
 const DEFAULT_LIMIT = 50;
@@ -212,12 +216,11 @@ export class SuporteService {
 
     await this.assertOficinaExists(id);
 
+    const persisted = await this.loadChannelMessages(id, channel);
+    const enviarAutoResposta = !canalJaTemMensagemDoUsuario(persisted);
+
     const userMessageId = randomUUID();
-    const autoReplyId = randomUUID();
     const userCreatedAt = new Date().toISOString();
-    const autoReplyCreatedAt = new Date(
-      Date.now() + 1000,
-    ).toISOString();
 
     const userMessage: SuporteMensagemApi = {
       id: userMessageId,
@@ -227,37 +230,46 @@ export class SuporteService {
       text,
       createdAt: userCreatedAt,
       readAt: null,
+      adminReadAt: null,
     };
 
-    const autoReply = buildAutoReplyMessage(
-      id,
-      channel,
-      autoReplyId,
-      autoReplyCreatedAt,
-    );
+    const messagesToReturn: SuporteMensagemApi[] = [userMessage];
 
     try {
       const batch = this.firebaseService.getFirestore().batch();
       const userRef = this.mensagensCollection.doc(userMessageId);
-      const replyRef = this.mensagensCollection.doc(autoReplyId);
 
       batch.set(userRef, {
         ...userMessage,
+        destino: 'hora-util',
         ...(context?.parceiroId ? { parceiroId: context.parceiroId } : {}),
         ...(context?.prefeituraId ? { prefeituraId: context.prefeituraId } : {}),
       });
 
-      batch.set(replyRef, {
-        ...autoReply,
-        readAt: null,
-      });
+      if (enviarAutoResposta) {
+        const autoReplyId = randomUUID();
+        const autoReplyCreatedAt = new Date(Date.now() + 1000).toISOString();
+        const autoReply = buildAutoReplyMessage(
+          id,
+          channel,
+          autoReplyId,
+          autoReplyCreatedAt,
+        );
+        const replyRef = this.mensagensCollection.doc(autoReplyId);
+        batch.set(replyRef, {
+          ...autoReply,
+          readAt: null,
+          autoReply: true,
+        });
+        messagesToReturn.push(autoReply);
+      }
 
       await batch.commit();
 
       return {
         data: {
           message: userMessage,
-          messages: [userMessage, autoReply],
+          messages: messagesToReturn,
         },
         message: 'Mensagem enviada com sucesso.',
       };
@@ -466,10 +478,11 @@ export class SuporteService {
       throw new BadRequestException('text não pode ser vazio.');
     }
 
+    const persisted = await this.loadChannelMessagesPosto(id, channel);
+    const enviarAutoResposta = !canalJaTemMensagemDoUsuario(persisted);
+
     const userMessageId = randomUUID();
-    const autoReplyId = randomUUID();
     const userCreatedAt = new Date().toISOString();
-    const autoReplyCreatedAt = new Date(Date.now() + 1000).toISOString();
 
     const userMessage: SuporteMensagemApi = {
       id: userMessageId,
@@ -485,17 +498,11 @@ export class SuporteService {
     const prefeituraId =
       texto(context?.prefeituraId) || texto(dto.prefeituraId) || undefined;
 
-    const autoReply = buildAutoReplyForPosto(
-      id,
-      channel,
-      autoReplyId,
-      autoReplyCreatedAt,
-    );
+    const messagesToReturn: SuporteMensagemApi[] = [userMessage];
 
     try {
       const batch = this.firebaseService.getFirestore().batch();
       const userRef = this.mensagensCollection.doc(userMessageId);
-      const replyRef = this.mensagensCollection.doc(autoReplyId);
 
       batch.set(userRef, {
         ...userMessage,
@@ -503,18 +510,30 @@ export class SuporteService {
         ...(prefeituraId ? { prefeituraId } : {}),
       });
 
-      batch.set(replyRef, {
-        ...autoReply,
-        readAt: null,
-        autoReply: true,
-      });
+      if (enviarAutoResposta) {
+        const autoReplyId = randomUUID();
+        const autoReplyCreatedAt = new Date(Date.now() + 1000).toISOString();
+        const autoReply = buildAutoReplyForPosto(
+          id,
+          channel,
+          autoReplyId,
+          autoReplyCreatedAt,
+        );
+        const replyRef = this.mensagensCollection.doc(autoReplyId);
+        batch.set(replyRef, {
+          ...autoReply,
+          readAt: null,
+          autoReply: true,
+        });
+        messagesToReturn.push(autoReply);
+      }
 
       await batch.commit();
 
       return {
         data: {
           message: userMessage,
-          messages: [userMessage, autoReply],
+          messages: messagesToReturn,
         },
         message: 'Mensagem enviada com sucesso.',
       };
@@ -898,6 +917,175 @@ export class SuporteService {
       console.error('Erro ao responder mensagem (admin):', error);
       throw new InternalServerErrorException(
         'Não foi possível enviar a resposta.',
+      );
+    }
+  }
+
+  // --- Inbox admin Hora Útil — oficinas (postoapp) ---
+
+  private async loadMensagensAdminOficinas(): Promise<SuporteMensagemApi[]> {
+    const snap = await this.mensagensCollection.get();
+    const mapa = new Map<string, SuporteMensagemApi>();
+    for (const doc of snap.docs) {
+      const m = mapMensagemToApi(
+        doc.id,
+        doc.data() as Record<string, unknown>,
+      );
+      if (m.oficinaId) mapa.set(m.id, m);
+    }
+    return [...mapa.values()];
+  }
+
+  async listarInboxAdminOficinas(channelRaw?: unknown): Promise<{
+    data: SuporteThreadOficinaApi[];
+    message: string;
+  }> {
+    const channelFilter =
+      typeof channelRaw === 'string' && channelRaw.trim()
+        ? parseSuporteChannel(channelRaw)
+        : null;
+
+    try {
+      const messages = await this.loadMensagensAdminOficinas();
+      let threads = agruparThreadsOficina(messages);
+      if (channelFilter) {
+        threads = threads.filter((t) => t.channel === channelFilter);
+      }
+      return {
+        data: threads,
+        message: 'Inbox admin de oficinas carregado com sucesso.',
+      };
+    } catch (error) {
+      console.error('Erro ao listar inbox admin de oficinas:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível carregar o inbox de suporte das oficinas.',
+      );
+    }
+  }
+
+  async contarPendentesAdminOficinas(): Promise<{
+    data: { total: number };
+    message: string;
+  }> {
+    const { data } = await this.listarInboxAdminOficinas();
+    const total = data.reduce((s, t) => s + t.unreadUserCount, 0);
+    return { data: { total }, message: 'ok' };
+  }
+
+  async listarMensagensAdminOficina(
+    oficinaId: string,
+    channelRaw: unknown,
+    limitRaw?: number,
+    before?: string,
+  ): Promise<{
+    data: { channel: SuporteChannel; messages: SuporteMensagemApi[] };
+    message: string;
+  }> {
+    const id = oficinaId.trim();
+    const channel = parseSuporteChannel(channelRaw);
+    const limit = Math.min(Math.max(limitRaw ?? DEFAULT_LIMIT, 1), 100);
+
+    if (!id) throw new BadRequestException('oficinaId inválido.');
+
+    try {
+      const persisted = await this.loadChannelMessages(id, channel);
+      const page = paginateMensagens(persisted, limit, before);
+      const messages = withWelcomeMessage(id, channel, page);
+      return {
+        data: { channel, messages },
+        message: 'Mensagens carregadas com sucesso.',
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      console.error('Erro ao listar mensagens admin (oficina):', error);
+      throw new InternalServerErrorException(
+        'Não foi possível carregar as mensagens.',
+      );
+    }
+  }
+
+  async responderComoAdminOficina(
+    oficinaId: string,
+    dto: ResponderSuporteDto,
+  ): Promise<{ data: SuporteMensagemApi; message: string }> {
+    const id = oficinaId.trim();
+    const channel = parseSuporteChannel(dto.channel);
+    const text = dto.text.trim();
+
+    if (!id) throw new BadRequestException('oficinaId inválido.');
+    if (!text) throw new BadRequestException('text não pode ser vazio.');
+
+    await this.assertOficinaExists(id);
+
+    const messageId = randomUUID();
+    const createdAt = new Date().toISOString();
+    const payload: SuporteMensagemApi = {
+      id: messageId,
+      oficinaId: id,
+      channel,
+      sender: 'support',
+      text,
+      createdAt,
+      readAt: null,
+      autoReply: false,
+    };
+
+    try {
+      await this.mensagensCollection.doc(messageId).set(payload);
+      return { data: payload, message: 'Resposta enviada com sucesso.' };
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      console.error('Erro ao responder mensagem admin (oficina):', error);
+      throw new InternalServerErrorException(
+        'Não foi possível enviar a resposta.',
+      );
+    }
+  }
+
+  async marcarLidasAdminOficina(
+    oficinaId: string,
+    channelRaw: unknown,
+  ): Promise<{ data: { updated: number }; message: string }> {
+    const id = oficinaId.trim();
+    const channel = parseSuporteChannel(channelRaw);
+
+    if (!id) throw new BadRequestException('oficinaId inválido.');
+
+    try {
+      const snap = await this.mensagensCollection
+        .where('oficinaId', '==', id)
+        .where('channel', '==', channel)
+        .get();
+
+      const agora = new Date().toISOString();
+      const batch = this.firebaseService.getFirestore().batch();
+      let updated = 0;
+
+      for (const doc of snap.docs) {
+        const data = doc.data() as Record<string, unknown>;
+        if (texto(data.sender) !== 'user') continue;
+        if (data.adminReadAt) continue;
+
+        batch.update(doc.ref, { adminReadAt: agora });
+        updated += 1;
+      }
+
+      if (updated > 0) await batch.commit();
+
+      return {
+        data: { updated },
+        message: 'Mensagens da oficina marcadas como lidas.',
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      console.error('Erro ao marcar lidas admin (oficina):', error);
+      throw new InternalServerErrorException(
+        'Não foi possível marcar as mensagens como lidas.',
       );
     }
   }

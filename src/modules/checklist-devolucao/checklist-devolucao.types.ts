@@ -33,6 +33,8 @@ export interface ChecklistDevolucaoStateItem {
 
 export interface ChecklistDevolucaoModuleItem {
   status: ChecklistItemStatus;
+  photo?: string;
+  description?: string;
 }
 
 export interface ChecklistDevolucaoPartItem {

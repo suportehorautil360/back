@@ -1,4 +1,4 @@
-import { formatarJid, formatarNumeroEvolution, numeroValido } from './phone';
+import { formatarJid, formatarNumeroEvolution, numeroValido, prepararMediaEvolution } from './phone';
 
 describe('whatsapp/phone', () => {
   it('formata número com DDD (11 díg.) prefixando o DDI 55', () => {
@@ -33,5 +33,21 @@ describe('whatsapp/phone', () => {
   it('formatarNumeroEvolution retorna só dígitos com DDI', () => {
     expect(formatarNumeroEvolution('67 99999-9999')).toBe('5567999999999');
     expect(formatarNumeroEvolution('+55 67 99999-9999')).toBe('5567999999999');
+  });
+
+  it('prepararMediaEvolution remove prefixo data URL', () => {
+    const { media, mimetype } = prepararMediaEvolution(
+      'data:image/png;base64,ABC123',
+    );
+    expect(mimetype).toBe('image/png');
+    expect(media).toBe('ABC123');
+  });
+
+  it('prepararMediaEvolution mantém URL http', () => {
+    const url = 'https://example.com/foto.jpg';
+    expect(prepararMediaEvolution(url)).toEqual({
+      media: url,
+      mimetype: 'image/jpeg',
+    });
   });
 });

@@ -5,6 +5,8 @@ import { ClientesService } from './clientes.service';
 import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
 import { CreateAcessoDto } from './dto/create-acesso.dto';
+import { UpdateAcessoDto } from './dto/update-acesso.dto';
+import { ResetSenhaAcessoDto } from './dto/reset-senha-acesso.dto';
 
 @ApiTags('clientes')
 @Controller('clientes')
@@ -124,5 +126,25 @@ export class ClientesController {
   @ApiOperation({ summary: 'Remove um acesso (usuário)' })
   async removerAcesso(@Param('acessoId') acessoId: string) {
     return this.clientesService.removerAcesso(acessoId);
+  }
+
+  @Post(':clienteId/acessos/:acessoId/update')
+  @ApiOperation({ summary: 'Atualiza dados de um acesso (login, perfil, etc.)' })
+  async atualizarAcesso(
+    @Param('clienteId') clienteId: string,
+    @Param('acessoId') acessoId: string,
+    @Body() dto: UpdateAcessoDto,
+  ) {
+    return this.clientesService.atualizarAcesso(clienteId, acessoId, dto);
+  }
+
+  @Post(':clienteId/acessos/:acessoId/resetar-senha')
+  @ApiOperation({ summary: 'Redefine a senha de um acesso' })
+  async resetarSenhaAcesso(
+    @Param('clienteId') clienteId: string,
+    @Param('acessoId') acessoId: string,
+    @Body() dto: ResetSenhaAcessoDto,
+  ) {
+    return this.clientesService.resetarSenhaAcesso(clienteId, acessoId, dto);
   }
 }

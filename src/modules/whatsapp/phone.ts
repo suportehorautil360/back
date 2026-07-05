@@ -28,3 +28,27 @@ export function formatarNumeroEvolution(numero: string | null | undefined): stri
   }
   return d;
 }
+
+/**
+ * Normaliza imagem para a Evolution API (`sendMedia`): URL http(s) ou base64
+ * puro — sem prefixo `data:...;base64,` (a API rejeita data URL).
+ */
+export function prepararMediaEvolution(imagem: string): {
+  media: string;
+  mimetype: string;
+} {
+  const raw = imagem.trim();
+  if (/^https?:\/\//i.test(raw)) {
+    return { media: raw, mimetype: 'image/jpeg' };
+  }
+
+  const dataUrl = /^data:([^;]+);base64,(.+)$/is.exec(raw);
+  if (dataUrl) {
+    return {
+      mimetype: dataUrl[1] || 'image/jpeg',
+      media: dataUrl[2],
+    };
+  }
+
+  return { media: raw, mimetype: 'image/jpeg' };
+}

@@ -288,3 +288,28 @@ describe('NotasFiscaisService — atualizarStatus', () => {
     expect(data.status).toBe('aprovada');
   });
 });
+
+describe('NotasFiscaisService — fluxo da oficina', () => {
+  it('exige valor informado no upload da oficina', async () => {
+    const { service } = makeService();
+    await expect(
+      service.upload({ oficinaId: 'of-1', value: '', file: pdf() }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('grava nota da oficina com valor informado e status pendente', async () => {
+    const { service } = makeService();
+
+    const nota = await service.upload({
+      oficinaId: 'of-1',
+      prefeituraId: 'pref-1',
+      value: '1.250,50',
+      file: pdf(),
+    });
+
+    expect(nota.oficinaId).toBe('of-1');
+    expect(nota.prefeituraId).toBe('pref-1');
+    expect(nota.status).toBe('pendente');
+    expect(nota.value).toBe(1250.5);
+  });
+});

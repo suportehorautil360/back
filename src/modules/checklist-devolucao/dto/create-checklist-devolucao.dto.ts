@@ -46,6 +46,18 @@ export class ChecklistDevolucaoModuleItemDto {
   @ApiProperty({ example: 'ok', description: 'ok | anomaly | na' })
   @IsString()
   status!: string;
+
+  @ApiPropertyOptional({ description: 'URL da foto (obrigatória se anomaly)' })
+  @IsOptional()
+  @IsString()
+  photo?: string;
+
+  @ApiPropertyOptional({
+    description: 'Descrição da anomalia (obrigatória se anomaly)',
+  })
+  @IsOptional()
+  @IsString()
+  description?: string;
 }
 
 export class ChecklistDevolucaoIdentificationDto {

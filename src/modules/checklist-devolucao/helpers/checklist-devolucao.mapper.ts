@@ -49,14 +49,23 @@ export function mapGeneralStateItems(
 }
 
 export function mapModuleItems(
-  raw: Record<string, { status?: string }> | undefined,
+  raw:
+    | Record<string, { status?: string; photo?: string; description?: string }>
+    | undefined,
 ): Record<string, ChecklistDevolucaoModuleItem> {
   if (!raw || typeof raw !== 'object') return {};
 
   const out: Record<string, ChecklistDevolucaoModuleItem> = {};
   for (const [key, value] of Object.entries(raw)) {
     if (!value || typeof value !== 'object') continue;
-    out[key] = { status: normalizeStatus(value.status) };
+    const item: ChecklistDevolucaoModuleItem = {
+      status: normalizeStatus(value.status),
+    };
+    const photo = texto(value.photo);
+    if (photo) item.photo = photo;
+    const description = texto(value.description);
+    if (description) item.description = description;
+    out[key] = item;
   }
   return out;
 }
@@ -218,7 +227,10 @@ export function mapChecklistDevolucaoFromFirestore(
       >,
     ),
     modules: mapModuleItems(
-      data.modules as Record<string, { status?: string }>,
+      data.modules as Record<
+        string,
+        { status?: string; photo?: string; description?: string }
+      >,
     ),
     parts: { items: partsItems },
     services: { items: serviceItems },

@@ -54,6 +54,8 @@ export interface UploadNotaFiscalInput {
   parceiroId?: string;
   prefeituraId?: string;
   solicitacaoOsId?: string;
+  /** Valor total informado pela oficina (sobrescreve o parse do PDF). */
+  value: unknown;
   file: Express.Multer.File;
 }
 
@@ -164,6 +166,7 @@ export class NotasFiscaisService {
     }
 
     const parsed = await this.validarEParsear(input.file);
+    const valorInformado = parseValorInformado(input.value);
 
     if (parsed.accessKey) {
       const duplicate = await this.collection
@@ -195,6 +198,7 @@ export class NotasFiscaisService {
           ? { solicitacaoOsId: texto(input.solicitacaoOsId) }
           : {}),
         ...this.dadosParseados(parsed),
+        value: valorInformado,
       },
       input.file,
     );

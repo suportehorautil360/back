@@ -29,6 +29,15 @@ export interface SuporteThreadApi {
   unreadUserCount: number;
 }
 
+export interface SuporteThreadOficinaApi {
+  oficinaId: string;
+  channel: SuporteChannel;
+  lastMessage: string;
+  lastMessageAt: string;
+  lastSender: SuporteSender;
+  unreadUserCount: number;
+}
+
 export interface SuporteMensagemFirestore {
   id: string;
   oficinaId?: string;
