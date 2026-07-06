@@ -1,6 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import {
   extractEvolutionErrorMessage,
+  isBrokenEvolutionInstance,
   sanitizeEvolutionPayloadForLog,
   WhatsAppEvolutionClient,
 } from './whatsapp-evolution.client';
@@ -37,6 +38,25 @@ describe('sanitizeEvolutionPayloadForLog', () => {
     expect(out.number).toBe('5511994892766');
     expect(out.media).toContain('…[');
     expect(out.media).toContain('chars]');
+  });
+});
+
+describe('isBrokenEvolutionInstance', () => {
+  it('detecta device_removed após logout', () => {
+    expect(
+      isBrokenEvolutionInstance({
+        connectionStatus: 'connecting',
+        disconnectionReasonCode: 401,
+        disconnectionObject: '{"error":{"data":{"attrs":{"type":"device_removed"}}}}',
+        disconnectionAt: '2026-07-05T23:47:08.542Z',
+      }),
+    ).toBe(true);
+  });
+
+  it('instância open não é considerada quebrada', () => {
+    expect(
+      isBrokenEvolutionInstance({ connectionStatus: 'open' }),
+    ).toBe(false);
   });
 });
 
