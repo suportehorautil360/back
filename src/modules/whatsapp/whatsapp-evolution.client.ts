@@ -38,7 +38,37 @@ type EvolutionInstanceRecord = {
   connectionStatus?: EvolutionConnectionState;
   owner?: string;
   profileName?: string;
+  disconnectionReasonCode?: number;
+  disconnectionObject?: string;
+  disconnectionAt?: string;
+  ownerJid?: string;
 };
+
+/** Sessão inválida após logout, device_removed ou reconexão travada. */
+export function isBrokenEvolutionInstance(
+  record: Record<string, unknown>,
+): boolean {
+  const status = String(
+    record.connectionStatus ??
+      (record.instance as { status?: string } | undefined)?.status ??
+      '',
+  )
+    .trim()
+    .toLowerCase();
+
+  const reason = Number(record.disconnectionReasonCode);
+  const discObj = String(record.disconnectionObject ?? '');
+
+  if (reason === 401 || discObj.includes('device_removed')) {
+    return true;
+  }
+
+  if (status === 'connecting' && record.disconnectionAt) {
+    return true;
+  }
+
+  return false;
+}
 
 /** Extrai mensagem legível do corpo de erro da Evolution (vários formatos). */
 export function extractEvolutionErrorMessage(
@@ -177,6 +207,99 @@ export class WhatsAppEvolutionClient {
 
     this.cachedInstanceName = name;
     return name;
+  }
+
+  private findInstanceRecord(
+    instances: EvolutionInstanceRecord[],
+    name: string,
+  ): EvolutionInstanceRecord | undefined {
+    return instances.find(
+      (item) =>
+        item.instance?.instanceName?.trim() === name ||
+        item.name?.trim() === name,
+    );
+  }
+
+  private async deleteInstance(name: string): Promise<void> {
+    try {
+      await this.request(
+        'DELETE',
+        `/instance/delete/${encodeURIComponent(name)}`,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Evolution: falha ao excluir instância "${name}": ${(error as Error).message}`,
+      );
+    }
+    if (this.cachedInstanceName === name) {
+      this.cachedInstanceName = null;
+    }
+    this.qrCache = null;
+  }
+
+  private async createInstance(
+    name: string,
+  ): Promise<EvolutionConnectResponse | null> {
+    const data = await this.request<{ qrcode?: EvolutionConnectResponse }>(
+      'POST',
+      '/instance/create',
+      {
+        instanceName: name,
+        integration: 'WHATSAPP-BAILEYS',
+        qrcode: true,
+      },
+    );
+    return data.qrcode ?? null;
+  }
+
+  /**
+   * Garante instância existente e saudável. Recria automaticamente após
+   * device_removed / logout (causa comum do "não foi possível conectar").
+   */
+  private async ensureInstanceReady(): Promise<EvolutionConnectResponse | null> {
+    const name = await this.resolveInstanceName();
+    const instances = await this.fetchInstances();
+    const current = this.findInstanceRecord(instances, name);
+
+    if (!current) {
+      this.logger.log(`Evolution: criando instância "${name}"…`);
+      return this.createInstance(name);
+    }
+
+    if (isBrokenEvolutionInstance(current as Record<string, unknown>)) {
+      this.logger.warn(
+        `Evolution: instância "${name}" com sessão inválida — recriando…`,
+      );
+      await this.deleteInstance(name);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      return this.createInstance(name);
+    }
+
+    return null;
+  }
+
+  private buildConnectResponse(
+    connect: EvolutionConnectResponse,
+    status: WhatsAppStatus,
+  ): WhatsAppStatusResp {
+    if (status === 'conectado') {
+      this.qrCache = null;
+      return { status };
+    }
+
+    const qrImagem = this.normalizeQr(connect.base64);
+    const resolvedStatus = qrImagem
+      ? 'aguardando_qr'
+      : status === 'desconectado'
+        ? 'conectando'
+        : status;
+
+    this.storeQrCache(resolvedStatus, qrImagem);
+
+    return {
+      status: resolvedStatus,
+      qrImagem,
+    };
   }
 
   private readConnectionState(item: EvolutionInstanceRecord): string {
@@ -353,6 +476,11 @@ export class WhatsAppEvolutionClient {
   }
 
   async connect(): Promise<WhatsAppStatusResp> {
+    const fromCreate = await this.ensureInstanceReady();
+    if (fromCreate?.base64) {
+      return this.buildConnectResponse(fromCreate, 'conectando');
+    }
+
     const instance = await this.resolveInstanceName();
     const connect = await this.request<EvolutionConnectResponse>(
       'GET',
@@ -361,24 +489,7 @@ export class WhatsAppEvolutionClient {
     const connection = await this.fetchConnectionState();
     const status = this.mapEvolutionState(this.extractConnectionState(connection));
 
-    if (status === 'conectado') {
-      this.qrCache = null;
-      return { status };
-    }
-
-    const qrImagem = this.normalizeQr(connect.base64);
-    const resolvedStatus = qrImagem
-      ? 'aguardando_qr'
-      : status === 'desconectado'
-        ? 'conectando'
-        : status;
-
-    this.storeQrCache(resolvedStatus, qrImagem);
-
-    return {
-      status: resolvedStatus,
-      qrImagem,
-    };
+    return this.buildConnectResponse(connect, status);
   }
 
   async logout(): Promise<void> {
