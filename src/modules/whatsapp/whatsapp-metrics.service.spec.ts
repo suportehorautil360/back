@@ -8,15 +8,34 @@ function fakeFirebase() {
     { alertas: { notificacaoWhatsapp: false }, empresa: { whatsappNumero: '11 90000-0000' } },
   ];
   const db = {
+    getAll: jest.fn().mockResolvedValue([]),
     collection: jest.fn((name: string) => {
       if (name === 'whatsappStats') {
-        return { doc: () => ({ set: setMensagens, get: async () => ({ data: () => ({ mensagens: 7 }) }) }) };
+        return {
+          doc: () => ({
+            set: setMensagens,
+            get: async () => ({ data: () => ({ mensagens: 7 }) }),
+          }),
+        };
       }
       if (name === 'whatsappEvents') {
-        return { add: addEvento };
+        const emptySnap = { docs: [] as { data: () => unknown }[] };
+        const queryChain = {
+          limit: () => ({ get: async () => emptySnap }),
+          get: async () => emptySnap,
+        };
+        return {
+          add: addEvento,
+          orderBy: () => queryChain,
+          where: () => ({ orderBy: () => queryChain }),
+        };
       }
       if (name === 'configuracoes') {
-        return { get: async () => ({ docs: configsData.map((d) => ({ data: () => d })) }) };
+        return {
+          get: async () => ({
+            docs: configsData.map((d) => ({ data: () => d })),
+          }),
+        };
       }
       throw new Error('coleção inesperada: ' + name);
     }),
@@ -60,5 +79,17 @@ describe('WhatsAppMetricsService', () => {
     const { firebase } = fakeFirebase();
     const svc = new WhatsAppMetricsService(firebase);
     await expect(svc.contarEmpresasUtilizando()).resolves.toBe(1);
+  });
+
+  it('carregarMetricasOverview usa cache em memória', async () => {
+    const { firebase } = fakeFirebase();
+    const svc = new WhatsAppMetricsService(firebase);
+
+    await svc.carregarMetricasOverview();
+    await svc.carregarMetricasOverview();
+
+    const chamadasConfig = (firebase.getFirestore().collection as jest.Mock).mock.calls
+      .filter(([name]) => name === 'configuracoes');
+    expect(chamadasConfig).toHaveLength(1);
   });
 });

@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { formatarNumeroEvolution, prepararMediaEvolution } from './phone';
 import { WhatsAppMetricsService } from './whatsapp-metrics.service';
 import {
-  calcularDisponibilidade,
   montarOverview,
   type WhatsappOverview,
   type WhatsAppStatus,
@@ -551,15 +550,10 @@ export class WhatsAppEvolutionClient {
   async getOverview(): Promise<WhatsappOverview> {
     const agora = new Date();
     const base = await this.getStatus();
-    const [empresas, hoje, mes, eventos, eventosJanela, instances] =
-      await Promise.all([
-        this.metrics.contarEmpresasUtilizando(),
-        this.metrics.mensagensHoje(),
-        this.metrics.mensagens30d(agora),
-        this.metrics.eventosRecentes(20),
-        this.metrics.eventosJanela(30, agora),
-        this.fetchInstances().catch(() => [] as EvolutionInstanceRecord[]),
-      ]);
+    const metricas = await this.metrics.carregarMetricasOverview(agora);
+    const [instances] = await Promise.all([
+      this.fetchInstances().catch(() => [] as EvolutionInstanceRecord[]),
+    ]);
 
     const instanceName = await this.resolveInstanceName();
     const current =
@@ -584,11 +578,11 @@ export class WhatsAppEvolutionClient {
       ultimaAtividade: null,
       versaoSessao: 'Evolution API',
       ambiente: process.env.NODE_ENV === 'production' ? 'prod' : 'dev',
-      empresasUtilizando: empresas,
-      mensagensHoje: hoje,
-      mensagens30d: mes,
-      disponibilidade: calcularDisponibilidade(eventosJanela, agora, 30),
-      eventos,
+      empresasUtilizando: metricas.empresasUtilizando,
+      mensagensHoje: metricas.mensagensHoje,
+      mensagens30d: metricas.mensagens30d,
+      disponibilidade: metricas.disponibilidade,
+      eventos: metricas.eventos,
     });
   }
 }

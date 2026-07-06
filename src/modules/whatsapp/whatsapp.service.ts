@@ -7,7 +7,6 @@ import { useFirestoreAuthState } from './firestore-auth-state';
 import { formatarJid } from './phone';
 import { WhatsAppMetricsService } from './whatsapp-metrics.service';
 import {
-  calcularDisponibilidade,
   montarOverview,
   type WhatsappOverview,
   type WhatsAppStatus,
@@ -281,13 +280,7 @@ export class WhatsAppService implements OnModuleInit {
 
     const agora = new Date();
     const base = await this.getStatus();
-    const [empresas, hoje, mes, eventos, eventosJanela] = await Promise.all([
-      this.metrics.contarEmpresasUtilizando(),
-      this.metrics.mensagensHoje(),
-      this.metrics.mensagens30d(agora),
-      this.metrics.eventosRecentes(20),
-      this.metrics.eventosJanela(30, agora),
-    ]);
+    const metricas = await this.metrics.carregarMetricasOverview(agora);
     return montarOverview({
       status: base.status,
       qrImagem: base.qrImagem,
@@ -297,11 +290,11 @@ export class WhatsAppService implements OnModuleInit {
       ultimaAtividade: this.ultimaAtividade,
       versaoSessao: this.versaoSessao,
       ambiente: this.ambiente(),
-      empresasUtilizando: empresas,
-      mensagensHoje: hoje,
-      mensagens30d: mes,
-      disponibilidade: calcularDisponibilidade(eventosJanela, agora, 30),
-      eventos,
+      empresasUtilizando: metricas.empresasUtilizando,
+      mensagensHoje: metricas.mensagensHoje,
+      mensagens30d: metricas.mensagens30d,
+      disponibilidade: metricas.disponibilidade,
+      eventos: metricas.eventos,
     });
   }
 
