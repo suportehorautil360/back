@@ -96,6 +96,14 @@ export function sanitizeEvolutionPayloadForLog(body: unknown): unknown {
 export class WhatsAppEvolutionClient {
   private readonly logger = new Logger(WhatsAppEvolutionClient.name);
   private cachedInstanceName: string | null = null;
+  /** QR em cache (~60s) para o Hub admin enquanto aguarda leitura. */
+  private qrCache: {
+    imagem: string;
+    at: number;
+    status: WhatsAppStatus;
+  } | null = null;
+
+  private static readonly QR_CACHE_MS = 55_000;
 
   constructor(
     private readonly config: ConfigService,
@@ -279,7 +287,69 @@ export class WhatsAppEvolutionClient {
 
   async getStatus(): Promise<WhatsAppStatusResp> {
     const connection = await this.fetchConnectionState();
-    return { status: this.mapEvolutionState(this.extractConnectionState(connection)) };
+    const status = this.mapEvolutionState(this.extractConnectionState(connection));
+
+    if (status === 'conectado') {
+      this.qrCache = null;
+      return { status };
+    }
+
+    const cached = this.readQrCache();
+    if (cached) {
+      return cached;
+    }
+
+    return { status };
+  }
+
+  /**
+   * Ao subir o back, tenta reutilizar a sessão já pareada na Evolution
+   * (evita pedir QR de novo após restart do Nest ou da Evolution).
+   */
+  async ensureSessionOnStartup(): Promise<void> {
+    try {
+      const atual = await this.getStatus();
+      if (atual.status === 'conectado') {
+        this.logger.log('Evolution: instância já conectada.');
+        return;
+      }
+
+      this.logger.log('Evolution: restaurando sessão da instância…');
+      const result = await this.connect();
+
+      if (result.status === 'conectado') {
+        this.logger.log('Evolution: sessão restaurada automaticamente.');
+      } else if (result.qrImagem) {
+        this.logger.warn(
+          'Evolution: sessão expirada — escaneie o QR no Hub admin.',
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Evolution: não foi possível restaurar sessão no startup: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  private readQrCache(): WhatsAppStatusResp | null {
+    if (!this.qrCache) return null;
+    if (Date.now() - this.qrCache.at > WhatsAppEvolutionClient.QR_CACHE_MS) {
+      this.qrCache = null;
+      return null;
+    }
+    return {
+      status: this.qrCache.status,
+      qrImagem: this.qrCache.imagem,
+    };
+  }
+
+  private storeQrCache(status: WhatsAppStatus, qrImagem?: string): void {
+    if (!qrImagem) return;
+    this.qrCache = {
+      imagem: qrImagem,
+      at: Date.now(),
+      status: status === 'conectando' ? 'aguardando_qr' : status,
+    };
   }
 
   async connect(): Promise<WhatsAppStatusResp> {
@@ -292,18 +362,28 @@ export class WhatsAppEvolutionClient {
     const status = this.mapEvolutionState(this.extractConnectionState(connection));
 
     if (status === 'conectado') {
+      this.qrCache = null;
       return { status };
     }
 
     const qrImagem = this.normalizeQr(connect.base64);
+    const resolvedStatus = qrImagem
+      ? 'aguardando_qr'
+      : status === 'desconectado'
+        ? 'conectando'
+        : status;
+
+    this.storeQrCache(resolvedStatus, qrImagem);
+
     return {
-      status: qrImagem ? 'aguardando_qr' : status === 'desconectado' ? 'conectando' : status,
+      status: resolvedStatus,
       qrImagem,
     };
   }
 
   async logout(): Promise<void> {
     const instance = await this.resolveInstanceName();
+    this.qrCache = null;
     await this.request<Record<string, never>>(
       'DELETE',
       `/instance/logout/${encodeURIComponent(instance)}`,

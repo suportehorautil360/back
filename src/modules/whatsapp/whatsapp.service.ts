@@ -71,6 +71,9 @@ export class WhatsAppService implements OnModuleInit {
       this.logger.log(
         `${this.externalModeLabel()} configurado — Baileys local desativado.`,
       );
+      if (this.evolution.isEnabled()) {
+        void this.evolution.ensureSessionOnStartup();
+      }
       return;
     }
 
