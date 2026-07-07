@@ -124,9 +124,12 @@ export class EmergenciesService {
 
     try {
       await this.collection.doc(id).set(doc);
-      // Notifica a empresa por WhatsApp + email (best-effort, não bloqueia).
-      void this.notificarWhatsApp(doc);
-      void this.notificarEmail(doc);
+      // Aguarda antes de responder: em serverless (Vercel) tarefas em
+      // background com `void` são cortadas quando a resposta HTTP termina.
+      await Promise.all([
+        this.notificarWhatsApp(doc),
+        this.notificarEmail(doc),
+      ]);
       return { data: doc, message: 'Emergência registrada com sucesso.' };
     } catch (error) {
       console.error('Erro ao registrar emergência:', error);
