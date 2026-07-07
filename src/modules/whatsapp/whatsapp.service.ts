@@ -103,7 +103,12 @@ export class WhatsAppService implements OnModuleInit {
     return this.status === 'conectado';
   }
 
-  async connect(): Promise<void> {
+  async connect(options?: { recriar?: boolean }): Promise<void> {
+    if (this.evolution.isEnabled()) {
+      await this.evolution.connect(options);
+      return;
+    }
+
     const external = this.external();
     if (external) {
       await external.connect();
@@ -275,7 +280,15 @@ export class WhatsAppService implements OnModuleInit {
   async getOverview(): Promise<WhatsappOverview> {
     const external = this.external();
     if (external) {
-      return external.getOverview();
+      const ov = await external.getOverview();
+      if (ov.integracao) return ov;
+      return {
+        ...ov,
+        integracao: this.evolution.isEnabled() ? 'evolution' : 'remote',
+        evolutionManagerUrl: this.evolution.isEnabled()
+          ? this.evolution.managerUrl()
+          : null,
+      };
     }
 
     const agora = new Date();
@@ -284,6 +297,8 @@ export class WhatsAppService implements OnModuleInit {
     return montarOverview({
       status: base.status,
       qrImagem: base.qrImagem,
+      integracao: 'baileys',
+      evolutionManagerUrl: null,
       numeroConectado: this.numeroConectado(),
       nomeSessao: this.nomeSessao(),
       conectadoDesde: this.conectadoDesde,

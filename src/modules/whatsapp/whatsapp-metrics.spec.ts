@@ -93,6 +93,8 @@ describe('whatsapp-metrics/montarOverview', () => {
     const ov = montarOverview({
       status: 'conectado',
       qrImagem: undefined,
+      integracao: 'baileys',
+      evolutionManagerUrl: null,
       numeroConectado: '5567999999999',
       nomeSessao: 'Hora Útil 360',
       conectadoDesde: '2026-06-05T09:42:00.000Z',
@@ -108,6 +110,8 @@ describe('whatsapp-metrics/montarOverview', () => {
     expect(ov).toEqual({
       status: 'conectado',
       qrImagem: undefined,
+      integracao: 'baileys',
+      evolutionManagerUrl: null,
       sessao: {
         numeroConectado: '5567999999999',
         nomeSessao: 'Hora Útil 360',

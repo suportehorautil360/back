@@ -8,7 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 import { WhatsAppService } from './whatsapp.service';
 import { AdminSecretGuard } from './admin-secret.guard';
 
@@ -37,6 +37,17 @@ class EnviarImagemDto {
   legenda?: string;
 }
 
+class ConnectWhatsAppDto {
+  @ApiProperty({
+    required: false,
+    description:
+      'Evolution: apaga e recria a instância (só use se souber o que está fazendo).',
+  })
+  @IsOptional()
+  @IsBoolean()
+  recriar?: boolean;
+}
+
 @ApiTags('whatsapp')
 @Controller('whatsapp')
 @UseGuards(AdminSecretGuard)
@@ -51,9 +62,12 @@ export class WhatsAppController {
 
   @Post('connect')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Inicia a conexão WhatsApp (gera o QR para parear)' })
-  async connect() {
-    await this.wa.connect();
+  @ApiOperation({
+    summary:
+      'Inicia/reconecta WhatsApp. Evolution: prefira parear no Manager; `recriar` só em casos extremos.',
+  })
+  async connect(@Body() dto: ConnectWhatsAppDto = {}) {
+    await this.wa.connect({ recriar: dto.recriar });
     return { data: await this.wa.getStatus(), message: 'Conectando…' };
   }
 

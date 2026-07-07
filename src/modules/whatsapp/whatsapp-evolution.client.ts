@@ -174,6 +174,18 @@ export class WhatsAppEvolutionClient {
     ).trim();
   }
 
+  /** URL do Manager Evolution (pareamento manual). */
+  managerUrl(): string | null {
+    const override = (
+      this.config.get<string>('EVOLUTION_MANAGER_URL') ?? ''
+    ).trim();
+    if (override) {
+      return override.replace(/\/$/, '');
+    }
+    const base = this.baseUrl();
+    return base ? `${base}/manager` : null;
+  }
+
   private async resolveInstanceName(): Promise<string> {
     const configured = this.configuredInstance();
     if (configured) {
@@ -252,26 +264,41 @@ export class WhatsAppEvolutionClient {
   }
 
   /**
-   * Garante instância existente e saudável. Recria automaticamente após
-   * device_removed / logout (causa comum do "não foi possível conectar").
+   * Garante instância existente e saudável. Só recria quando `recriar` é true
+   * (ação explícita do admin). Evita apagar sessão pareada no Manager.
    */
-  private async ensureInstanceReady(): Promise<EvolutionConnectResponse | null> {
+  private async ensureInstanceReady(
+    options: { recriar?: boolean } = {},
+  ): Promise<EvolutionConnectResponse | null> {
     const name = await this.resolveInstanceName();
     const instances = await this.fetchInstances();
     const current = this.findInstanceRecord(instances, name);
 
     if (!current) {
-      this.logger.log(`Evolution: criando instância "${name}"…`);
-      return this.createInstance(name);
+      if (options.recriar) {
+        this.logger.log(`Evolution: criando instância "${name}"…`);
+        return this.createInstance(name);
+      }
+      this.logger.warn(
+        `Evolution: instância "${name}" não encontrada — crie e pareie no Manager.`,
+      );
+      return null;
     }
 
     if (isBrokenEvolutionInstance(current as Record<string, unknown>)) {
+      if (options.recriar) {
+        this.logger.warn(
+          `Evolution: instância "${name}" com sessão inválida — recriando…`,
+        );
+        await this.deleteInstance(name);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        return this.createInstance(name);
+      }
       this.logger.warn(
-        `Evolution: instância "${name}" com sessão inválida — recriando…`,
+        `Evolution: instância "${name}" com sessão inválida — pareie de novo no Manager ` +
+          `(ou chame connect com recriar=true).`,
       );
-      await this.deleteInstance(name);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      return this.createInstance(name);
+      return null;
     }
 
     return null;
@@ -425,8 +452,8 @@ export class WhatsAppEvolutionClient {
   }
 
   /**
-   * Ao subir o back, tenta reutilizar a sessão já pareada na Evolution
-   * (evita pedir QR de novo após restart do Nest ou da Evolution).
+   * Ao subir o back, só consulta o status — não chama connect (evita QR/sessão
+   * extra em cold starts da Vercel). Pareamento fica no Manager da Evolution.
    */
   async ensureSessionOnStartup(): Promise<void> {
     try {
@@ -435,20 +462,13 @@ export class WhatsAppEvolutionClient {
         this.logger.log('Evolution: instância já conectada.');
         return;
       }
-
-      this.logger.log('Evolution: restaurando sessão da instância…');
-      const result = await this.connect();
-
-      if (result.status === 'conectado') {
-        this.logger.log('Evolution: sessão restaurada automaticamente.');
-      } else if (result.qrImagem) {
-        this.logger.warn(
-          'Evolution: sessão expirada — escaneie o QR no Hub admin.',
-        );
-      }
+      this.logger.warn(
+        `Evolution: instância não conectada (${atual.status}) — ` +
+          `pareie ou reconecte no Manager (${this.managerUrl() ?? 'Evolution'}).`,
+      );
     } catch (error) {
       this.logger.warn(
-        `Evolution: não foi possível restaurar sessão no startup: ${(error as Error).message}`,
+        `Evolution: não foi possível consultar status no startup: ${(error as Error).message}`,
       );
     }
   }
@@ -474,13 +494,29 @@ export class WhatsAppEvolutionClient {
     };
   }
 
-  async connect(): Promise<WhatsAppStatusResp> {
-    const fromCreate = await this.ensureInstanceReady();
+  async connect(options?: { recriar?: boolean }): Promise<WhatsAppStatusResp> {
+    const fromCreate = await this.ensureInstanceReady({
+      recriar: options?.recriar,
+    });
     if (fromCreate?.base64) {
       return this.buildConnectResponse(fromCreate, 'conectando');
     }
 
     const instance = await this.resolveInstanceName();
+    const instances = await this.fetchInstances();
+    const current = this.findInstanceRecord(instances, instance);
+
+    if (!current) {
+      return { status: 'desconectado' };
+    }
+
+    if (
+      isBrokenEvolutionInstance(current as Record<string, unknown>) &&
+      !options?.recriar
+    ) {
+      return { status: 'desconectado' };
+    }
+
     const connect = await this.request<EvolutionConnectResponse>(
       'GET',
       `/instance/connect/${encodeURIComponent(instance)}`,
@@ -565,6 +601,8 @@ export class WhatsAppEvolutionClient {
     return montarOverview({
       status: base.status,
       qrImagem: base.qrImagem,
+      integracao: 'evolution',
+      evolutionManagerUrl: this.managerUrl(),
       numeroConectado:
         current?.owner?.trim() ||
         current?.instance?.owner?.trim() ||

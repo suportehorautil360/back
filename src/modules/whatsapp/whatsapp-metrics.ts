@@ -109,9 +109,15 @@ export interface WhatsappKpis {
   mensagens30d: number;
   disponibilidade: WhatsappDisponibilidade;
 }
+export type WhatsAppIntegracao = 'evolution' | 'remote' | 'baileys';
+
 export interface WhatsappOverview {
   status: WhatsAppStatus;
   qrImagem?: string;
+  /** Como a sessão WhatsApp é gerenciada (Evolution = pareamento no Manager). */
+  integracao: WhatsAppIntegracao;
+  /** URL do Manager Evolution (quando `integracao === 'evolution'`). */
+  evolutionManagerUrl?: string | null;
   sessao: WhatsappSessao;
   kpis: WhatsappKpis;
   eventos: EventoWhats[];
@@ -129,6 +135,8 @@ export function ultimosDias(count: number, ref: Date): string[] {
 export interface MontarOverviewArgs extends WhatsappSessao {
   status: WhatsAppStatus;
   qrImagem?: string;
+  integracao: WhatsAppIntegracao;
+  evolutionManagerUrl?: string | null;
   empresasUtilizando: number;
   mensagensHoje: number;
   mensagens30d: number;
@@ -140,6 +148,8 @@ export function montarOverview(a: MontarOverviewArgs): WhatsappOverview {
   return {
     status: a.status,
     qrImagem: a.qrImagem,
+    integracao: a.integracao,
+    evolutionManagerUrl: a.evolutionManagerUrl ?? null,
     sessao: {
       numeroConectado: a.numeroConectado,
       nomeSessao: a.nomeSessao,
