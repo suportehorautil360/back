@@ -12,10 +12,11 @@ import {
  */
 function makeFirebase(opts: {
   cfg?: unknown;
+  cliente?: { whatsapp?: string; contrato?: { emailContratante?: string } };
   workFrontId?: string | null;
   telefoneFrente?: string | null;
 }) {
-  const { cfg, workFrontId = null, telefoneFrente = null } = opts;
+  const { cfg, cliente, workFrontId = null, telefoneFrente = null } = opts;
   const docsFor = (name: string) => {
     if (name === 'configuracoes') {
       return cfg === undefined ? [] : [{ data: () => cfg }];
@@ -34,6 +35,14 @@ function makeFirebase(opts: {
     collection: jest.fn((name: string) => ({
       where: jest.fn(() => ({
         get: async () => ({ docs: docsFor(name) }),
+      })),
+      doc: jest.fn((id: string) => ({
+        get: async () => {
+          if (name === 'clientes' && cliente !== undefined && id === 'pref1') {
+            return { exists: true, data: () => cliente };
+          }
+          return { exists: false, data: () => undefined };
+        },
       })),
     })),
   };
@@ -130,6 +139,28 @@ describe('EmergenciesService.notificarWhatsApp', () => {
     await svc.notificarWhatsApp(doc);
 
     expect(whatsapp.enviarMensagem).toHaveBeenCalledTimes(1);
+  });
+
+  it('prioriza whatsapp do cliente sobre configuracoes legado', async () => {
+    const whatsapp = makeWhatsapp();
+    const firebase = makeFirebase({
+      cfg: {
+        alertas: { notificacaoWhatsapp: true },
+        empresa: { whatsappNumero: '+5519971596071' },
+      },
+      cliente: { whatsapp: '+5511994892766' },
+      workFrontId: null,
+    });
+    const svc = new EmergenciesService(
+      firebase,
+      whatsapp as any,
+      makeMail() as any,
+    );
+
+    await svc.notificarWhatsApp(doc);
+
+    expect(whatsapp.enviarMensagem).toHaveBeenCalledTimes(1);
+    expect(whatsapp.enviarMensagem.mock.calls[0][0]).toBe('+5511994892766');
   });
 
   it('notifica só a empresa quando o equipamento não tem frente alocada', async () => {

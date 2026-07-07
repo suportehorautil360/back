@@ -198,10 +198,12 @@ export class EmergenciesService {
         return;
       }
 
-      // Destinatários: número da empresa + telefone da frente onde o
-      // equipamento está alocado. Deduplicados pelo JID — o mesmo número
-      // escrito de formas diferentes não recebe duas vezes.
-      const numeroEmpresa = (cfg?.empresa?.whatsappNumero ?? '').trim();
+      // Destinatários: WhatsApp da empresa (clientes = fonte única) + telefone
+      // da frente onde o equipamento está alocado.
+      const numeroEmpresa = await this.buscarWhatsappEmpresa(
+        doc.prefeituraId,
+        cfg?.empresa?.whatsappNumero,
+      );
       const numeroFrente = await this.buscarTelefoneFrenteDoEquipamento(
         doc.idMaquina ?? doc.equipamentoId,
       );
@@ -300,6 +302,40 @@ export class EmergenciesService {
   }
 
   /**
+   * WhatsApp de emergências da empresa. Fonte única: coleção `clientes`
+   * (mesmo doc que Configurações grava ao salvar). Retrocompat: `configuracoes`.
+   */
+  private async buscarWhatsappEmpresa(
+    prefeituraId: string,
+    fallbackConfig?: string,
+  ): Promise<string> {
+    const db = this.firebase.getFirestore();
+    const cliente = await db.collection('clientes').doc(prefeituraId).get();
+    const doCliente = (
+      cliente.data()?.whatsapp as string | undefined
+    )?.trim();
+    if (doCliente) return doCliente;
+    return (fallbackConfig ?? '').trim();
+  }
+
+  /**
+   * E-mail de alertas da empresa. Fonte única: `clientes.contrato.emailContratante`.
+   */
+  private async buscarEmailEmpresa(
+    prefeituraId: string,
+    fallbackConfig?: string,
+  ): Promise<string> {
+    const db = this.firebase.getFirestore();
+    const cliente = await db.collection('clientes').doc(prefeituraId).get();
+    const contrato = cliente.data()?.contrato as
+      | { emailContratante?: string }
+      | undefined;
+    const doCliente = (contrato?.emailContratante ?? '').trim();
+    if (doCliente) return doCliente;
+    return (fallbackConfig ?? '').trim();
+  }
+
+  /**
    * Notifica a emergência por EMAIL: email da frente alocada + `emailAlertas`
    * da empresa (deduplicados). Best-effort, nunca lança. Pública porque a
    * emergência do checklist é gravada direto pelo front e chama esta à parte.
@@ -315,7 +351,10 @@ export class EmergenciesService {
       const cfg = snap.docs[0]?.data() as
         | { empresa?: { emailAlertas?: string } }
         | undefined;
-      const emailEmpresa = (cfg?.empresa?.emailAlertas ?? '').trim();
+      const emailEmpresa = await this.buscarEmailEmpresa(
+        doc.prefeituraId,
+        cfg?.empresa?.emailAlertas,
+      );
       const emailFrente = await this.buscarEmailFrenteDoEquipamento(
         doc.idMaquina ?? doc.equipamentoId,
       );
