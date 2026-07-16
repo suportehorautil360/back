@@ -28,6 +28,15 @@ export class UpdateWorkFrontDto {
   responsible?: string;
 
   @ApiPropertyOptional({
+    description:
+      'Doc id do usuário responsável na coleção `users`. String vazia remove ' +
+      'o vínculo e a frente volta a ser visível a todos.',
+  })
+  @IsOptional()
+  @IsString()
+  responsibleId?: string;
+
+  @ApiPropertyOptional({
     description: 'Telefone (WhatsApp) da frente de trabalho, em E.164',
   })
   @IsOptional()

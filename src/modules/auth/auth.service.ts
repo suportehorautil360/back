@@ -12,9 +12,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as admin from 'firebase-admin';
 import type { StringValue } from 'ms';
-import type {
-  QueryDocumentSnapshot,
-} from 'firebase-admin/firestore';
+import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { FirebaseService } from '../../config/firebase.service';
 import { MailService } from '../mail/mail.service';
 import { mapOficinaListItem } from '../oficinas/helpers/oficinas-list.helper';
@@ -112,6 +110,8 @@ export class AuthService {
         sub: doc.id,
         oficinaId,
         prefeituraId: toStr(userData?.prefeituraId),
+        perfil: toStr(userData?.perfil) || 'gestor',
+        vinculo: toStr(userData?.vinculo) || toStr(userData?.type),
         credLevel,
       },
       { secret, expiresIn: expiresIn as StringValue },
@@ -138,7 +138,10 @@ export class AuthService {
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto) {
-    const userRef = this.firebase.getFirestore().collection('users').doc(userId);
+    const userRef = this.firebase
+      .getFirestore()
+      .collection('users')
+      .doc(userId);
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
@@ -147,7 +150,10 @@ export class AuthService {
 
     const userData = userDoc.data();
     const currentValid = usesBcryptPassword(userData)
-      ? await bcrypt.compare(dto.currentPassword, userData!.passwordHash as string)
+      ? await bcrypt.compare(
+          dto.currentPassword,
+          userData!.passwordHash as string,
+        )
       : this.matchesOperacionalPassword(dto.currentPassword, userData);
 
     if (!currentValid) {
@@ -409,7 +415,10 @@ export class AuthService {
       return userData.oficinaId.trim();
     }
 
-    if (typeof userData?.officinaId === 'string' && userData.officinaId.trim()) {
+    if (
+      typeof userData?.officinaId === 'string' &&
+      userData.officinaId.trim()
+    ) {
       return userData.officinaId.trim();
     }
 

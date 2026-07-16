@@ -43,6 +43,18 @@ export class CreateWorkFrontDto {
 
   @ApiProperty({
     description:
+      'Doc id do usuário responsável na coleção `users`. Define quem enxerga ' +
+      'a frente: só ele e o admin. Opcional — frentes sem o campo continuam ' +
+      'visíveis a todos (legado, criadas antes deste campo existir).',
+    example: 'abc123',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  responsibleId?: string;
+
+  @ApiProperty({
+    description:
       'Telefone (WhatsApp) da frente de trabalho, em E.164. Recebe a ' +
       'notificação de emergência do equipamento alocado nesta frente.',
     example: '+5511999999999',

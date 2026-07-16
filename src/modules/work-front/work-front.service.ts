@@ -1,11 +1,12 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateWorkFrontDto } from './dto/create-work-front.dto';
 import { UpdateWorkFrontDto } from './dto/update-work-front.dto';
-import { FirebaseService } from 'src/config/firebase.service';
+import { FirebaseService } from '../../config/firebase.service';
 import { randomUUID } from 'node:crypto';
 
 @Injectable()
@@ -16,6 +17,13 @@ export class WorkFrontService {
   }
 
   async create(createWorkFrontDto: CreateWorkFrontDto) {
+    if (createWorkFrontDto.responsibleId) {
+      await this.assertResponsavelDaPrefeitura(
+        createWorkFrontDto.responsibleId,
+        createWorkFrontDto.prefeituraId,
+      );
+    }
+
     try {
       const db = this.firebaseService.getFirestore();
 
@@ -97,12 +105,22 @@ export class WorkFrontService {
         throw new NotFoundException('Frente de trabalho não encontrada.');
       }
 
+      // A prefeitura vem da frente, não do payload: o PATCH não a envia e ela
+      // não é editável.
+      if (updateDto.responsibleId) {
+        await this.assertResponsavelDaPrefeitura(
+          updateDto.responsibleId,
+          snapshot.docs[0].data()?.prefeituraId as string | undefined,
+        );
+      }
+
       // Mantém apenas os campos realmente enviados (não toca em alocações).
       const data: Record<string, unknown> = {};
       const allowed: (keyof UpdateWorkFrontDto)[] = [
         'name',
         'address',
         'responsible',
+        'responsibleId',
         'telefone',
         'email',
         'status',
@@ -120,10 +138,41 @@ export class WorkFrontService {
 
       return { message: 'Front de trabalho atualizado com sucesso' };
     } catch (error) {
-      if (error instanceof NotFoundException) throw error;
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
       console.error('Error updating work front:', error);
       throw new InternalServerErrorException(
         'Ocorreu um erro ao atualizar o front de trabalho. Tente novamente mais tarde.',
+      );
+    }
+  }
+
+  /**
+   * Designar a frente a um usuário de outra prefeitura a tornaria invisível
+   * para todos: o responsável não a alcança (lista pela prefeitura dele) e
+   * ninguém mais bate com o id.
+   */
+  private async assertResponsavelDaPrefeitura(
+    responsibleId: string,
+    prefeituraId: string | undefined,
+  ) {
+    const userDoc = await this.firebaseService
+      .getFirestore()
+      .collection('users')
+      .doc(responsibleId)
+      .get();
+
+    if (!userDoc.exists) {
+      throw new BadRequestException('Usuário responsável não encontrado.');
+    }
+
+    if (userDoc.data()?.prefeituraId !== prefeituraId) {
+      throw new BadRequestException(
+        'O responsável precisa ser um usuário desta prefeitura.',
       );
     }
   }

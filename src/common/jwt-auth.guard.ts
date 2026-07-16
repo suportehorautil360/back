@@ -9,9 +9,12 @@ import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 
 export interface JwtPayload {
+  /** Doc id do usuário em `users` — o mesmo id de `work-fronts.responsibleId`. */
   sub: string;
   oficinaId: string;
   prefeituraId: string;
+  perfil?: string;
+  vinculo?: string;
   credLevel?: string;
 }
 

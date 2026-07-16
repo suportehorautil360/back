@@ -40,6 +40,15 @@ export class WorkFrontItemDto {
   responsible!: string;
 
   @ApiProperty({
+    description:
+      'Doc id do usuário responsável na coleção `users`. Ausente nas frentes ' +
+      'legadas, que seguem visíveis a todos.',
+    example: 'abc123',
+    required: false,
+  })
+  responsibleId?: string;
+
+  @ApiProperty({
     description: 'Telefone (WhatsApp) da frente de trabalho, em E.164',
     example: '+5511999999999',
     required: false,
