@@ -24,6 +24,8 @@ function mapItensNao(raw: unknown): ChecklistRegistroItemNao[] {
       const rec = item as Record<string, unknown>;
       return {
         titulo: texto(rec.titulo) || undefined,
+        problema: texto(rec.problema) || undefined,
+        numero: texto(rec.numero) || undefined,
       };
     });
 }
@@ -50,6 +52,9 @@ export function mapChecklistRegistroFromFirestore(
     linha: texto(data.linha),
     totalItens: numero(data.totalItens),
     totalSim: numero(data.totalSim),
+    totalNao: numero(data.totalNao),
+    totalNa: numero(data.totalNa),
+    totalAplicaveis: numero(data.totalAplicaveis),
     pontuacao: numero(data.pontuacao),
     horimetro: texto(data.horimetro),
     assinaturaOperador: texto(data.assinaturaOperador),

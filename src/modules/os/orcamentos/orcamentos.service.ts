@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { FieldValue } from 'firebase-admin/firestore';
 import { FirebaseService } from '../../../config/firebase.service';
+import { NotificacoesService } from '../../notificacoes/notificacoes.service';
 import { nomeFromOficinaDoc } from '../helpers/especialidade-oficina.helper';
 import {
   mergeLance,
@@ -33,9 +34,19 @@ function texto(valor: unknown): string {
   return typeof valor === 'string' ? valor.trim() : '';
 }
 
+function fmtBRL(valor: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(valor);
+}
+
 @Injectable()
 export class OrcamentosService {
-  constructor(private readonly firebaseService: FirebaseService) {}
+  constructor(
+    private readonly firebaseService: FirebaseService,
+    private readonly notificacoes: NotificacoesService,
+  ) {}
 
   private get solicitacoesCollection() {
     return this.firebaseService.getFirestore().collection('solicitacoesOS');
@@ -159,10 +170,43 @@ export class OrcamentosService {
             valorTotal,
             prazoDias,
             solicitacaoStatus: novoStatus,
+            prefeituraId,
+            oficinaNome,
           };
         });
 
-      return result;
+      // Notifica o RH da prefeitura. Falha da notificação não quebra o envio.
+      if (result.prefeituraId) {
+        try {
+          await this.notificacoes.create({
+            destinatarioTipo: 'rh',
+            destinatarioId: result.prefeituraId,
+            prefeituraId: result.prefeituraId,
+            tipo: 'info',
+            titulo: `Novo orçamento: ${result.protocol}`,
+            mensagem: `${result.oficinaNome} enviou orçamento de ${fmtBRL(
+              result.valorTotal,
+            )} (prazo: ${result.prazoDias} dia${
+              result.prazoDias === 1 ? '' : 's'
+            }).`,
+            referenciaTipo: 'orcamento',
+            referenciaId: result.id,
+          });
+        } catch (notifErr) {
+          console.warn(
+            'Não foi possível notificar a prefeitura sobre o orçamento:',
+            notifErr,
+          );
+        }
+      }
+
+      return {
+        id: result.id,
+        protocol: result.protocol,
+        valorTotal: result.valorTotal,
+        prazoDias: result.prazoDias,
+        solicitacaoStatus: result.solicitacaoStatus,
+      };
     } catch (error) {
       if (
         error instanceof BadRequestException ||

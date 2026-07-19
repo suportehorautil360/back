@@ -1,5 +1,7 @@
 export interface ChecklistRegistroItemNao {
   titulo?: string;
+  problema?: string;
+  numero?: string;
 }
 
 export interface ChecklistRegistroDoc {
@@ -12,6 +14,10 @@ export interface ChecklistRegistroDoc {
   linha: string;
   totalItens: number;
   totalSim: number;
+  /** Contagem real de respostas "Não" (não inclui N/A). */
+  totalNao: number;
+  totalNa: number;
+  totalAplicaveis: number;
   pontuacao: number;
   horimetro: string;
   assinaturaOperador: string;
