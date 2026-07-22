@@ -91,13 +91,29 @@ export function normalizeAnswerValue(value: unknown): 'sim' | 'nao' | 'outro' {
   return 'outro';
 }
 
-export function classifyRisk(totalNao: number): {
+export function classifyRisk(
+  totalNao: number,
+  opts?: { temImpeditivo?: boolean },
+): {
   nivel: RiskLevel;
   prioridade: 3 | 2 | 1;
 } {
+  // Item impeditivo reprovado sempre sobe para Alto (além da emergência).
+  if (opts?.temImpeditivo) return { nivel: 'alto', prioridade: 3 };
   if (totalNao >= 2) return { nivel: 'alto', prioridade: 3 };
   if (totalNao === 1) return { nivel: 'medio', prioridade: 2 };
   return { nivel: 'baixo', prioridade: 1 };
+}
+
+/** Detecta flag de item impeditivo na resposta do checklist. */
+export function isAnswerImpeditivo(answer: Record<string, unknown>): boolean {
+  if (answer.impeditivo === true) return true;
+  const value = answer.value;
+  if (value && typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    if (obj.impeditivo === true) return true;
+  }
+  return false;
 }
 
 export function getNomeEquipamento(runData: Record<string, unknown>): string {
@@ -122,6 +138,7 @@ export function getNomeOperador(runData: Record<string, unknown>): string {
 export function getAcaoSugerida(
   runData: Record<string, unknown>,
   totalNao: number,
+  opts?: { temImpeditivo?: boolean },
 ): string {
   const blockReason = toSafeString(runData.blockReason);
   if (blockReason) return `Bloquear operacao: ${blockReason}`;
@@ -129,7 +146,7 @@ export function getAcaoSugerida(
   const generatedEmergencyIds = Array.isArray(runData.generatedEmergencyIds)
     ? runData.generatedEmergencyIds
     : [];
-  if (generatedEmergencyIds.length > 0) {
+  if (generatedEmergencyIds.length > 0 || opts?.temImpeditivo) {
     return 'Acionar equipe de manutencao imediatamente (emergencia gerada).';
   }
 

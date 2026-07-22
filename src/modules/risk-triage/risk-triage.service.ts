@@ -7,6 +7,7 @@ import {
   getAcaoSugerida,
   getNomeEquipamento,
   getNomeOperador,
+  isAnswerImpeditivo,
   normalizeAnswerValue,
   normalizeText,
   resolveDefeito,
@@ -37,6 +38,10 @@ export class RiskTriageService {
     return this.firebase.getFirestore().collection('checklistAnswers');
   }
 
+  private get equipamentos() {
+    return this.firebase.getFirestore().collection('equipamentos');
+  }
+
   async listByPrefeitura(params: RiskTriageParams) {
     try {
       const {
@@ -62,12 +67,48 @@ export class RiskTriageService {
         runsQuery = runsQuery.where('startedAt', '<=', endDateIso);
       }
 
-      const snap = await runsQuery.get();
+      const [snap, equipamentosSnap] = await Promise.all([
+        runsQuery.get(),
+        this.equipamentos.where('prefeituraId', '==', prefeituraId).get(),
+      ]);
+
+      const equipamentos = equipamentosSnap.docs.map((doc) => {
+        const data = doc.data() as Record<string, unknown>;
+        return {
+          docId: doc.id,
+          id: toSafeString(data.id),
+          chassis: toSafeString(data.chassis),
+          tipo: toSafeString(data.tipo),
+          nome:
+            toSafeString(data.descricao) ||
+            toSafeString(data.modelo) ||
+            toSafeString(data.tipo),
+        };
+      });
+      const equipamentoPorId = new Map<string, (typeof equipamentos)[number]>();
+      const equipamentoPorChassis = new Map<
+        string,
+        (typeof equipamentos)[number]
+      >();
+      equipamentos.forEach((equipamento) => {
+        if (equipamento.docId) {
+          equipamentoPorId.set(equipamento.docId, equipamento);
+        }
+        if (equipamento.id) equipamentoPorId.set(equipamento.id, equipamento);
+        const chassisNormalizado = normalizeText(equipamento.chassis);
+        if (chassisNormalizado) {
+          equipamentoPorChassis.set(chassisNormalizado, equipamento);
+        }
+      });
 
       const rows = await Promise.all(
         snap.docs.map(async (doc) => {
           const runData = doc.data() as Record<string, unknown>;
           const runId = toSafeString(runData.id) || doc.id;
+          const chassisRun = toSafeString(runData.chassis);
+          const equipamento =
+            equipamentoPorId.get(toSafeString(runData.equipamentoId)) ??
+            equipamentoPorChassis.get(normalizeText(chassisRun));
 
           const answersSnap = await this.answers
             .where('runId', '==', runId)
@@ -88,6 +129,7 @@ export class RiskTriageService {
               ),
               value: rawValue,
               valueNormalized: normalized,
+              impeditivo: isAnswerImpeditivo(answer),
               answeredAt: toSafeString(answer.answeredAt),
             };
           });
@@ -95,10 +137,26 @@ export class RiskTriageService {
           const totalNao = respostas.filter(
             (r) => r.valueNormalized === 'nao',
           ).length;
-          const risco = classifyRisk(totalNao);
-          const primeiraFalha = respostas.find(
-            (r) => r.valueNormalized === 'nao',
-          );
+          const generatedEmergencyIds = Array.isArray(
+            runData.generatedEmergencyIds,
+          )
+            ? runData.generatedEmergencyIds
+            : [];
+          // Impeditivo no answer OU emergência/bloqueio no run → risco Alto.
+          // Assim o item vai para triagem mesmo quando só abriu emergência.
+          const temImpeditivo =
+            respostas.some(
+              (r) => r.valueNormalized === 'nao' && r.impeditivo,
+            ) ||
+            generatedEmergencyIds.length > 0 ||
+            Boolean(toSafeString(runData.blockReason)) ||
+            toSafeString(runData.status) === 'blocked';
+          const risco = classifyRisk(totalNao, { temImpeditivo });
+          // Prefere o primeiro "Não" impeditivo como defeito principal.
+          const primeiraFalha =
+            respostas.find(
+              (r) => r.valueNormalized === 'nao' && r.impeditivo,
+            ) ?? respostas.find((r) => r.valueNormalized === 'nao');
           const defeito = resolveDefeito({
             questionId: primeiraFalha?.questionId,
             questionLabel: primeiraFalha?.questionLabel,
@@ -108,11 +166,19 @@ export class RiskTriageService {
           return {
             id: runId,
             prefeituraId: toSafeString(runData.prefeituraId),
-            chassis: toSafeString(runData.chassis),
-            nomeEquipamento: getNomeEquipamento(runData),
+            chassis: chassisRun || equipamento?.chassis || '',
+            nomeEquipamento:
+              equipamento?.nome || getNomeEquipamento(runData),
+            tipoEquipamento:
+              equipamento?.tipo ||
+              toSafeString(runData.tipoEquipamento) ||
+              toSafeString(runData.tipo) ||
+              toSafeString(runData.categoria),
             nomeOperador: getNomeOperador(runData),
             defeito,
-            acaoSugerida: getAcaoSugerida(runData, totalNao),
+            acaoSugerida: getAcaoSugerida(runData, totalNao, {
+              temImpeditivo,
+            }),
             startedAt: runData.startedAt ?? null,
             risco: risco.nivel,
             prioridadeRisco: risco.prioridade,
@@ -152,6 +218,8 @@ export class RiskTriageService {
       const data = filteredRows.map((row) => ({
         risco: row.risco,
         nomeEquipamento: row.nomeEquipamento,
+        tipoEquipamento: row.tipoEquipamento,
+        chassis: row.chassis,
         defeito: row.defeito,
         nomeOperador: row.nomeOperador,
         acaoSugerida: row.acaoSugerida,

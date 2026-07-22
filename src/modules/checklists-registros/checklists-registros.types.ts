@@ -2,6 +2,8 @@ export interface ChecklistRegistroItemNao {
   titulo?: string;
   problema?: string;
   numero?: string;
+  /** Item impeditivo reprovado — triagem classifica como risco alto. */
+  impeditivo?: boolean;
 }
 
 export interface ChecklistRegistroDoc {

@@ -18,6 +18,13 @@ export class AnswerChecklistQuestionDto {
 
   @ApiProperty({
     required: false,
+    description:
+      'True quando o item é impeditivo e foi marcado como Não. A triagem de risco classifica o run como alto.',
+  })
+  impeditivo?: boolean;
+
+  @ApiProperty({
+    required: false,
     description: 'Ações calculadas pelo motor de regras/definição versionada.',
   })
   actions?: ChecklistRuleActionDto[];

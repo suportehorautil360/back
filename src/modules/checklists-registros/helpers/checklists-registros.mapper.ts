@@ -26,6 +26,7 @@ function mapItensNao(raw: unknown): ChecklistRegistroItemNao[] {
         titulo: texto(rec.titulo) || undefined,
         problema: texto(rec.problema) || undefined,
         numero: texto(rec.numero) || undefined,
+        impeditivo: rec.impeditivo === true ? true : undefined,
       };
     });
 }

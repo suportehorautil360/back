@@ -11,6 +11,7 @@ import { NotificacoesModule } from './modules/notificacoes/notificacoes.module';
 import { AbonosModule } from './modules/abonos/abonos.module';
 import { EscalaModule } from './modules/escala/escala.module';
 import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
+import { CargosPermissaoModule } from './modules/cargos-permissao/cargos-permissao.module';
 import { EmergenciesModule } from './modules/emergencies/emergencies.module';
 import { ChecklistsModule } from './modules/checklists/checklists.module';
 import { ChecklistDefinitionsModule } from './modules/checklist-definitions/checklist-definitions.module';
@@ -62,6 +63,7 @@ import { FleetfuelModule } from './modules/fleetfuel/fleetfuel.module';
     AbonosModule,
     EscalaModule,
     FeatureFlagsModule,
+    CargosPermissaoModule,
     EmergenciesModule,
     ChecklistsModule,
     ChecklistDefinitionsModule,

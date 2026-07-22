@@ -138,6 +138,9 @@ export class ChecklistsService {
       value: dto.value,
       problemDescription: dto.problemDescription ?? null,
       photoUrls: Array.isArray(dto.photoUrls) ? dto.photoUrls : [],
+      // Impeditivo reprovado: triagem de risco usa este flag para forçar Alto
+      // (mesmo quando já gerou emergência).
+      impeditivo: dto.impeditivo === true,
       answeredAt: agora,
     };
 
