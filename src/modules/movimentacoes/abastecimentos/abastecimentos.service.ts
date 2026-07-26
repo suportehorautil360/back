@@ -37,7 +37,7 @@ import {
   parseDateStart,
 } from '../shared/date.helper';
 import {
-  createdAtToIso,
+  resolveCreatedAt,
   fetchPrefeituraDocs,
 } from '../shared/prefeitura-query.helper';
 import { reverseGeocode } from '../shared/reverse-geocode.helper';
@@ -520,7 +520,8 @@ export class AbastecimentosService {
         return {
           ...data,
           id: asString(data.id) || doc.id,
-          createdAt: createdAtToIso(data.createdAt) || createdAtToIso(data.criadoEm),
+          // Fleetfuel: createdAt ISO; legado 360: criadoEm Timestamp ou só `data`.
+          createdAt: resolveCreatedAt(data),
         } as AbastecimentoDoc;
       });
 
@@ -573,9 +574,18 @@ export class AbastecimentosService {
       this.fetchPostoMap(uniquePostoIds),
     ]);
 
-    return Promise.all(
-      docs.map((doc) => this.formatAbastecimento(doc, equipmentMap, postoMap)),
+    // Um doc quebrado não pode derrubar o histórico inteiro (500).
+    const formatted = await Promise.all(
+      docs.map(async (doc) => {
+        try {
+          return await this.formatAbastecimento(doc, equipmentMap, postoMap);
+        } catch (err) {
+          console.error(`Falha ao formatar abastecimento ${doc.id}:`, err);
+          return null;
+        }
+      }),
     );
+    return formatted.filter((row): row is NonNullable<typeof row> => row != null);
   }
 
   /**
@@ -671,7 +681,10 @@ export class AbastecimentosService {
           plateOrChassis,
       ),
       plate: asString(
-        equipment.placa ?? equipment.chassis ?? plateOrChassis,
+        equipment.placa ??
+          equipment.chassis ??
+          raw.placa ??
+          plateOrChassis,
       ),
       type: asString(equipment.tipo ?? equipment.linha ?? raw.tipoVeiculo ?? '—'),
     };
@@ -679,10 +692,17 @@ export class AbastecimentosService {
     const readingLabel = formatReadingLabel(raw);
     const currentReading = resolveCurrentReading(raw);
 
-    const local =
-      doc.latitude && doc.longitude
-        ? await reverseGeocode(doc.latitude, doc.longitude)
-        : asString(raw.local) || null;
+    const hasCoords =
+      Number.isFinite(Number(doc.latitude)) &&
+      Number.isFinite(Number(doc.longitude)) &&
+      !(Number(doc.latitude) === 0 && Number(doc.longitude) === 0);
+
+    const local = hasCoords
+      ? await reverseGeocode(Number(doc.latitude), Number(doc.longitude))
+      : asString(raw.local) || null;
+
+    const valorLegado = parseValorLegado(raw.valorTotal ?? raw.valor ?? raw.total);
+    const precoLegado = parseValorLegado(raw.pricePerLiter ?? raw.precoLitro);
 
     return {
       id: doc.id,
@@ -699,8 +719,9 @@ export class AbastecimentosService {
         asString(raw.motorista) ||
         null,
       liters: resolveLiters(raw),
-      pricePerLiter: doc.pricePerLiter ?? null,
-      value: doc.total ?? null,
+      pricePerLiter:
+        doc.pricePerLiter ?? (precoLegado > 0 ? precoLegado : null),
+      value: doc.total ?? (valorLegado > 0 ? valorLegado : null),
       // Docs legados podem não ter currentReading — os helpers resolvem leitura
       // (currentReading/leitura/km/horimetro) e devolvem null/'—' sem derrubar a
       // listagem inteira (500).
@@ -732,6 +753,18 @@ function asString(value: unknown): string {
   if (typeof value === 'number' || typeof value === 'boolean')
     return String(value);
   return '';
+}
+
+/** Aceita número ou "R$ 1.234,56" (legado do portal 360). */
+function parseValorLegado(v: unknown): number {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
+  if (typeof v !== 'string') return 0;
+  const limpo = v
+    .replace(/[^0-9,.-]/g, '')
+    .replace(/\./g, '')
+    .replace(',', '.');
+  const n = Number(limpo);
+  return Number.isFinite(n) ? n : 0;
 }
 
 function motoristaEhCondutor(

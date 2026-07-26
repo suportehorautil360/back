@@ -11,7 +11,16 @@ export interface PrefeituraQueryOptions {
 /** Normaliza createdAt / criadoEm (string ISO, Timestamp Firestore ou legado). */
 export function createdAtToIso(raw: unknown): string {
   if (!raw) return '';
-  if (typeof raw === 'string') return raw;
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (!trimmed) return '';
+    // Campo legado `data` (YYYY-MM-DD) — meio-dia UTC para cair no dia certo.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return `${trimmed}T12:00:00.000Z`;
+    }
+    const d = new Date(trimmed);
+    return Number.isNaN(d.getTime()) ? '' : d.toISOString();
+  }
 
   if (typeof raw === 'object' && raw !== null) {
     const rec = raw as Record<string, unknown>;
@@ -22,13 +31,21 @@ export function createdAtToIso(raw: unknown): string {
     if (typeof rec.seconds === 'number') {
       return new Date(rec.seconds * 1000).toISOString();
     }
+    if (typeof rec._seconds === 'number') {
+      return new Date(rec._seconds * 1000).toISOString();
+    }
   }
 
   return '';
 }
 
-function resolveCreatedAt(data: Record<string, unknown>): string {
-  return createdAtToIso(data.createdAt) || createdAtToIso(data.criadoEm);
+/** createdAt → criadoEm → data (YYYY-MM-DD do portal legado). */
+export function resolveCreatedAt(data: Record<string, unknown>): string {
+  return (
+    createdAtToIso(data.createdAt) ||
+    createdAtToIso(data.criadoEm) ||
+    createdAtToIso(data.data)
+  );
 }
 
 function compareCreatedAt(
