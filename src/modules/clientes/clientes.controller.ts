@@ -1,5 +1,17 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../../common/jwt-auth.guard';
 import { ClientesOficinasService } from './clientes-oficinas.service';
 import { ClientesService } from './clientes.service';
 import { CreateClienteDto } from './dto/create-cliente.dto';
@@ -7,6 +19,7 @@ import { UpdateClienteDto } from './dto/update-cliente.dto';
 import { CreateAcessoDto } from './dto/create-acesso.dto';
 import { UpdateAcessoDto } from './dto/update-acesso.dto';
 import { ResetSenhaAcessoDto } from './dto/reset-senha-acesso.dto';
+import { ChecklistLoginConfigDto } from './dto/checklist-login-config.dto';
 
 @ApiTags('clientes')
 @Controller('clientes')
@@ -81,7 +94,8 @@ export class ClientesController {
   @Delete(':prefeituraId/parceiros/:parceiroId/descredenciar')
   @ApiOperation({
     summary: 'Descredenciar oficina do município',
-    description: 'Define status Suspensa no credenciamento municipal (não remove o parceiro global).',
+    description:
+      'Define status Suspensa no credenciamento municipal (não remove o parceiro global).',
   })
   @ApiParam({ name: 'prefeituraId' })
   @ApiParam({ name: 'parceiroId' })
@@ -129,7 +143,9 @@ export class ClientesController {
   }
 
   @Post(':clienteId/acessos/:acessoId/update')
-  @ApiOperation({ summary: 'Atualiza dados de um acesso (login, perfil, etc.)' })
+  @ApiOperation({
+    summary: 'Atualiza dados de um acesso (login, perfil, etc.)',
+  })
   async atualizarAcesso(
     @Param('clienteId') clienteId: string,
     @Param('acessoId') acessoId: string,
@@ -146,5 +162,19 @@ export class ClientesController {
     @Body() dto: ResetSenhaAcessoDto,
   ) {
     return this.clientesService.resetarSenhaAcesso(clienteId, acessoId, dto);
+  }
+
+  @Patch(':id/checklist-login-config')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Atualiza config do login do checklist (cpfSenha / chassi).',
+  })
+  @ApiResponse({ status: 204, description: 'Configuração atualizada.' })
+  async atualizarChecklistLoginConfig(
+    @Param('id') id: string,
+    @Body() dto: ChecklistLoginConfigDto,
+  ): Promise<void> {
+    await this.clientesService.atualizarChecklistLoginConfig(id, dto);
   }
 }
