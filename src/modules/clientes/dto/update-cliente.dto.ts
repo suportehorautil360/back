@@ -1,5 +1,8 @@
+import { Type } from 'class-transformer';
+import { IsOptional, ValidateNested } from 'class-validator';
 import { OmitType, PartialType } from '@nestjs/swagger';
 import { CreateClienteDto, CreateContratoDto } from './create-cliente.dto';
+import { ChecklistLoginConfigDto } from './checklist-login-config.dto';
 
 /** Contrato em atualização — todos os campos opcionais (merge parcial). */
 export class UpdateContratoDto extends PartialType(CreateContratoDto) {}
@@ -15,4 +18,9 @@ export class UpdateClienteDto extends PartialType(
   OmitType(CreateClienteDto, ['contrato'] as const),
 ) {
   contrato?: UpdateContratoDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ChecklistLoginConfigDto)
+  checklistLogin?: ChecklistLoginConfigDto;
 }
