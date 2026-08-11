@@ -66,16 +66,4 @@ describe('ClientesService.atualizarChecklistLoginConfig', () => {
       service.atualizarChecklistLoginConfig('naoExiste', dto),
     ).rejects.toThrow(NotFoundException);
   });
-
-  it('rejeita com NotFoundException se cliente não é encontrado (mesma coisa)', async () => {
-    const { firebase } = makeFirestore({
-      docExists: false,
-    });
-    const service = new ClientesService(firebase);
-    const dto: ChecklistLoginConfigDto = { cpfSenha: true, chassi: false };
-
-    await expect(
-      service.atualizarChecklistLoginConfig('id_fantasma', dto),
-    ).rejects.toThrow(NotFoundException);
-  });
 });
