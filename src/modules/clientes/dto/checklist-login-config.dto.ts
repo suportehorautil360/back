@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 
 @ValidatorConstraint({ name: 'PeloMenos1Modo' })
-class PeloMenos1ModoAtivo implements ValidatorConstraintInterface {
+export class PeloMenos1ModoAtivo implements ValidatorConstraintInterface {
   validate(_: unknown, args: ValidationArguments) {
     const o = args.object as { cpfSenha?: boolean; chassi?: boolean };
     return Boolean(o.cpfSenha) || Boolean(o.chassi);
