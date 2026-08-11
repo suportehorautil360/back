@@ -3,36 +3,62 @@ import { validarMatrizPreventiva } from './validar-matriz.helper';
 
 describe('validarMatrizPreventiva', () => {
   const matrizValida = {
-    ciclos: [{ id: 'c1', horas: 250, km: 10000, titulo: 'Ciclo 1' }],
-    linhas: [
+    categorias: [
       {
-        id: 'l1',
-        categoria: 'Fluidos',
-        item: 'Óleo',
-        especificacao: 'SAE',
-        acoes: { c1: 'trocar' },
+        id: 'cat-fluidos',
+        nome: 'Fluidos',
+        ciclos: [{ id: 'c1', horas: 250, km: 10000, titulo: 'Ciclo 1' }],
+        linhas: [
+          {
+            id: 'l1',
+            item: 'Óleo',
+            especificacao: 'SAE',
+            acoes: { c1: 'trocar' },
+          },
+        ],
       },
     ],
   };
 
-  it('aceita matriz válida', () => {
+  it('aceita plano com categorias→matriz', () => {
     expect(validarMatrizPreventiva(matrizValida)).toEqual(matrizValida);
   });
 
-  it('rejeita sem ciclos', () => {
+  it('rejeita sem categorias', () => {
+    expect(() => validarMatrizPreventiva({ categorias: [] })).toThrow(
+      BadRequestException,
+    );
+  });
+
+  it('rejeita categoria sem ciclos', () => {
     expect(() =>
-      validarMatrizPreventiva({ ciclos: [], linhas: matrizValida.linhas }),
+      validarMatrizPreventiva({
+        categorias: [
+          {
+            id: 'cat-1',
+            nome: 'X',
+            ciclos: [],
+            linhas: [],
+          },
+        ],
+      }),
     ).toThrow(BadRequestException);
   });
 
   it('rejeita ação em ciclo inexistente', () => {
     expect(() =>
       validarMatrizPreventiva({
-        ciclos: matrizValida.ciclos,
-        linhas: [
+        categorias: [
           {
-            ...matrizValida.linhas[0],
-            acoes: { c2: 'trocar' },
+            ...matrizValida.categorias[0],
+            linhas: [
+              {
+                id: 'l1',
+                item: 'Óleo',
+                especificacao: 'SAE',
+                acoes: { c2: 'trocar' },
+              },
+            ],
           },
         ],
       }),
@@ -42,11 +68,17 @@ describe('validarMatrizPreventiva', () => {
   it('rejeita ação inválida', () => {
     expect(() =>
       validarMatrizPreventiva({
-        ciclos: matrizValida.ciclos,
-        linhas: [
+        categorias: [
           {
-            ...matrizValida.linhas[0],
-            acoes: { c1: 'invalida' },
+            ...matrizValida.categorias[0],
+            linhas: [
+              {
+                id: 'l1',
+                item: 'Óleo',
+                especificacao: 'SAE',
+                acoes: { c1: 'invalida' },
+              },
+            ],
           },
         ],
       }),
