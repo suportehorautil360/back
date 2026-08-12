@@ -57,7 +57,11 @@ export class ChecklistChassiService {
     const cliDoc = habilitadas[0];
     const equipamento = eqSnap.docs.find(
       (e) => e.get('prefeituraId') === cliDoc.id,
-    )!;
+    );
+
+    if (!equipamento) {
+      throw new NotFoundException('Chassi não encontrado.');
+    }
 
     return {
       empresaId: cliDoc.id,
