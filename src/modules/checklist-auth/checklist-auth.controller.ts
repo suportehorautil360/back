@@ -1,10 +1,13 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { ChecklistChassiService } from './checklist-chassi.service';
 import { ResolverChassiDto } from './dto/resolver-chassi.dto';
 
 @ApiTags('checklist')
 @Controller('checklist')
+@UseGuards(ThrottlerGuard)
+@Throttle({ default: { limit: 10, ttl: 60_000 } })
 export class ChecklistAuthController {
   constructor(private readonly service: ChecklistChassiService) {}
 

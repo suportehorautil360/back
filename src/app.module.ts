@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { RevisionModule } from './modules/revision/revision.module';
 import { WorkFrontModule } from './modules/work-front/work-front.module';
@@ -50,6 +51,7 @@ import { ChecklistAuthModule } from './modules/checklist-auth/checklist-auth.mod
       isGlobal: true,
     }),
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 10 }]),
     VehiclesModule,
     EquipamentosModule,
     FuncionariosModule,

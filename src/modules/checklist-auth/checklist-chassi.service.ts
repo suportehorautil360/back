@@ -2,17 +2,23 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { FirebaseService } from '../../config/firebase.service';
 import { normalizarChassi } from './helpers/chassi.helper';
 
 @Injectable()
 export class ChecklistChassiService {
+  private readonly logger = new Logger(ChecklistChassiService.name);
+
   constructor(private readonly firebase: FirebaseService) {}
 
   async resolverChassi(chassiInput: string) {
     const chassi = normalizarChassi(chassiInput);
-    if (!chassi) throw new NotFoundException('Chassi vazio.');
+    if (!chassi) {
+      this.logger.warn(JSON.stringify({ evento: 'resolver-chassi', chassi: chassiInput, resultado: 'vazio' }));
+      throw new NotFoundException('Chassi vazio.');
+    }
 
     const eqSnap = await this.firebase
       .getFirestore()
@@ -21,7 +27,10 @@ export class ChecklistChassiService {
       .limit(5)
       .get();
 
-    if (eqSnap.empty) throw new NotFoundException('Chassi não encontrado.');
+    if (eqSnap.empty) {
+      this.logger.warn(JSON.stringify({ evento: 'resolver-chassi', chassi, resultado: 'nao-encontrado' }));
+      throw new NotFoundException('Chassi não encontrado.');
+    }
 
     // Buscar clientes das prefeituraIds únicas e filtrar por chassi habilitado
     const prefIds = [
@@ -44,15 +53,19 @@ export class ChecklistChassiService {
             ?.chassi === true,
       );
 
-    if (habilitadas.length === 0)
+    if (habilitadas.length === 0) {
+      this.logger.warn(JSON.stringify({ evento: 'resolver-chassi', chassi, resultado: 'nao-habilita' }));
       throw new NotFoundException(
         'A empresa vinculada ao chassi não habilita login por chassi.',
       );
+    }
 
-    if (habilitadas.length > 1)
+    if (habilitadas.length > 1) {
+      this.logger.warn(JSON.stringify({ evento: 'resolver-chassi', chassi, resultado: 'conflito' }));
       throw new ConflictException(
         'Chassi vinculado a múltiplas empresas com login habilitado.',
       );
+    }
 
     const cliDoc = habilitadas[0];
     const equipamento = eqSnap.docs.find(
@@ -60,15 +73,20 @@ export class ChecklistChassiService {
     );
 
     if (!equipamento) {
+      this.logger.warn(JSON.stringify({ evento: 'resolver-chassi', chassi, resultado: 'nao-encontrado' }));
       throw new NotFoundException('Chassi não encontrado.');
     }
 
-    return {
+    const resultado = {
       empresaId: cliDoc.id,
       empresaNome: (cliDoc.get('nome') as string) ?? cliDoc.id,
       idMaquina: equipamento.id,
       chassi,
     };
+
+    this.logger.log(JSON.stringify({ evento: 'resolver-chassi', chassi, empresaId: cliDoc.id, resultado: 'ok' }));
+
+    return resultado;
   }
 
   async listarChassisDaEmpresa(
