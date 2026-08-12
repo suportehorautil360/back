@@ -42,6 +42,7 @@ import { SuporteModule } from './modules/suporte/suporte.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { FleetfuelModule } from './modules/fleetfuel/fleetfuel.module';
+import { ChecklistAuthModule } from './modules/checklist-auth/checklist-auth.module';
 
 @Module({
   imports: [
@@ -90,6 +91,7 @@ import { FleetfuelModule } from './modules/fleetfuel/fleetfuel.module';
     AuthModule,
     UsersModule,
     FleetfuelModule,
+    ChecklistAuthModule,
     // ... outros módulos
   ],
   controllers: [],
