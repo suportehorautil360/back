@@ -70,4 +70,26 @@ export class ChecklistChassiService {
       chassi,
     };
   }
+
+  async listarChassisDaEmpresa(
+    empresaId: string,
+  ): Promise<{ chassis: string[]; expiraEm: string }> {
+    const snap = await this.firebase
+      .getFirestore()
+      .collection('equipamentos')
+      .where('prefeituraId', '==', empresaId)
+      .get();
+
+    const set = new Set<string>();
+    for (const d of snap.docs) {
+      const norm = normalizarChassi((d.get('chassis') as string) ?? '');
+      if (norm) set.add(norm);
+    }
+
+    const TTL_MS = 7 * 24 * 60 * 60 * 1000;
+    return {
+      chassis: [...set],
+      expiraEm: new Date(Date.now() + TTL_MS).toISOString(),
+    };
+  }
 }

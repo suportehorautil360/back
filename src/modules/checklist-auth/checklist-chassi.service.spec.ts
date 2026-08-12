@@ -197,3 +197,64 @@ describe('ChecklistChassiService.resolverChassi', () => {
   });
 
 });
+
+describe('ChecklistChassiService.listarChassisDaEmpresa', () => {
+  it('retorna lista deduplicada + normalizada', async () => {
+    // Mock equipamentos where prefeituraId == 'cli_1' →
+    // [ {chassis:'aaa'}, {chassis:'BBB'}, {chassis:'aaa'}, {chassis:''} ]
+    const firebase = {
+      getFirestore: () => ({
+        collection: (name: string) => {
+          if (name === 'equipamentos') {
+            return {
+              where: jest.fn(() => ({
+                get: jest.fn().mockResolvedValue({
+                  empty: false,
+                  docs: [
+                    makeDoc('eq_1', { prefeituraId: 'cli_1', chassis: 'aaa' }),
+                    makeDoc('eq_2', { prefeituraId: 'cli_1', chassis: 'BBB' }),
+                    makeDoc('eq_3', { prefeituraId: 'cli_1', chassis: 'aaa' }),
+                    makeDoc('eq_4', { prefeituraId: 'cli_1', chassis: '' }),
+                  ],
+                }),
+              })),
+            };
+          }
+          return {};
+        },
+      }),
+    } as unknown as FirebaseService;
+
+    const service = new ChecklistChassiService(firebase);
+    const out = await service.listarChassisDaEmpresa('cli_1');
+
+    expect(out.chassis.sort()).toEqual(['AAA', 'BBB']);
+    expect(new Date(out.expiraEm).getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it('retorna lista vazia se sem equipamentos', async () => {
+    const firebase = {
+      getFirestore: () => ({
+        collection: (name: string) => {
+          if (name === 'equipamentos') {
+            return {
+              where: jest.fn(() => ({
+                get: jest.fn().mockResolvedValue({
+                  empty: true,
+                  docs: [],
+                }),
+              })),
+            };
+          }
+          return {};
+        },
+      }),
+    } as unknown as FirebaseService;
+
+    const service = new ChecklistChassiService(firebase);
+    const out = await service.listarChassisDaEmpresa('cli_vazio');
+
+    expect(out.chassis).toEqual([]);
+    expect(new Date(out.expiraEm).getTime()).toBeGreaterThan(Date.now());
+  });
+});
