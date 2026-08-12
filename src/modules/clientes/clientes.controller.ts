@@ -8,10 +8,8 @@ import {
   Param,
   Patch,
   Post,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../common/jwt-auth.guard';
 import { ClientesOficinasService } from './clientes-oficinas.service';
 import { ClientesService } from './clientes.service';
 import { CreateClienteDto } from './dto/create-cliente.dto';
@@ -165,7 +163,6 @@ export class ClientesController {
   }
 
   @Patch(':id/checklist-login-config')
-  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Atualiza config do login do checklist (cpfSenha / chassi).',
