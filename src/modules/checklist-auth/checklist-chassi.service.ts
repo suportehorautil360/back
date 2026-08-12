@@ -104,10 +104,13 @@ export class ChecklistChassiService {
       if (norm) set.add(norm);
     }
 
-    const TTL_MS = 7 * 24 * 60 * 60 * 1000;
-    return {
+    const result = {
       chassis: [...set],
-      expiraEm: new Date(Date.now() + TTL_MS).toISOString(),
+      expiraEm: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     };
+
+    this.logger.log(JSON.stringify({ evento: 'listar-chassis-empresa', empresaId, quantidade: result.chassis.length }));
+
+    return result;
   }
 }
