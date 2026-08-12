@@ -10,6 +10,7 @@ describe('ChecklistAuthController (e2e)', () => {
   let app: INestApplication<App>;
 
   const resolverChassi = jest.fn();
+  const listarChassisDaEmpresa = jest.fn();
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -17,7 +18,7 @@ describe('ChecklistAuthController (e2e)', () => {
       providers: [
         {
           provide: ChecklistChassiService,
-          useValue: { resolverChassi },
+          useValue: { resolverChassi, listarChassisDaEmpresa },
         },
       ],
     }).compile();
@@ -86,6 +87,42 @@ describe('ChecklistAuthController (e2e)', () => {
         .post('/checklist/resolver-chassi')
         .send({ chassi: 123 })
         .expect(400);
+    });
+  });
+
+  describe('GET /checklist/chassis-empresa/:empresaId', () => {
+    it('should return 200 with chassis list and expiraEm', async () => {
+      const mockResponse = {
+        chassis: ['ABC123DEF456', 'XYZ789GHI012'],
+        expiraEm: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      };
+
+      listarChassisDaEmpresa.mockResolvedValue(mockResponse);
+
+      const res = await request(app.getHttpServer())
+        .get('/checklist/chassis-empresa/empresa-1')
+        .expect(200);
+
+      expect(res.body.chassis).toEqual(['ABC123DEF456', 'XYZ789GHI012']);
+      expect(res.body.expiraEm).toBeDefined();
+      expect(listarChassisDaEmpresa).toHaveBeenCalledWith('empresa-1');
+    });
+
+    it('should return 200 with empty chassis list for empresa with no equipamentos', async () => {
+      const mockResponse = {
+        chassis: [],
+        expiraEm: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      };
+
+      listarChassisDaEmpresa.mockResolvedValue(mockResponse);
+
+      const res = await request(app.getHttpServer())
+        .get('/checklist/chassis-empresa/empresa-empty')
+        .expect(200);
+
+      expect(res.body.chassis).toEqual([]);
+      expect(res.body.expiraEm).toBeDefined();
+      expect(listarChassisDaEmpresa).toHaveBeenCalledWith('empresa-empty');
     });
   });
 });

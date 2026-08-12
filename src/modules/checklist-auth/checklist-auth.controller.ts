@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChecklistChassiService } from './checklist-chassi.service';
 import { ResolverChassiDto } from './dto/resolver-chassi.dto';
@@ -13,5 +13,11 @@ export class ChecklistAuthController {
   @ApiOperation({ summary: 'Resolve empresa/máquina a partir do chassi (público, rate-limited).' })
   async resolver(@Body() dto: ResolverChassiDto) {
     return this.service.resolverChassi(dto.chassi);
+  }
+
+  @Get('chassis-empresa/:empresaId')
+  @ApiOperation({ summary: 'Lista chassis da empresa para cache offline (público, rate-limited).' })
+  async chassisEmpresa(@Param('empresaId') empresaId: string) {
+    return this.service.listarChassisDaEmpresa(empresaId);
   }
 }
