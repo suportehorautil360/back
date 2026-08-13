@@ -10,9 +10,9 @@ export class PlanosPreventivosController {
 
   @Get(':prefeituraId')
   @ApiOperation({
-    summary: 'Obter matriz de manutenção preventiva do município',
+    summary: 'Obter plano de manutenção preventiva do município',
     description:
-      'Retorna { ciclos, linhas } por prefeituraId. 404 quando ainda não foi salvo — front usa MATRIZ_PADRAO.',
+      'Retorna { categorias: [{ id, nome, ciclos, linhas }] }. 404 quando ainda não foi salvo — front usa seed padrão.',
   })
   @ApiParam({ name: 'prefeituraId' })
   @ApiResponse({ status: 200, description: 'Plano carregado.' })
@@ -24,8 +24,8 @@ export class PlanosPreventivosController {
   @Put(':prefeituraId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Salvar / substituir matriz preventiva',
-    description: 'Replace completo de { ciclos, linhas }.',
+    summary: 'Salvar / substituir plano preventivo',
+    description: 'Replace completo de { categorias } — cada categoria com a própria matriz.',
   })
   @ApiParam({ name: 'prefeituraId' })
   salvar(
@@ -38,8 +38,8 @@ export class PlanosPreventivosController {
   @Post(':prefeituraId/restaurar-padrao')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Restaurar matriz multimarcas padrão',
-    description: 'Grava seed com 4 ciclos e 22 linhas (igual ao front).',
+    summary: 'Restaurar plano padrão',
+    description: 'Grava seed com 4 categorias (Fluidos, Filtros, Consumo, Serviço), cada uma com matriz própria.',
   })
   @ApiParam({ name: 'prefeituraId' })
   restaurarPadrao(@Param('prefeituraId') prefeituraId: string) {

@@ -21,20 +21,25 @@ export interface CicloMatriz {
 
 export interface LinhaMatriz {
   id: string;
-  categoria: string;
   item: string;
   especificacao: string;
   acoes: Record<string, AcaoMatriz>;
 }
 
-export interface PlanoPreventivoDoc {
-  prefeituraId: string;
+/** Categoria dona de uma matriz (ciclos × linhas). */
+export interface CategoriaPlano {
+  id: string;
+  nome: string;
   ciclos: CicloMatriz[];
   linhas: LinhaMatriz[];
+}
+
+export interface PlanoPreventivoDoc {
+  prefeituraId: string;
+  categorias: CategoriaPlano[];
   atualizadoEm: string;
 }
 
 export interface SalvarPlanoPreventivoInput {
-  ciclos: CicloMatriz[];
-  linhas: LinhaMatriz[];
+  categorias: CategoriaPlano[];
 }
