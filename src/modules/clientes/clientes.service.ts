@@ -16,6 +16,7 @@ import { UpdateClienteDto } from './dto/update-cliente.dto';
 import { CreateAcessoDto } from './dto/create-acesso.dto';
 import { UpdateAcessoDto } from './dto/update-acesso.dto';
 import { ResetSenhaAcessoDto } from './dto/reset-senha-acesso.dto';
+import { ChecklistLoginConfigDto } from './dto/checklist-login-config.dto';
 
 /** SHA-256 sem salt (espelha utils/hashSenha do front, pra o login bater). */
 function hashSenha(senha: string): string {
@@ -492,7 +493,8 @@ export class ClientesService {
 
     if (dto.email !== undefined) patch.email = dto.email.trim();
     if (dto.whatsapp !== undefined) patch.whatsapp = dto.whatsapp.trim();
-    if (dto.notificaEmail !== undefined) patch.notificaEmail = dto.notificaEmail;
+    if (dto.notificaEmail !== undefined)
+      patch.notificaEmail = dto.notificaEmail;
     if (dto.notificaWhatsapp !== undefined) {
       patch.notificaWhatsapp = dto.notificaWhatsapp;
     }
@@ -552,5 +554,23 @@ export class ClientesService {
         'Não foi possível redefinir a senha.',
       );
     }
+  }
+
+  /** Atualiza a configuração do checklist login (cpfSenha / chassi) de um cliente. */
+  async atualizarChecklistLoginConfig(
+    clienteId: string,
+    config: ChecklistLoginConfigDto,
+  ): Promise<void> {
+    const ref = this.firebaseService
+      .getFirestore()
+      .collection('clientes')
+      .doc(clienteId);
+    const doc = await ref.get();
+    if (!doc.exists) {
+      throw new NotFoundException(`Cliente ${clienteId} não encontrado.`);
+    }
+    await ref.update({
+      checklistLogin: { cpfSenha: config.cpfSenha, chassi: config.chassi },
+    });
   }
 }

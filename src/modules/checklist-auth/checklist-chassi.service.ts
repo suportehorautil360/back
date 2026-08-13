@@ -1,0 +1,116 @@
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
+import { FirebaseService } from '../../config/firebase.service';
+import { normalizarChassi } from './helpers/chassi.helper';
+
+@Injectable()
+export class ChecklistChassiService {
+  private readonly logger = new Logger(ChecklistChassiService.name);
+
+  constructor(private readonly firebase: FirebaseService) {}
+
+  async resolverChassi(chassiInput: string) {
+    const chassi = normalizarChassi(chassiInput);
+    if (!chassi) {
+      this.logger.warn(JSON.stringify({ evento: 'resolver-chassi', chassi: chassiInput, resultado: 'vazio' }));
+      throw new NotFoundException('Chassi vazio.');
+    }
+
+    const eqSnap = await this.firebase
+      .getFirestore()
+      .collection('equipamentos')
+      .where('chassis', '==', chassi)
+      .limit(5)
+      .get();
+
+    if (eqSnap.empty) {
+      this.logger.warn(JSON.stringify({ evento: 'resolver-chassi', chassi, resultado: 'nao-encontrado' }));
+      throw new NotFoundException('Chassi não encontrado.');
+    }
+
+    // Buscar clientes das prefeituraIds únicas e filtrar por chassi habilitado
+    const prefIds = [
+      ...new Set(
+        eqSnap.docs.map((d) => d.get('prefeituraId') as string).filter(Boolean),
+      ),
+    ];
+
+    const clientesDocs = await Promise.all(
+      prefIds.map((id) =>
+        this.firebase.getFirestore().collection('clientes').doc(id).get(),
+      ),
+    );
+
+    const habilitadas = clientesDocs
+      .filter((d) => d.exists)
+      .filter(
+        (d) =>
+          (d.get('checklistLogin') as { chassi?: boolean } | undefined)
+            ?.chassi === true,
+      );
+
+    if (habilitadas.length === 0) {
+      this.logger.warn(JSON.stringify({ evento: 'resolver-chassi', chassi, resultado: 'nao-habilita' }));
+      throw new NotFoundException(
+        'A empresa vinculada ao chassi não habilita login por chassi.',
+      );
+    }
+
+    if (habilitadas.length > 1) {
+      this.logger.warn(JSON.stringify({ evento: 'resolver-chassi', chassi, resultado: 'conflito' }));
+      throw new ConflictException(
+        'Chassi vinculado a múltiplas empresas com login habilitado.',
+      );
+    }
+
+    const cliDoc = habilitadas[0];
+    const equipamento = eqSnap.docs.find(
+      (e) => e.get('prefeituraId') === cliDoc.id,
+    );
+
+    if (!equipamento) {
+      this.logger.warn(JSON.stringify({ evento: 'resolver-chassi', chassi, resultado: 'nao-encontrado' }));
+      throw new NotFoundException('Chassi não encontrado.');
+    }
+
+    const resultado = {
+      empresaId: cliDoc.id,
+      empresaNome: (cliDoc.get('nome') as string) ?? cliDoc.id,
+      idMaquina: equipamento.id,
+      chassi,
+    };
+
+    this.logger.log(JSON.stringify({ evento: 'resolver-chassi', chassi, empresaId: cliDoc.id, resultado: 'ok' }));
+
+    return resultado;
+  }
+
+  async listarChassisDaEmpresa(
+    empresaId: string,
+  ): Promise<{ chassis: string[]; expiraEm: string }> {
+    const snap = await this.firebase
+      .getFirestore()
+      .collection('equipamentos')
+      .where('prefeituraId', '==', empresaId)
+      .get();
+
+    const set = new Set<string>();
+    for (const d of snap.docs) {
+      const norm = normalizarChassi((d.get('chassis') as string) ?? '');
+      if (norm) set.add(norm);
+    }
+
+    const result = {
+      chassis: [...set],
+      expiraEm: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    };
+
+    this.logger.log(JSON.stringify({ evento: 'listar-chassis-empresa', empresaId, quantidade: result.chassis.length }));
+
+    return result;
+  }
+}
