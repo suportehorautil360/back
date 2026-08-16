@@ -41,3 +41,23 @@ export function deveAplicarMedicaoChecklist(
     leituraNova,
   );
 }
+
+/**
+ * Escolhe horímetro ou hodômetro conforme a unidade do equipamento.
+ * Evita rejeitar "87000" em veículo km porque veio do campo horímetro do PWA.
+ */
+export function resolverLeituraParaUnidade(
+  leituraTexto: string,
+  unidadeRevisao: unknown,
+): { measurementType: 'horimetro' | 'hodometro'; leitura: number } | null {
+  const txt = leituraTexto.trim();
+  if (!txt) return null;
+  const un =
+    unidadeRevisao === 'km' ? 'km' : unidadeRevisao === 'h' ? 'h' : null;
+  if (un === 'km') return resolverLeituraChecklist({ km: txt });
+  if (un === 'h') return resolverLeituraChecklist({ hourMeter: txt });
+  return (
+    resolverLeituraChecklist({ km: txt }) ??
+    resolverLeituraChecklist({ hourMeter: txt })
+  );
+}

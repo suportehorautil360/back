@@ -10,9 +10,17 @@ const fromMock = jest.fn(() => ({
   upload: uploadMock,
   getPublicUrl: getPublicUrlMock,
 }));
+const listBucketsMock = jest.fn();
+const createBucketMock = jest.fn();
 
 jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn(() => ({ storage: { from: fromMock } })),
+  createClient: jest.fn(() => ({
+    storage: {
+      from: fromMock,
+      listBuckets: listBucketsMock,
+      createBucket: createBucketMock,
+    },
+  })),
 }));
 
 describe('UploadsService', () => {
@@ -29,6 +37,8 @@ describe('UploadsService', () => {
     getPublicUrlMock.mockImplementation((path: string) => ({
       data: { publicUrl: `https://cdn.exemplo/${path}` },
     }));
+    listBucketsMock.mockResolvedValue({ data: [], error: null });
+    createBucketMock.mockResolvedValue({ error: null });
   });
 
   afterAll(() => {

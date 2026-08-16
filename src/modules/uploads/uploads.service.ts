@@ -174,6 +174,7 @@ export class UploadsService {
     checklistId: string,
     fotos: FotoUpload[],
   ): Promise<string[]> {
+    await this.ensureBucket(this.bucket);
     const storage = this.getCliente().storage.from(this.bucket);
     const urls: string[] = [];
     for (const foto of fotos) {
@@ -186,7 +187,7 @@ export class UploadsService {
       if (error) {
         console.error('Erro no upload para o Supabase Storage:', error);
         throw new InternalServerErrorException(
-          'Não foi possível enviar as fotos do checklist.',
+          `Não foi possível enviar as fotos do checklist: ${storageErrorMessage(error)}`,
         );
       }
       urls.push(storage.getPublicUrl(path).data.publicUrl);
