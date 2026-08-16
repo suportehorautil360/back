@@ -47,7 +47,13 @@ import { ChecklistAuthModule } from './modules/checklist-auth/checklist-auth.mod
       isGlobal: true,
     }),
     ScheduleModule.forRoot(),
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 10 }]),
+    // @nestjs/throttler v6 exige `{ throttlers: [...] }` e cada throttler
+    // precisa de `name` — o `@Throttle({ default: {...} })` do controller
+    // resolve pelo nome, então sem `name: 'default'` o guard estoura em
+    // runtime e devolve 500 em todo endpoint que usa ThrottlerGuard.
+    ThrottlerModule.forRoot({
+      throttlers: [{ name: 'default', ttl: 60_000, limit: 10 }],
+    }),
     PrismaModule,
     EquipamentosModule,
     FuncionariosModule,
