@@ -1,10 +1,11 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Param, Post, UseGuards, BadRequestException } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { ChecklistChassiService } from './checklist-chassi.service';
 import { ResolverChassiDto } from './dto/resolver-chassi.dto';
 import { SalvarChecklistRunDto } from './dto/salvar-checklist-run.dto';
 import { SalvarEmergenciaDto } from './dto/salvar-emergencia.dto';
+import { BaterPontoDto } from './dto/bater-ponto.dto';
 
 @ApiTags('checklist')
 @Controller('checklist')
@@ -44,6 +45,24 @@ export class ChecklistAuthController {
   })
   async salvarEmergencia(@Body() dto: SalvarEmergenciaDto) {
     return this.service.salvarEmergencia(dto);
+  }
+
+  @Post('bater-ponto')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Registra batida de ponto no Postgres (login por chassi, sem sessão Supabase).',
+  })
+  async baterPonto(
+    @Body() dto: BaterPontoDto,
+    @Headers('idempotency-key') idempotencyKey?: string,
+  ) {
+    const clientId = idempotencyKey?.trim();
+    if (!clientId) {
+      throw new BadRequestException('Idempotency-Key obrigatória.');
+    }
+    const data = await this.service.baterPonto(dto, clientId);
+    return { data, message: 'Batida registrada.' };
   }
 
   @Get("runs/:empresaId")
