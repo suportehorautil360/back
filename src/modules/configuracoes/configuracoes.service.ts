@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { FirebaseService } from '../../config/firebase.service';
-import { resolverEmpresa } from '../../common/prisma/company-resolver';
+import { resolverEmpresa, companyWhere } from '../../common/prisma/company-resolver';
 import {
   mapConfiguracaoToApi,
   mapEscalaToApi,
@@ -25,9 +25,7 @@ export class ConfiguracoesService {
   async obter(prefeituraId: string) {
     try {
       const company = await this.prisma.company.findFirst({
-        where: {
-          OR: [{ legacyId: prefeituraId }, { id: prefeituraId }],
-        },
+        where: companyWhere(prefeituraId),
         select: {
           id: true,
           legacyId: true,
@@ -98,9 +96,7 @@ export class ConfiguracoesService {
   async salvar(dto: UpsertConfiguracaoDto) {
     try {
       const company = await this.prisma.company.findFirst({
-        where: {
-          OR: [{ legacyId: dto.prefeituraId }, { id: dto.prefeituraId }],
-        },
+        where: companyWhere(dto.prefeituraId),
         select: {
           id: true,
           legacyId: true,

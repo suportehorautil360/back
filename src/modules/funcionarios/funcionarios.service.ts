@@ -19,6 +19,7 @@ import {
   parseCondutoresIds,
 } from '../../common/prisma/equipment-api.mapper';
 import { mapOperatorToApi } from '../../common/prisma/operator-api.mapper';
+import { companyWhere } from '../../common/prisma/company-resolver';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateFuncionarioDto } from './dto/create-funcionario.dto';
 import { AuthFuncionarioDto } from './dto/auth-funcionario.dto';
@@ -328,7 +329,7 @@ export class FuncionariosService {
     if (!prefeituraId) return [];
 
     const companyId = await this.prisma.company.findFirst({
-      where: { OR: [{ legacyId: prefeituraId }, { id: prefeituraId }] },
+      where: companyWhere(prefeituraId),
       select: { id: true },
     });
     if (companyId) {
@@ -482,7 +483,7 @@ export class FuncionariosService {
   async findAllByPrefeitura(prefeituraId: string) {
     try {
       const company = await this.prisma.company.findFirst({
-        where: { OR: [{ legacyId: prefeituraId }, { id: prefeituraId }] },
+        where: companyWhere(prefeituraId),
         select: { id: true, legacyId: true },
       });
       if (company) {

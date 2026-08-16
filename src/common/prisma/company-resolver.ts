@@ -38,3 +38,11 @@ export async function resolverCompanyId(
   const company = await resolverEmpresa(prisma, prefeituraId, { id: true });
   return company?.id ?? null;
 }
+
+/** Where seguro: legacyId não passa por coluna UUID (evita P2007 com "tl-ms"). */
+export function companyWhere(idOuLegacy: string) {
+  if (isUuid(idOuLegacy)) {
+    return { OR: [{ id: idOuLegacy }, { legacyId: idOuLegacy }] };
+  }
+  return { legacyId: idOuLegacy };
+}
