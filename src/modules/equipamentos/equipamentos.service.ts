@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { FirebaseService } from '../../config/firebase.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { randomUUID } from 'node:crypto';
 import { CreateEquipamentoDto } from './dto/create-equipamento.dto';
 import { UpdateEquipamentoDto } from './dto/update-equipamento.dto';
@@ -15,7 +16,7 @@ import {
 } from '../movimentacoes/shared/tank-saldo.helper';
 import {
   deveAplicarMedicaoChecklist,
-  resolverLeituraChecklist,
+  resolverLeituraParaUnidade,
   type MedicaoChecklistTexto,
 } from './helpers/sync-medicao-from-texto.helper';
 
@@ -60,7 +61,10 @@ function ehArray(valor: unknown): valor is unknown[] {
 
 @Injectable()
 export class EquipamentosService {
-  constructor(private firebaseService: FirebaseService) {}
+  constructor(
+    private firebaseService: FirebaseService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   private get collection() {
     return this.firebaseService.getFirestore().collection('equipamentos');
@@ -118,14 +122,72 @@ export class EquipamentosService {
     return { data: doc.data(), message: 'Equipamento encontrado.' };
   }
 
+  /** Se `id` é UUID válido, devolve; senão devolve UUID nulo (não bate em companyId). */
+  private tryUuid(id: string): string {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+      ? id
+      : '00000000-0000-0000-0000-000000000000';
+  }
+
   /** Lista os equipamentos da prefeitura. Sem registros => lista vazia (200). */
   async findAllByPrefeitura(prefeituraId: string) {
     try {
+      const prismaRows = await this.prisma.equipment.findMany({
+        where: {
+          OR: [
+            { companyId: this.tryUuid(prefeituraId) },
+            { company: { legacyId: prefeituraId } },
+          ],
+        },
+        select: {
+          id: true,
+          legacyId: true,
+          descricao: true,
+          chassi: true,
+          modelo: true,
+          linha: true,
+          tipo: true,
+          placa: true,
+          marca: true,
+          ano: true,
+          obra: true,
+          status: true,
+          medicaoAtual: true,
+          intervaloRevisao: true,
+          ultimaRevisao: true,
+          unidadeRevisao: true,
+        },
+        orderBy: { descricao: 'asc' },
+      });
+
+      if (prismaRows.length > 0) {
+        const data = prismaRows.map((e) => ({
+          id: e.legacyId ?? e.id,
+          prefeituraId,
+          descricao: e.descricao ?? '',
+          label: e.descricao ?? '',
+          chassis: e.chassi ?? '',
+          chassi: e.chassi ?? '',
+          modelo: e.modelo ?? '',
+          linha: e.linha ?? '',
+          tipo: e.tipo ?? '',
+          placa: e.placa ?? '',
+          marca: e.marca ?? '',
+          ano: e.ano ?? '',
+          obra: e.obra ?? '',
+          status: e.status ?? 'ativo',
+          medicaoAtual: e.medicaoAtual ?? 0,
+          intervaloRevisao: e.intervaloRevisao ?? 0,
+          ultimaRevisao: e.ultimaRevisao ?? 0,
+          unidadeRevisao: e.unidadeRevisao ?? 'h',
+        }));
+        return { data, message: 'Equipamentos buscados com sucesso!' };
+      }
+
+      // Fallback Firestore (legado) — empresas ainda não migradas.
       const ref = await this.collection
         .where('prefeituraId', '==', prefeituraId)
         .get();
-      // Garante um `id` utilizável: o campo salvo (docs novos) ou, em fallback,
-      // o id do documento Firestore (docs legados sem o campo `id`).
       const data = ref.docs.map((doc) => {
         const raw = doc.data();
         return { ...raw, id: (raw as { id?: string }).id ?? doc.id };
@@ -320,12 +382,70 @@ export class EquipamentosService {
     const id = equipamentoId.trim();
     if (!id) return false;
 
-    const resolvido = resolverLeituraChecklist(campos);
-    if (!resolvido) return false;
+    const leituraTexto = (campos.hourMeter ?? campos.km ?? '').trim();
+    if (!leituraTexto) return false;
 
+    const prismaOk = await this.syncMedicaoPrisma(id, leituraTexto);
+    if (prismaOk) return true;
+
+    return this.syncMedicaoFirestore(id, leituraTexto);
+  }
+
+  private async syncMedicaoPrisma(
+    id: string,
+    leituraTexto: string,
+  ): Promise<boolean> {
+    try {
+      const equip = await this.prisma.equipment.findFirst({
+        where: { OR: [{ id }, { legacyId: id }] },
+        select: { id: true, medicaoAtual: true, unidadeRevisao: true },
+      });
+      if (!equip) return false;
+
+      const resolvido = resolverLeituraParaUnidade(
+        leituraTexto,
+        equip.unidadeRevisao,
+      );
+      if (!resolvido) return false;
+      if (
+        !deveAplicarMedicaoChecklist(
+          {
+            unidadeRevisao: equip.unidadeRevisao,
+            medicaoAtual: equip.medicaoAtual,
+          },
+          resolvido.measurementType,
+          resolvido.leitura,
+        )
+      ) {
+        return false;
+      }
+
+      await this.prisma.equipment.update({
+        where: { id: equip.id },
+        data: { medicaoAtual: resolvido.leitura },
+      });
+      return true;
+    } catch (error) {
+      console.warn(
+        'Não foi possível sincronizar medição do equipamento (Postgres):',
+        { equipamentoId: id, error },
+      );
+      return false;
+    }
+  }
+
+  private async syncMedicaoFirestore(
+    id: string,
+    leituraTexto: string,
+  ): Promise<boolean> {
     try {
       const doc = await this.findDocByField(id);
       const atual = (doc.data() ?? {}) as Record<string, unknown>;
+      const resolvido = resolverLeituraParaUnidade(
+        leituraTexto,
+        atual.unidadeRevisao,
+      );
+      if (!resolvido) return false;
       if (
         !deveAplicarMedicaoChecklist(
           atual,

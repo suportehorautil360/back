@@ -1,6 +1,7 @@
 import {
   deveAplicarMedicaoChecklist,
   resolverLeituraChecklist,
+  resolverLeituraParaUnidade,
 } from './sync-medicao-from-texto.helper';
 
 describe('sync-medicao-from-texto.helper', () => {
@@ -21,6 +22,22 @@ describe('sync-medicao-from-texto.helper', () => {
     it('retorna null sem leitura válida', () => {
       expect(resolverLeituraChecklist({})).toBeNull();
       expect(resolverLeituraChecklist({ hourMeter: 'abc' })).toBeNull();
+    });
+  });
+
+  describe('resolverLeituraParaUnidade', () => {
+    it('interpreta leitura como km quando equipamento usa km', () => {
+      expect(resolverLeituraParaUnidade('87000', 'km')).toEqual({
+        measurementType: 'hodometro',
+        leitura: 87000,
+      });
+    });
+
+    it('interpreta leitura como horímetro quando equipamento usa h', () => {
+      expect(resolverLeituraParaUnidade('6890,2', 'h')).toEqual({
+        measurementType: 'horimetro',
+        leitura: 6890.2,
+      });
     });
   });
 

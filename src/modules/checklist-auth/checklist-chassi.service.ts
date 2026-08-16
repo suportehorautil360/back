@@ -2,10 +2,15 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
   Logger,
 } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Prisma } from '../../prisma/generated/client';
 import { normalizarChassi } from './helpers/chassi.helper';
+import type { SalvarChecklistRunDto } from './dto/salvar-checklist-run.dto';
+import type { SalvarEmergenciaDto } from './dto/salvar-emergencia.dto';
 
 /**
  * Resolver chassi → empresa/equipamento (login por chassi do PWA operador).
@@ -43,6 +48,7 @@ export class ChecklistChassiService {
       },
       select: {
         id: true,
+        legacyId: true,
         chassi: true,
         companyId: true,
         company: {
@@ -62,6 +68,7 @@ export class ChecklistChassiService {
         },
         select: {
           id: true,
+          legacyId: true,
           chassi: true,
           companyId: true,
           company: {
@@ -132,7 +139,7 @@ export class ChecklistChassiService {
       // via `legacyId` quando houver, senão UUID Postgres.
       empresaId: primeiro.company?.legacyId ?? primeiro.companyId,
       empresaNome: primeiro.company?.name ?? primeiro.companyId,
-      idMaquina: primeiro.id,
+      idMaquina: primeiro.legacyId ?? primeiro.id,
       chassi,
     };
 
@@ -181,6 +188,261 @@ export class ChecklistChassiService {
     );
 
     return result;
+  }
+
+  /**
+   * Grava checklist no Postgres quando o operador entrou por chassi (sem JWT
+   * Supabase). Valida que o chassi pertence à empresa informada.
+   */
+  async salvarChecklistRun(dto: SalvarChecklistRunDto): Promise<{ id: string }> {
+    const company = await this.resolveCompany(dto.prefeituraId);
+    await this.assertEquipamentoDaEmpresa(
+      company.id,
+      dto.chassis,
+      dto.equipamentoId,
+    );
+
+    const executedAt = Date.parse(dto.dataHoraIso);
+    const row = {
+      id: dto.id,
+      legacyId: dto.id,
+      companyId: company.id,
+      operadorNome: dto.operador,
+      operadorLegacyId: dto.funcionarioId || null,
+      operadorCpf: (dto.funcionarioCpf ?? '').replace(/\D+/g, '') || null,
+      chassi: normalizarChassi(dto.chassis),
+      categoria: dto.categoria ?? null,
+      modelo: dto.modelo ?? null,
+      linha: dto.linha ?? null,
+      totalItens: dto.totalItens ?? null,
+      totalSim: dto.totalSim ?? null,
+      totalNao: dto.totalNao ?? null,
+      totalNa: dto.totalNa ?? null,
+      totalAplicaveis: dto.totalAplicaveis ?? null,
+      pontuacao: dto.pontuacao ?? null,
+      horimetro: dto.horimetro ?? null,
+      respostas:
+        dto.respostas === null || dto.respostas === undefined
+          ? undefined
+          : (dto.respostas as Prisma.InputJsonValue),
+      itensNao:
+        dto.itensNao === null || dto.itensNao === undefined
+          ? undefined
+          : (dto.itensNao as Prisma.InputJsonValue),
+      obs: dto.obs ?? null,
+      fotoHorimetro: dto.fotoHorimetro ?? null,
+      assinaturaOperador: dto.assinaturaOperador ?? null,
+      localizacaoGps: dto.localizacaoGps ?? null,
+      executedAt: Number.isNaN(executedAt) ? new Date() : new Date(executedAt),
+    };
+
+    await this.prisma.checklistRun.upsert({
+      where: { id: dto.id },
+      create: row,
+      update: {
+        operadorNome: row.operadorNome,
+        operadorLegacyId: row.operadorLegacyId,
+        operadorCpf: row.operadorCpf,
+        chassi: row.chassi,
+        categoria: row.categoria,
+        modelo: row.modelo,
+        linha: row.linha,
+        totalItens: row.totalItens,
+        totalSim: row.totalSim,
+        totalNao: row.totalNao,
+        totalNa: row.totalNa,
+        totalAplicaveis: row.totalAplicaveis,
+        pontuacao: row.pontuacao,
+        horimetro: row.horimetro,
+        respostas: row.respostas,
+        itensNao: row.itensNao,
+        obs: row.obs,
+        fotoHorimetro: row.fotoHorimetro,
+        assinaturaOperador: row.assinaturaOperador,
+        localizacaoGps: row.localizacaoGps,
+        executedAt: row.executedAt,
+      },
+    });
+
+    this.logger.log(
+      JSON.stringify({
+        evento: 'salvar-checklist-run',
+        id: dto.id,
+        companyId: company.id,
+        chassi: row.chassi,
+      }),
+    );
+
+    return { id: dto.id };
+  }
+
+  /** Emergência manual/automática — mesmo fluxo do login por chassi. */
+  async salvarEmergencia(dto: SalvarEmergenciaDto): Promise<{ id: string }> {
+    const company = await this.resolveCompany(dto.prefeituraId);
+    if (dto.chassis) {
+      await this.assertEquipamentoDaEmpresa(
+        company.id,
+        dto.chassis,
+        dto.idMaquina ?? dto.equipamentoLegacyId,
+      );
+    }
+
+    const id = dto.id ?? randomUUID();
+    const dataHora = Date.parse(dto.dataHoraIso);
+    const row = {
+      id,
+      legacyId: id,
+      companyId: company.id,
+      source: dto.source,
+      severity: dto.severity ?? 'warning',
+      chassi: dto.chassis ? normalizarChassi(dto.chassis) : null,
+      equipmentLegacyId: dto.equipamentoLegacyId ?? null,
+      idMaquina: dto.idMaquina ?? null,
+      modelo: dto.modelo ?? null,
+      operadorNome: dto.operadorNome ?? null,
+      operadorLegacyId: dto.operadorLegacyId ?? null,
+      operadorCpf: (dto.operadorCpf ?? '').replace(/\D+/g, '') || null,
+      tipoFalha: dto.tipoFalha,
+      descricao: dto.descricao,
+      localizacaoGps: dto.localizacaoGps ?? null,
+      fotos: (dto.fotos ?? []) as Prisma.InputJsonValue,
+      checklistLegacyId: dto.checklistLegacyId ?? null,
+      questionId: dto.questionId ?? null,
+      questionLabel: dto.questionLabel ?? null,
+      dataHora: Number.isNaN(dataHora) ? new Date() : new Date(dataHora),
+    };
+
+    await this.prisma.emergency.upsert({
+      where: { id },
+      create: row,
+      update: {
+        source: row.source,
+        severity: row.severity,
+        chassi: row.chassi,
+        equipmentLegacyId: row.equipmentLegacyId,
+        idMaquina: row.idMaquina,
+        modelo: row.modelo,
+        operadorNome: row.operadorNome,
+        operadorLegacyId: row.operadorLegacyId,
+        operadorCpf: row.operadorCpf,
+        tipoFalha: row.tipoFalha,
+        descricao: row.descricao,
+        localizacaoGps: row.localizacaoGps,
+        fotos: row.fotos,
+        checklistLegacyId: row.checklistLegacyId,
+        questionId: row.questionId,
+        questionLabel: row.questionLabel,
+        dataHora: row.dataHora,
+      },
+    });
+
+    return { id };
+  }
+
+  /** Lista checklists da empresa (login por chassi — sem JWT Supabase). */
+  async listarRunsEmpresa(empresaId: string) {
+    const company = await this.resolveCompany(empresaId);
+    const rows = await this.prisma.checklistRun.findMany({
+      where: { companyId: company.id },
+      orderBy: { executedAt: "desc" },
+      take: 500,
+      select: {
+        id: true,
+        executedAt: true,
+        operadorNome: true,
+        chassi: true,
+        categoria: true,
+        modelo: true,
+        linha: true,
+        totalItens: true,
+        totalSim: true,
+        totalNao: true,
+        totalNa: true,
+        totalAplicaveis: true,
+        pontuacao: true,
+        horimetro: true,
+        assinaturaOperador: true,
+        respostas: true,
+        obs: true,
+        localizacaoGps: true,
+        operadorLegacyId: true,
+        operadorCpf: true,
+      },
+    });
+
+    return {
+      data: rows.map((r) => ({
+        id: r.id,
+        executed_at: r.executedAt?.toISOString() ?? null,
+        operador_nome: r.operadorNome,
+        chassi: r.chassi,
+        categoria: r.categoria,
+        modelo: r.modelo,
+        linha: r.linha,
+        total_itens: r.totalItens,
+        total_sim: r.totalSim,
+        total_nao: r.totalNao,
+        total_na: r.totalNa,
+        total_aplicaveis: r.totalAplicaveis,
+        pontuacao: r.pontuacao,
+        horimetro: r.horimetro,
+        assinatura_operador: r.assinaturaOperador,
+        respostas: r.respostas,
+        obs: r.obs,
+        localizacao_gps: r.localizacaoGps,
+        operador_legacy_id: r.operadorLegacyId,
+        operador_cpf: r.operadorCpf,
+      })),
+    };
+  }
+
+  private async resolveCompany(prefeituraId: string) {
+    const company = await this.prisma.company.findFirst({
+      where: {
+        OR: [{ id: this.tryUuid(prefeituraId) }, { legacyId: prefeituraId }],
+      },
+      select: { id: true, legacyId: true },
+    });
+    if (!company) {
+      throw new NotFoundException('Empresa não encontrada.');
+    }
+    return company;
+  }
+
+  private async assertEquipamentoDaEmpresa(
+    companyId: string,
+    chassiInput: string,
+    equipamentoId?: string | null,
+  ) {
+    const chassi = normalizarChassi(chassiInput);
+    if (!chassi) {
+      throw new BadRequestException('Chassi inválido.');
+    }
+
+    const equip = await this.prisma.equipment.findFirst({
+      where: {
+        companyId,
+        OR: [{ chassi }, { chassi: { equals: chassi, mode: 'insensitive' } }],
+      },
+      select: { id: true, legacyId: true },
+    });
+
+    if (!equip) {
+      throw new NotFoundException(
+        'Chassi não pertence ao cadastro desta empresa.',
+      );
+    }
+
+    if (equipamentoId) {
+      const ids = new Set(
+        [equip.id, equip.legacyId].filter((v): v is string => Boolean(v)),
+      );
+      if (!ids.has(equipamentoId)) {
+        throw new BadRequestException(
+          'Equipamento informado não confere com o chassi.',
+        );
+      }
+    }
   }
 
   /** Se `id` é UUID válido, devolve; senão devolve string vazia (não bate). */
