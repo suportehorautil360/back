@@ -1,60 +1,129 @@
-jest.mock('uuid', () => ({ v4: () => 'fixed-uuid' }));
+// PrismaService importa a client ESM do Prisma (`import.meta.url`) que o Jest
+// atual (CJS via ts-jest) não carrega. Stub antes de qualquer import da service
+// evita o require em cadeia. Cada teste injeta seu próprio mock via constructor.
+jest.mock('../../prisma/prisma.service', () => ({ PrismaService: class {} }));
 
 import { FeatureFlagsService } from './feature-flags.service';
-import { FirebaseService } from '../../config/firebase.service';
+import type { PrismaService } from '../../prisma/prisma.service';
 
-function makeFirestore(docs: { id?: string; data: () => unknown }[] = []) {
-  const setDoc = jest.fn().mockResolvedValue(undefined);
-  const updateDoc = jest.fn().mockResolvedValue(undefined);
-  const getDocs = jest
+type CompanyRow = { id: string };
+type CompanyFeatureRow = { enabled: boolean; feature: { key: string } | null };
+type FeatureRow = { id: string; key: string };
+
+function makePrisma(opts: {
+  company?: CompanyRow | null;
+  companyByLegacy?: CompanyRow | null;
+  companyFeatures?: CompanyFeatureRow[];
+  features?: FeatureRow[];
+}) {
+  const findUniqueCompany = jest.fn().mockImplementation(({ where }) => {
+    if ('id' in where) return Promise.resolve(opts.company ?? null);
+    if ('legacyId' in where)
+      return Promise.resolve(opts.companyByLegacy ?? null);
+    return Promise.resolve(null);
+  });
+
+  const findManyCompanyFeature = jest
     .fn()
-    .mockResolvedValue({ empty: docs.length === 0, docs });
-  const collection = jest.fn(() => ({
-    where: jest.fn(() => ({ get: getDocs })),
-    doc: jest.fn(() => ({ set: setDoc, update: updateDoc })),
-  }));
-  const firebaseService = {
-    getFirestore: () => ({ collection }),
-  } as unknown as FirebaseService;
-  return { firebaseService, setDoc, updateDoc };
+    .mockResolvedValue(opts.companyFeatures ?? []);
+  const upsertCompanyFeature = jest.fn().mockResolvedValue(undefined);
+  const findManyFeature = jest.fn().mockResolvedValue(opts.features ?? []);
+  const runTransaction = jest.fn().mockImplementation((calls: unknown[]) =>
+    Promise.all(calls),
+  );
+
+  const prisma = {
+    company: { findUnique: findUniqueCompany },
+    companyFeature: {
+      findMany: findManyCompanyFeature,
+      upsert: upsertCompanyFeature,
+    },
+    feature: { findMany: findManyFeature },
+    $transaction: runTransaction,
+  } as unknown as PrismaService;
+
+  return { prisma, upsertCompanyFeature, findUniqueCompany };
 }
 
 describe('FeatureFlagsService', () => {
-  it('obter devolve {} quando não há flags', async () => {
-    const { firebaseService } = makeFirestore([]);
-    expect(await new FeatureFlagsService(firebaseService).obter('p')).toEqual(
-      {},
-    );
+  it('obter devolve {} quando empresa nao existe', async () => {
+    const { prisma } = makePrisma({});
+    const svc = new FeatureFlagsService(prisma);
+    expect(await svc.obter('a6a03cde-f0a9-402b-9c4d-812033f76f57')).toEqual({});
   });
 
-  it('ativo é false por padrão (opt-in)', async () => {
-    const { firebaseService } = makeFirestore([]);
-    const ativo = await new FeatureFlagsService(firebaseService).ativo(
-      'p',
+  it('obter devolve {} quando empresa existe mas sem flags', async () => {
+    const { prisma } = makePrisma({
+      company: { id: '00000000-0000-0000-0000-000000000001' },
+      companyFeatures: [],
+    });
+    expect(
+      await new FeatureFlagsService(prisma).obter(
+        '00000000-0000-0000-0000-000000000001',
+      ),
+    ).toEqual({});
+  });
+
+  it('obter mapeia CompanyFeature -> { key: enabled }', async () => {
+    const { prisma } = makePrisma({
+      company: { id: '00000000-0000-0000-0000-000000000001' },
+      companyFeatures: [
+        { enabled: true, feature: { key: 'ponto' } },
+        { enabled: false, feature: { key: 'abastecimento' } },
+      ],
+    });
+    expect(
+      await new FeatureFlagsService(prisma).obter(
+        '00000000-0000-0000-0000-000000000001',
+      ),
+    ).toEqual({ ponto: true, abastecimento: false });
+  });
+
+  it('obter aceita legacyId (docId Firestore antigo)', async () => {
+    const { prisma } = makePrisma({
+      companyByLegacy: { id: '00000000-0000-0000-0000-000000000001' },
+      companyFeatures: [{ enabled: true, feature: { key: 'ponto' } }],
+    });
+    // "a6a03cde-..." é um legacyId, não é UUID Postgres real da empresa.
+    const flags = await new FeatureFlagsService(prisma).obter('legacy-abc');
+    expect(flags).toEqual({ ponto: true });
+  });
+
+  it('ativo=false por padrão (opt-in) quando flag ausente', async () => {
+    const { prisma } = makePrisma({
+      company: { id: '00000000-0000-0000-0000-000000000001' },
+      companyFeatures: [],
+    });
+    const ativo = await new FeatureFlagsService(prisma).ativo(
+      '00000000-0000-0000-0000-000000000001',
       'ponto',
     );
     expect(ativo).toBe(false);
   });
 
-  it('ativo é true quando a flag está marcada', async () => {
-    const { firebaseService } = makeFirestore([
-      { id: 'd1', data: () => ({ flags: { ponto: true } }) },
-    ]);
-    const ativo = await new FeatureFlagsService(firebaseService).ativo(
-      'p',
-      'ponto',
-    );
-    expect(ativo).toBe(true);
-  });
-
-  it('salvar cria quando não existe', async () => {
-    const { firebaseService, setDoc } = makeFirestore([]);
-    await new FeatureFlagsService(firebaseService).salvar({
-      prefeituraId: 'p',
-      flags: { ponto: true },
+  it('salvar faz upsert só das keys que existem no catálogo', async () => {
+    const { prisma, upsertCompanyFeature } = makePrisma({
+      company: { id: '00000000-0000-0000-0000-000000000001' },
+      features: [
+        { id: 'feat-1', key: 'ponto' },
+        // "desconhecida" NÃO existe no catálogo — deve ser ignorada com warning.
+      ],
     });
-    expect(setDoc).toHaveBeenCalledWith(
-      expect.objectContaining({ prefeituraId: 'p', flags: { ponto: true } }),
+    await new FeatureFlagsService(prisma).salvar({
+      prefeituraId: '00000000-0000-0000-0000-000000000001',
+      flags: { ponto: true, desconhecida: true },
+    });
+    expect(upsertCompanyFeature).toHaveBeenCalledTimes(1);
+    expect(upsertCompanyFeature).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          companyId_featureId: {
+            companyId: '00000000-0000-0000-0000-000000000001',
+            featureId: 'feat-1',
+          },
+        },
+        update: { enabled: true },
+      }),
     );
   });
 });

@@ -1,10 +1,11 @@
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
-import { FirebaseService } from '../../config/firebase.service';
+import type { ChecklistDefinition } from '../../prisma/generated/client';
+import { PrismaService } from '../../prisma/prisma.service';
 import { CreateChecklistDefinitionDto } from './dto/create-checklist-definition.dto';
 import { UpdateChecklistDefinitionDto } from './dto/update-checklist-definition.dto';
 import { SEED_CHECKLIST_DEFINITIONS } from './seed-data';
@@ -21,68 +22,121 @@ export interface ChecklistDefinitionDoc {
   updatedAt: string;
 }
 
+/** Descarta prototype/métodos do DTO — Prisma Json exige plain literals. */
+function toPlainItem(i: {
+  ordem: number;
+  texto: string;
+  severidade: string;
+}) {
+  return { ordem: i.ordem, texto: i.texto, severidade: i.severidade };
+}
+
+/**
+ * Catálogo GLOBAL de definições de checklist do operador. Migrado de
+ * `checklistDefinitions` no Firestore em 2026-08-16 (purge Firebase). O
+ * modelo Postgres (`checklist_definitions`) é 1:1 com o antigo — `id` UUID
+ * novo + `legacyId` (o slug/docId antigo pra preservar refs em `runs` e
+ * caches offline). Shape da API mantido pro PWA/painel não precisarem mudar.
+ */
 @Injectable()
 export class ChecklistDefinitionsService {
-  constructor(private firebaseService: FirebaseService) {}
+  private readonly logger = new Logger(ChecklistDefinitionsService.name);
 
-  private get collection() {
-    return this.firebaseService
-      .getFirestore()
-      .collection('checklistDefinitions');
+  constructor(private readonly prisma: PrismaService) {}
+
+  /** Serializa a linha Postgres pro shape que o front espera (Json → string[] etc). */
+  private toDoc(row: ChecklistDefinition): ChecklistDefinitionDoc {
+    return {
+      // Front usa `id` como slug canônico — preserva `legacyId` quando existe
+      // (seed usa slug); senão UUID novo. Caches offline gravaram slug.
+      id: row.legacyId ?? row.id,
+      nome: row.nome,
+      categoria: row.categoria,
+      keywords: Array.isArray(row.keywords) ? (row.keywords as string[]) : [],
+      ativo: row.ativo,
+      version: row.version,
+      itens: Array.isArray(row.itens)
+        ? (row.itens as ChecklistDefinitionDoc['itens'])
+        : [],
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    };
   }
 
   /**
-   * Localiza o documento pelo campo `id` salvo ou, em fallback, pelo id do
-   * próprio documento Firestore (docs semeados usam o slug como doc id).
+   * Localiza por `legacyId` (slug do seed / docId Firestore) OU pelo UUID
+   * Postgres — front pode passar qualquer um dos dois. Ordem: legacyId
+   * primeiro porque é o mais comum vindo de caches antigos.
    */
-  private async findDocByField(id: string) {
-    const ref = await this.collection.where('id', '==', id).get();
-    if (!ref.empty) return ref.docs[0];
+  private async findByAnyId(
+    id: string,
+  ): Promise<ChecklistDefinition> {
+    const porLegacy = await this.prisma.checklistDefinition.findUnique({
+      where: { legacyId: id },
+    });
+    if (porLegacy) return porLegacy;
 
-    const byDocId = await this.collection.doc(id).get();
-    if (byDocId.exists) return byDocId;
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    if (isUuid) {
+      const porId = await this.prisma.checklistDefinition.findUnique({
+        where: { id },
+      });
+      if (porId) return porId;
+    }
 
     throw new NotFoundException('Definição de checklist não encontrada.');
   }
 
   async create(dto: CreateChecklistDefinitionDto) {
-    const id = randomUUID();
-    const agora = new Date().toISOString();
-    const novo: ChecklistDefinitionDoc = {
-      id,
-      nome: dto.nome,
-      categoria: dto.categoria,
-      keywords: Array.isArray(dto.keywords) ? dto.keywords : [],
-      ativo: dto.ativo ?? true,
-      version: 1,
-      itens: Array.isArray(dto.itens) ? dto.itens : [],
-      createdAt: agora,
-      updatedAt: agora,
-    };
     try {
-      await this.collection.doc(id).set(novo);
-      return { data: novo, message: 'Definição de checklist criada!' };
+      const criada = await this.prisma.checklistDefinition.create({
+        data: {
+          nome: dto.nome,
+          categoria: dto.categoria,
+          keywords: Array.isArray(dto.keywords) ? dto.keywords : [],
+          ativo: dto.ativo ?? true,
+          version: 1,
+          // DTO instances têm prototype de classe — Prisma InputJsonValue exige
+          // plain object literals. Map explícito garante o shape correto.
+          itens: Array.isArray(dto.itens) ? dto.itens.map(toPlainItem) : [],
+        },
+      });
+      return {
+        data: this.toDoc(criada),
+        message: 'Definição de checklist criada!',
+      };
     } catch (error) {
-      console.error('Erro ao salvar definição de checklist:', error);
+      this.logger.error(
+        JSON.stringify({
+          evento: 'checklist-def-create',
+          erro: (error as Error).message,
+        }),
+      );
       throw new InternalServerErrorException(
         'Não foi possível salvar a definição de checklist.',
       );
     }
   }
 
-  /** Lista as definições do catálogo global. `ativo=true` filtra só as ativas. */
+  /** Lista o catálogo. `somenteAtivas=true` filtra por `ativo=true`. */
   async findAll(somenteAtivas = false) {
     try {
-      const ref = await this.collection.get();
-      let data = ref.docs.map((doc) => {
-        const raw = doc.data() as Partial<ChecklistDefinitionDoc>;
-        return { ...raw, id: raw.id ?? doc.id } as ChecklistDefinitionDoc;
+      const linhas = await this.prisma.checklistDefinition.findMany({
+        where: somenteAtivas ? { ativo: true } : undefined,
+        orderBy: { nome: 'asc' },
       });
-      if (somenteAtivas) data = data.filter((d) => d.ativo !== false);
-      data.sort((a, b) => (a.nome ?? '').localeCompare(b.nome ?? ''));
-      return { data, message: 'Definições de checklist listadas.' };
+      return {
+        data: linhas.map((l) => this.toDoc(l)),
+        message: 'Definições de checklist listadas.',
+      };
     } catch (error) {
-      console.error('Erro ao listar definições de checklist:', error);
+      this.logger.error(
+        JSON.stringify({
+          evento: 'checklist-def-list',
+          erro: (error as Error).message,
+        }),
+      );
       throw new InternalServerErrorException(
         'Não foi possível listar as definições de checklist.',
       );
@@ -90,34 +144,44 @@ export class ChecklistDefinitionsService {
   }
 
   async findById(id: string) {
-    const doc = await this.findDocByField(id);
-    return { data: doc.data(), message: 'Definição encontrada.' };
+    const row = await this.findByAnyId(id);
+    return { data: this.toDoc(row), message: 'Definição encontrada.' };
   }
 
   async updateById(id: string, dto: UpdateChecklistDefinitionDto) {
     try {
-      const doc = await this.findDocByField(id);
-      const atual = doc.data() as ChecklistDefinitionDoc;
+      const atual = await this.findByAnyId(id);
 
-      const patch: Record<string, unknown> = {
-        updatedAt: new Date().toISOString(),
-      };
-      for (const [key, value] of Object.entries(dto)) {
-        if (value !== undefined) patch[key] = value;
-      }
-      // Mudou os itens => sobe a versão (o operador usa isso para invalidar cache).
+      const patch: Parameters<
+        typeof this.prisma.checklistDefinition.update
+      >[0]['data'] = {};
+      if (dto.nome !== undefined) patch.nome = dto.nome;
+      if (dto.categoria !== undefined) patch.categoria = dto.categoria;
+      if (dto.keywords !== undefined) patch.keywords = dto.keywords;
+      if (dto.ativo !== undefined) patch.ativo = dto.ativo;
       if (dto.itens !== undefined) {
-        patch.version = (atual.version ?? 1) + 1;
+        patch.itens = dto.itens.map(toPlainItem);
+        // Version bump só quando itens mudam — invalida cache do operador.
+        patch.version = atual.version + 1;
       }
 
-      await this.collection.doc(doc.id).update(patch);
+      const atualizado = await this.prisma.checklistDefinition.update({
+        where: { id: atual.id },
+        data: patch,
+      });
       return {
-        data: { id, ...patch },
+        data: this.toDoc(atualizado),
         message: 'Definição de checklist atualizada!',
       };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      console.error('Erro ao atualizar definição de checklist:', error);
+      this.logger.error(
+        JSON.stringify({
+          evento: 'checklist-def-update',
+          id,
+          erro: (error as Error).message,
+        }),
+      );
       throw new InternalServerErrorException(
         'Não foi possível atualizar a definição de checklist.',
       );
@@ -125,20 +189,29 @@ export class ChecklistDefinitionsService {
   }
 
   /**
-   * Desativa a definição (soft-delete): preserva runs históricos que a
-   * referenciam por `definitionId`, mas tira do catálogo do operador.
+   * Soft-delete: só marca `ativo=false`. Preserva `runs` históricos que
+   * referenciam a definição por `definitionId`/`legacyId`.
    */
   async deleteById(id: string) {
     try {
-      const doc = await this.findDocByField(id);
-      await this.collection.doc(doc.id).update({
-        ativo: false,
-        updatedAt: new Date().toISOString(),
+      const atual = await this.findByAnyId(id);
+      await this.prisma.checklistDefinition.update({
+        where: { id: atual.id },
+        data: { ativo: false },
       });
-      return { data: { id }, message: 'Definição de checklist desativada.' };
+      return {
+        data: { id: atual.legacyId ?? atual.id },
+        message: 'Definição de checklist desativada.',
+      };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      console.error('Erro ao desativar definição de checklist:', error);
+      this.logger.error(
+        JSON.stringify({
+          evento: 'checklist-def-delete',
+          id,
+          erro: (error as Error).message,
+        }),
+      );
       throw new InternalServerErrorException(
         'Não foi possível desativar a definição de checklist.',
       );
@@ -146,50 +219,61 @@ export class ChecklistDefinitionsService {
   }
 
   /**
-   * Bootstrap idempotente: popula o catálogo com as variantes do seed (migradas
-   * do `hu360OperadorSeed.json`). No-op se já houver definições, salvo `force`.
-   * Usa o slug como doc id, então re-rodar não duplica.
+   * Bootstrap idempotente do catálogo. Usa `legacyId=slug` como chave —
+   * re-rodar não duplica. Sem `force`, no-op quando já há qualquer linha.
    */
   async seedDefaults(force = false) {
     try {
-      const existente = await this.collection.limit(1).get();
-      if (!existente.empty && !force) {
-        return {
-          data: [],
-          message: 'Catálogo já populado — seed ignorado (use ?force=true).',
-        };
+      if (!force) {
+        const existe = await this.prisma.checklistDefinition.count({ take: 1 });
+        if (existe > 0) {
+          return {
+            data: [],
+            message: 'Catálogo já populado — seed ignorado (use ?force=true).',
+          };
+        }
       }
 
-      const agora = new Date().toISOString();
       const gravadas: ChecklistDefinitionDoc[] = [];
       for (const def of SEED_CHECKLIST_DEFINITIONS) {
-        const ref = this.collection.doc(def.slug);
-        const snap = await ref.get();
-        const version =
-          (snap.exists ? (snap.data() as ChecklistDefinitionDoc).version : 0) ||
-          0;
-        const doc: ChecklistDefinitionDoc = {
-          id: def.slug,
-          nome: def.nome,
-          categoria: def.categoria,
-          keywords: def.keywords,
-          ativo: true,
-          version: version + 1,
-          itens: def.itens,
-          createdAt: snap.exists
-            ? ((snap.data() as ChecklistDefinitionDoc).createdAt ?? agora)
-            : agora,
-          updatedAt: agora,
-        };
-        await ref.set(doc);
-        gravadas.push(doc);
+        const existente = await this.prisma.checklistDefinition.findUnique({
+          where: { legacyId: def.slug },
+        });
+        const version = (existente?.version ?? 0) + 1;
+
+        const upserted = await this.prisma.checklistDefinition.upsert({
+          where: { legacyId: def.slug },
+          update: {
+            nome: def.nome,
+            categoria: def.categoria,
+            keywords: def.keywords,
+            itens: def.itens,
+            ativo: true,
+            version,
+          },
+          create: {
+            legacyId: def.slug,
+            nome: def.nome,
+            categoria: def.categoria,
+            keywords: def.keywords,
+            itens: def.itens,
+            ativo: true,
+            version,
+          },
+        });
+        gravadas.push(this.toDoc(upserted));
       }
       return {
         data: gravadas,
         message: `Seed concluído: ${gravadas.length} definições gravadas.`,
       };
     } catch (error) {
-      console.error('Erro ao semear definições de checklist:', error);
+      this.logger.error(
+        JSON.stringify({
+          evento: 'checklist-def-seed',
+          erro: (error as Error).message,
+        }),
+      );
       throw new InternalServerErrorException(
         'Não foi possível semear as definições de checklist.',
       );
