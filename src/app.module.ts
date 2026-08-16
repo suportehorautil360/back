@@ -2,15 +2,13 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { VehiclesModule } from './modules/vehicles/vehicles.module';
+import { PrismaModule } from './prisma/prisma.module';
 import { RevisionModule } from './modules/revision/revision.module';
 import { WorkFrontModule } from './modules/work-front/work-front.module';
 import { AllocationsModule } from './modules/allocations/allocations.module';
-import { TimeRecordsModule } from './modules/time-records/time-records.module';
 import { SolicitacoesPontoModule } from './modules/solicitacoes-ponto/solicitacoes-ponto.module';
 import { NotificacoesModule } from './modules/notificacoes/notificacoes.module';
 import { AbonosModule } from './modules/abonos/abonos.module';
-import { EscalaModule } from './modules/escala/escala.module';
 import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
 import { CargosPermissaoModule } from './modules/cargos-permissao/cargos-permissao.module';
 import { EmergenciesModule } from './modules/emergencies/emergencies.module';
@@ -37,9 +35,7 @@ import { ChecklistDevolucaoModule } from './modules/checklist-devolucao/checklis
 import { ChecklistsRegistrosModule } from './modules/checklists-registros/checklists-registros.module';
 import { GarantiasModule } from './modules/garantias/garantias.module';
 import { InsumosModule } from './modules/insumos/insumos.module';
-import { OcorrenciasModule } from './modules/ocorrencias/ocorrencias.module';
 import { NotasFiscaisModule } from './modules/notas-fiscais/notas-fiscais.module';
-import { SuporteModule } from './modules/suporte/suporte.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { FleetfuelModule } from './modules/fleetfuel/fleetfuel.module';
@@ -52,7 +48,7 @@ import { ChecklistAuthModule } from './modules/checklist-auth/checklist-auth.mod
     }),
     ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 10 }]),
-    VehiclesModule,
+    PrismaModule,
     EquipamentosModule,
     FuncionariosModule,
     ConfiguracoesModule,
@@ -60,11 +56,9 @@ import { ChecklistAuthModule } from './modules/checklist-auth/checklist-auth.mod
     RevisionModule,
     WorkFrontModule,
     AllocationsModule,
-    TimeRecordsModule,
     SolicitacoesPontoModule,
     NotificacoesModule,
     AbonosModule,
-    EscalaModule,
     FeatureFlagsModule,
     CargosPermissaoModule,
     EmergenciesModule,
@@ -87,9 +81,7 @@ import { ChecklistAuthModule } from './modules/checklist-auth/checklist-auth.mod
     ChecklistsRegistrosModule,
     GarantiasModule,
     InsumosModule,
-    OcorrenciasModule,
     NotasFiscaisModule,
-    SuporteModule,
     AuthModule,
     UsersModule,
     FleetfuelModule,

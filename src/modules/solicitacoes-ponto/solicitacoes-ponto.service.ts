@@ -12,7 +12,7 @@ import {
 } from './dto/create-solicitacao-ponto.dto';
 import { NotificacoesService } from '../notificacoes/notificacoes.service';
 import { AbonosService } from '../abonos/abonos.service';
-import { selarRegistro } from '../time-records/ledger';
+import { selarRegistro } from '../../common/ledger/ponto-ledger';
 
 export type StatusSolicitacao = 'pendente' | 'aprovado' | 'reprovado';
 
