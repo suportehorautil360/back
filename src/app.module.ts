@@ -19,6 +19,7 @@ import { UserModule } from './modules/user/user.module';
 import { EquipamentosModule } from './modules/equipamentos/equipamentos.module';
 import { FuncionariosModule } from './modules/funcionarios/funcionarios.module';
 import { ConfiguracoesModule } from './modules/configuracoes/configuracoes.module';
+import { EscalaModule } from './modules/escala/escala.module';
 import { WhatsAppModule } from './modules/whatsapp/whatsapp.module';
 import { MovimentacoesModule } from './modules/movimentacoes/movimentacoes.module';
 import { ClientesModule } from './modules/clientes/clientes.module';
@@ -52,6 +53,7 @@ import { ChecklistAuthModule } from './modules/checklist-auth/checklist-auth.mod
     EquipamentosModule,
     FuncionariosModule,
     ConfiguracoesModule,
+    EscalaModule,
     MovimentacoesModule,
     RevisionModule,
     WorkFrontModule,

@@ -281,6 +281,7 @@ export type CompanyWhereInput = {
   features?: Prisma.CompanyFeatureListRelationFilter
   featureChanges?: Prisma.CompanyFeatureChangeListRelationFilter
   partners?: Prisma.PartnerListRelationFilter
+  partnerPortalUsers?: Prisma.PartnerPortalUserListRelationFilter
   equipments?: Prisma.EquipmentListRelationFilter
   checklistRuns?: Prisma.ChecklistRunListRelationFilter
   serviceOrders?: Prisma.ServiceOrderListRelationFilter
@@ -325,6 +326,7 @@ export type CompanyOrderByWithRelationInput = {
   features?: Prisma.CompanyFeatureOrderByRelationAggregateInput
   featureChanges?: Prisma.CompanyFeatureChangeOrderByRelationAggregateInput
   partners?: Prisma.PartnerOrderByRelationAggregateInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserOrderByRelationAggregateInput
   equipments?: Prisma.EquipmentOrderByRelationAggregateInput
   checklistRuns?: Prisma.ChecklistRunOrderByRelationAggregateInput
   serviceOrders?: Prisma.ServiceOrderOrderByRelationAggregateInput
@@ -372,6 +374,7 @@ export type CompanyWhereUniqueInput = Prisma.AtLeast<{
   features?: Prisma.CompanyFeatureListRelationFilter
   featureChanges?: Prisma.CompanyFeatureChangeListRelationFilter
   partners?: Prisma.PartnerListRelationFilter
+  partnerPortalUsers?: Prisma.PartnerPortalUserListRelationFilter
   equipments?: Prisma.EquipmentListRelationFilter
   checklistRuns?: Prisma.ChecklistRunListRelationFilter
   serviceOrders?: Prisma.ServiceOrderListRelationFilter
@@ -462,6 +465,7 @@ export type CompanyCreateInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -506,6 +510,7 @@ export type CompanyUncheckedCreateInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -550,6 +555,7 @@ export type CompanyUpdateInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -594,6 +600,7 @@ export type CompanyUncheckedUpdateInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -860,6 +867,20 @@ export type CompanyUpdateOneRequiredWithoutPartnersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.CompanyUpdateToOneWithWhereWithoutPartnersInput, Prisma.CompanyUpdateWithoutPartnersInput>, Prisma.CompanyUncheckedUpdateWithoutPartnersInput>
 }
 
+export type CompanyCreateNestedOneWithoutPartnerPortalUsersInput = {
+  create?: Prisma.XOR<Prisma.CompanyCreateWithoutPartnerPortalUsersInput, Prisma.CompanyUncheckedCreateWithoutPartnerPortalUsersInput>
+  connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutPartnerPortalUsersInput
+  connect?: Prisma.CompanyWhereUniqueInput
+}
+
+export type CompanyUpdateOneRequiredWithoutPartnerPortalUsersNestedInput = {
+  create?: Prisma.XOR<Prisma.CompanyCreateWithoutPartnerPortalUsersInput, Prisma.CompanyUncheckedCreateWithoutPartnerPortalUsersInput>
+  connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutPartnerPortalUsersInput
+  upsert?: Prisma.CompanyUpsertWithoutPartnerPortalUsersInput
+  connect?: Prisma.CompanyWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CompanyUpdateToOneWithWhereWithoutPartnerPortalUsersInput, Prisma.CompanyUpdateWithoutPartnerPortalUsersInput>, Prisma.CompanyUncheckedUpdateWithoutPartnerPortalUsersInput>
+}
+
 export type CompanyCreateNestedOneWithoutPontoRegistrosInput = {
   create?: Prisma.XOR<Prisma.CompanyCreateWithoutPontoRegistrosInput, Prisma.CompanyUncheckedCreateWithoutPontoRegistrosInput>
   connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutPontoRegistrosInput
@@ -1099,6 +1120,7 @@ export type CompanyCreateWithoutSettingsInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -1142,6 +1164,7 @@ export type CompanyUncheckedCreateWithoutSettingsInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -1201,6 +1224,7 @@ export type CompanyUpdateWithoutSettingsInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -1244,6 +1268,7 @@ export type CompanyUncheckedUpdateWithoutSettingsInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1287,6 +1312,7 @@ export type CompanyCreateWithoutEquipmentsInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
   operators?: Prisma.OperatorCreateNestedManyWithoutCompanyInput
@@ -1330,6 +1356,7 @@ export type CompanyUncheckedCreateWithoutEquipmentsInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
   operators?: Prisma.OperatorUncheckedCreateNestedManyWithoutCompanyInput
@@ -1389,6 +1416,7 @@ export type CompanyUpdateWithoutEquipmentsInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
   operators?: Prisma.OperatorUpdateManyWithoutCompanyNestedInput
@@ -1432,6 +1460,7 @@ export type CompanyUncheckedUpdateWithoutEquipmentsInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
   operators?: Prisma.OperatorUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1475,6 +1504,7 @@ export type CompanyCreateWithoutWorkFrontsInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -1518,6 +1548,7 @@ export type CompanyUncheckedCreateWithoutWorkFrontsInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -1577,6 +1608,7 @@ export type CompanyUpdateWithoutWorkFrontsInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -1620,6 +1652,7 @@ export type CompanyUncheckedUpdateWithoutWorkFrontsInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1663,6 +1696,7 @@ export type CompanyCreateWithoutChecklistRunsInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
   operators?: Prisma.OperatorCreateNestedManyWithoutCompanyInput
@@ -1706,6 +1740,7 @@ export type CompanyUncheckedCreateWithoutChecklistRunsInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
   operators?: Prisma.OperatorUncheckedCreateNestedManyWithoutCompanyInput
@@ -1765,6 +1800,7 @@ export type CompanyUpdateWithoutChecklistRunsInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
   operators?: Prisma.OperatorUpdateManyWithoutCompanyNestedInput
@@ -1808,6 +1844,7 @@ export type CompanyUncheckedUpdateWithoutChecklistRunsInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
   operators?: Prisma.OperatorUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1851,6 +1888,7 @@ export type CompanyCreateWithoutServiceOrdersInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   operators?: Prisma.OperatorCreateNestedManyWithoutCompanyInput
@@ -1894,6 +1932,7 @@ export type CompanyUncheckedCreateWithoutServiceOrdersInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   operators?: Prisma.OperatorUncheckedCreateNestedManyWithoutCompanyInput
@@ -1953,6 +1992,7 @@ export type CompanyUpdateWithoutServiceOrdersInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   operators?: Prisma.OperatorUpdateManyWithoutCompanyNestedInput
@@ -1996,6 +2036,7 @@ export type CompanyUncheckedUpdateWithoutServiceOrdersInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   operators?: Prisma.OperatorUncheckedUpdateManyWithoutCompanyNestedInput
@@ -2039,6 +2080,7 @@ export type CompanyCreateWithoutPlanoPreventivoInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -2082,6 +2124,7 @@ export type CompanyUncheckedCreateWithoutPlanoPreventivoInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -2141,6 +2184,7 @@ export type CompanyUpdateWithoutPlanoPreventivoInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -2184,6 +2228,7 @@ export type CompanyUncheckedUpdateWithoutPlanoPreventivoInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -2227,6 +2272,7 @@ export type CompanyCreateWithoutOperatorsInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -2270,6 +2316,7 @@ export type CompanyUncheckedCreateWithoutOperatorsInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -2329,6 +2376,7 @@ export type CompanyUpdateWithoutOperatorsInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -2372,6 +2420,7 @@ export type CompanyUncheckedUpdateWithoutOperatorsInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -2415,6 +2464,7 @@ export type CompanyCreateWithoutAbastecimentosInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -2458,6 +2508,7 @@ export type CompanyUncheckedCreateWithoutAbastecimentosInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -2517,6 +2568,7 @@ export type CompanyUpdateWithoutAbastecimentosInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -2560,6 +2612,7 @@ export type CompanyUncheckedUpdateWithoutAbastecimentosInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -2602,6 +2655,7 @@ export type CompanyCreateWithoutPartnersInput = {
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -2645,6 +2699,7 @@ export type CompanyUncheckedCreateWithoutPartnersInput = {
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -2704,6 +2759,7 @@ export type CompanyUpdateWithoutPartnersInput = {
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -2747,6 +2803,199 @@ export type CompanyUncheckedUpdateWithoutPartnersInput = {
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
+  equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
+  serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
+  operators?: Prisma.OperatorUncheckedUpdateManyWithoutCompanyNestedInput
+  abastecimentos?: Prisma.AbastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  workFronts?: Prisma.WorkFrontUncheckedUpdateManyWithoutCompanyNestedInput
+  settings?: Prisma.CompanySettingsUncheckedUpdateOneWithoutCompanyNestedInput
+  emergencies?: Prisma.EmergencyUncheckedUpdateManyWithoutCompanyNestedInput
+  creditos?: Prisma.CreditoUncheckedUpdateManyWithoutCompanyNestedInput
+  lubrificacoes?: Prisma.LubrificacaoUncheckedUpdateManyWithoutCompanyNestedInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
+  planoPreventivo?: Prisma.PlanoPreventivoUncheckedUpdateOneWithoutCompanyNestedInput
+}
+
+export type CompanyCreateWithoutPartnerPortalUsersInput = {
+  id?: string
+  legacyId?: string | null
+  name: string
+  slug: string
+  type?: $Enums.CompanyType
+  status?: $Enums.Status
+  uf?: string | null
+  cidade?: string | null
+  email?: string | null
+  cnpj?: string | null
+  caepf?: string | null
+  whatsapp?: string | null
+  razaoSocial?: string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.CompanyUserCreateNestedManyWithoutCompanyInput
+  roles?: Prisma.CompanyRoleCreateNestedManyWithoutCompanyInput
+  pontoRegistros?: Prisma.PontoRegistroCreateNestedManyWithoutCompanyInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoCreateNestedManyWithoutCompanyInput
+  pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
+  features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
+  featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
+  partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
+  checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
+  serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
+  operators?: Prisma.OperatorCreateNestedManyWithoutCompanyInput
+  abastecimentos?: Prisma.AbastecimentoCreateNestedManyWithoutCompanyInput
+  workFronts?: Prisma.WorkFrontCreateNestedManyWithoutCompanyInput
+  settings?: Prisma.CompanySettingsCreateNestedOneWithoutCompanyInput
+  emergencies?: Prisma.EmergencyCreateNestedManyWithoutCompanyInput
+  creditos?: Prisma.CreditoCreateNestedManyWithoutCompanyInput
+  lubrificacoes?: Prisma.LubrificacaoCreateNestedManyWithoutCompanyInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
+  notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
+  planoPreventivo?: Prisma.PlanoPreventivoCreateNestedOneWithoutCompanyInput
+}
+
+export type CompanyUncheckedCreateWithoutPartnerPortalUsersInput = {
+  id?: string
+  legacyId?: string | null
+  name: string
+  slug: string
+  type?: $Enums.CompanyType
+  status?: $Enums.Status
+  uf?: string | null
+  cidade?: string | null
+  email?: string | null
+  cnpj?: string | null
+  caepf?: string | null
+  whatsapp?: string | null
+  razaoSocial?: string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.CompanyUserUncheckedCreateNestedManyWithoutCompanyInput
+  roles?: Prisma.CompanyRoleUncheckedCreateNestedManyWithoutCompanyInput
+  pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutCompanyInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedCreateNestedManyWithoutCompanyInput
+  pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
+  features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
+  featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
+  partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
+  checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
+  serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
+  operators?: Prisma.OperatorUncheckedCreateNestedManyWithoutCompanyInput
+  abastecimentos?: Prisma.AbastecimentoUncheckedCreateNestedManyWithoutCompanyInput
+  workFronts?: Prisma.WorkFrontUncheckedCreateNestedManyWithoutCompanyInput
+  settings?: Prisma.CompanySettingsUncheckedCreateNestedOneWithoutCompanyInput
+  emergencies?: Prisma.EmergencyUncheckedCreateNestedManyWithoutCompanyInput
+  creditos?: Prisma.CreditoUncheckedCreateNestedManyWithoutCompanyInput
+  lubrificacoes?: Prisma.LubrificacaoUncheckedCreateNestedManyWithoutCompanyInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
+  notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
+  planoPreventivo?: Prisma.PlanoPreventivoUncheckedCreateNestedOneWithoutCompanyInput
+}
+
+export type CompanyCreateOrConnectWithoutPartnerPortalUsersInput = {
+  where: Prisma.CompanyWhereUniqueInput
+  create: Prisma.XOR<Prisma.CompanyCreateWithoutPartnerPortalUsersInput, Prisma.CompanyUncheckedCreateWithoutPartnerPortalUsersInput>
+}
+
+export type CompanyUpsertWithoutPartnerPortalUsersInput = {
+  update: Prisma.XOR<Prisma.CompanyUpdateWithoutPartnerPortalUsersInput, Prisma.CompanyUncheckedUpdateWithoutPartnerPortalUsersInput>
+  create: Prisma.XOR<Prisma.CompanyCreateWithoutPartnerPortalUsersInput, Prisma.CompanyUncheckedCreateWithoutPartnerPortalUsersInput>
+  where?: Prisma.CompanyWhereInput
+}
+
+export type CompanyUpdateToOneWithWhereWithoutPartnerPortalUsersInput = {
+  where?: Prisma.CompanyWhereInput
+  data: Prisma.XOR<Prisma.CompanyUpdateWithoutPartnerPortalUsersInput, Prisma.CompanyUncheckedUpdateWithoutPartnerPortalUsersInput>
+}
+
+export type CompanyUpdateWithoutPartnerPortalUsersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumCompanyTypeFieldUpdateOperationsInput | $Enums.CompanyType
+  status?: Prisma.EnumStatusFieldUpdateOperationsInput | $Enums.Status
+  uf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnpj?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caepf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razaoSocial?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.CompanyUserUpdateManyWithoutCompanyNestedInput
+  roles?: Prisma.CompanyRoleUpdateManyWithoutCompanyNestedInput
+  pontoRegistros?: Prisma.PontoRegistroUpdateManyWithoutCompanyNestedInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUpdateManyWithoutCompanyNestedInput
+  pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
+  features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
+  featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
+  partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
+  checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
+  serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
+  operators?: Prisma.OperatorUpdateManyWithoutCompanyNestedInput
+  abastecimentos?: Prisma.AbastecimentoUpdateManyWithoutCompanyNestedInput
+  workFronts?: Prisma.WorkFrontUpdateManyWithoutCompanyNestedInput
+  settings?: Prisma.CompanySettingsUpdateOneWithoutCompanyNestedInput
+  emergencies?: Prisma.EmergencyUpdateManyWithoutCompanyNestedInput
+  creditos?: Prisma.CreditoUpdateManyWithoutCompanyNestedInput
+  lubrificacoes?: Prisma.LubrificacaoUpdateManyWithoutCompanyNestedInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
+  notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
+  planoPreventivo?: Prisma.PlanoPreventivoUpdateOneWithoutCompanyNestedInput
+}
+
+export type CompanyUncheckedUpdateWithoutPartnerPortalUsersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumCompanyTypeFieldUpdateOperationsInput | $Enums.CompanyType
+  status?: Prisma.EnumStatusFieldUpdateOperationsInput | $Enums.Status
+  uf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnpj?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caepf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razaoSocial?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.CompanyUserUncheckedUpdateManyWithoutCompanyNestedInput
+  roles?: Prisma.CompanyRoleUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
+  features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
+  featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
+  partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -2790,6 +3039,7 @@ export type CompanyCreateWithoutPontoRegistrosInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -2833,6 +3083,7 @@ export type CompanyUncheckedCreateWithoutPontoRegistrosInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -2892,6 +3143,7 @@ export type CompanyUpdateWithoutPontoRegistrosInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -2935,6 +3187,7 @@ export type CompanyUncheckedUpdateWithoutPontoRegistrosInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -2978,6 +3231,7 @@ export type CompanyCreateWithoutPontoNsrCounterInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -3021,6 +3275,7 @@ export type CompanyUncheckedCreateWithoutPontoNsrCounterInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -3080,6 +3335,7 @@ export type CompanyUpdateWithoutPontoNsrCounterInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -3123,6 +3379,7 @@ export type CompanyUncheckedUpdateWithoutPontoNsrCounterInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -3166,6 +3423,7 @@ export type CompanyCreateWithoutPontoSolicitacoesInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -3209,6 +3467,7 @@ export type CompanyUncheckedCreateWithoutPontoSolicitacoesInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -3268,6 +3527,7 @@ export type CompanyUpdateWithoutPontoSolicitacoesInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -3311,6 +3571,7 @@ export type CompanyUncheckedUpdateWithoutPontoSolicitacoesInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -3354,6 +3615,7 @@ export type CompanyCreateWithoutPontoAbonosInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -3397,6 +3659,7 @@ export type CompanyUncheckedCreateWithoutPontoAbonosInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -3456,6 +3719,7 @@ export type CompanyUpdateWithoutPontoAbonosInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -3499,6 +3763,7 @@ export type CompanyUncheckedUpdateWithoutPontoAbonosInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -3542,6 +3807,7 @@ export type CompanyCreateWithoutChecklistsDevolucaoInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -3585,6 +3851,7 @@ export type CompanyUncheckedCreateWithoutChecklistsDevolucaoInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -3644,6 +3911,7 @@ export type CompanyUpdateWithoutChecklistsDevolucaoInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -3687,6 +3955,7 @@ export type CompanyUncheckedUpdateWithoutChecklistsDevolucaoInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -3730,6 +3999,7 @@ export type CompanyCreateWithoutOrcamentosInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -3773,6 +4043,7 @@ export type CompanyUncheckedCreateWithoutOrcamentosInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -3832,6 +4103,7 @@ export type CompanyUpdateWithoutOrcamentosInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -3875,6 +4147,7 @@ export type CompanyUncheckedUpdateWithoutOrcamentosInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -3918,6 +4191,7 @@ export type CompanyCreateWithoutRolesInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -3961,6 +4235,7 @@ export type CompanyUncheckedCreateWithoutRolesInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -4020,6 +4295,7 @@ export type CompanyUpdateWithoutRolesInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -4063,6 +4339,7 @@ export type CompanyUncheckedUpdateWithoutRolesInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -4106,6 +4383,7 @@ export type CompanyCreateWithoutFeaturesInput = {
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -4149,6 +4427,7 @@ export type CompanyUncheckedCreateWithoutFeaturesInput = {
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -4208,6 +4487,7 @@ export type CompanyUpdateWithoutFeaturesInput = {
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -4251,6 +4531,7 @@ export type CompanyUncheckedUpdateWithoutFeaturesInput = {
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -4294,6 +4575,7 @@ export type CompanyCreateWithoutFeatureChangesInput = {
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -4337,6 +4619,7 @@ export type CompanyUncheckedCreateWithoutFeatureChangesInput = {
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -4396,6 +4679,7 @@ export type CompanyUpdateWithoutFeatureChangesInput = {
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -4439,6 +4723,7 @@ export type CompanyUncheckedUpdateWithoutFeatureChangesInput = {
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -4482,6 +4767,7 @@ export type CompanyCreateWithoutUsersInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -4525,6 +4811,7 @@ export type CompanyUncheckedCreateWithoutUsersInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -4584,6 +4871,7 @@ export type CompanyUpdateWithoutUsersInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -4627,6 +4915,7 @@ export type CompanyUncheckedUpdateWithoutUsersInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -4671,6 +4960,7 @@ export type CompanyCreateWithoutEmergenciesInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -4714,6 +5004,7 @@ export type CompanyUncheckedCreateWithoutEmergenciesInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -4773,6 +5064,7 @@ export type CompanyUpdateWithoutEmergenciesInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -4816,6 +5108,7 @@ export type CompanyUncheckedUpdateWithoutEmergenciesInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -4859,6 +5152,7 @@ export type CompanyCreateWithoutCreditosInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -4902,6 +5196,7 @@ export type CompanyUncheckedCreateWithoutCreditosInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -4961,6 +5256,7 @@ export type CompanyUpdateWithoutCreditosInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -5004,6 +5300,7 @@ export type CompanyUncheckedUpdateWithoutCreditosInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -5047,6 +5344,7 @@ export type CompanyCreateWithoutLubrificacoesInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -5090,6 +5388,7 @@ export type CompanyUncheckedCreateWithoutLubrificacoesInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -5149,6 +5448,7 @@ export type CompanyUpdateWithoutLubrificacoesInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -5192,6 +5492,7 @@ export type CompanyUncheckedUpdateWithoutLubrificacoesInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -5235,6 +5536,7 @@ export type CompanyCreateWithoutReabastecimentosComboioInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -5278,6 +5580,7 @@ export type CompanyUncheckedCreateWithoutReabastecimentosComboioInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -5337,6 +5640,7 @@ export type CompanyUpdateWithoutReabastecimentosComboioInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -5380,6 +5684,7 @@ export type CompanyUncheckedUpdateWithoutReabastecimentosComboioInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -5423,6 +5728,7 @@ export type CompanyCreateWithoutNotasFiscaisInput = {
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
@@ -5466,6 +5772,7 @@ export type CompanyUncheckedCreateWithoutNotasFiscaisInput = {
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
   equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
   checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
@@ -5525,6 +5832,7 @@ export type CompanyUpdateWithoutNotasFiscaisInput = {
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
@@ -5568,6 +5876,7 @@ export type CompanyUncheckedUpdateWithoutNotasFiscaisInput = {
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
   equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
   checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
@@ -5598,6 +5907,7 @@ export type CompanyCountOutputType = {
   features: number
   featureChanges: number
   partners: number
+  partnerPortalUsers: number
   equipments: number
   checklistRuns: number
   serviceOrders: number
@@ -5622,6 +5932,7 @@ export type CompanyCountOutputTypeSelect<ExtArgs extends runtime.Types.Extension
   features?: boolean | CompanyCountOutputTypeCountFeaturesArgs
   featureChanges?: boolean | CompanyCountOutputTypeCountFeatureChangesArgs
   partners?: boolean | CompanyCountOutputTypeCountPartnersArgs
+  partnerPortalUsers?: boolean | CompanyCountOutputTypeCountPartnerPortalUsersArgs
   equipments?: boolean | CompanyCountOutputTypeCountEquipmentsArgs
   checklistRuns?: boolean | CompanyCountOutputTypeCountChecklistRunsArgs
   serviceOrders?: boolean | CompanyCountOutputTypeCountServiceOrdersArgs
@@ -5713,6 +6024,13 @@ export type CompanyCountOutputTypeCountFeatureChangesArgs<ExtArgs extends runtim
  */
 export type CompanyCountOutputTypeCountPartnersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.PartnerWhereInput
+}
+
+/**
+ * CompanyCountOutputType without action
+ */
+export type CompanyCountOutputTypeCountPartnerPortalUsersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PartnerPortalUserWhereInput
 }
 
 /**
@@ -5822,6 +6140,7 @@ export type CompanySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   features?: boolean | Prisma.Company$featuresArgs<ExtArgs>
   featureChanges?: boolean | Prisma.Company$featureChangesArgs<ExtArgs>
   partners?: boolean | Prisma.Company$partnersArgs<ExtArgs>
+  partnerPortalUsers?: boolean | Prisma.Company$partnerPortalUsersArgs<ExtArgs>
   equipments?: boolean | Prisma.Company$equipmentsArgs<ExtArgs>
   checklistRuns?: boolean | Prisma.Company$checklistRunsArgs<ExtArgs>
   serviceOrders?: boolean | Prisma.Company$serviceOrdersArgs<ExtArgs>
@@ -5911,6 +6230,7 @@ export type CompanyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   features?: boolean | Prisma.Company$featuresArgs<ExtArgs>
   featureChanges?: boolean | Prisma.Company$featureChangesArgs<ExtArgs>
   partners?: boolean | Prisma.Company$partnersArgs<ExtArgs>
+  partnerPortalUsers?: boolean | Prisma.Company$partnerPortalUsersArgs<ExtArgs>
   equipments?: boolean | Prisma.Company$equipmentsArgs<ExtArgs>
   checklistRuns?: boolean | Prisma.Company$checklistRunsArgs<ExtArgs>
   serviceOrders?: boolean | Prisma.Company$serviceOrdersArgs<ExtArgs>
@@ -5943,6 +6263,7 @@ export type $CompanyPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     features: Prisma.$CompanyFeaturePayload<ExtArgs>[]
     featureChanges: Prisma.$CompanyFeatureChangePayload<ExtArgs>[]
     partners: Prisma.$PartnerPayload<ExtArgs>[]
+    partnerPortalUsers: Prisma.$PartnerPortalUserPayload<ExtArgs>[]
     equipments: Prisma.$EquipmentPayload<ExtArgs>[]
     checklistRuns: Prisma.$ChecklistRunPayload<ExtArgs>[]
     serviceOrders: Prisma.$ServiceOrderPayload<ExtArgs>[]
@@ -6395,6 +6716,7 @@ export interface Prisma__CompanyClient<T, Null = never, ExtArgs extends runtime.
   features<T extends Prisma.Company$featuresArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$featuresArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CompanyFeaturePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   featureChanges<T extends Prisma.Company$featureChangesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$featureChangesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CompanyFeatureChangePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   partners<T extends Prisma.Company$partnersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$partnersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PartnerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  partnerPortalUsers<T extends Prisma.Company$partnerPortalUsersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$partnerPortalUsersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PartnerPortalUserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   equipments<T extends Prisma.Company$equipmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$equipmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EquipmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   checklistRuns<T extends Prisma.Company$checklistRunsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$checklistRunsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChecklistRunPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   serviceOrders<T extends Prisma.Company$serviceOrdersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$serviceOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -7103,6 +7425,30 @@ export type Company$partnersArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.PartnerScalarFieldEnum | Prisma.PartnerScalarFieldEnum[]
+}
+
+/**
+ * Company.partnerPortalUsers
+ */
+export type Company$partnerPortalUsersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PartnerPortalUser
+   */
+  select?: Prisma.PartnerPortalUserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PartnerPortalUser
+   */
+  omit?: Prisma.PartnerPortalUserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PartnerPortalUserInclude<ExtArgs> | null
+  where?: Prisma.PartnerPortalUserWhereInput
+  orderBy?: Prisma.PartnerPortalUserOrderByWithRelationInput | Prisma.PartnerPortalUserOrderByWithRelationInput[]
+  cursor?: Prisma.PartnerPortalUserWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PartnerPortalUserScalarFieldEnum | Prisma.PartnerPortalUserScalarFieldEnum[]
 }
 
 /**

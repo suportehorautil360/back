@@ -4,7 +4,10 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { mapPartnerPostoToApi } from '../../../common/prisma/partner-api.mapper';
+import { resolverCompanyId } from '../../../common/prisma/company-resolver';
 import { FirebaseService } from '../../../config/firebase.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { parseDateEnd, parseDateStart } from '../shared/date.helper';
 import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
 import { CreatePostoDto } from './dto/create-posto.dto';
@@ -20,7 +23,10 @@ import { PostoDoc, PostoListItem, TIPO_PARCEIRO_OPTIONS } from './postos.types';
 
 @Injectable()
 export class PostosService {
-  constructor(private firebaseService: FirebaseService) {}
+  constructor(
+    private firebaseService: FirebaseService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   private get collection() {
     return this.firebaseService.getFirestore().collection('postos');
@@ -75,6 +81,32 @@ export class PostosService {
       const endIso = endDate
         ? parseDateEnd(endDate, 'endDate').toISOString()
         : undefined;
+
+      const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+      if (companyId) {
+        const partners = await this.prisma.partner.findMany({
+          where: { companyId, type: 'POSTO' },
+          orderBy: { nomeFantasia: 'asc' },
+        });
+        if (partners.length > 0) {
+          const docs: PostoDoc[] = partners.map((p) =>
+            mapPartnerPostoToApi(p, prefeituraId) as PostoDoc,
+          );
+          const codeMap = new Map(
+            docs.map((doc, index) => [doc.id, `P${index + 1}`]),
+          );
+          const statsMap = await this.fetchAbastecimentoStats(
+            prefeituraId,
+            docs.map((doc) => doc.id),
+            startIso,
+            endIso,
+          );
+          const data = docs.map((doc) =>
+            this.mapToListItem(doc, codeMap, statsMap),
+          );
+          return { data, message: 'Postos buscados com sucesso!' };
+        }
+      }
 
       const docs = (
         await fetchPrefeituraDocs<PostoDoc>(this.collection, prefeituraId, {

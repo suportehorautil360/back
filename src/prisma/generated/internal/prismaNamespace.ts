@@ -419,6 +419,7 @@ export const ModelName = {
   AccessGroup: 'AccessGroup',
   RoleAccessGroup: 'RoleAccessGroup',
   Partner: 'Partner',
+  PartnerPortalUser: 'PartnerPortalUser',
   Feature: 'Feature',
   PontoRegistro: 'PontoRegistro',
   PontoNsrCounter: 'PontoNsrCounter',
@@ -450,7 +451,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "planoPreventivo" | "operator" | "abastecimento" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "roleAccessGroup" | "partner" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal"
+    modelProps: "user" | "company" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "planoPreventivo" | "operator" | "abastecimento" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2079,6 +2080,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.PartnerCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.PartnerCountAggregateOutputType> | number
+        }
+      }
+    }
+    PartnerPortalUser: {
+      payload: Prisma.$PartnerPortalUserPayload<ExtArgs>
+      fields: Prisma.PartnerPortalUserFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PartnerPortalUserFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalUserPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PartnerPortalUserFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalUserPayload>
+        }
+        findFirst: {
+          args: Prisma.PartnerPortalUserFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalUserPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PartnerPortalUserFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalUserPayload>
+        }
+        findMany: {
+          args: Prisma.PartnerPortalUserFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalUserPayload>[]
+        }
+        create: {
+          args: Prisma.PartnerPortalUserCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalUserPayload>
+        }
+        createMany: {
+          args: Prisma.PartnerPortalUserCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PartnerPortalUserCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalUserPayload>[]
+        }
+        delete: {
+          args: Prisma.PartnerPortalUserDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalUserPayload>
+        }
+        update: {
+          args: Prisma.PartnerPortalUserUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalUserPayload>
+        }
+        deleteMany: {
+          args: Prisma.PartnerPortalUserDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PartnerPortalUserUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PartnerPortalUserUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalUserPayload>[]
+        }
+        upsert: {
+          args: Prisma.PartnerPortalUserUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalUserPayload>
+        }
+        aggregate: {
+          args: Prisma.PartnerPortalUserAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePartnerPortalUser>
+        }
+        groupBy: {
+          args: Prisma.PartnerPortalUserGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PartnerPortalUserGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PartnerPortalUserCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PartnerPortalUserCountAggregateOutputType> | number
         }
       }
     }
@@ -3753,6 +3828,26 @@ export const PartnerScalarFieldEnum = {
 export type PartnerScalarFieldEnum = (typeof PartnerScalarFieldEnum)[keyof typeof PartnerScalarFieldEnum]
 
 
+export const PartnerPortalUserScalarFieldEnum = {
+  id: 'id',
+  legacyId: 'legacyId',
+  companyId: 'companyId',
+  partnerId: 'partnerId',
+  partnerLegacyId: 'partnerLegacyId',
+  nome: 'nome',
+  usuario: 'usuario',
+  email: 'email',
+  senhaHash: 'senhaHash',
+  perfil: 'perfil',
+  vinculo: 'vinculo',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PartnerPortalUserScalarFieldEnum = (typeof PartnerPortalUserScalarFieldEnum)[keyof typeof PartnerPortalUserScalarFieldEnum]
+
+
 export const FeatureScalarFieldEnum = {
   id: 'id',
   key: 'key',
@@ -4484,6 +4579,7 @@ export type GlobalOmitConfig = {
   accessGroup?: Prisma.AccessGroupOmit
   roleAccessGroup?: Prisma.RoleAccessGroupOmit
   partner?: Prisma.PartnerOmit
+  partnerPortalUser?: Prisma.PartnerPortalUserOmit
   feature?: Prisma.FeatureOmit
   pontoRegistro?: Prisma.PontoRegistroOmit
   pontoNsrCounter?: Prisma.PontoNsrCounterOmit

@@ -73,6 +73,7 @@ export const ModelName = {
   AccessGroup: 'AccessGroup',
   RoleAccessGroup: 'RoleAccessGroup',
   Partner: 'Partner',
+  PartnerPortalUser: 'PartnerPortalUser',
   Feature: 'Feature',
   PontoRegistro: 'PontoRegistro',
   PontoNsrCounter: 'PontoNsrCounter',
@@ -553,6 +554,26 @@ export const PartnerScalarFieldEnum = {
 } as const
 
 export type PartnerScalarFieldEnum = (typeof PartnerScalarFieldEnum)[keyof typeof PartnerScalarFieldEnum]
+
+
+export const PartnerPortalUserScalarFieldEnum = {
+  id: 'id',
+  legacyId: 'legacyId',
+  companyId: 'companyId',
+  partnerId: 'partnerId',
+  partnerLegacyId: 'partnerLegacyId',
+  nome: 'nome',
+  usuario: 'usuario',
+  email: 'email',
+  senhaHash: 'senhaHash',
+  perfil: 'perfil',
+  vinculo: 'vinculo',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PartnerPortalUserScalarFieldEnum = (typeof PartnerPortalUserScalarFieldEnum)[keyof typeof PartnerPortalUserScalarFieldEnum]
 
 
 export const FeatureScalarFieldEnum = {
