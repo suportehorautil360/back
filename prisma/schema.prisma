@@ -1,0 +1,1434 @@
+// Schema Prisma — Horautil (back NestJS)
+// FONTE DA VERDADE: horautil/prisma/schema.prisma. Este arquivo é uma cópia
+// sincronizada — sempre editar lá e copiar. Migrations rodam pelo horautil.
+// Aqui o back só CONSOME o cliente gerado — não corre migrations.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/prisma/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Papéis internos da equipe Horautil
+enum UserRole {
+  CTO
+  ADMIN
+  STAFF
+}
+
+/// Papéis dos usuários dentro de uma empresa contratante.
+enum CompanyUserRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+/// Classificação comercial da empresa. Os valores legados permanecem no Firestore.
+enum CompanyType {
+  MUNICIPALITY
+  RENTAL
+}
+
+/// Status genérico de habilitação
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+/// Equipe interna da Horautil (opera o painel admin).
+/// O `id` é o `auth.users.id` do Supabase — vinculamos 1-para-1.
+model User {
+  id              String   @id @db.Uuid
+  email           String   @unique
+  name            String
+  avatarUrl       String?  @map("avatar_url")
+  role            UserRole @default(STAFF)
+  status          Status   @default(ACTIVE)
+  onboardingState Json     @default("{}") @map("onboarding_state")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+/// Empresas clientes da Horautil. `legacyId` aponta para `clientes/{id}` no Firestore.
+model Company {
+  id       String      @id @default(uuid()) @db.Uuid
+  legacyId String?     @unique @map("legacy_id")
+  name     String
+  slug     String      @unique
+  type     CompanyType @default(MUNICIPALITY)
+  status   Status      @default(ACTIVE)
+
+  /// Dados básicos do cliente. Nullable pra tolerar shells (Company criada
+  /// só pra FK de feature flag) e permitir migração incremental do Firestore.
+  uf       String? @db.VarChar(2)
+  cidade   String?
+  email    String?
+  cnpj     String?
+  caepf    String?
+  whatsapp String?
+
+  /// Razão social fiscal. `name` é o display comercial (pode divergir);
+  /// aqui fica o rótulo exato usado em documentos legais (Portaria 671).
+  razaoSocial String? @map("razao_social")
+
+  /// Preferências de login do portal do cliente (cpfSenha, chassi).
+  checklistLogin Json? @map("checklist_login")
+
+  /// Snapshot do contrato — preservamos o shape completo do legacy pra
+  /// não perder informação enquanto o domínio de contratos não é modelado.
+  contract Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users                   CompanyUser[]
+  roles                   CompanyRole[]
+  pontoRegistros          PontoRegistro[]
+  pontoSolicitacoes       PontoSolicitacao[]
+  pontoAbonos             PontoAbono[]
+  pontoNsrCounter         PontoNsrCounter?
+  checklistsDevolucao     ChecklistDevolucao[]
+  orcamentos              Orcamento[]
+  features                CompanyFeature[]
+  featureChanges          CompanyFeatureChange[]
+  partners                Partner[]
+  equipments              Equipment[]
+  checklistRuns           ChecklistRun[]
+  serviceOrders           ServiceOrder[]
+  operators               Operator[]
+  abastecimentos          Abastecimento[]
+  workFronts              WorkFront[]
+  settings                CompanySettings?
+  emergencies             Emergency[]
+  creditos                Credito[]
+  lubrificacoes           Lubrificacao[]
+  reabastecimentosComboio ComboioReabastecimento[]
+  notasFiscais            NotaFiscal[]
+  planoPreventivo         PlanoPreventivo?
+
+  @@map("clients")
+}
+
+/// Parâmetros operacionais da empresa (1:1 com Company). Consolida as três
+/// seções da tela /empresa/[slug]/configuracoes: alertas, comportamento do
+/// bloqueio de revisão e escala da jornada. Espelhado em Firestore nas
+/// collections `configuracoes/{legacyId}` e `escala/{legacyId}` pra manter
+/// compat com o portal 360 legacy.
+model CompanySettings {
+  companyId String @id @map("company_id") @db.Uuid
+
+  /// Alertas e notificações — 6 toggles independentes.
+  alertBloqueioRevisaoVencida Boolean @default(true) @map("alert_bloqueio_revisao_vencida")
+  alertNivelCriticoTanque     Boolean @default(true) @map("alert_nivel_critico_tanque")
+  alertAbastecimentoIrregular Boolean @default(true) @map("alert_abastecimento_irregular")
+  alertCnhProximaVencimento   Boolean @default(true) @map("alert_cnh_proxima_vencimento")
+  alertRelatorioSemanal       Boolean @default(false) @map("alert_relatorio_semanal")
+  alertWhatsappEmergencia     Boolean @default(false) @map("alert_whatsapp_emergencia")
+
+  /// Comportamento do bloqueio de revisão.
+  bloquearAoVencer Boolean @default(true) @map("bloquear_ao_vencer")
+  alertar80        Boolean @default(true) @map("alertar_80")
+  alertar90        Boolean @default(true) @map("alertar_90")
+
+  /// Escala da jornada — HH:MM 24h, almoço em minutos, dias 0=Dom..6=Sab.
+  escalaInicio    String @default("08:00") @map("escala_inicio")
+  escalaFim       String @default("18:00") @map("escala_fim")
+  escalaAlmocoMin Int    @default(60) @map("escala_almoco_min")
+  escalaDias      Json   @default("[1,2,3,4,5]") @map("escala_dias")
+
+  /// Intervalos de revisão padrão por categoria de equipamento — usados pra
+  /// pré-preencher `Equipment.intervaloRevisao` no formulário de novo
+  /// equipamento (mesmo papel do `configPadrao.intervalos` do 360 legacy).
+  /// Shape: { carro, caminhao, maquina, ambulancia, van } com { valor, unidade }.
+  /// Não editável na tela de Configurações (paridade com o legado).
+  intervalos Json @default("{\"carro\":{\"valor\":1000,\"unidade\":\"km\"},\"caminhao\":{\"valor\":500,\"unidade\":\"horas\"},\"maquina\":{\"valor\":500,\"unidade\":\"horas\"},\"ambulancia\":{\"valor\":1000,\"unidade\":\"km\"},\"van\":{\"valor\":1000,\"unidade\":\"km\"}}")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("company_settings")
+}
+
+/// Equipamento (frota). Campos ricos migrados do Firestore `equipamentos/{id}`
+/// pra suportar o painel da empresa (marca/modelo, medição, revisão, frente).
+model Equipment {
+  id        String  @id @default(uuid()) @db.Uuid
+  legacyId  String? @unique @map("legacy_id")
+  companyId String  @map("company_id") @db.Uuid
+
+  /// Bruto do legado: "ativo" | "bloqueado" | "inativo" | "manutencao" | ...
+  status String
+
+  /// Identificação e descrição
+  descricao String?
+  tipo      String?
+  linha     String?
+  placa     String?
+  chassi    String?
+  marca     String?
+  modelo    String?
+  ano       String?
+
+  /// Medição e revisão — usado por "Próximas manutenções" e "Bloqueados".
+  medicaoAtual     Float?  @map("medicao_atual")
+  intervaloRevisao Float?  @map("intervalo_revisao")
+  ultimaRevisao    Float?  @map("ultima_revisao")
+  /// "km" | "h" (horímetro)
+  unidadeRevisao   String? @map("unidade_revisao")
+
+  /// Frente de trabalho atual (string livre igual legado); vazio = "Disponível".
+  obra String?
+
+  /// Identificação estendida (formulário completo).
+  renavam        String?
+  numeroSerie    String? @map("numero_serie")
+  patrimonioBase String? @map("patrimonio_base")
+
+  /// Veículo estendido.
+  cor                      String?
+  combustivel              String?
+  /// "Própria" | "Locada" (rótulo do legado).
+  tipoFrota                String?  @map("tipo_frota")
+  motorizacao              String?
+  anoModelo                String?  @map("ano_modelo")
+  capacidadeTanque         Float?   @map("capacidade_tanque")
+  /// Só faz sentido pra comboio (tanque acoplado ao caminhão em si).
+  capacidadeTanqueCaminhao Float?   @map("capacidade_tanque_caminhao")
+  valorVeiculo             Decimal? @map("valor_veiculo") @db.Decimal(12, 2)
+
+  /// Operação — responsáveis. `condutoresIds` é `string[]` de `legacyId`
+  /// de Operator (soft-ref pra tolerar operador removido).
+  condutoresIds     Json    @default("[]") @map("condutores_ids")
+  gestorResponsavel String? @map("gestor_responsavel")
+
+  /// Localização.
+  centroCusto String? @map("centro_custo")
+  cidade      String?
+  estado      String? @db.VarChar(2)
+  regiao      String?
+
+  /// Documentos (datas de vencimento e locação).
+  ipva                 DateTime? @db.Date
+  seguro               DateTime? @db.Date
+  licenciamento        DateTime? @db.Date
+  vigenciaInicio       DateTime? @map("vigencia_inicio") @db.Date
+  vigenciaFim          DateTime? @map("vigencia_fim") @db.Date
+  inativarAposVigencia Boolean   @default(false) @map("inativar_apos_vigencia")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company        Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  abastecimentos Abastecimento[]
+  revisoes       EquipmentRevision[]
+  alocacoes      WorkFrontAllocation[]
+  creditos       Credito[]
+  lubrificacoes  Lubrificacao[]
+  cargasComboio  ComboioReabastecimento[]
+  serviceOrders  ServiceOrder[]
+
+  @@index([companyId, status])
+  @@index([companyId, tipo])
+  @@map("equipments")
+}
+
+/// Histórico imutável de revisões concluídas — cada `liberarEquipamentoAction`
+/// insere uma row. Guarda tudo que o formulário coleta (data, oficina, custo,
+/// NF, serviços) mais quem liberou. `leitura` também vive em `equipment.ultimaRevisao`
+/// pra query rápida; aqui fica o rastro auditável.
+model EquipmentRevision {
+  id          String   @id @default(uuid()) @db.Uuid
+  equipmentId String   @map("equipment_id") @db.Uuid
+  data        DateTime @db.Date
+  leitura     Float
+  /// "km" | "h" — copiada do equipamento no momento da liberação.
+  unidade     String
+  oficina     String?
+  custo       Decimal? @db.Decimal(12, 2)
+  notaFiscal  String?  @map("nota_fiscal")
+  servicos    String?
+  /// Usuário que registrou (nullable pra tolerar imports/scripts).
+  createdById String?  @map("created_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@index([equipmentId, createdAt])
+  @@map("equipment_revisions")
+}
+
+/// Estado da frente de trabalho — controla se aparece como alocável e como
+/// aparece no chip da UI (verde/amarelo/cinza).
+enum FrenteStatus {
+  ATIVA
+  PAUSADA
+  CONCLUIDA
+}
+
+/// Frente de trabalho (obra) — agrupa equipamentos por local/responsável e
+/// permite acompanhar custo estimado + comunicação via WhatsApp/email.
+/// Backfill do Firestore `work-fronts/{id}` (mesmo shape do 360-repository).
+model WorkFront {
+  id        String  @id @default(uuid()) @db.Uuid
+  legacyId  String? @unique @map("legacy_id")
+  companyId String  @map("company_id") @db.Uuid
+
+  nome     String
+  endereco String?
+
+  /// Soft-ref (id de Operator/CompanyUser) — o backend não impõe FK pra
+  /// tolerar responsável desligado ou legado sem match. `responsavelNome`
+  /// mantém o rótulo mesmo se o vínculo se perder.
+  responsavelLegacyId String? @map("responsavel_legacy_id")
+  responsavelNome     String? @map("responsavel_nome")
+
+  /// Telefone em E.164 (ex: +5511987654321). Vazio quando não cadastrado.
+  telefone String?
+  /// Recebe alertas de emergência/checklist da frente.
+  email    String?
+
+  status FrenteStatus @default(ATIVA)
+  custo  Decimal      @default(0) @db.Decimal(12, 2)
+
+  inicio DateTime? @db.Date
+  fim    DateTime? @db.Date
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company   Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  alocacoes WorkFrontAllocation[]
+  creditos  Credito[]
+
+  @@index([companyId, status])
+  @@map("work_fronts")
+}
+
+/// Alocação de um equipamento numa frente. Uma alocação com `endDate = null`
+/// é a "vigente"; ao alocar o mesmo equipamento em outra frente, encerramos
+/// (`endDate = now`) a alocação vigente anterior — mesmo comportamento do
+/// backend legado.
+model WorkFrontAllocation {
+  id          String    @id @default(uuid()) @db.Uuid
+  legacyId    String?   @unique @map("legacy_id")
+  workFrontId String    @map("work_front_id") @db.Uuid
+  equipmentId String    @map("equipment_id") @db.Uuid
+  funcao      String?
+  startDate   DateTime  @map("start_date") @db.Date
+  /// null = alocação vigente; preenchido = encerrada.
+  endDate     DateTime? @map("end_date") @db.Date
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  workFront WorkFront @relation(fields: [workFrontId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@index([workFrontId, endDate])
+  @@index([equipmentId, endDate])
+  @@map("work_front_allocations")
+}
+
+/// Execução de checklist do operador (não confundir com `ChecklistDefinition`).
+/// Backfill do Firestore `checklistsRegistros/{id}`. `operadorLegacyId` e
+/// `definitionLegacyId` são soft-refs (não FK) pra tolerar dados históricos
+/// que referenciam registros já apagados. Campos ricos (respostas, itens
+/// reprovados, pontuação) alimentam a tela de Auditoria de Checklists.
+model ChecklistRun {
+  id                 String  @id @default(uuid()) @db.Uuid
+  legacyId           String? @unique @map("legacy_id")
+  companyId          String  @map("company_id") @db.Uuid
+  operadorLegacyId   String? @map("operador_legacy_id")
+  operadorNome       String? @map("operador_nome")
+  /// CPF (só dígitos) do operador — snapshot no momento da execução. Usado
+  /// pelo PWA pra bater com Operator quando `operadorLegacyId` não bate.
+  operadorCpf        String? @map("operador_cpf")
+  definitionLegacyId String? @map("definition_legacy_id")
+
+  /// Identificação do equipamento no momento da execução (snapshot pra
+  /// tolerar mudança/remoção posterior no cadastro).
+  chassi    String?
+  categoria String?
+  modelo    String?
+  linha     String?
+
+  /// Contadores derivados das respostas.
+  totalItens      Int?   @map("total_itens")
+  totalSim        Int?   @map("total_sim")
+  totalNao        Int?   @map("total_nao")
+  totalNa         Int?   @map("total_na")
+  totalAplicaveis Int?   @map("total_aplicaveis")
+  /// Pontuação percentual (0-100) — mesma fórmula do 360.
+  pontuacao       Float?
+
+  /// Leitura do horímetro/hodômetro no momento do checklist.
+  horimetro String?
+
+  /// Snapshot completo das respostas do checklist (chave item → sim/nao/na
+  /// ou objeto com detalhes). Guardado como JSON pra tolerar variação de
+  /// shape entre versões do PWA.
+  respostas Json?
+  /// Itens marcados "Não" — objetos `{ titulo, problema?, numero?, impeditivo? }`.
+  itensNao  Json?   @map("itens_nao")
+  obs       String?
+
+  /// Data URLs base64 (mesmo formato do legado). TEXT pode chegar a algumas
+  /// centenas de KB por row — ok pra volumes atuais.
+  /// PWA novo prefere URLs do Supabase Storage (bucket `checklists/`).
+  fotoHorimetro      String? @map("foto_horimetro") @db.Text
+  assinaturaOperador String? @map("assinatura_operador") @db.Text
+
+  /// GPS capturado ao iniciar o checklist ("lat,lng" ou string livre).
+  localizacaoGps String? @map("localizacao_gps")
+
+  /// Quando a execução aconteceu de verdade (não confundir com `createdAt`
+  /// da row Postgres, que é do backfill).
+  executedAt DateTime? @map("executed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([companyId, operadorLegacyId])
+  @@index([companyId, executedAt])
+  @@index([companyId, chassi])
+  @@map("checklist_runs")
+}
+
+/// Ordem de serviço — modelagem MÍNIMA pra alimentar o dashboard (contagem
+/// por status). Backfill do Firestore `ordensServico/{id}`. Ampliar quando
+/// o módulo de OS for construído.
+/// Ordem de Serviço — backfill do Firestore `solicitacoesOS/{id}`. A UI de
+/// Abrir OS é a fonte primária de escrita agora (Postgres); Firestore fica
+/// como espelho best-effort pra portais legados. Sub-cards (insumos/etapas/
+/// sintomas/ocorrências) ficam em models filhos separados pra CRUD limpo.
+model ServiceOrder {
+  id        String  @id @default(uuid()) @db.Uuid
+  legacyId  String? @unique @map("legacy_id")
+  companyId String  @map("company_id") @db.Uuid
+
+  /// Protocolo humano-legível (ex: "OS-2026-047"). Gerado no create com
+  /// sequência por company. Não é PK — o UUID é.
+  protocolo String
+
+  /// "C" (corretiva) | "P" (preditiva) | "V" (preventiva). Legado usa esse
+  /// código curto; `serviceType` armazena a versão em inglês do back-360
+  /// pra compat com o portal da oficina que ainda lê Firestore.
+  tipoOs      String  @map("tipo_os")
+  serviceType String? @map("service_type")
+
+  /// Snapshot do equipamento no momento da criação — tolera equipamento
+  /// removido. `equipmentId` é FK opcional (SET NULL) pra rastrear vivos.
+  equipmentId    String? @map("equipment_id") @db.Uuid
+  equipmentNome  String? @map("equipment_nome")
+  equipmentPlaca String? @map("equipment_placa")
+  linha          String?
+  segmento       String?
+  horimetro      String?
+
+  /// Snapshot do operador solicitante.
+  operadorLegacyId String? @map("operador_legacy_id")
+  operadorNome     String? @map("operador_nome")
+
+  /// Descrição do problema (obrigatório na UI).
+  relato          String    @db.Text
+  dataAgendamento DateTime? @map("data_agendamento") @db.Date
+  /// "Aberta" | "EmAndamento" | "Concluida" — situação operacional (não
+  /// confundir com `status`, que rastreia o fluxo comercial da OS).
+  situacao        String    @default("Aberta")
+
+  /// Fluxo do pregão/orçamento — bruto do legado.
+  /// "aguardando_orcamento" | "em_orcamento" | "pregao" |
+  /// "aguardando_aprovacao" | "aprovado" | "concluido" | "cancelado"
+  status String @default("aguardando_orcamento")
+
+  /// Preventiva: qual categoria/ciclo do plano gerou esta OS.
+  categoriaPlanoId String? @map("categoria_plano_id")
+  cicloId          String? @map("ciclo_id")
+
+  /// Oficinas convidadas pra dar orçamento. `oficinasIds` é `string[]` de
+  /// Partner.legacyId (soft-ref pra tolerar oficina desativada);
+  /// `oficinasNomes` é snapshot pra exibir sem query extra.
+  oficinasIds         Json @default("[]") @map("oficinas_ids")
+  oficinasNomes       Json @default("[]") @map("oficinas_nomes")
+  /// IDs de oficinas que já responderam com lance.
+  oficinasResponderam Json @default("[]") @map("oficinas_responderam")
+  /// Array de `{ oficinaId, valor, prazoDias, ordemServicoId?, atualizadoEm }`.
+  lances              Json @default("[]")
+
+  /// Aprovação final — quando gestor escolhe uma oficina vencedora.
+  aprovadoEm             DateTime? @map("aprovado_em")
+  valorAprovado          Decimal?  @map("valor_aprovado") @db.Decimal(12, 2)
+  oficinaVencedoraId     String?   @map("oficina_vencedora_id")
+  ordemServicoAprovadaId String?   @map("ordem_servico_aprovada_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company     Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  equipment   Equipment?               @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  insumos     ServiceOrderInsumo[]
+  etapas      ServiceOrderEtapa[]
+  sintomas    ServiceOrderSintoma[]
+  ocorrencias ServiceOrderOcorrencia[]
+  orcamentos  Orcamento[]
+
+  @@unique([companyId, protocolo])
+  @@index([companyId, status])
+  @@index([companyId, createdAt])
+  @@index([companyId, tipoOs])
+  @@index([equipmentId])
+  @@map("service_orders")
+}
+
+/// Peça/material consumido na OS. UI: aba Geral → sub-card "Insumos".
+model ServiceOrderInsumo {
+  id             String   @id @default(uuid()) @db.Uuid
+  serviceOrderId String   @map("service_order_id") @db.Uuid
+  ordem          Int      @default(0)
+  codigo         String?
+  descricao      String
+  marca          String?
+  quantidade     Decimal  @default(0) @db.Decimal(12, 3)
+  unidade        String?
+  valorUnit      Decimal  @default(0) @map("valor_unit") @db.Decimal(12, 2)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  serviceOrder ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+
+  @@index([serviceOrderId, ordem])
+  @@map("service_order_insumos")
+}
+
+/// Etapa/task planejada na OS. UI: aba Geral → sub-card "Etapas".
+model ServiceOrderEtapa {
+  id             String    @id @default(uuid()) @db.Uuid
+  serviceOrderId String    @map("service_order_id") @db.Uuid
+  sequencia      Int       @default(0)
+  descricao      String
+  tecnico        String?
+  inicioPrevisto DateTime? @map("inicio_previsto") @db.Date
+  /// "Pendente" | "Aguardando" | "EmAndamento" | "Concluida" | "Cancelada"
+  status         String    @default("Pendente")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  serviceOrder ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+
+  @@index([serviceOrderId, sequencia])
+  @@map("service_order_etapas")
+}
+
+/// Sintoma/diagnóstico registrado. UI: aba Geral → sub-card "Sintomas".
+model ServiceOrderSintoma {
+  id             String   @id @default(uuid()) @db.Uuid
+  serviceOrderId String   @map("service_order_id") @db.Uuid
+  codigo         String?
+  descricao      String
+  observacao     String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  serviceOrder ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+
+  @@index([serviceOrderId])
+  @@map("service_order_sintomas")
+}
+
+/// Anotação/histórico de ocorrência da OS. UI: aba Geral → sub-card
+/// "Ocorrências". Cada nova entrada é imutável — timeline de auditoria.
+model ServiceOrderOcorrencia {
+  id             String   @id @default(uuid()) @db.Uuid
+  serviceOrderId String   @map("service_order_id") @db.Uuid
+  usuario        String?
+  mensagem       String   @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  serviceOrder ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+
+  @@index([serviceOrderId, createdAt])
+  @@map("service_order_ocorrencias")
+}
+
+/// Plano preventivo da empresa — 1:1 com Company. Backfill do Firestore
+/// `planosPreventivos/{prefeituraId}`. `categorias` é Json com o shape do
+/// legado: array de { id, nome, ciclos: [{ id, horas, km, titulo }],
+/// linhas: [{ id, item, especificacao, acoes: { [cicloId]: string } }] }.
+/// Mantemos como JSONB pra não perder informação enquanto o domínio de
+/// planos preventivos ainda evolui — as queries são leves (1 row por company).
+model PlanoPreventivo {
+  companyId  String   @id @map("company_id") @db.Uuid
+  categorias Json     @default("[]")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("planos_preventivos")
+}
+
+/// Operador de equipamento (motorista, comboista, mecânico). Vinculado a uma
+/// Company. Backfill do Firestore `operadores/{id}`. `funcao` fica string
+/// livre pra tolerar variação do legado.
+/// Funcionário/operador da empresa. Backfill do Firestore `operadores/{id}`
+/// (nome da coleção legada). Um `Operator` pode ser motorista, comboista,
+/// mecânico ou administrativo — os campos abrangem o setor de RH inteiro.
+///
+/// `tipo` define o perfil de acesso no portal (não confundir com `cargo`,
+/// que é o papel operacional livre). Login/senha são gerados
+/// deterministicamente do nome + CPF; hash em SHA256(cpf:senha) mantém
+/// compat com o portal do operador 360.
+model Operator {
+  id        String  @id @default(uuid()) @db.Uuid
+  legacyId  String? @unique @map("legacy_id")
+  companyId String  @map("company_id") @db.Uuid
+
+  /// Identificação básica.
+  nome           String
+  cpf            String?
+  matricula      String?
+  dataNascimento DateTime? @map("data_nascimento") @db.Date
+  rg             String?
+  celular        String?
+
+  /// Papel operacional livre (Operador de Manutenção, Motorista, Comboista,
+  /// Mecânico, Supervisor de RH, Outro…). Mantido como string pra tolerar
+  /// variação.
+  cargo  String?
+  /// Alias legado — mantido pra não quebrar telas que já leem `funcao`.
+  /// Novos escritas usam `cargo`.
+  funcao String?
+
+  /// Perfil de acesso no portal: "operador" | "supervisor" | "admin".
+  tipo   String  @default("operador")
+  /// "ativo" | "inativo" (soft-delete via toggle).
+  status String  @default("ativo")
+  /// Compat com o boolean antigo — sincronizado com `status`.
+  ativo  Boolean @default(true)
+
+  /// Habilitação (CNH). Nullable pra não obrigar quem não dirige.
+  cnh             String?
+  cnhCategoria    String?   @map("cnh_categoria")
+  cnhValidade     DateTime? @map("cnh_validade") @db.Date
+  cnhEmissao      DateTime? @map("cnh_emissao") @db.Date
+  cnhLocalEmissao String?   @map("cnh_local_emissao")
+  cnhRestricao    String?   @map("cnh_restricao")
+
+  /// Credenciais do portal do operador (mesma mecânica do 360 legado).
+  /// `loginGerado` é denormalizado pra suportar busca rápida por login;
+  /// `senhaHash` é SHA256("{cpf}:{senha}") — hash simples pra compat com
+  /// o backend legado. Vamos migrar pra bcrypt/argon2 no auth novo.
+  loginGerado String? @map("login_gerado")
+  senhaHash   String? @map("senha_hash")
+
+  observacoes String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company           Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  pontoRegistros    PontoRegistro[]
+  pontoSolicitacoes PontoSolicitacao[]
+  pontoAbonos       PontoAbono[]
+
+  @@unique([companyId, cpf])
+  @@index([companyId])
+  @@index([companyId, status])
+  @@index([companyId, tipo])
+  @@index([companyId, cnhValidade])
+  @@map("operators")
+}
+
+/// Abastecimento — registro de posto OU carga do comboio (`valor` fica 0
+/// pra comboio). Backfill do Firestore `abastecimentos/{id}`.
+model Abastecimento {
+  id               String  @id @default(uuid()) @db.Uuid
+  legacyId         String? @unique @map("legacy_id")
+  companyId        String  @map("company_id") @db.Uuid
+  /// FK opcional pro equipamento — nullable pra tolerar equipamentos apagados.
+  equipmentId      String? @map("equipment_id") @db.Uuid
+  /// Soft-refs por legacyId (motorista/posto/comboio) — evita quebrar backfill.
+  operadorLegacyId String? @map("operador_legacy_id")
+  postoLegacyId    String? @map("posto_legacy_id")
+  /// legacyId do Equipment usado como comboio (quando `origem = 'comboio'`).
+  comboioLegacyId  String? @map("comboio_legacy_id")
+
+  /// Data do abastecimento (dia). Hora fica no campo separado se necessário.
+  data           DateTime @db.Date
+  hora           String?
+  litros         Decimal  @db.Decimal(10, 3)
+  /// Valor total em reais. 0 quando `origem = 'comboio'`.
+  valor          Decimal  @db.Decimal(12, 2)
+  combustivel    String?
+  /// "posto" | "comboio"
+  origem         String   @default("posto")
+  /// Leitura do hodômetro/horímetro no momento do abastecimento.
+  leitura        Float?
+  /// "km" | "h"
+  leituraUnidade String?  @map("leitura_unidade")
+  postoNome      String?  @map("posto_nome")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  equipment Equipment? @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, data])
+  @@index([equipmentId])
+  @@map("abastecimentos")
+}
+
+/// Definição (modelo/variante) de checklist do operador. Catálogo GLOBAL —
+/// sem FK Company. Espelhado no Firestore `checklistDefinitions/{legacyId}`
+/// pra compat com o portal do operador do 360 legacy.
+model ChecklistDefinition {
+  id        String   @id @default(uuid()) @db.Uuid
+  legacyId  String?  @unique @map("legacy_id")
+  nome      String
+  categoria String
+  /// string[] em minúsculas — usado pra casar equipamento por nome/modelo.
+  keywords  Json     @default("[]")
+  ativo     Boolean  @default(true)
+  /// Incrementa quando `itens` muda — operador usa pra invalidar cache local.
+  version   Int      @default(1)
+  /// { ordem: number, texto: string, severidade: 'impeditivo' | 'normal' }[]
+  itens     Json     @default("[]")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([ativo])
+  @@map("checklist_definitions")
+}
+
+/// Sinal financeiro do lançamento — magnitude fica em `valor`, sinal no `tipo`.
+enum TipoLancamento {
+  RECEITA
+  DESPESA
+}
+
+/// Ciclo de vida do título financeiro.
+enum StatusLancamento {
+  PENDENTE
+  PAGO
+  ATRASADO
+}
+
+/// Lançamento financeiro (contas a pagar/receber). Escopo global (sem FK
+/// Company) — mesmo modelo do legado 360, que também não tinha tenant.
+/// `numero` é um contador sequencial exposto como `FI-{1000+numero}` na UI.
+model LancamentoFinanceiro {
+  id         String           @id @default(uuid()) @db.Uuid
+  numero     Int              @unique @default(autoincrement())
+  tipo       TipoLancamento
+  descricao  String
+  valor      Decimal          @db.Decimal(12, 2)
+  vencimento DateTime?        @db.Date
+  status     StatusLancamento @default(PENDENTE)
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([tipo])
+  @@index([vencimento])
+  @@map("lancamentos_financeiros")
+}
+
+/// Cargo (papel funcional) — catálogo GLOBAL. `key` é o slug estável que o
+/// código pode referenciar; `label` é editável pelo admin. O que cada cargo
+/// pode acessar por padrão fica em `RoleAccessGroup`. Override por empresa
+/// vai numa tabela separada (painel da empresa), fora deste módulo.
+model Role {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique
+  label     String
+  descricao String?
+  ordem     Int      @default(0)
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  accessGroups RoleAccessGroup[]
+
+  @@index([ativo])
+  @@map("roles")
+}
+
+/// Grupo de acesso — catálogo GLOBAL de áreas do app (Abastecimento,
+/// Gestão de Frota, ...). `key` é referenciada pelo código; `label` é
+/// editável pelo admin.
+model AccessGroup {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique
+  label     String
+  ordem     Int      @default(0)
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  roles RoleAccessGroup[]
+
+  @@index([ativo])
+  @@map("access_groups")
+}
+
+/// Matriz padrão: quais grupos cada cargo pode acessar. É a *base* que o
+/// sistema entrega — no painel da empresa dá pra sobrescrever por cliente.
+model RoleAccessGroup {
+  roleId    String   @map("role_id") @db.Uuid
+  groupId   String   @map("group_id") @db.Uuid
+  enabled   Boolean  @default(false)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  role  Role        @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  group AccessGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, groupId])
+  @@index([groupId])
+  @@map("role_access_groups")
+}
+
+/// Tipo do parceiro credenciado — separa a shape ao renderizar (aba muda).
+enum PartnerType {
+  POSTO
+  OFICINA
+}
+
+/// Parceiro credenciado (posto de combustível ou oficina mecânica) vinculado
+/// a uma Company (cliente). Postgres é fonte de verdade; espelhamos em
+/// `postos/{id}` ou `oficinas/{id}` no Firestore pra compat com o portal 360.
+model Partner {
+  id        String      @id @default(uuid()) @db.Uuid
+  legacyId  String?     @unique @map("legacy_id")
+  type      PartnerType
+  companyId String      @map("company_id") @db.Uuid
+
+  // Dados gerais
+  razaoSocial       String  @map("razao_social")
+  nomeFantasia      String? @map("nome_fantasia")
+  cnpj              String?
+  telefonePrincipal String? @map("telefone_principal")
+  emailComercial    String? @map("email_comercial")
+  cidadeUf          String? @map("cidade_uf")
+  endereco          String?
+
+  // Posto (nullable para oficina)
+  bandeira      String?
+  combustiveis  Json?
+  servicos      Json?
+  /// Preço por litro anunciado pelo posto — usado no fallback quando o
+  /// abastecimento não trouxe `pricePerLiter` próprio. Null pra oficina.
+  precoPorLitro Float?  @map("preco_por_litro")
+
+  // Oficina (nullable para posto)
+  especialidade     String?
+  linhasAtuacao     Json?   @map("linhas_atuacao")
+  segmentosAtuacao  Json?   @map("segmentos_atuacao")
+  categoriasServico Json?   @map("categorias_servico")
+
+  // Financeiro / contrato comercial
+  condicaoPagamento      String? @map("condicao_pagamento")
+  limiteCredito          Float?  @map("limite_credito")
+  descontoComercial      String? @map("desconto_comercial")
+  observacoesFaturamento String? @map("observacoes_faturamento") @db.Text
+
+  status String  @default("ativo")
+  ativo  Boolean @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([type])
+  @@map("partners")
+}
+
+/// Catálogo de módulos do produto. As chaves são contratos estáveis do código.
+model Feature {
+  id          String   @id @default(uuid()) @db.Uuid
+  key         String   @unique
+  label       String
+  category    String
+  description String
+  status      Status   @default(ACTIVE)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  companies CompanyFeature[]
+  changes   CompanyFeatureChange[]
+
+  @@map("features")
+}
+
+/// Ledger IMUTÁVEL de ponto (Portaria MTE 671/2021 — REP-P).
+///
+/// Toda marcação vira registro imutável. Nunca se altera nem se apaga: correções
+/// entram como novo registro tipo `ajuste` (com `refNsr` apontando pra original)
+/// e cancelamentos entram como `cancelamento`. O front resolve o "estado
+/// efetivo" via `resolverLedger` sem tocar no ledger de origem.
+///
+/// NSR sequencial POR EMPRESA + hash SHA-256 encadeado (`hash` do registro N
+/// depende do `hash` do N-1) garantem inalterabilidade e ordem — o `PontoNsrCounter`
+/// mantém o topo da cadeia por empresa.
+model PontoRegistro {
+  id        String  @id @default(uuid()) @db.Uuid
+  legacyId  String? @unique @map("legacy_id")
+  companyId String  @map("company_id") @db.Uuid
+
+  /// FK opcional pro cadastro do RH (nome pode não bater exatamente com um
+  /// Operator). `operatorNome` é a fonte de verdade e nunca muda depois de
+  /// gravado — Portaria 671 exige que o registro identifique o trabalhador.
+  operatorId   String? @map("operator_id") @db.Uuid
+  operatorNome String  @map("operator_nome")
+  /// Só dígitos. Portaria 671 requer CPF na marcação sempre que possível.
+  operatorCpf  String? @map("operator_cpf")
+
+  /// Horário oficial da marcação (imutável).
+  timestampOriginal DateTime @map("timestamp_original")
+  /// "entrada" | "almoco" | "volta" | "saida"
+  tipo              String
+  /// Data URL base64 da selfie (só em `registro = original`). Pode ficar
+  /// grande — mantém como TEXT.
+  photoUrl          String?  @map("photo_url") @db.Text
+
+  /// Natureza do registro no ledger. Default `original` pra compat legado.
+  /// "original" | "ajuste" | "cancelamento".
+  registro     String  @default("original")
+  /// Sequencial por empresa (nunca reinicia).
+  nsr          Int
+  /// SHA-256 do payload canônico + hash do registro anterior.
+  hash         String
+  hashAnterior String? @map("hash_anterior")
+
+  /// Ajuste/cancelamento aponta pra original via `refNsr` (preferido) ou
+  /// `refId` (fallback quando não temos NSR do alvo).
+  refNsr Int?    @map("ref_nsr")
+  refId  String? @map("ref_id")
+
+  /// `aplicado`:
+  ///  - true  → registro válido no ledger efetivo (originais são sempre true;
+  ///            ajustes/cancelamentos ficam true após aprovação do RH).
+  ///  - false → pendente/reprovado (não entra no ledger efetivo).
+  aplicado         Boolean   @default(true)
+  /// Justificativa do trabalhador no ajuste (opcional).
+  motivo           String?
+  /// Motivo da reprovação do RH (quando aplicado=false + processado).
+  motivoReprovacao String?   @map("motivo_reprovacao")
+  avaliadoEm       DateTime? @map("avaliado_em")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  operator Operator? @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+
+  @@unique([companyId, nsr])
+  @@index([companyId, timestampOriginal])
+  @@index([companyId, operatorCpf, timestampOriginal])
+  @@index([companyId, registro])
+  @@map("ponto_registros")
+}
+
+/// Contador NSR + topo da cadeia hash por empresa. Atômico — sempre atualizado
+/// na mesma transação em que o `PontoRegistro` é gravado.
+model PontoNsrCounter {
+  companyId  String   @id @map("company_id") @db.Uuid
+  ultimo     Int      @default(0)
+  ultimoHash String?  @map("ultimo_hash")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("ponto_nsr_counters")
+}
+
+/// Solicitação de correção enviada pelo operador (via PWA) e aprovada pelo RH.
+/// Ao aprovar, o backend cria o `PontoRegistro` correspondente (ajuste ou
+/// cancelamento) e a solicitação passa a status = `aprovado`.
+model PontoSolicitacao {
+  id        String  @id @default(uuid()) @db.Uuid
+  legacyId  String? @unique @map("legacy_id")
+  companyId String  @map("company_id") @db.Uuid
+
+  /// "incluir" | "cancelar" | "abono" | "mensagem"
+  tipo   String
+  /// "pendente" | "aprovado" | "reprovado"
+  status String @default("pendente")
+
+  operatorId   String? @map("operator_id") @db.Uuid
+  operatorNome String  @map("operator_nome")
+  operatorCpf  String? @map("operator_cpf")
+
+  /// Alvo do cancelamento — id do `PontoRegistro` original.
+  batidaId          String?   @map("batida_id") @db.Uuid
+  /// YYYY-MM-DD (usado por tipo=abono ou tipo=incluir).
+  data              String?   @db.VarChar(10)
+  /// ISO 8601 — horário da batida a incluir (tipo=incluir).
+  timestampOriginal DateTime? @map("timestamp_original")
+  /// "entrada"|"almoco"|"volta"|"saida" (tipo=incluir).
+  tipoBatida        String?   @map("tipo_batida")
+  observacao        String?   @db.Text
+  /// Documento de suporte (data URL base64).
+  anexoDataUrl      String?   @map("anexo_data_url") @db.Text
+  anexoNome         String?   @map("anexo_nome")
+
+  motivoReprovacao String? @map("motivo_reprovacao")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  operator Operator? @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, status])
+  @@index([companyId, createdAt])
+  @@map("ponto_solicitacoes")
+}
+
+/// Abono criado quando o RH aprova uma solicitação tipo=abono. Cobre dias sem
+/// batida ou com jornada abaixo do previsto — reclassifica o dia de "falta"
+/// pra "abonado" (não pune saldo).
+model PontoAbono {
+  id        String  @id @default(uuid()) @db.Uuid
+  legacyId  String? @unique @map("legacy_id")
+  companyId String  @map("company_id") @db.Uuid
+
+  operatorId   String? @map("operator_id") @db.Uuid
+  operatorNome String  @map("operator_nome")
+  /// Só dígitos — usado pra casar com a marcação (fonte de verdade do vínculo).
+  operatorCpf  String  @map("operator_cpf")
+
+  /// YYYY-MM-DD (dia abonado — local).
+  data          String  @db.VarChar(10)
+  motivo        String?
+  solicitacaoId String? @map("solicitacao_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  operator Operator? @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, operatorCpf, data])
+  @@map("ponto_abonos")
+}
+
+/// Checklist de Devolução (CHD) — auditoria RH/prefeitura sobre o equipamento
+/// devolvido pela oficina, vinculado a uma OS. Shape rico + evolutivo, então
+/// guardamos os blocos como JSONB (identification / generalState / modules /
+/// parts / services / closing / prefeituraConferencia). Mesmo formato do
+/// back-360 legado — quando o CHD é gerado pela oficina, cai aqui via
+/// backfill; escritas novas mantêm o shape idêntico pra compat.
+model ChecklistDevolucao {
+  id        String  @id @default(uuid()) @db.Uuid
+  legacyId  String? @unique @map("legacy_id")
+  companyId String  @map("company_id") @db.Uuid
+
+  /// Nº CHD humano (ex.: CHD-2026-0001).
+  number String
+
+  /// Oficina (Partner) — soft-ref por legacyId + snapshot do nome.
+  oficinaId   String? @map("oficina_id")
+  oficinaNome String? @map("oficina_nome")
+
+  /// OS vinculada. `osProtocolo` é o protocolo humano (OS-2026-794).
+  osProtocolo     String? @map("os_protocolo")
+  solicitacaoOsId String? @map("solicitacao_os_id")
+  ordemServicoId  String? @map("ordem_servico_id") @db.Uuid
+
+  /// Identification: { os, date, time, brandModel, platePrefix, currentKm,
+  /// hourMeter, driver, technicalResponsible, fuel }.
+  identification Json
+
+  /// Estado geral: Record<itemId, { status: "ok"|"anomaly"|"na", photo?, description? }>.
+  generalState Json @default("{}") @map("general_state")
+
+  /// Módulos: Record<itemId, { status, photo?, description? }>.
+  modules Json @default("{}")
+
+  /// Peças: { items: [{ description, partNumber, brand, oldPartDestination,
+  /// newPhoto?, replacedPhoto? }] }.
+  parts Json @default("{\"items\":[]}")
+
+  /// Serviços: { items: [{ systemComponent, initialDiagnosis, technicalAction,
+  /// technician, manHours }] }.
+  services Json @default("{\"items\":[]}")
+
+  /// Encerramento: { inventoryChecked, driverSignature, workshopSignature }.
+  closing Json @default("{}")
+
+  /// Workflow: enviado | em_conferencia | aceito | contestado.
+  status String @default("enviado")
+
+  /// Conferência da prefeitura (opcional): { aceito, observacoes,
+  /// conferidoPor, conferidoEm }.
+  prefeituraConferencia Json? @map("prefeitura_conferencia")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt])
+  @@index([companyId, oficinaId])
+  @@index([companyId, status])
+  @@map("checklist_devolucao")
+}
+
+/// Orçamento enviado por uma oficina em resposta a uma OS. Cada OS pode ter
+/// múltiplos orçamentos (um por oficina convidada). Backfill vem do Firestore
+/// `ordensServico/{id}` (nome legado — Nest chamava "ordem" mas é orçamento).
+/// Itens ficam em JSONB unificado ({category: "part"|"service"|"travel", …}).
+model Orcamento {
+  id        String  @id @default(uuid()) @db.Uuid
+  legacyId  String? @unique @map("legacy_id")
+  companyId String  @map("company_id") @db.Uuid
+
+  /// FK forte pra ServiceOrder — a "solicitação de OS" à qual este orçamento
+  /// responde. Cascata: apagar a OS apaga os orçamentos.
+  serviceOrderId String @map("service_order_id") @db.Uuid
+
+  /// Protocolo humano-legível do orçamento (ex: ORC-047-A).
+  protocolo String
+
+  /// Snapshot da oficina — soft-ref por Partner.legacyId.
+  oficinaId    String? @map("oficina_id")
+  oficinaNome  String? @map("oficina_nome")
+  /// No legado, o campo "operador" da OrdemOrcamento contém o nome de usuário
+  /// que enviou o orçamento (o operador da oficina). Preservamos pra exibir
+  /// quando `oficinaNome` estiver vazio.
+  operadorNome String? @map("operador_nome")
+
+  /// Snapshot pra exibir sem join.
+  equipamento String?
+  defeito     String? @db.Text
+
+  /// Itens do orçamento — array unificado. Cada item:
+  /// { category?: "part"|"service"|"travel", descricao, valor,
+  ///   codigo?, marca?, quantidade?, valorUnitario?,   // peça
+  ///   tipoHora?, horas?, valorHora?,                  // serviço
+  ///   km?, valorPorKm?, horasViagem?, valorHoraViagem?, taxas? }  // deslocamento
+  itens Json @default("[]")
+
+  valorTotal Decimal @default(0) @map("valor_total") @db.Decimal(12, 2)
+  prazoDias  Int?    @map("prazo_dias")
+
+  /// "aguardando_aprovacao" | "em_pregao" | "aprovado" | "recusado".
+  status String @default("aguardando_aprovacao")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company      Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  serviceOrder ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, serviceOrderId])
+  @@index([companyId, status])
+  @@index([serviceOrderId])
+  @@map("orcamentos")
+}
+
+/// Cargos por empresa — cada empresa mantém a lista de cargos usada no
+/// cadastro de funcionários. Seed inicial vem do catálogo global `Role`,
+/// mas depois vira totalmente editável por empresa (label, ordem, ativo).
+/// `key` é o slug estável (referência interna); `label` é o rótulo exibido.
+model CompanyRole {
+  id        String   @id @default(uuid()) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  key       String
+  label     String
+  ordem     Int      @default(0)
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, key])
+  @@index([companyId, ativo, ordem])
+  @@map("company_roles")
+}
+
+/// Habilita funcionalidades contratadas por empresa. `config` permite evolução
+/// de cada módulo sem acoplar o domínio ao provedor de persistência atual.
+model CompanyFeature {
+  companyId String   @map("company_id") @db.Uuid
+  featureId String   @map("feature_id") @db.Uuid
+  enabled   Boolean  @default(false)
+  config    Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  feature Feature @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@id([companyId, featureId])
+  @@index([featureId])
+  @@map("company_features")
+}
+
+/// Histórico imutável das alterações de funcionalidades para suporte e auditoria.
+model CompanyFeatureChange {
+  id        String   @id @default(uuid()) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  featureId String   @map("feature_id") @db.Uuid
+  enabled   Boolean
+  changedBy String   @map("changed_by") @db.Uuid
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  feature Feature @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt])
+  @@map("company_feature_changes")
+}
+
+/// Usuários que pertencem a uma empresa (acesso ao portal da empresa).
+/// `id` também é o `auth.users.id` do Supabase.
+model CompanyUser {
+  id        String          @id @db.Uuid
+  companyId String          @map("client_id") @db.Uuid
+  email     String
+  name      String
+  role      CompanyUserRole @default(MEMBER)
+  status    Status          @default(ACTIVE)
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, email])
+  @@index([companyId])
+  @@map("client_users")
+}
+
+/// Emergência reportada pelo operador. Duas fontes:
+///   - `source = "checklist_auto"` → criada pelo PWA quando um item impeditivo
+///     do checklist é reprovado. `checklistLegacyId` aponta pro run que gerou.
+///   - `source = "manual"` → operador registrou emergência diretamente.
+///
+/// `statusAtendimento` transita livremente entre os 4 valores (não é state
+/// machine — o gestor pode voltar de RESOLVIDO pra ABERTO se se enganou).
+///
+/// `fotos` é `string[]` — data-URIs base64 ou URLs. Preserva o formato do
+/// legado (`emergenciasRegistros/{id}.fotos` no Firestore).
+model Emergency {
+  id        String  @id @default(uuid()) @db.Uuid
+  legacyId  String? @unique @map("legacy_id")
+  companyId String  @map("company_id") @db.Uuid
+
+  /// "manual" | "checklist_auto"
+  source            String
+  /// "warning" | "critical" | "blocking"
+  severity          String
+  /// "ABERTO" | "EM_ATENDIMENTO" | "RESOLVIDO" | "CANCELADO"
+  statusAtendimento String @default("ABERTO") @map("status_atendimento")
+
+  /// Snapshot do equipamento no momento da emergência (não é FK — tolera
+  /// equipamento apagado).
+  chassi            String?
+  equipmentLegacyId String? @map("equipment_legacy_id")
+  idMaquina         String? @map("id_maquina")
+  modelo            String?
+
+  /// Snapshot do operador (soft-ref via legacyId).
+  operadorNome     String? @map("operador_nome")
+  operadorLegacyId String? @map("operador_legacy_id")
+  /// CPF (só dígitos) — snapshot pra vínculo direto com Operator.
+  operadorCpf      String? @map("operador_cpf")
+
+  /// Falha reportada.
+  tipoFalha      String  @map("tipo_falha")
+  descricao      String  @db.Text
+  localizacaoGps String? @map("localizacao_gps")
+  /// string[] — data-URIs ou URLs de foto.
+  fotos          Json    @default("[]")
+
+  /// Contexto do checklist quando `source = "checklist_auto"`.
+  checklistLegacyId String? @map("checklist_legacy_id")
+  questionId        String? @map("question_id")
+  questionLabel     String? @map("question_label")
+
+  /// Momento da ocorrência (do `dataHoraIso` do legado).
+  dataHora  DateTime @map("data_hora")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([companyId, dataHora])
+  @@index([companyId, statusAtendimento])
+  @@map("emergencies")
+}
+
+/// Crédito de abastecimento — pode ser alocado por equipamento (posto
+/// credenciado desconta o saldo) ou por frente de trabalho (rateio pelos
+/// veículos da frente sem crédito próprio). Backfill do Firestore
+/// `creditos/{legacyId}`. Escritas novas ficam no Postgres + espelho no
+/// Firestore (dual-write pra compat com o back-360 legado).
+model Credito {
+  id        String  @id @default(uuid()) @db.Uuid
+  legacyId  String? @unique @map("legacy_id")
+  companyId String  @map("company_id") @db.Uuid
+
+  /// "equipment" | "workFront" — igual valor `type` do Firestore.
+  tipo String
+
+  /// FK opcional pro equipamento (quando `tipo = equipment`). Nullable
+  /// pra tolerar equipamento apagado.
+  equipmentId    String? @map("equipment_id") @db.Uuid
+  /// Snapshot original vindo do form (placa/chassi/id sem normalização) —
+  /// necessário pra encontrar o Equipment mesmo quando ele foi criado
+  /// depois do crédito.
+  plateOrChassis String? @map("plate_or_chassis")
+
+  /// FK opcional pra frente de trabalho (quando `tipo = workFront`).
+  workFrontId String? @map("work_front_id") @db.Uuid
+
+  /// Rótulo exibido no histórico (nome do equip/frente no momento do
+  /// lançamento). Mantido mesmo que o vínculo se perca.
+  targetLabel String @map("target_label")
+
+  amount      Decimal @db.Decimal(12, 2)
+  responsible String
+  observation String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  equipment Equipment? @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  workFront WorkFront? @relation(fields: [workFrontId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, tipo, createdAt])
+  @@index([equipmentId])
+  @@index([workFrontId])
+  @@map("creditos")
+}
+
+/// Registro de engraxe (graxa) — não confundir com troca de óleo (feita
+/// pela manutenção). Backfill do Firestore `lubrificacoes/{legacyId}`,
+/// gravado pelo app do comboista. `greasedPoints` é `string[]` com chaves
+/// do catálogo (boomPins, bucket, articulation, axles, driveshaft,
+/// bearings) — traduzidas pt-BR no lado da view.
+model Lubrificacao {
+  id             String  @id @default(uuid()) @db.Uuid
+  legacyId       String? @unique @map("legacy_id")
+  companyId      String  @map("company_id") @db.Uuid
+  /// FK opcional pro equipamento — nullable pra tolerar equipamento apagado.
+  equipmentId    String? @map("equipment_id") @db.Uuid
+  /// Snapshot da placa/chassi enviado pelo comboio (identifica mesmo se
+  /// o Equipment for removido).
+  plateOrChassis String? @map("plate_or_chassis")
+
+  /// Nome do comboísta no momento do registro (snapshot).
+  comboistaNome String? @map("comboista_nome")
+
+  /// Leitura do horímetro/hodômetro (float).
+  reading     Float?
+  /// "h" | "km"
+  readingUnit String? @map("reading_unit")
+
+  /// Array de chaves ativas do catálogo — Json string[].
+  greasedPoints Json @default("[]") @map("greased_points")
+
+  observation String?
+  latitude    Float?
+  longitude   Float?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  equipment Equipment? @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, createdAt])
+  @@index([equipmentId])
+  @@map("lubrificacoes")
+}
+
+/// Reabastecimento do tanque do comboio (entrada de combustível na frota).
+/// Backfill do Firestore `reabastecimentos/{legacyId}`. Origem pode ser
+/// posto, tanque da fazenda ou distribuidora. `equipmentId` aponta pro
+/// caminhão-comboio quando informado (SET NULL preserva histórico).
+model ComboioReabastecimento {
+  id          String  @id @default(uuid()) @db.Uuid
+  legacyId    String? @unique @map("legacy_id")
+  companyId   String  @map("company_id") @db.Uuid
+  equipmentId String? @map("equipment_id") @db.Uuid
+
+  /// "gasStation" | "farmTank" | "distributor" (chave crua do back-360).
+  sourceType     String  @map("source_type")
+  /// Litros recebidos — decimal pra suportar frações raras (ex.: 4960.5).
+  receivedLiters Decimal @map("received_liters") @db.Decimal(12, 2)
+  invoiceNumber  String? @map("invoice_number")
+
+  latitude  Float?
+  longitude Float?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  equipment Equipment? @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, createdAt])
+  @@index([equipmentId])
+  @@map("comboio_reabastecimentos")
+}
+
+/// Nota fiscal — enviada pelo posto (combustível) OU pela oficina (peça/
+/// serviço). O parceiro emissor fica em `postoLegacyId` (posto) OU
+/// `oficinaLegacyId` (oficina). `parseCompleteness` indica se o PDF foi
+/// lido completamente pelo pipeline de extração — quando parcial, a UI
+/// mostra "Ver PDF" no lugar do valor.
+model NotaFiscal {
+  id        String  @id @default(uuid()) @db.Uuid
+  legacyId  String? @unique @map("legacy_id")
+  companyId String  @map("company_id") @db.Uuid
+
+  /// Soft-refs (parceiros ficam em Firestore próprio; aqui é ID cru).
+  postoLegacyId    String? @map("posto_legacy_id")
+  oficinaLegacyId  String? @map("oficina_legacy_id")
+  parceiroLegacyId String? @map("parceiro_legacy_id")
+  /// FK opcional pra OS (ainda não modelamos OS em Postgres — só guarda ID).
+  solicitacaoOsId  String? @map("solicitacao_os_id")
+
+  description  String?
+  /// "servico" | "peca" | "combustivel" | "outros"
+  category     String  @default("outros")
+  /// "nfe-55" | "nfce-65"
+  documentType String  @default("nfe-55") @map("document_type")
+
+  number     String?
+  issuerName String?   @map("issuer_name")
+  /// ISO string — nem sempre coincide com createdAt.
+  issuedAt   DateTime? @map("issued_at")
+  accessKey  String?   @map("access_key")
+  value      Decimal   @default(0) @db.Decimal(14, 2)
+
+  /// "pendente" | "aprovada" | "rejeitada"
+  status String @default("pendente")
+
+  fileName String? @map("file_name")
+  fileUrl  String? @map("file_url")
+
+  /// "completo" | "parcial" — output do parser de PDF.
+  parseCompleteness String? @map("parse_completeness")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt])
+  @@index([companyId, postoLegacyId])
+  @@index([companyId, oficinaLegacyId])
+  @@map("notas_fiscais")
+}
