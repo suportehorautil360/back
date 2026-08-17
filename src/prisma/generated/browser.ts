@@ -181,6 +181,12 @@ export type RoleAccessGroup = Prisma.RoleAccessGroupModel
  */
 export type Partner = Prisma.PartnerModel
 /**
+ * Model PartnerPortalUser
+ * Login do portal do posto (Firestore `users` com `vinculo:"posto"`).
+ * Senha em SHA-256 hex sem sal — paridade com o legado e `POST /user/auth/login`.
+ */
+export type PartnerPortalUser = Prisma.PartnerPortalUserModel
+/**
  * Model Feature
  * Catálogo de módulos do produto. As chaves são contratos estáveis do código.
  */

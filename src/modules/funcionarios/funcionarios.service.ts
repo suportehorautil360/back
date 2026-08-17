@@ -6,36 +6,26 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { StringValue } from 'ms';
-import { createHash } from 'node:crypto';
 import * as admin from 'firebase-admin';
 import { FirebaseService } from '../../config/firebase.service';
+import {
+  gerarLoginOperador,
+  hashSenhaFuncionario,
+  limparCpf,
+} from '../../common/prisma/operator-auth.helper';
+import {
+  ehComboioTipo,
+  ehCondutorDoEquipamentoRow,
+  parseCondutoresIds,
+} from '../../common/prisma/equipment-api.mapper';
+import { mapOperatorToApi } from '../../common/prisma/operator-api.mapper';
+import { companyWhere } from '../../common/prisma/company-resolver';
+import { PrismaService } from '../../prisma/prisma.service';
 import { CreateFuncionarioDto } from './dto/create-funcionario.dto';
 import { AuthFuncionarioDto } from './dto/auth-funcionario.dto';
 
 const COLECAO = 'operadores';
 const BATCH_MAX = 450;
-
-function limparCpf(cpf: string): string {
-  return (cpf || '').replace(/\D/g, '');
-}
-
-/** SHA-256 hex (UTF-8) — idêntico ao hashSenha do front (paridade do login). */
-function sha256hex(value: string): string {
-  return createHash('sha256').update(value, 'utf8').digest('hex');
-}
-
-/** Hash salgado com o CPF, igual ao front: SHA-256("<cpf>:<senha>"). */
-function hashSenhaFuncionario(cpf: string, senha: string): string {
-  return sha256hex(`${limparCpf(cpf)}:${senha}`);
-}
-
-/** Login gerado: primeiro nome (minúsculo) + 3 últimos dígitos do CPF. */
-function gerarLogin(nome: string, cpf: string): string {
-  const primeiro = (nome || '').trim().split(/\s+/)[0] ?? '';
-  const cpfLimpo = limparCpf(cpf);
-  if (!primeiro || cpfLimpo.length < 3) return '';
-  return `${primeiro.toLowerCase()}${cpfLimpo.slice(-3)}`;
-}
 
 function tsToMillis(v: unknown): number {
   if (v && typeof (v as { toMillis?: () => number }).toMillis === 'function') {
@@ -60,6 +50,7 @@ export class FuncionariosService {
     private firebaseService: FirebaseService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly prisma: PrismaService,
   ) {}
 
   private get firestore() {
@@ -67,6 +58,22 @@ export class FuncionariosService {
   }
   private get collection() {
     return this.firestore.collection(COLECAO);
+  }
+
+  private async ehCondutorDeEquipamentoPg(
+    companyId: string,
+    operadorLegacyId: string,
+    apenasComboio: boolean,
+  ): Promise<boolean> {
+    const rows = await this.prisma.equipment.findMany({
+      where: { companyId },
+      select: { tipo: true, condutoresIds: true },
+    });
+    return rows.some((e) => {
+      const isComboio = ehComboioTipo(e.tipo);
+      if (apenasComboio ? !isComboio : isComboio) return false;
+      return ehCondutorDoEquipamentoRow(e, operadorLegacyId);
+    });
   }
 
   /**
@@ -127,11 +134,106 @@ export class FuncionariosService {
     return jwtSecret;
   }
 
+  private async emitirJwtFuncionario(
+    funcionario: {
+      id: string;
+      nome: string;
+      cpf: string;
+      cargo: string;
+      loginGerado: string;
+      prefeituraId: string;
+    },
+  ) {
+    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') ?? '24h';
+    const accessToken = await this.jwtService.signAsync(
+      {
+        sub: funcionario.loginGerado || funcionario.id,
+        tipo: 'operador',
+        cargo: funcionario.cargo,
+        prefeituraId: funcionario.prefeituraId,
+        funcionarioId: funcionario.id,
+      },
+      {
+        secret: this.getJwtSecret(),
+        expiresIn: expiresIn as StringValue,
+      },
+    );
+
+    return {
+      ok: true as const,
+      funcionario,
+      accessToken,
+      tokenType: 'Bearer' as const,
+      expiresIn,
+      message: 'Login realizado com sucesso.',
+    };
+  }
+
+  private async autenticarPostgres(dto: AuthFuncionarioDto) {
+    const ident = (dto.identificador ?? '').trim();
+    const senha = dto.senha ?? '';
+    const limpo = limparCpf(ident);
+    const ehCpf = limpo.length === 11;
+
+    const rows = await this.prisma.operator.findMany({
+      where: ehCpf
+        ? { cpf: limpo }
+        : { loginGerado: ident.toLowerCase() },
+      include: { company: { select: { legacyId: true } } },
+    });
+    if (rows.length === 0) return null;
+
+    let temSenha = false;
+    let matched: (typeof rows)[number] | null = null;
+    const appMotorista = dto.app === 'motorista';
+
+    for (const row of rows) {
+      if (!row.senhaHash) continue;
+      temSenha = true;
+      const cpfDoc = limparCpf(row.cpf ?? '');
+      if (row.senhaHash !== hashSenhaFuncionario(cpfDoc, senha)) continue;
+
+      const status = row.status ?? 'ativo';
+      if (status !== 'ativo') {
+        return { ok: false as const, msg: 'Funcionário inativo. Procure o gestor.' };
+      }
+
+      matched = row;
+      break;
+    }
+
+    if (!matched) {
+      if (temSenha) {
+        return { ok: false as const, msg: 'Identificador ou senha incorretos.' };
+      }
+      return {
+        ok: false as const,
+        msg: 'Funcionário sem senha cadastrada. Procure o gestor.',
+      };
+    }
+
+    const cpfDoc = limparCpf(matched.cpf ?? '');
+    const funcionario = {
+      id: matched.legacyId ?? matched.id,
+      nome: matched.nome,
+      cpf: cpfDoc,
+      cargo: matched.cargo ?? matched.funcao ?? '',
+      loginGerado: matched.loginGerado ?? gerarLoginOperador(matched.nome, cpfDoc),
+      prefeituraId: matched.company.legacyId ?? '',
+    };
+
+    const ehCondutor = await this.ehCondutorDeEquipamentoPg(
+      matched.companyId,
+      funcionario.id,
+      !appMotorista,
+    );
+    if (!ehCondutor) return null;
+
+    return this.emitirJwtFuncionario(funcionario);
+  }
+
   /**
-   * Login do operador/funcionário (app de campo). Autentica contra a coleção
-   * `operadores` por CPF (11 dígitos) ou login gerado (primeiro nome + 3
-   * últimos dígitos do CPF), com a senha salgada com o CPF. Porta a lógica
-   * que o front fazia direto no Firestore (funcionariosApi.autenticar).
+   * Login do operador/funcionário (app de campo). Postgres → Firestore.
    */
   async autenticar(dto: AuthFuncionarioDto) {
     const ident = (dto.identificador ?? '').trim();
@@ -139,6 +241,9 @@ export class FuncionariosService {
     if (!ident || !senha) {
       return { ok: false, msg: 'Informe o CPF/usuário e a senha.' };
     }
+
+    const pg = await this.autenticarPostgres(dto);
+    if (pg !== null) return pg;
 
     const limpo = limparCpf(ident);
     const ehCpf = limpo.length === 11;
@@ -199,30 +304,7 @@ export class FuncionariosService {
         };
       }
 
-      const expiresIn =
-        this.configService.get<string>('JWT_EXPIRES_IN') ?? '24h';
-      const accessToken = await this.jwtService.signAsync(
-        {
-          sub: funcionario.loginGerado || funcionario.id,
-          tipo: 'operador',
-          cargo: funcionario.cargo,
-          prefeituraId: funcionario.prefeituraId,
-          funcionarioId: funcionario.id,
-        },
-        {
-          secret: this.getJwtSecret(),
-          expiresIn: expiresIn as StringValue,
-        },
-      );
-
-      return {
-        ok: true,
-        funcionario,
-        accessToken,
-        tokenType: 'Bearer',
-        expiresIn,
-        message: 'Login realizado com sucesso.',
-      };
+      return this.emitirJwtFuncionario(funcionario);
     }
 
     return {
@@ -233,16 +315,6 @@ export class FuncionariosService {
     };
   }
 
-  /**
-   * Credenciais para LOGIN OFFLINE do app de campo. Para cada condutor de
-   * comboio da prefeitura, ativo e com senha, devolve o verificador da senha
-   * (`senhaHash` = SHA-256("<cpf>:<senha>")) + dados mínimos de sessão. O app
-   * pré-cacheia isso e valida a senha localmente, sem rede — assim qualquer
-   * condutor loga offline no aparelho (turnos compartilhados), igual ao operador.
-   *
-   * ⚠️ Expõe o hash da senha. É o mesmo modelo do app do operador (que lê do
-   * Firestore), mas via rota. TODO: gatear a rota (auth) e migrar p/ bcrypt.
-   */
   async credenciaisOffline(prefeituraId: string): Promise<
     {
       id: string;
@@ -255,6 +327,42 @@ export class FuncionariosService {
     }[]
   > {
     if (!prefeituraId) return [];
+
+    const companyId = await this.prisma.company.findFirst({
+      where: companyWhere(prefeituraId),
+      select: { id: true },
+    });
+    if (companyId) {
+      const equipRows = await this.prisma.equipment.findMany({
+        where: { companyId: companyId.id },
+        select: { tipo: true, condutoresIds: true },
+      });
+      const condutores = new Set<string>();
+      for (const e of equipRows) {
+        if (!ehComboioTipo(e.tipo)) continue;
+        for (const id of parseCondutoresIds(e.condutoresIds)) condutores.add(id);
+      }
+      if (condutores.size > 0) {
+        const ops = await this.prisma.operator.findMany({
+          where: { companyId: companyId.id, status: 'ativo' },
+        });
+        return ops
+          .filter((op) => condutores.has(op.legacyId ?? op.id) && op.senhaHash)
+          .map((op) => {
+            const cpf = limparCpf(op.cpf ?? '');
+            return {
+              id: op.legacyId ?? op.id,
+              cpf,
+              loginGerado:
+                op.loginGerado ?? gerarLoginOperador(op.nome, cpf),
+              nome: op.nome,
+              cargo: op.cargo ?? op.funcao ?? '',
+              prefeituraId,
+              senhaHash: op.senhaHash!,
+            };
+          });
+      }
+    }
 
     // 1) Condutores responsáveis de comboios da prefeitura (um Set de ids).
     const equipSnap = await this.firestore
@@ -303,7 +411,7 @@ export class FuncionariosService {
       creds.push({
         id: doc.id,
         cpf,
-        loginGerado: loginDoc || gerarLogin(nome, cpf),
+        loginGerado: loginDoc || gerarLoginOperador(nome, cpf),
         nome,
         cargo: typeof data.cargo === 'string' ? data.cargo : '',
         prefeituraId,
@@ -319,7 +427,7 @@ export class FuncionariosService {
     return {
       nome: (input.nome || '').trim(),
       cpf,
-      loginGerado: gerarLogin(input.nome, cpf),
+      loginGerado: gerarLoginOperador(input.nome, cpf),
       cargo: (input.cargo || '').trim(),
       telefone: input.telefone?.trim() || null,
       tipo:
@@ -374,6 +482,22 @@ export class FuncionariosService {
 
   async findAllByPrefeitura(prefeituraId: string) {
     try {
+      const company = await this.prisma.company.findFirst({
+        where: companyWhere(prefeituraId),
+        select: { id: true, legacyId: true },
+      });
+      if (company) {
+        const rows = await this.prisma.operator.findMany({
+          where: { companyId: company.id },
+          orderBy: { createdAt: 'desc' },
+        });
+        if (rows.length > 0) {
+          const legacy = company.legacyId ?? prefeituraId;
+          const data = rows.map((row) => mapOperatorToApi(row, legacy));
+          return { data, message: 'Funcionários buscados com sucesso!' };
+        }
+      }
+
       const snap = await this.collection
         .where('prefeituraId', '==', prefeituraId)
         .get();
@@ -390,7 +514,7 @@ export class FuncionariosService {
       for (const d of snap.docs) {
         const x = d.data();
         if (x.loginGerado || !x.nome || !x.cpf) continue;
-        const lg = gerarLogin(String(x.nome), String(x.cpf));
+        const lg = gerarLoginOperador(String(x.nome), String(x.cpf));
         if (lg) {
           void this.collection
             .doc(d.id)
@@ -409,6 +533,18 @@ export class FuncionariosService {
   }
 
   async findById(id: string) {
+    const pg = await this.prisma.operator.findFirst({
+      where: { OR: [{ id }, { legacyId: id }] },
+      include: { company: { select: { legacyId: true } } },
+    });
+    if (pg) {
+      const prefeituraId = pg.company.legacyId ?? '';
+      return {
+        data: mapOperatorToApi(pg, prefeituraId),
+        message: 'OK',
+      };
+    }
+
     const snap = await this.getDocOrThrow(id);
     return { data: { id: snap.id, ...snap.data() }, message: 'OK' };
   }

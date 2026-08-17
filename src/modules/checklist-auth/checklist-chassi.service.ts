@@ -11,6 +11,11 @@ import { Prisma } from '../../prisma/generated/client';
 import { normalizarChassi } from './helpers/chassi.helper';
 import type { SalvarChecklistRunDto } from './dto/salvar-checklist-run.dto';
 import type { SalvarEmergenciaDto } from './dto/salvar-emergencia.dto';
+import type { BaterPontoDto } from './dto/bater-ponto.dto';
+import {
+  calcularHashPonto,
+  formatTimestampForLedger,
+} from './helpers/ponto-ledger.helper';
 
 /**
  * Resolver chassi → empresa/equipamento (login por chassi do PWA operador).
@@ -337,6 +342,145 @@ export class ChecklistChassiService {
     });
 
     return { id };
+  }
+
+  /**
+   * Batida de ponto no Postgres quando o operador entrou por chassi (sem JWT
+   * Supabase). Espelha a RPC `bater_ponto` — idempotência via `legacyId`.
+   */
+  async baterPonto(dto: BaterPontoDto, clientId: string) {
+    const company = await this.resolveCompany(dto.prefeituraId);
+    const nome = dto.name.trim();
+    if (!nome) {
+      throw new BadRequestException('Nome do operador é obrigatório.');
+    }
+
+    const existente = await this.prisma.pontoRegistro.findFirst({
+      where: { legacyId: clientId },
+    });
+    if (existente) {
+      if (existente.companyId !== company.id) {
+        throw new ConflictException(
+          'Idempotency-Key já usada por outra empresa.',
+        );
+      }
+      return this.mapPontoResponse(existente, dto.prefeituraId);
+    }
+
+    const cpfDigits = (dto.cpf ?? '').replace(/\D+/g, '') || null;
+    let operatorId: string | null = null;
+    if (cpfDigits) {
+      const op = await this.prisma.operator.findFirst({
+        where: { companyId: company.id, cpf: cpfDigits },
+        select: { id: true },
+      });
+      operatorId = op?.id ?? null;
+    }
+
+    const timestampOriginal = new Date(dto.timestampOriginal);
+    if (Number.isNaN(timestampOriginal.getTime())) {
+      throw new BadRequestException('timestampOriginal inválido.');
+    }
+    const tsLedger = formatTimestampForLedger(dto.timestampOriginal);
+    const identificador = cpfDigits || nome;
+
+    const created = await this.prisma.$transaction(async (tx) => {
+      await tx.pontoNsrCounter.upsert({
+        where: { companyId: company.id },
+        create: { companyId: company.id, ultimo: 0, ultimoHash: null },
+        update: {},
+      });
+      await tx.$executeRaw`
+        SELECT 1 FROM ponto_nsr_counters
+        WHERE company_id = ${company.id}::uuid
+        FOR UPDATE
+      `;
+
+      const counter = await tx.pontoNsrCounter.findUniqueOrThrow({
+        where: { companyId: company.id },
+      });
+
+      const nextNsr = counter.ultimo + 1;
+      const hashAnterior = counter.ultimoHash ?? '';
+      const hash = calcularHashPonto(
+        nextNsr,
+        company.id,
+        identificador,
+        dto.tipo,
+        tsLedger,
+        hashAnterior,
+      );
+
+      await tx.pontoNsrCounter.update({
+        where: { companyId: company.id },
+        data: { ultimo: nextNsr, ultimoHash: hash },
+      });
+
+      return tx.pontoRegistro.create({
+        data: {
+          id: randomUUID(),
+          legacyId: clientId,
+          companyId: company.id,
+          operatorId,
+          operatorNome: nome,
+          operatorCpf: cpfDigits,
+          timestampOriginal,
+          tipo: dto.tipo,
+          photoUrl: dto.photo ?? null,
+          registro: 'original',
+          nsr: nextNsr,
+          hash,
+          hashAnterior: hashAnterior || null,
+          aplicado: true,
+        },
+      });
+    });
+
+    this.logger.log(
+      JSON.stringify({
+        evento: 'bater-ponto-chassi',
+        companyId: company.id,
+        clientId,
+        nsr: created.nsr,
+        tipo: dto.tipo,
+      }),
+    );
+
+    return this.mapPontoResponse(created, dto.prefeituraId);
+  }
+
+  private mapPontoResponse(
+    row: {
+      id: string;
+      operatorNome: string;
+      operatorCpf: string | null;
+      timestampOriginal: Date;
+      tipo: string;
+      photoUrl: string | null;
+      nsr: number;
+      hash: string;
+      hashAnterior: string | null;
+      registro: string;
+      aplicado: boolean;
+      createdAt: Date;
+    },
+    prefeituraId: string,
+  ) {
+    return {
+      id: row.id,
+      name: row.operatorNome,
+      prefeituraId,
+      timestampOriginal: row.timestampOriginal.toISOString(),
+      tipo: row.tipo,
+      photo: row.photoUrl ?? undefined,
+      cpf: row.operatorCpf,
+      nsr: row.nsr,
+      hash: row.hash,
+      hashAnterior: row.hashAnterior ?? undefined,
+      registro: row.registro,
+      aplicado: row.aplicado,
+      createdAt: row.createdAt.toISOString(),
+    };
   }
 
   /** Lista checklists da empresa (login por chassi — sem JWT Supabase). */

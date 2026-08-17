@@ -1,9 +1,11 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { StringValue } from 'ms';
 import { FirebaseService } from '../../config/firebase.service';
+import { hashSenhaPosto } from '../../common/prisma/operator-auth.helper';
+import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { BoasVindasPostoDto } from './dto/boas-vindas-posto.dto';
 import { EsqueciSenhaDto } from './dto/esqueci-senha.dto';
@@ -38,6 +40,7 @@ export class UserService {
     private readonly jwtService: JwtService,
     private readonly firebase: FirebaseService,
     private readonly mail: MailService,
+    private readonly prisma: PrismaService,
   ) {}
 
   private get usersCollection() {
@@ -49,7 +52,9 @@ export class UserService {
   }
 
   async login(dto: LoginUserDto) {
-    const user = await this.tryFirestoreLogin(dto);
+    const user =
+      (await this.tryPostgresLogin(dto)) ??
+      (await this.tryFirestoreLogin(dto));
 
     if (!user) {
       return {
@@ -199,6 +204,52 @@ export class UserService {
     return { ok: true, message: 'E-mail de boas-vindas enviado.' };
   }
 
+  private async tryPostgresLogin(
+    dto: LoginUserDto,
+  ): Promise<UsuarioAuth | null> {
+    try {
+      const senhaHash = hashSenhaPosto(dto.senha);
+      const email = dto.email?.trim().toLowerCase();
+      const usuario = dto.usuario?.trim();
+
+      const or: Array<{ email?: string; usuario?: string }> = [];
+      if (email) or.push({ email });
+      if (usuario) or.push({ usuario });
+      if (usuario?.includes('@') && !email) {
+        or.push({ email: usuario.toLowerCase() });
+      }
+      if (or.length === 0) return null;
+
+      const rows = await this.prisma.partnerPortalUser.findMany({
+        where: {
+          vinculo: 'posto',
+          status: 'ativo',
+          OR: or,
+        },
+        include: { company: { select: { legacyId: true } } },
+        take: 10,
+      });
+
+      for (const row of rows) {
+        if (row.senhaHash !== senhaHash) continue;
+        return {
+          nome: row.nome,
+          usuario: row.usuario,
+          email: row.email ?? undefined,
+          senha: row.senhaHash,
+          perfil: row.perfil,
+          vinculo: 'posto',
+          prefeituraId: row.company.legacyId ?? '',
+          postoId: row.partnerLegacyId ?? undefined,
+        };
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   private async tryFirestoreLogin(
     dto: LoginUserDto,
   ): Promise<UsuarioAuth | null> {
@@ -299,7 +350,7 @@ export class UserService {
   }
 
   private hashSenha(value: string): string {
-    return createHash('sha256').update(value).digest('hex');
+    return hashSenhaPosto(value);
   }
 
   private toSafeString(value: unknown): string {
