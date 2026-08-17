@@ -84,11 +84,17 @@ export class FuncionariosController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
-      'Verificadores p/ login OFFLINE do app de campo (condutores da prefeitura)',
+      'Verificadores p/ login OFFLINE (escopo comboio = condutores; prefeitura = todos operadores ativos)',
   })
   @ApiParam({ name: 'prefeituraId' })
-  async credenciaisOffline(@Param('prefeituraId') prefeituraId: string) {
-    const data = await this.service.credenciaisOffline(prefeituraId);
+  async credenciaisOffline(
+    @Param('prefeituraId') prefeituraId: string,
+    @Query('escopo') escopo?: 'comboio' | 'prefeitura',
+  ) {
+    const data = await this.service.credenciaisOffline(
+      prefeituraId,
+      escopo === 'prefeitura' ? 'prefeitura' : 'comboio',
+    );
     return { data, message: 'Credenciais offline.' };
   }
 
