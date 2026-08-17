@@ -6,8 +6,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { StringValue } from 'ms';
-import * as admin from 'firebase-admin';
-import { FirebaseService } from '../../config/firebase.service';
+import { randomUUID } from 'node:crypto';
 import {
   gerarLoginOperador,
   hashSenhaFuncionario,
@@ -19,24 +18,11 @@ import {
   parseCondutoresIds,
 } from '../../common/prisma/equipment-api.mapper';
 import { mapOperatorToApi } from '../../common/prisma/operator-api.mapper';
-import { companyWhere } from '../../common/prisma/company-resolver';
+import { companyWhere, resolverCompanyId } from '../../common/prisma/company-resolver';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { Prisma } from '../../prisma/generated/client';
 import { CreateFuncionarioDto } from './dto/create-funcionario.dto';
 import { AuthFuncionarioDto } from './dto/auth-funcionario.dto';
-
-const COLECAO = 'operadores';
-const BATCH_MAX = 450;
-
-function tsToMillis(v: unknown): number {
-  if (v && typeof (v as { toMillis?: () => number }).toMillis === 'function') {
-    return (v as { toMillis: () => number }).toMillis();
-  }
-  if (typeof v === 'string') {
-    const t = Date.parse(v);
-    return Number.isFinite(t) ? t : 0;
-  }
-  return 0;
-}
 
 export interface ImportResultado {
   criados: number;
@@ -44,21 +30,19 @@ export interface ImportResultado {
   erros: { linha: number; nome: string; cpf: string; motivo: string }[];
 }
 
+function parseDateOptional(value?: string): Date | null {
+  if (!value?.trim()) return null;
+  const t = Date.parse(value.trim());
+  return Number.isFinite(t) ? new Date(t) : null;
+}
+
 @Injectable()
 export class FuncionariosService {
   constructor(
-    private firebaseService: FirebaseService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
   ) {}
-
-  private get firestore() {
-    return this.firebaseService.getFirestore();
-  }
-  private get collection() {
-    return this.firestore.collection(COLECAO);
-  }
 
   private async ehCondutorDeEquipamentoPg(
     companyId: string,
@@ -76,56 +60,6 @@ export class FuncionariosService {
     });
   }
 
-  /**
-   * O funcionário é condutor responsável de algum equipamento da prefeitura?
-   * Gate do PWA FleetFuel (motorista). Filtra em memória (sem índice composto).
-   */
-  private async ehCondutorDeEquipamento(
-    prefeituraId: string,
-    funcionarioId: string,
-  ): Promise<boolean> {
-    if (!prefeituraId || !funcionarioId) return false;
-    const snap = await this.firestore
-      .collection('equipamentos')
-      .where('prefeituraId', '==', prefeituraId)
-      .get();
-    return snap.docs.some((d) => {
-      const data = d.data() as { condutoresResponsaveis?: unknown };
-      const condutores = Array.isArray(data.condutoresResponsaveis)
-        ? data.condutoresResponsaveis
-        : [];
-      return condutores.includes(funcionarioId);
-    });
-  }
-
-  /**
-   * O funcionário é condutor responsável de pelo menos um comboio da prefeitura?
-   * Gate do PWA do comboista — só condutores de comboio entram.
-   */
-  private async ehCondutorDeComboio(
-    prefeituraId: string,
-    funcionarioId: string,
-  ): Promise<boolean> {
-    if (!prefeituraId || !funcionarioId) return false;
-    const snap = await this.firestore
-      .collection('equipamentos')
-      .where('prefeituraId', '==', prefeituraId)
-      .get();
-    return snap.docs.some((d) => {
-      const data = d.data() as {
-        tipo?: unknown;
-        condutoresResponsaveis?: unknown;
-      };
-      const condutores = Array.isArray(data.condutoresResponsaveis)
-        ? data.condutoresResponsaveis
-        : [];
-      return (
-        String(data.tipo).toLowerCase() === 'comboio' &&
-        condutores.includes(funcionarioId)
-      );
-    });
-  }
-
   private getJwtSecret(): string {
     const jwtSecret = this.configService.get<string>('JWT_SECRET') ?? '';
     if (!jwtSecret) {
@@ -134,16 +68,14 @@ export class FuncionariosService {
     return jwtSecret;
   }
 
-  private async emitirJwtFuncionario(
-    funcionario: {
-      id: string;
-      nome: string;
-      cpf: string;
-      cargo: string;
-      loginGerado: string;
-      prefeituraId: string;
-    },
-  ) {
+  private async emitirJwtFuncionario(funcionario: {
+    id: string;
+    nome: string;
+    cpf: string;
+    cargo: string;
+    loginGerado: string;
+    prefeituraId: string;
+  }) {
     const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') ?? '24h';
     const accessToken = await this.jwtService.signAsync(
       {
@@ -167,6 +99,88 @@ export class FuncionariosService {
       expiresIn,
       message: 'Login realizado com sucesso.',
     };
+  }
+
+  private buildOperatorCreateData(
+    companyId: string,
+    dto: CreateFuncionarioDto,
+    legacyId: string,
+  ): Prisma.OperatorCreateInput {
+    const cpf = limparCpf(dto.cpf);
+    const senhaInicial = dto.senha || cpf;
+    const status = dto.status === 'inativo' ? 'inativo' : 'ativo';
+    const cargo = (dto.cargo || '').trim() || null;
+
+    return {
+      legacyId,
+      company: { connect: { id: companyId } },
+      nome: (dto.nome || '').trim(),
+      cpf,
+      loginGerado: gerarLoginOperador(dto.nome, cpf),
+      cargo,
+      funcao: cargo,
+      celular: dto.telefone?.trim() || null,
+      tipo:
+        dto.tipo === 'supervisor' || dto.tipo === 'admin' ? dto.tipo : 'operador',
+      status,
+      ativo: status !== 'inativo',
+      senhaHash: hashSenhaFuncionario(cpf, senhaInicial),
+      matricula: dto.matricula?.trim() || null,
+      dataNascimento: parseDateOptional(dto.dataNascimento),
+      rg: dto.rg?.trim() || null,
+      cnh: dto.cnh?.replace(/\D/g, '') || null,
+      cnhCategoria: dto.cnhCategoria?.trim() || null,
+      cnhValidade: parseDateOptional(dto.cnhValidade),
+      cnhLocalEmissao: dto.cnhLocalEmissao?.trim() || null,
+      cnhEmissao: parseDateOptional(dto.cnhEmissao),
+      cnhRestricao: dto.cnhRestricao?.trim() || null,
+      observacoes: dto.observacoes?.trim() || null,
+    };
+  }
+
+  private buildOperatorUpdateData(
+    dto: CreateFuncionarioDto,
+  ): Prisma.OperatorUpdateInput {
+    const cpf = limparCpf(dto.cpf);
+    const status = dto.status === 'inativo' ? 'inativo' : 'ativo';
+    const cargo = (dto.cargo || '').trim() || null;
+    const data: Prisma.OperatorUpdateInput = {
+      nome: (dto.nome || '').trim(),
+      cpf,
+      loginGerado: gerarLoginOperador(dto.nome, cpf),
+      cargo,
+      funcao: cargo,
+      celular: dto.telefone?.trim() || null,
+      tipo:
+        dto.tipo === 'supervisor' || dto.tipo === 'admin' ? dto.tipo : 'operador',
+      status,
+      ativo: status !== 'inativo',
+      matricula: dto.matricula?.trim() || null,
+      dataNascimento: parseDateOptional(dto.dataNascimento),
+      rg: dto.rg?.trim() || null,
+      cnh: dto.cnh?.replace(/\D/g, '') || null,
+      cnhCategoria: dto.cnhCategoria?.trim() || null,
+      cnhValidade: parseDateOptional(dto.cnhValidade),
+      cnhLocalEmissao: dto.cnhLocalEmissao?.trim() || null,
+      cnhEmissao: parseDateOptional(dto.cnhEmissao),
+      cnhRestricao: dto.cnhRestricao?.trim() || null,
+      observacoes: dto.observacoes?.trim() || null,
+    };
+    if (dto.senha) {
+      data.senhaHash = hashSenhaFuncionario(cpf, dto.senha);
+    }
+    return data;
+  }
+
+  private async findOperatorOrThrow(id: string) {
+    const row = await this.prisma.operator.findFirst({
+      where: { OR: [{ id }, { legacyId: id }] },
+      include: { company: { select: { legacyId: true } } },
+    });
+    if (!row) {
+      throw new NotFoundException('Funcionário não encontrado.');
+    }
+    return row;
   }
 
   private async autenticarPostgres(dto: AuthFuncionarioDto) {
@@ -232,9 +246,7 @@ export class FuncionariosService {
     return this.emitirJwtFuncionario(funcionario);
   }
 
-  /**
-   * Login do operador/funcionário (app de campo). Somente Postgres.
-   */
+  /** Login do operador/funcionário (app de campo). Somente Postgres. */
   async autenticar(dto: AuthFuncionarioDto) {
     const ident = (dto.identificador ?? '').trim();
     const senha = dto.senha ?? '';
@@ -298,9 +310,7 @@ export class FuncionariosService {
       where: { companyId: company.id, status: 'ativo', senhaHash: { not: null } },
     });
     return ops
-      .filter(
-        (op) => condutores.has(op.legacyId ?? op.id) && op.senhaHash,
-      )
+      .filter((op) => condutores.has(op.legacyId ?? op.id) && op.senhaHash)
       .map((op) => this.mapOperadorCredencialOffline(op, prefeituraId));
   }
 
@@ -329,55 +339,19 @@ export class FuncionariosService {
     };
   }
 
-  /** Campos do documento (sem createdAt/senha), compartilhado por criar/editar. */
-  private basePayload(input: CreateFuncionarioDto) {
-    const cpf = limparCpf(input.cpf);
-    return {
-      nome: (input.nome || '').trim(),
-      cpf,
-      loginGerado: gerarLoginOperador(input.nome, cpf),
-      cargo: (input.cargo || '').trim(),
-      telefone: input.telefone?.trim() || null,
-      tipo:
-        input.tipo === 'supervisor' || input.tipo === 'admin'
-          ? input.tipo
-          : 'operador',
-      status: input.status === 'inativo' ? 'inativo' : 'ativo',
-      matricula: input.matricula?.trim() || null,
-      dataNascimento: input.dataNascimento?.trim() || null,
-      rg: input.rg?.trim() || null,
-      cnh: input.cnh?.replace(/\D/g, '') || null,
-      cnhCategoria: input.cnhCategoria?.trim() || null,
-      cnhValidade: input.cnhValidade?.trim() || null,
-      cnhLocalEmissao: input.cnhLocalEmissao?.trim() || null,
-      cnhEmissao: input.cnhEmissao?.trim() || null,
-      cnhRestricao: input.cnhRestricao?.trim() || null,
-      observacoes: input.observacoes?.trim() || null,
-    };
-  }
-
-  private async getDocOrThrow(id: string) {
-    const snap = await this.collection.doc(id).get();
-    if (!snap.exists) {
-      throw new NotFoundException('Funcionário não encontrado.');
-    }
-    return snap;
-  }
-
   async create(prefeituraId: string, dto: CreateFuncionarioDto) {
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) {
+      throw new NotFoundException('Empresa não encontrada.');
+    }
+
     try {
-      const cpf = limparCpf(dto.cpf);
-      const senhaInicial = dto.senha || cpf;
-      const ref = this.collection.doc();
-      await ref.set({
-        prefeituraId,
-        ...this.basePayload(dto),
-        senhaHash: hashSenhaFuncionario(cpf, senhaInicial),
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      const legacyId = randomUUID();
+      const row = await this.prisma.operator.create({
+        data: this.buildOperatorCreateData(companyId, dto, legacyId),
       });
       return {
-        data: { id: ref.id },
+        data: { id: row.legacyId ?? row.id },
         message: 'Funcionário criado com sucesso!',
       };
     } catch (error) {
@@ -394,43 +368,16 @@ export class FuncionariosService {
         where: companyWhere(prefeituraId),
         select: { id: true, legacyId: true },
       });
-      if (company) {
-        const rows = await this.prisma.operator.findMany({
-          where: { companyId: company.id },
-          orderBy: { createdAt: 'desc' },
-        });
-        if (rows.length > 0) {
-          const legacy = company.legacyId ?? prefeituraId;
-          const data = rows.map((row) => mapOperatorToApi(row, legacy));
-          return { data, message: 'Funcionários buscados com sucesso!' };
-        }
+      if (!company) {
+        return { data: [], message: 'Funcionários buscados com sucesso!' };
       }
 
-      const snap = await this.collection
-        .where('prefeituraId', '==', prefeituraId)
-        .get();
-
-      const data = snap.docs
-        .map((d) => ({ id: d.id, ...d.data() }))
-        .sort(
-          (a, b) =>
-            tsToMillis((b as { createdAt?: unknown }).createdAt) -
-            tsToMillis((a as { createdAt?: unknown }).createdAt),
-        );
-
-      // Backfill do loginGerado para docs legados (fire-and-forget).
-      for (const d of snap.docs) {
-        const x = d.data();
-        if (x.loginGerado || !x.nome || !x.cpf) continue;
-        const lg = gerarLoginOperador(String(x.nome), String(x.cpf));
-        if (lg) {
-          void this.collection
-            .doc(d.id)
-            .update({ loginGerado: lg })
-            .catch(() => {});
-        }
-      }
-
+      const rows = await this.prisma.operator.findMany({
+        where: { companyId: company.id },
+        orderBy: { createdAt: 'desc' },
+      });
+      const legacy = company.legacyId ?? prefeituraId;
+      const data = rows.map((row) => mapOperatorToApi(row, legacy));
       return { data, message: 'Funcionários buscados com sucesso!' };
     } catch (error) {
       console.error('Erro ao buscar funcionários:', error);
@@ -441,61 +388,51 @@ export class FuncionariosService {
   }
 
   async findById(id: string) {
-    const pg = await this.prisma.operator.findFirst({
-      where: { OR: [{ id }, { legacyId: id }] },
-      include: { company: { select: { legacyId: true } } },
-    });
-    if (pg) {
-      const prefeituraId = pg.company.legacyId ?? '';
-      return {
-        data: mapOperatorToApi(pg, prefeituraId),
-        message: 'OK',
-      };
-    }
-
-    const snap = await this.getDocOrThrow(id);
-    return { data: { id: snap.id, ...snap.data() }, message: 'OK' };
+    const row = await this.findOperatorOrThrow(id);
+    const prefeituraId = row.company.legacyId ?? '';
+    return {
+      data: mapOperatorToApi(row, prefeituraId),
+      message: 'OK',
+    };
   }
 
   async update(id: string, dto: CreateFuncionarioDto) {
-    await this.getDocOrThrow(id);
-    const cpf = limparCpf(dto.cpf);
-    const payload: Record<string, unknown> = {
-      ...this.basePayload(dto),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    };
-    if (dto.senha) payload.senhaHash = hashSenhaFuncionario(cpf, dto.senha);
-    await this.collection.doc(id).update(payload);
+    const row = await this.findOperatorOrThrow(id);
+    await this.prisma.operator.update({
+      where: { id: row.id },
+      data: this.buildOperatorUpdateData(dto),
+    });
     return { data: {}, message: 'Funcionário atualizado com sucesso!' };
   }
 
   async remove(id: string) {
-    await this.getDocOrThrow(id);
-    await this.collection.doc(id).delete();
+    const row = await this.findOperatorOrThrow(id);
+    await this.prisma.operator.delete({ where: { id: row.id } });
     return { data: {}, message: 'Funcionário removido com sucesso!' };
   }
 
   async definirStatus(id: string, status: 'ativo' | 'inativo') {
-    await this.getDocOrThrow(id);
-    await this.collection.doc(id).update({
-      status: status === 'inativo' ? 'inativo' : 'ativo',
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    const row = await this.findOperatorOrThrow(id);
+    const ativo = status !== 'inativo';
+    await this.prisma.operator.update({
+      where: { id: row.id },
+      data: { status: ativo ? 'ativo' : 'inativo', ativo },
     });
     return { data: {}, message: 'Status atualizado.' };
   }
 
   /** Reseta a senha para o CPF (ação do gestor). */
   async resetarSenha(id: string) {
-    const snap = await this.getDocOrThrow(id);
-    const cpf = limparCpf(String(snap.data()?.cpf ?? ''));
+    const row = await this.findOperatorOrThrow(id);
+    const cpf = limparCpf(row.cpf ?? '');
     if (!cpf) {
       throw new InternalServerErrorException(
         'CPF não definido — não dá para resetar.',
       );
     }
-    await this.collection.doc(id).update({
-      senhaHash: hashSenhaFuncionario(cpf, cpf),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    await this.prisma.operator.update({
+      where: { id: row.id },
+      data: { senhaHash: hashSenhaFuncionario(cpf, cpf) },
     });
     return { data: {}, message: 'Senha resetada para o CPF.' };
   }
@@ -503,11 +440,17 @@ export class FuncionariosService {
   async cpfEmUso(prefeituraId: string, cpf: string, ignorarId?: string) {
     const limpo = limparCpf(cpf);
     if (!limpo) return { data: { emUso: false }, message: 'OK' };
-    const snap = await this.collection
-      .where('prefeituraId', '==', prefeituraId)
-      .where('cpf', '==', limpo)
-      .get();
-    const emUso = snap.docs.some((d) => d.id !== ignorarId);
+
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) return { data: { emUso: false }, message: 'OK' };
+
+    const rows = await this.prisma.operator.findMany({
+      where: { companyId, cpf: limpo },
+      select: { id: true, legacyId: true },
+    });
+    const emUso = rows.some(
+      (r) => r.id !== ignorarId && (r.legacyId ?? r.id) !== ignorarId,
+    );
     return { data: { emUso }, message: 'OK' };
   }
 
@@ -516,67 +459,57 @@ export class FuncionariosService {
     prefeituraId: string,
     linhas: CreateFuncionarioDto[],
   ): Promise<{ data: ImportResultado; message: string }> {
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) {
+      throw new NotFoundException('Empresa não encontrada.');
+    }
+
     try {
-      const existentesSnap = await this.collection
-        .where('prefeituraId', '==', prefeituraId)
-        .get();
+      const existentes = await this.prisma.operator.findMany({
+        where: { companyId },
+        select: { cpf: true },
+      });
       const cpfsExistentes = new Set(
-        existentesSnap.docs
-          .map((d) => limparCpf(String(d.data().cpf ?? '')))
-          .filter(Boolean),
+        existentes.map((r) => limparCpf(r.cpf ?? '')).filter(Boolean),
       );
 
       const vistos = new Set<string>();
       const erros: ImportResultado['erros'] = [];
       let criados = 0;
-      let batch = this.firestore.batch();
-      let pendentes = 0;
 
-      for (let i = 0; i < linhas.length; i++) {
-        const row = linhas[i];
-        const linha = i + 1;
-        const nome = (row?.nome || '').trim();
-        const cpf = limparCpf(row?.cpf || '');
+      await this.prisma.$transaction(async (tx) => {
+        for (let i = 0; i < linhas.length; i++) {
+          const row = linhas[i];
+          const linha = i + 1;
+          const nome = (row?.nome || '').trim();
+          const cpf = limparCpf(row?.cpf || '');
 
-        if (!nome) {
-          erros.push({ linha, nome, cpf, motivo: 'Nome vazio' });
-          continue;
-        }
-        if (cpf.length !== 11) {
-          erros.push({
-            linha,
-            nome,
-            cpf,
-            motivo: 'CPF inválido (precisa de 11 dígitos)',
+          if (!nome) {
+            erros.push({ linha, nome, cpf, motivo: 'Nome vazio' });
+            continue;
+          }
+          if (cpf.length !== 11) {
+            erros.push({
+              linha,
+              nome,
+              cpf,
+              motivo: 'CPF inválido (precisa de 11 dígitos)',
+            });
+            continue;
+          }
+          if (cpfsExistentes.has(cpf) || vistos.has(cpf)) {
+            erros.push({ linha, nome, cpf, motivo: 'CPF já cadastrado' });
+            continue;
+          }
+
+          vistos.add(cpf);
+          cpfsExistentes.add(cpf);
+          await tx.operator.create({
+            data: this.buildOperatorCreateData(companyId, row, randomUUID()),
           });
-          continue;
+          criados++;
         }
-        if (cpfsExistentes.has(cpf) || vistos.has(cpf)) {
-          erros.push({ linha, nome, cpf, motivo: 'CPF já cadastrado' });
-          continue;
-        }
-
-        vistos.add(cpf);
-        const senhaInicial = row.senha || cpf;
-        const ref = this.collection.doc();
-        batch.set(ref, {
-          prefeituraId,
-          ...this.basePayload(row),
-          senhaHash: hashSenhaFuncionario(cpf, senhaInicial),
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-        criados++;
-        pendentes++;
-
-        if (pendentes >= BATCH_MAX) {
-          await batch.commit();
-          batch = this.firestore.batch();
-          pendentes = 0;
-        }
-      }
-
-      if (pendentes > 0) await batch.commit();
+      });
 
       return {
         data: { criados, ignorados: erros.length, erros },

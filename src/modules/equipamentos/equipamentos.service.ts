@@ -4,32 +4,28 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { FirebaseService } from '../../config/firebase.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   ehComboioTipo,
   ehCondutorDoEquipamentoRow,
   mapEquipmentToApi,
 } from '../../common/prisma/equipment-api.mapper';
-import { resolverCompanyId } from '../../common/prisma/company-resolver';
-import { randomUUID } from 'node:crypto';
-import { CreateEquipamentoDto } from './dto/create-equipamento.dto';
-import { UpdateEquipamentoDto } from './dto/update-equipamento.dto';
-import { CompleteRevisaoEquipDto } from './dto/complete-revisao-equip.dto';
 import {
-  ensureTankForComboio,
-  tankStatus,
-} from '../movimentacoes/shared/tank-saldo.helper';
+  mapCreateEquipamentoToPrisma,
+  mapUpdateEquipamentoToPrisma,
+} from '../../common/prisma/equipment-prisma.mapper';
+import { ensureTankForComboioPg } from '../../common/prisma/equipment-resolver';
+import { tankStatusPg } from '../../common/prisma/tank-saldo-prisma.helper';
+import { resolverCompanyId } from '../../common/prisma/company-resolver';
 import {
   deveAplicarMedicaoChecklist,
   resolverLeituraParaUnidade,
   type MedicaoChecklistTexto,
 } from './helpers/sync-medicao-from-texto.helper';
-
-/** Equipamento é comboio? (tipo `Comboio`, case-insensitive). */
-function ehComboio(tipo: unknown): boolean {
-  return typeof tipo === 'string' && tipo.trim().toLowerCase() === 'comboio';
-}
+import { randomUUID } from 'node:crypto';
+import { CreateEquipamentoDto } from './dto/create-equipamento.dto';
+import { UpdateEquipamentoDto } from './dto/update-equipamento.dto';
+import { CompleteRevisaoEquipDto } from './dto/complete-revisao-equip.dto';
 
 function txt(valor: unknown): string {
   return typeof valor === 'string' ? valor : '';
@@ -40,67 +36,25 @@ function nmr(valor: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-/** Equipamento em que o funcionário é condutor responsável? */
-function ehCondutorDoEquipamento(
-  e: Record<string, unknown>,
-  motoristaId: string,
-): boolean {
-  const condutores = ehArray(e.condutoresResponsaveis)
-    ? e.condutoresResponsaveis
-    : [];
-  return condutores.some((id) => id === motoristaId);
-}
-
-function mapDocEquipamento(doc: {
-  id: string;
-  data: () => Record<string, unknown>;
-}): Record<string, unknown> & { id: string } {
-  const raw = doc.data();
-  const id = typeof raw.id === 'string' ? raw.id : doc.id;
-  return { ...raw, id };
-}
-
-/** Type guard que estreita para `unknown[]` (Array.isArray estreita para any[]). */
-function ehArray(valor: unknown): valor is unknown[] {
-  return Array.isArray(valor);
-}
-
 @Injectable()
 export class EquipamentosService {
-  constructor(
-    private firebaseService: FirebaseService,
-    private readonly prisma: PrismaService,
-  ) {}
-
-  private get collection() {
-    return this.firebaseService.getFirestore().collection('equipamentos');
-  }
-
-  private get revisoesCollection() {
-    return this.firebaseService
-      .getFirestore()
-      .collection('equipamentos_revisoes');
-  }
-
-  /**
-   * Localiza o documento pelo campo `id` salvo (docs novos) ou, em fallback,
-   * pelo id do próprio documento Firestore (docs legados sem o campo `id`).
-   */
-  private async findDocByField(id: string) {
-    const ref = await this.collection.where('id', '==', id).get();
-    if (!ref.empty) return ref.docs[0];
-
-    const byDocId = await this.collection.doc(id).get();
-    if (byDocId.exists) return byDocId;
-
-    throw new NotFoundException(
-      'Equipamento não encontrado para o ID fornecido.',
-    );
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateEquipamentoDto) {
+    const companyId = await resolverCompanyId(this.prisma, dto.prefeituraId);
+    if (!companyId) {
+      throw new BadRequestException('Empresa não encontrada.');
+    }
+
     const id = randomUUID();
     try {
+      const data = mapCreateEquipamentoToPrisma(dto, companyId, id);
+      await this.prisma.equipment.create({ data });
+
+      if (ehComboioTipo(dto.tipo)) {
+        await ensureTankForComboioPg(this.prisma, id);
+      }
+
       const novo = {
         id,
         ...dto,
@@ -108,11 +62,6 @@ export class EquipamentosService {
         status: dto.status ?? 'ativo',
         createdAt: new Date().toISOString(),
       };
-      await this.collection.doc().set(novo);
-      // Comboio é um equipamento com tanque próprio: garante o doc em `tanks`.
-      if (ehComboio(novo.tipo)) {
-        await ensureTankForComboio(this.firebaseService.getFirestore(), novo);
-      }
       return { data: novo, message: 'Equipamento criado com sucesso!' };
     } catch (error) {
       console.error('Erro ao salvar equipamento:', error);
@@ -122,7 +71,7 @@ export class EquipamentosService {
     }
   }
 
-  /** Busca um equipamento pelo campo `id` (Postgres → Firestore). */
+  /** Busca um equipamento pelo id (UUID Postgres ou legacyId). */
   async findById(id: string) {
     const prismaRow = await this.prisma.equipment.findFirst({
       where: { OR: [{ id }, { legacyId: id }] },
@@ -136,8 +85,7 @@ export class EquipamentosService {
       };
     }
 
-    const doc = await this.findDocByField(id);
-    return { data: doc.data(), message: 'Equipamento encontrado.' };
+    throw new NotFoundException('Equipamento não encontrado.');
   }
 
   /** Se `id` é UUID válido, devolve; senão devolve UUID nulo (não bate em companyId). */
@@ -202,15 +150,7 @@ export class EquipamentosService {
         return { data, message: 'Equipamentos buscados com sucesso!' };
       }
 
-      // Fallback Firestore (legado) — empresas ainda não migradas.
-      const ref = await this.collection
-        .where('prefeituraId', '==', prefeituraId)
-        .get();
-      const data = ref.docs.map((doc) => {
-        const raw = doc.data();
-        return { ...raw, id: (raw as { id?: string }).id ?? doc.id };
-      });
-      return { data, message: 'Equipamentos buscados com sucesso!' };
+      return { data: [], message: 'Equipamentos buscados com sucesso!' };
     } catch (error) {
       console.error('Erro ao buscar equipamentos:', error);
       throw new InternalServerErrorException(
@@ -229,111 +169,54 @@ export class EquipamentosService {
   ) {
     try {
       const companyId = await resolverCompanyId(this.prisma, prefeituraId);
-      if (companyId) {
-        const rows = await this.prisma.equipment.findMany({
-          where: { companyId },
-          select: {
-            id: true,
-            legacyId: true,
-            descricao: true,
-            chassi: true,
-            modelo: true,
-            linha: true,
-            tipo: true,
-            placa: true,
-            marca: true,
-            ano: true,
-            obra: true,
-            status: true,
-            medicaoAtual: true,
-            intervaloRevisao: true,
-            ultimaRevisao: true,
-            unidadeRevisao: true,
-            combustivel: true,
-            capacidadeTanque: true,
-            condutoresIds: true,
-          },
-        });
-        if (rows.length > 0) {
-          const equipamentos = rows
-            .filter(
-              (e) =>
-                !ehComboioTipo(e.tipo) &&
-                ehCondutorDoEquipamentoRow(e, motoristaId),
-            )
-            .map((e) => mapEquipmentToApi(e, prefeituraId));
-
-          const data = await Promise.all(
-            equipamentos.map(async (e) => {
-              const nome =
-                txt(e.descricao) || txt(e.modelo) || txt(e.tipo) || 'Equipamento';
-              return {
-                id: e.id,
-                descricao: nome,
-                placa: txt(e.placa),
-                chassis: txt(e.chassis),
-                tipo: txt(e.tipo),
-              };
-            }),
-          );
-
-          return {
-            data,
-            message: 'Equipamentos do condutor buscados com sucesso!',
-          };
-        }
+      if (!companyId) {
+        return { data: [], message: 'Equipamentos do condutor buscados com sucesso!' };
       }
 
-      const ref = await this.collection
-        .where('prefeituraId', '==', prefeituraId)
-        .get();
+      const rows = await this.prisma.equipment.findMany({
+        where: { companyId },
+        select: {
+          id: true,
+          legacyId: true,
+          descricao: true,
+          chassi: true,
+          modelo: true,
+          linha: true,
+          tipo: true,
+          placa: true,
+          marca: true,
+          ano: true,
+          obra: true,
+          status: true,
+          medicaoAtual: true,
+          intervaloRevisao: true,
+          ultimaRevisao: true,
+          unidadeRevisao: true,
+          combustivel: true,
+          capacidadeTanque: true,
+          condutoresIds: true,
+        },
+      });
 
-      const firestore = this.firebaseService.getFirestore();
-      const equipamentos = ref.docs
-        .map(mapDocEquipamento)
-        .filter((e) => ehCondutorDoEquipamento(e, motoristaId));
+      const equipamentos = rows
+        .filter(
+          (e) =>
+            !ehComboioTipo(e.tipo) &&
+            ehCondutorDoEquipamentoRow(e, motoristaId),
+        )
+        .map((e) => mapEquipmentToApi(e, prefeituraId));
 
-      const data = await Promise.all(
-        equipamentos.map(async (e) => {
-          const equipId = e.id;
-          const nome =
-            txt(e.descricao) || txt(e.modelo) || txt(e.tipo) || 'Equipamento';
-          const base = {
-            id: equipId,
-            descricao: nome,
-            placa: txt(e.placa),
-            chassis: txt(e.chassis),
-            tipo: txt(e.tipo),
-          };
-
-          if (!ehComboio(e.tipo)) return base;
-
-          const tankSnap = await firestore
-            .collection('tanks')
-            .doc(equipId)
-            .get();
-          const t: Record<string, unknown> = tankSnap.data() ?? {};
-          const capacity =
-            t.capacity !== undefined
-              ? nmr(t.capacity)
-              : nmr(e.capacidadeTanque);
-          const currentVolume = nmr(t.currentVolume);
-          const { percentage, status } = tankStatus(capacity, currentVolume);
-          return {
-            ...base,
-            tank: {
-              name: nome,
-              fuelType: txt(e.combustivel),
-              capacity,
-              currentVolume,
-              percentage,
-              status,
-              veiculoModelo: txt(e.modelo) || txt(e.descricao),
-              veiculoPlaca: txt(e.placa),
-            },
-          };
-        }),
-      );
+      const data = equipamentos.map((e) => {
+        const nome =
+          txt(e.descricao) || txt(e.modelo) || txt(e.tipo) || 'Equipamento';
+        return {
+          id: e.id,
+          descricao: nome,
+          placa: txt(e.placa),
+          chassis: txt(e.chassis),
+          tipo: txt(e.tipo),
+        };
+      });
 
       return {
         data,
@@ -355,104 +238,44 @@ export class EquipamentosService {
   async findComboiosByMotorista(prefeituraId: string, motoristaId: string) {
     try {
       const companyId = await resolverCompanyId(this.prisma, prefeituraId);
-      if (companyId) {
-        const rows = await this.prisma.equipment.findMany({
-          where: { companyId },
-          select: {
-            id: true,
-            legacyId: true,
-            descricao: true,
-            chassi: true,
-            modelo: true,
-            tipo: true,
-            placa: true,
-            combustivel: true,
-            capacidadeTanque: true,
-            condutoresIds: true,
-          },
-        });
-        if (rows.length > 0) {
-          const firestore = this.firebaseService.getFirestore();
-          const comboios = rows.filter(
-            (e) =>
-              ehComboioTipo(e.tipo) &&
-              ehCondutorDoEquipamentoRow(e, motoristaId),
-          );
-
-          const data = await Promise.all(
-            comboios.map(async (e) => {
-              const comboioId = e.legacyId ?? e.id;
-              const tankSnap = await firestore
-                .collection('tanks')
-                .doc(comboioId)
-                .get();
-              const t: Record<string, unknown> = tankSnap.data() ?? {};
-              const capacity =
-                t.capacity !== undefined
-                  ? nmr(t.capacity)
-                  : nmr(e.capacidadeTanque);
-              const currentVolume = nmr(t.currentVolume);
-              const { percentage, status } = tankStatus(
-                capacity,
-                currentVolume,
-              );
-              const nome = txt(e.descricao) || txt(e.modelo) || 'Comboio';
-              return {
-                id: comboioId,
-                descricao: nome,
-                placa: txt(e.placa),
-                chassis: txt(e.chassi),
-                tank: {
-                  name: nome,
-                  fuelType: txt(e.combustivel),
-                  capacity,
-                  currentVolume,
-                  percentage,
-                  status,
-                  veiculoModelo: txt(e.modelo) || txt(e.descricao),
-                  veiculoPlaca: txt(e.placa),
-                },
-              };
-            }),
-          );
-
-          return { data, message: 'Comboios do condutor buscados com sucesso!' };
-        }
+      if (!companyId) {
+        return { data: [], message: 'Comboios do condutor buscados com sucesso!' };
       }
 
-      const ref = await this.collection
-        .where('prefeituraId', '==', prefeituraId)
-        .get();
+      const rows = await this.prisma.equipment.findMany({
+        where: { companyId },
+        select: {
+          id: true,
+          legacyId: true,
+          descricao: true,
+          chassi: true,
+          modelo: true,
+          tipo: true,
+          placa: true,
+          combustivel: true,
+          capacidadeTanque: true,
+          volumeTanqueAtual: true,
+          condutoresIds: true,
+        },
+      });
 
-      const firestore = this.firebaseService.getFirestore();
-      const comboios = ref.docs
-        .map(mapDocEquipamento)
+      const data = rows
         .filter(
           (e) =>
-            txt(e.tipo).toLowerCase() === 'comboio' &&
-            ehCondutorDoEquipamento(e, motoristaId),
-        );
-
-      const data = await Promise.all(
-        comboios.map(async (e) => {
-          const comboioId = e.id;
-          const tankSnap = await firestore
-            .collection('tanks')
-            .doc(comboioId)
-            .get();
-          const t: Record<string, unknown> = tankSnap.data() ?? {};
-          const capacity =
-            t.capacity !== undefined
-              ? nmr(t.capacity)
-              : nmr(e.capacidadeTanque);
-          const currentVolume = nmr(t.currentVolume);
-          const { percentage, status } = tankStatus(capacity, currentVolume);
+            ehComboioTipo(e.tipo) &&
+            ehCondutorDoEquipamentoRow(e, motoristaId),
+        )
+        .map((e) => {
+          const comboioId = e.legacyId ?? e.id;
+          const capacity = nmr(e.capacidadeTanque);
+          const currentVolume = nmr(e.volumeTanqueAtual);
+          const { percentage, status } = tankStatusPg(capacity, currentVolume);
           const nome = txt(e.descricao) || txt(e.modelo) || 'Comboio';
           return {
             id: comboioId,
             descricao: nome,
             placa: txt(e.placa),
-            chassis: txt(e.chassis),
+            chassis: txt(e.chassi),
             tank: {
               name: nome,
               fuelType: txt(e.combustivel),
@@ -464,8 +287,7 @@ export class EquipamentosService {
               veiculoPlaca: txt(e.placa),
             },
           };
-        }),
-      );
+        });
 
       return { data, message: 'Comboios do condutor buscados com sucesso!' };
     } catch (error) {
@@ -478,28 +300,29 @@ export class EquipamentosService {
 
   async updateById(id: string, dto: UpdateEquipamentoDto) {
     try {
-      const doc = await this.findDocByField(id);
-      const atual: Record<string, unknown> = doc.data() ?? {};
-
-      // Só grava os campos informados (evita sobrescrever com undefined).
-      const patch: Record<string, unknown> = {
-        updatedAt: new Date().toISOString(),
-      };
-      for (const [key, value] of Object.entries(dto)) {
-        if (value !== undefined) patch[key] = value;
+      const row = await this.prisma.equipment.findFirst({
+        where: { OR: [{ id }, { legacyId: id }] },
+      });
+      if (!row) {
+        throw new NotFoundException(
+          'Equipamento não encontrado para o ID fornecido.',
+        );
       }
 
-      await this.collection.doc(doc.id).update(patch);
-
-      // Mantém o tanque do comboio sincronizado (capacidade/dados do veículo).
-      const merged: Record<string, unknown> = {
-        ...atual,
-        ...patch,
-        id: typeof atual.id === 'string' ? atual.id : doc.id,
-      };
-      if (ehComboio(merged.tipo)) {
-        await ensureTankForComboio(this.firebaseService.getFirestore(), merged);
+      const patch = mapUpdateEquipamentoToPrisma(dto);
+      if (Object.keys(patch).length === 0) {
+        return { data: {}, message: 'Equipamento atualizado com sucesso!' };
       }
+
+      const updated = await this.prisma.equipment.update({
+        where: { id: row.id },
+        data: patch,
+      });
+
+      if (ehComboioTipo(updated.tipo)) {
+        await ensureTankForComboioPg(this.prisma, row.id);
+      }
+
       return { data: {}, message: 'Equipamento atualizado com sucesso!' };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -526,9 +349,7 @@ export class EquipamentosService {
     if (!leituraTexto) return false;
 
     const prismaOk = await this.syncMedicaoPrisma(id, leituraTexto);
-    if (prismaOk) return true;
-
-    return this.syncMedicaoFirestore(id, leituraTexto);
+    return prismaOk;
   }
 
   private async syncMedicaoPrisma(
@@ -574,46 +395,17 @@ export class EquipamentosService {
     }
   }
 
-  private async syncMedicaoFirestore(
-    id: string,
-    leituraTexto: string,
-  ): Promise<boolean> {
-    try {
-      const doc = await this.findDocByField(id);
-      const atual = (doc.data() ?? {}) as Record<string, unknown>;
-      const resolvido = resolverLeituraParaUnidade(
-        leituraTexto,
-        atual.unidadeRevisao,
-      );
-      if (!resolvido) return false;
-      if (
-        !deveAplicarMedicaoChecklist(
-          atual,
-          resolvido.measurementType,
-          resolvido.leitura,
-        )
-      ) {
-        return false;
-      }
-
-      await this.collection.doc(doc.id).update({
-        medicaoAtual: resolvido.leitura,
-        updatedAt: new Date().toISOString(),
-      });
-      return true;
-    } catch (error) {
-      console.warn(
-        'Não foi possível sincronizar medição do equipamento após checklist:',
-        { equipamentoId: id, error },
-      );
-      return false;
-    }
-  }
-
   async deleteById(id: string) {
     try {
-      const doc = await this.findDocByField(id);
-      await this.collection.doc(doc.id).delete();
+      const row = await this.prisma.equipment.findFirst({
+        where: { OR: [{ id }, { legacyId: id }] },
+      });
+      if (!row) {
+        throw new NotFoundException(
+          'Equipamento não encontrado para o ID fornecido.',
+        );
+      }
+      await this.prisma.equipment.delete({ where: { id: row.id } });
       return { data: {}, message: 'Equipamento removido com sucesso!' };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -632,29 +424,72 @@ export class EquipamentosService {
   async completeRevision(dto: CompleteRevisaoEquipDto) {
     const revisionId = randomUUID();
     try {
-      const doc = await this.findDocByField(dto.equipamentoId);
-      const data = doc.data() as { medicaoAtual?: number };
+      const equip = await this.prisma.equipment.findFirst({
+        where: {
+          OR: [{ id: dto.equipamentoId }, { legacyId: dto.equipamentoId }],
+        },
+        select: {
+          id: true,
+          legacyId: true,
+          medicaoAtual: true,
+          unidadeRevisao: true,
+        },
+      });
+      if (!equip) {
+        throw new NotFoundException(
+          'Equipamento não encontrado para o ID fornecido.',
+        );
+      }
 
-      if (dto.odometerReading < (data.medicaoAtual ?? 0)) {
+      const medicaoAtual = equip.medicaoAtual ?? 0;
+      if (dto.odometerReading < medicaoAtual) {
         throw new BadRequestException(
           'A leitura não pode ser menor que a medição atual do equipamento.',
         );
       }
 
+      const unidade = equip.unidadeRevisao?.trim() || 'h';
+      const revisionDate = new Date(dto.revisionDate);
+      const createdAt = new Date();
+
+      await this.prisma.$transaction([
+        this.prisma.equipmentRevision.create({
+          data: {
+            id: revisionId,
+            equipmentId: equip.id,
+            data: revisionDate,
+            leitura: dto.odometerReading,
+            unidade,
+            oficina: dto.mechanicOrOfficeName.trim() || null,
+            custo: dto.revisionCost,
+            notaFiscal: dto.invoiceNumber.trim() || null,
+            servicos: dto.servicesDescription.trim() || null,
+            createdAt,
+          },
+        }),
+        this.prisma.equipment.update({
+          where: { id: equip.id },
+          data: {
+            medicaoAtual: dto.odometerReading,
+            ultimaRevisao: dto.odometerReading,
+            status: 'ativo',
+          },
+        }),
+      ]);
+
       const novaRevisao = {
         id: revisionId,
-        ...dto,
+        revisionDate: dto.revisionDate,
+        odometerReading: dto.odometerReading,
+        mechanicOrOfficeName: dto.mechanicOrOfficeName,
+        servicesDescription: dto.servicesDescription,
+        revisionCost: dto.revisionCost,
+        invoiceNumber: dto.invoiceNumber,
+        prefeituraId: dto.prefeituraId,
+        equipamentoId: equip.legacyId ?? equip.id,
         status: 'Concluída',
-        createdAt: new Date().toISOString(),
+        createdAt: createdAt.toISOString(),
       };
-      await this.revisoesCollection.doc().set(novaRevisao);
-
-      await this.collection.doc(doc.id).update({
-        medicaoAtual: dto.odometerReading,
-        ultimaRevisao: dto.odometerReading,
-        status: 'ativo',
-        updatedAt: new Date().toISOString(),
-      });
 
       return {
         data: novaRevisao,
