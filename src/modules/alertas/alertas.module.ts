@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { FirebaseService } from '../../config/firebase.service';
 import { MailModule } from '../mail/mail.module';
 import { AdminSecretGuard } from '../whatsapp/admin-secret.guard';
 import { AlertasController } from './alertas.controller';
@@ -13,6 +12,6 @@ import { AlertasService } from './alertas.service';
 @Module({
   imports: [MailModule],
   controllers: [AlertasController],
-  providers: [AlertasService, FirebaseService, AdminSecretGuard],
+  providers: [AlertasService, AdminSecretGuard],
 })
 export class AlertasModule {}

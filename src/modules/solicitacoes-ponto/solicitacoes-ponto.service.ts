@@ -4,7 +4,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { FirebaseService } from '../../config/firebase.service';
+import { selarRegistroPostgres } from '../../common/prisma/ponto-selo.helper';
+import {
+  resolverCompanyId,
+  resolverEmpresa,
+} from '../../common/prisma/company-resolver';
+import { PrismaService } from '../../prisma/prisma.service';
+import type { PontoSolicitacao } from '../../prisma/generated/client';
 import {
   CreateSolicitacaoPontoDto,
   TipoBatida,
@@ -12,7 +18,6 @@ import {
 } from './dto/create-solicitacao-ponto.dto';
 import { NotificacoesService } from '../notificacoes/notificacoes.service';
 import { AbonosService } from '../abonos/abonos.service';
-import { selarRegistro } from '../../common/ledger/ponto-ledger';
 
 export type StatusSolicitacao = 'pendente' | 'aprovado' | 'reprovado';
 
@@ -26,7 +31,6 @@ export interface SolicitacaoDoc {
   batidaId?: string | null;
   data?: string | null;
   timestampOriginal?: string | null;
-  /** Para tipo "incluir": qual batida do dia. Default "entrada". */
   tipoBatida?: TipoBatida | null;
   observacao?: string | null;
   anexoDataUrl?: string | null;
@@ -36,22 +40,37 @@ export interface SolicitacaoDoc {
   updatedAt: string;
 }
 
+function mapSolicitacaoRow(
+  row: PontoSolicitacao,
+  prefeituraId: string,
+): SolicitacaoDoc {
+  return {
+    id: row.legacyId ?? row.id,
+    tipo: row.tipo as TipoSolicitacao,
+    status: row.status as StatusSolicitacao,
+    prefeituraId,
+    name: row.operatorNome,
+    cpf: row.operatorCpf,
+    batidaId: row.batidaId,
+    data: row.data,
+    timestampOriginal: row.timestampOriginal?.toISOString() ?? null,
+    tipoBatida: (row.tipoBatida as TipoBatida | null) ?? null,
+    observacao: row.observacao,
+    anexoDataUrl: row.anexoDataUrl,
+    anexoNome: row.anexoNome,
+    motivoReprovacao: row.motivoReprovacao,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
 @Injectable()
 export class SolicitacoesPontoService {
   constructor(
-    private firebase: FirebaseService,
+    private readonly prisma: PrismaService,
     private notificacoes: NotificacoesService,
     private abonos: AbonosService,
   ) {}
-
-  private get collection() {
-    return this.firebase.getFirestore().collection('solicitacoesPonto');
-  }
-
-  /** Coleção de batidas (para aprovar/cancelar refletir lá quando aplicável). */
-  private get timeRecords() {
-    return this.firebase.getFirestore().collection('timeRecords');
-  }
 
   private rotuloTipo(tipo: TipoSolicitacao): string {
     return {
@@ -65,28 +84,44 @@ export class SolicitacoesPontoService {
   async create(dto: CreateSolicitacaoPontoDto) {
     try {
       const id = randomUUID();
-      const agora = new Date().toISOString();
-      const doc: SolicitacaoDoc = {
-        id,
-        tipo: dto.tipo,
-        status: 'pendente',
-        prefeituraId: dto.prefeituraId,
-        name: dto.name,
-        cpf: dto.cpf ?? null,
-        batidaId: dto.batidaId ?? null,
-        data: dto.data ?? null,
-        timestampOriginal: dto.timestampOriginal ?? null,
-        tipoBatida: dto.tipoBatida ?? null,
-        observacao: dto.observacao ?? null,
-        anexoDataUrl: dto.anexoDataUrl ?? null,
-        anexoNome: dto.anexoNome ?? null,
-        createdAt: agora,
-        updatedAt: agora,
-      };
-      await this.collection.doc(id).set(doc);
+      const companyId = await resolverCompanyId(this.prisma, dto.prefeituraId);
+      if (!companyId) {
+        throw new InternalServerErrorException('Empresa não encontrada.');
+      }
 
-      // Notifica o RH (broadcast pra prefeitura) que tem solicitação nova.
-      // Falhar a notificação não deve quebrar a criação da solicitação.
+      const cpfDigits = (dto.cpf ?? '').replace(/\D/g, '') || null;
+      let operatorId: string | null = null;
+      if (cpfDigits) {
+        const op = await this.prisma.operator.findFirst({
+          where: { companyId, cpf: cpfDigits },
+          select: { id: true },
+        });
+        operatorId = op?.id ?? null;
+      }
+
+      const row = await this.prisma.pontoSolicitacao.create({
+        data: {
+          id,
+          legacyId: id,
+          companyId,
+          operatorId,
+          operatorNome: dto.name,
+          operatorCpf: cpfDigits,
+          tipo: dto.tipo,
+          status: 'pendente',
+          batidaId: dto.batidaId ?? null,
+          data: dto.data ?? null,
+          timestampOriginal: dto.timestampOriginal
+            ? new Date(dto.timestampOriginal)
+            : null,
+          tipoBatida: dto.tipoBatida ?? null,
+          observacao: dto.observacao ?? null,
+          anexoDataUrl: dto.anexoDataUrl ?? null,
+          anexoNome: dto.anexoNome ?? null,
+        },
+      });
+      const doc = mapSolicitacaoRow(row, dto.prefeituraId);
+
       try {
         await this.notificacoes.create({
           destinatarioTipo: 'rh',
@@ -98,30 +133,34 @@ export class SolicitacoesPontoService {
             dto.observacao ? `: "${dto.observacao.slice(0, 120)}"` : '.'
           }`,
           referenciaTipo: 'solicitacao-ponto',
-          referenciaId: id,
+          referenciaId: doc.id,
         });
       } catch (notifErr) {
-        console.warn('Não foi possível notificar o RH:', notifErr);
+        console.warn('Não foi possível notificar RH:', notifErr);
       }
 
-      return { data: doc, message: 'Solicitação criada com sucesso!' };
+      return { data: doc, message: 'Solicitação registrada.' };
     } catch (e) {
+      if (e instanceof InternalServerErrorException) throw e;
       console.error('Erro ao criar solicitação de ponto:', e);
       throw new InternalServerErrorException(
-        'Não foi possível registrar a solicitação. Tente novamente.',
+        'Não foi possível registrar a solicitação.',
       );
     }
   }
 
   async listar(prefeituraId: string) {
     try {
-      const snap = await this.collection
-        .where('prefeituraId', '==', prefeituraId)
-        .get();
-      const data = snap.docs
-        .map((d) => d.data() as SolicitacaoDoc)
-        // Mais recentes primeiro.
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+      if (!companyId) {
+        return { data: [] as SolicitacaoDoc[], message: 'Solicitações carregadas.' };
+      }
+
+      const rows = await this.prisma.pontoSolicitacao.findMany({
+        where: { companyId },
+        orderBy: { createdAt: 'desc' },
+      });
+      const data = rows.map((row) => mapSolicitacaoRow(row, prefeituraId));
       return { data, message: 'Solicitações carregadas.' };
     } catch (e) {
       console.error('Erro ao listar solicitações de ponto:', e);
@@ -131,126 +170,115 @@ export class SolicitacoesPontoService {
     }
   }
 
-  /**
-   * Aprova a solicitação. Para tipo=incluir, cria a batida correspondente
-   * em timeRecords. Para tipo=cancelar, marca a batida referenciada como
-   * cancelada. Os outros tipos só mudam o status (a ação é interpretativa).
-   */
   async aprovar(id: string) {
-    const snap = await this.collection.doc(id).get();
-    if (!snap.exists) {
+    const row = await this.prisma.pontoSolicitacao.findFirst({
+      where: { OR: [{ id }, { legacyId: id }] },
+    });
+    if (!row) {
       throw new NotFoundException('Solicitação não encontrada.');
     }
-    const doc = snap.data() as SolicitacaoDoc;
+
+    const company = await this.prisma.company.findUnique({
+      where: { id: row.companyId },
+      select: { legacyId: true },
+    });
+    const prefeituraId = company?.legacyId ?? row.companyId;
+    const doc = mapSolicitacaoRow(row, prefeituraId);
+
     if (doc.status !== 'pendente') {
       return { data: doc, message: 'Solicitação já foi avaliada.' };
     }
 
-    const db = this.firebase.getFirestore();
     try {
       if (doc.tipo === 'incluir' && doc.timestampOriginal) {
-        // Inclusão de batida esquecida: entra no ledger como um AJUSTE
-        // (sem `refNsr`, pois não corrige nenhuma original) já aplicado,
-        // com NSR sequencial e hash encadeado (Portaria 671).
         const batidaId = randomUUID();
         const ts = doc.timestampOriginal;
-        // Slot da batida pedido pelo operador (entrada/almoco/volta/saida).
-        // Compat. legado: solicitações antigas sem `tipoBatida` caem em 'entrada'.
         const tipoBatida: TipoBatida = doc.tipoBatida ?? 'entrada';
-        await db.runTransaction(async (tx) => {
-          const selo = await selarRegistro(db, tx, {
-            prefeituraId: doc.prefeituraId,
-            identificador: doc.cpf?.replace(/\D/g, '') || doc.name,
+        const identificador =
+          (doc.cpf ?? '').replace(/\D/g, '') || doc.name;
+
+        await this.prisma.$transaction(async (tx) => {
+          const selo = await selarRegistroPostgres(tx, row.companyId, {
+            identificador,
             tipo: tipoBatida,
             timestampOriginal: ts,
             registro: 'ajuste',
             refNsr: null,
           });
-          tx.set(this.timeRecords.doc(batidaId), {
-            id: batidaId,
-            prefeituraId: doc.prefeituraId,
-            name: doc.name,
-            cpf: doc.cpf ?? null,
-            tipo: tipoBatida,
-            timestampOriginal: ts,
-            horaLocalBR: new Date(ts).toLocaleString('pt-BR', {
-              timeZone: 'America/Sao_Paulo',
-            }),
-            registro: 'ajuste' as const,
-            refNsr: null,
-            aplicado: true,
-            origem: 'solicitacao-inclusao',
-            solicitacaoId: doc.id,
-            nsr: selo.nsr,
-            hash: selo.hash,
-            hashAnterior: selo.hashAnterior,
-            createdAt: new Date().toISOString(),
+
+          await tx.pontoRegistro.create({
+            data: {
+              id: batidaId,
+              legacyId: batidaId,
+              companyId: row.companyId,
+              operatorId: row.operatorId,
+              operatorNome: doc.name,
+              operatorCpf: (doc.cpf ?? '').replace(/\D/g, '') || null,
+              timestampOriginal: new Date(ts),
+              tipo: tipoBatida,
+              registro: 'ajuste',
+              refNsr: null,
+              nsr: selo.nsr,
+              hash: selo.hash,
+              hashAnterior: selo.hashAnterior || null,
+              aplicado: true,
+            },
           });
         });
       } else if (doc.tipo === 'cancelar' && doc.batidaId) {
-        // Cancelamento: NÃO altera a batida original (Portaria 671). Grava um
-        // registro de CANCELAMENTO apontando para a original via refNsr; o
-        // front desconsidera a original ao resolver o ledger.
-        const batidaSnap = await this.timeRecords
-          .where('id', '==', doc.batidaId)
-          .get();
-        if (!batidaSnap.empty) {
-          const alvo = batidaSnap.docs[0].data() as {
-            prefeituraId: string;
-            name: string;
-            cpf?: string | null;
-            tipo: string;
-            nsr?: number;
-            id: string;
-            timestampOriginal: string;
-          };
+        const alvo = await this.prisma.pontoRegistro.findFirst({
+          where: {
+            companyId: row.companyId,
+            OR: [{ id: doc.batidaId }, { legacyId: doc.batidaId }],
+          },
+        });
+
+        if (alvo) {
           const cancelId = randomUUID();
-          await db.runTransaction(async (tx) => {
-            const selo = await selarRegistro(db, tx, {
-              prefeituraId: alvo.prefeituraId,
-              identificador: alvo.cpf?.replace(/\D/g, '') || alvo.name,
+          const identificador =
+            alvo.operatorCpf?.replace(/\D/g, '') || alvo.operatorNome;
+
+          await this.prisma.$transaction(async (tx) => {
+            const selo = await selarRegistroPostgres(tx, row.companyId, {
+              identificador,
               tipo: alvo.tipo,
-              timestampOriginal: alvo.timestampOriginal,
+              timestampOriginal: alvo.timestampOriginal.toISOString(),
               registro: 'cancelamento',
-              refNsr: alvo.nsr ?? null,
+              refNsr: alvo.nsr,
             });
-            tx.set(this.timeRecords.doc(cancelId), {
-              id: cancelId,
-              prefeituraId: alvo.prefeituraId,
-              name: alvo.name,
-              cpf: alvo.cpf ?? null,
-              tipo: alvo.tipo,
-              timestampOriginal: alvo.timestampOriginal,
-              registro: 'cancelamento' as const,
-              refNsr: alvo.nsr ?? null,
-              refId: alvo.id,
-              aplicado: true,
-              canceladoPorSolicitacao: doc.id,
-              solicitacaoId: doc.id,
-              nsr: selo.nsr,
-              hash: selo.hash,
-              hashAnterior: selo.hashAnterior,
-              createdAt: new Date().toISOString(),
+
+            await tx.pontoRegistro.create({
+              data: {
+                id: cancelId,
+                legacyId: cancelId,
+                companyId: row.companyId,
+                operatorId: alvo.operatorId,
+                operatorNome: alvo.operatorNome,
+                operatorCpf: alvo.operatorCpf,
+                timestampOriginal: alvo.timestampOriginal,
+                tipo: alvo.tipo,
+                registro: 'cancelamento',
+                refNsr: alvo.nsr,
+                refId: alvo.legacyId ?? alvo.id,
+                nsr: selo.nsr,
+                hash: selo.hash,
+                hashAnterior: selo.hashAnterior || null,
+                aplicado: true,
+              },
             });
           });
         }
       } else if (doc.tipo === 'abono' && doc.data) {
-        // Aprovar abono cria um registro na coleção `abonos` — o front
-        // consulta para classificar o dia como 'abonado'. Precisa do CPF para
-        // casar com o funcionário: usa o da solicitação ou, se faltar, resolve
-        // pelo cadastro de operadores (pelo nome). Se ainda assim não houver
-        // CPF, AVISA (não falha calado).
         let cpf = (doc.cpf ?? '').replace(/\D/g, '');
         if (!cpf && doc.name?.trim()) {
           try {
-            const opSnap = await db
-              .collection('operadores')
-              .where('prefeituraId', '==', doc.prefeituraId)
-              .get();
-            const alvo = doc.name.trim().toLowerCase();
-            const op = opSnap.docs
-              .map((d) => d.data() as { nome?: string; cpf?: string })
-              .find((o) => (o.nome ?? '').trim().toLowerCase() === alvo);
+            const op = await this.prisma.operator.findFirst({
+              where: {
+                companyId: row.companyId,
+                nome: { equals: doc.name.trim(), mode: 'insensitive' },
+              },
+              select: { cpf: true },
+            });
             cpf = (op?.cpf ?? '').replace(/\D/g, '');
           } catch (lookupErr) {
             console.warn('Falha ao resolver CPF do operador:', lookupErr);
@@ -259,7 +287,7 @@ export class SolicitacoesPontoService {
         if (cpf) {
           try {
             await this.abonos.criar({
-              prefeituraId: doc.prefeituraId,
+              prefeituraId,
               funcionarioCpf: cpf,
               funcionarioNome: doc.name,
               data: doc.data,
@@ -271,29 +299,29 @@ export class SolicitacoesPontoService {
           }
         } else {
           console.warn(
-            `Abono aprovado SEM criar registro: CPF não encontrado (solicitação ${doc.id}, "${doc.name}"). Cadastre o CPF do funcionário.`,
+            `Abono aprovado SEM criar registro: CPF não encontrado (solicitação ${doc.id}, "${doc.name}").`,
           );
         }
       }
 
-      const updated: SolicitacaoDoc = {
-        ...doc,
-        status: 'aprovado',
-        motivoReprovacao: null,
-        updatedAt: new Date().toISOString(),
-      };
-      await this.collection.doc(id).set(updated);
+      const updatedRow = await this.prisma.pontoSolicitacao.update({
+        where: { id: row.id },
+        data: {
+          status: 'aprovado',
+          motivoReprovacao: null,
+        },
+      });
+      const updated = mapSolicitacaoRow(updatedRow, prefeituraId);
 
-      // Notifica o funcionário (se identificável por CPF).
       if (doc.cpf) {
         try {
           await this.notificacoes.create({
             destinatarioTipo: 'funcionario',
             destinatarioId: doc.cpf,
-            prefeituraId: doc.prefeituraId,
+            prefeituraId,
             tipo: 'sucesso',
             titulo: `${this.rotuloTipo(doc.tipo)} aprovada`,
-            mensagem: `Sua solicitação foi aprovada pelo gestor.`,
+            mensagem: 'Sua solicitação foi aprovada pelo gestor.',
             referenciaTipo: 'solicitacao-ponto',
             referenciaId: doc.id,
           });
@@ -304,6 +332,7 @@ export class SolicitacoesPontoService {
 
       return { data: updated, message: 'Solicitação aprovada.' };
     } catch (e) {
+      if (e instanceof NotFoundException) throw e;
       console.error('Erro ao aprovar solicitação:', e);
       throw new InternalServerErrorException(
         'Não foi possível aprovar a solicitação.',
@@ -312,36 +341,59 @@ export class SolicitacoesPontoService {
   }
 
   async reprovar(id: string, motivo: string) {
-    const snap = await this.collection.doc(id).get();
-    if (!snap.exists) {
+    const row = await this.prisma.pontoSolicitacao.findFirst({
+      where: { OR: [{ id }, { legacyId: id }] },
+    });
+    if (!row) {
       throw new NotFoundException('Solicitação não encontrada.');
     }
-    const doc = snap.data() as SolicitacaoDoc;
-    const updated: SolicitacaoDoc = {
-      ...doc,
-      status: 'reprovado',
-      motivoReprovacao: motivo,
-      updatedAt: new Date().toISOString(),
-    };
-    await this.collection.doc(id).set(updated);
 
-    if (doc.cpf) {
-      try {
-        await this.notificacoes.create({
-          destinatarioTipo: 'funcionario',
-          destinatarioId: doc.cpf,
-          prefeituraId: doc.prefeituraId,
-          tipo: 'erro',
-          titulo: `${this.rotuloTipo(doc.tipo)} reprovada`,
-          mensagem: `Motivo: ${motivo}`,
-          referenciaTipo: 'solicitacao-ponto',
-          referenciaId: doc.id,
-        });
-      } catch (notifErr) {
-        console.warn('Não foi possível notificar funcionário:', notifErr);
-      }
+    const company = await resolverEmpresa(this.prisma, row.companyId, {
+      id: true,
+      legacyId: true,
+    });
+    const prefeituraId = company?.legacyId ?? row.companyId;
+    const doc = mapSolicitacaoRow(row, prefeituraId);
+
+    if (doc.status !== 'pendente') {
+      return { data: doc, message: 'Solicitação já foi avaliada.' };
     }
 
-    return { data: updated, message: 'Solicitação reprovada.' };
+    try {
+      const updatedRow = await this.prisma.pontoSolicitacao.update({
+        where: { id: row.id },
+        data: {
+          status: 'reprovado',
+          motivoReprovacao: motivo?.trim() || null,
+        },
+      });
+      const updated = mapSolicitacaoRow(updatedRow, prefeituraId);
+
+      if (doc.cpf) {
+        try {
+          await this.notificacoes.create({
+            destinatarioTipo: 'funcionario',
+            destinatarioId: doc.cpf,
+            prefeituraId,
+            tipo: 'aviso',
+            titulo: `${this.rotuloTipo(doc.tipo)} reprovada`,
+            mensagem: motivo?.trim()
+              ? `Motivo: ${motivo.trim()}`
+              : 'Sua solicitação foi reprovada pelo gestor.',
+            referenciaTipo: 'solicitacao-ponto',
+            referenciaId: doc.id,
+          });
+        } catch (notifErr) {
+          console.warn('Não foi possível notificar funcionário:', notifErr);
+        }
+      }
+
+      return { data: updated, message: 'Solicitação reprovada.' };
+    } catch (e) {
+      console.error('Erro ao reprovar solicitação:', e);
+      throw new InternalServerErrorException(
+        'Não foi possível reprovar a solicitação.',
+      );
+    }
   }
 }

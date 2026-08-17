@@ -67,3 +67,60 @@ export function mapChecklistRegistroFromFirestore(
     itensNao: mapItensNao(data.itensNao),
   };
 }
+
+type ChecklistRunRow = {
+  id: string;
+  legacyId: string | null;
+  operadorLegacyId: string | null;
+  operadorNome: string | null;
+  chassi: string | null;
+  categoria: string | null;
+  modelo: string | null;
+  linha: string | null;
+  totalItens: number | null;
+  totalSim: number | null;
+  totalNao: number | null;
+  totalNa: number | null;
+  totalAplicaveis: number | null;
+  pontuacao: number | null;
+  horimetro: string | null;
+  assinaturaOperador: string | null;
+  respostas: unknown;
+  obs: string | null;
+  localizacaoGps: string | null;
+  itensNao: unknown;
+  executedAt: Date | null;
+  createdAt: Date;
+};
+
+export function mapChecklistRunRowToDoc(
+  row: ChecklistRunRow,
+  prefeituraId: string,
+): ChecklistRegistroDoc {
+  const dataHoraIso =
+    row.executedAt?.toISOString() ?? row.createdAt.toISOString();
+
+  return {
+    id: row.legacyId ?? row.id,
+    dataHoraIso,
+    operador: texto(row.operadorNome),
+    chassis: texto(row.chassi),
+    categoria: texto(row.categoria),
+    modelo: texto(row.modelo),
+    linha: texto(row.linha),
+    totalItens: numero(row.totalItens),
+    totalSim: numero(row.totalSim),
+    totalNao: numero(row.totalNao),
+    totalNa: numero(row.totalNa),
+    totalAplicaveis: numero(row.totalAplicaveis),
+    pontuacao: numero(row.pontuacao),
+    horimetro: texto(row.horimetro),
+    assinaturaOperador: texto(row.assinaturaOperador),
+    respostas: mapRespostas(row.respostas),
+    obs: texto(row.obs) || null,
+    localizacaoGps: row.localizacaoGps ?? null,
+    prefeituraId,
+    idOperadorSession: texto(row.operadorLegacyId),
+    itensNao: mapItensNao(row.itensNao),
+  };
+}

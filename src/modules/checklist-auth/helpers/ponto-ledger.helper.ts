@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 
+export type RegistroLedger = 'original' | 'ajuste' | 'cancelamento';
+
 /** Formato canônico do timestamp no hash (espelha a RPC `bater_ponto`). */
 export function formatTimestampForLedger(iso: string): string {
   const d = new Date(iso);
@@ -16,6 +18,30 @@ export function formatTimestampForLedger(iso: string): string {
   return `${y}-${mo}-${da}T${h}:${mi}:${s}.${ms}Z`;
 }
 
+export function calcularHashPontoLedger(
+  nsr: number,
+  companyId: string,
+  identificador: string,
+  tipo: string,
+  timestampOriginal: string,
+  hashAnterior: string,
+  registro: RegistroLedger = 'original',
+  refNsr: number | null = null,
+): string {
+  const payload = JSON.stringify([
+    nsr,
+    companyId,
+    identificador,
+    tipo,
+    timestampOriginal,
+    registro,
+    refNsr,
+  ]);
+  return createHash('sha256')
+    .update(`${hashAnterior}|${payload}`)
+    .digest('hex');
+}
+
 export function calcularHashPonto(
   nsr: number,
   companyId: string,
@@ -24,16 +50,14 @@ export function calcularHashPonto(
   timestampOriginal: string,
   hashAnterior: string,
 ): string {
-  const payload = JSON.stringify([
+  return calcularHashPontoLedger(
     nsr,
     companyId,
     identificador,
     tipo,
     timestampOriginal,
+    hashAnterior,
     'original',
     null,
-  ]);
-  return createHash('sha256')
-    .update(`${hashAnterior}|${payload}`)
-    .digest('hex');
+  );
 }

@@ -1,34 +1,21 @@
-import { Injectable } from '@nestjs/common';
-import { FirebaseService } from 'src/config/firebase.service';
-import { CreateFuelEntryDto } from '../dto/create-fuel-entry.dto';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { creditarTanquePrisma } from '../../../common/prisma/tank-saldo-prisma.helper';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { CreateFuelEntryDto } from '../dto/create-fuel-entry.dto';
 
 @Injectable()
 export class FuelEntriesService {
-  constructor(private readonly firebaseService: FirebaseService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async createEntry(createDto: CreateFuelEntryDto) {
-    const db = this.firebaseService.getFirestore();
-    const batch = db.batch();
+    const volume = Number(createDto.volume);
+    if (!Number.isFinite(volume) || volume <= 0) {
+      throw new BadRequestException('Volume inválido.');
+    }
 
-    // Acessando o FieldValue via seu serviço centralizado
-    const { FieldValue } = this.firebaseService;
+    await creditarTanquePrisma(this.prisma, createDto.tankId, volume);
 
-    const entryId = randomUUID();
-    const entryRef = db.collection('fuel-entries').doc(entryId);
-    const tankRef = db.collection('tanks').doc(createDto.tankId);
-
-    batch.set(entryRef, {
-      ...createDto,
-      createdAt: new Date().toISOString(),
-    });
-
-    batch.update(tankRef, {
-      currentVolume: FieldValue.increment(createDto.volume),
-    });
-
-    await batch.commit();
-    return { success: true };
+    return { success: true, id: randomUUID() };
   }
 }
-

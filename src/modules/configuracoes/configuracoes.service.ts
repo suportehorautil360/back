@@ -1,6 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
-import { FirebaseService } from '../../config/firebase.service';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { resolverEmpresa, companyWhere } from '../../common/prisma/company-resolver';
 import {
   mapConfiguracaoToApi,
@@ -12,16 +14,8 @@ import { UpsertConfiguracaoDto } from './dto/upsert-configuracao.dto';
 
 @Injectable()
 export class ConfiguracoesService {
-  constructor(
-    private firebaseService: FirebaseService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  private get collection() {
-    return this.firebaseService.getFirestore().collection('configuracoes');
-  }
-
-  /** Uma configuração por prefeitura: Postgres (CompanySettings) → Firestore. */
   async obter(prefeituraId: string) {
     try {
       const company = await this.prisma.company.findFirst({
@@ -38,22 +32,14 @@ export class ConfiguracoesService {
         },
       });
 
-      if (company) {
-        const settings = await this.prisma.companySettings.findUnique({
-          where: { companyId: company.id },
-        });
-        const data = mapConfiguracaoToApi(
-          prefeituraId,
-          company,
-          settings,
-        );
-        return { data, message: 'Configuração buscada com sucesso!' };
+      if (!company) {
+        return { data: null, message: 'Configuração não encontrada.' };
       }
 
-      const snap = await this.collection
-        .where('prefeituraId', '==', prefeituraId)
-        .get();
-      const data = snap.empty ? null : snap.docs[0].data();
+      const settings = await this.prisma.companySettings.findUnique({
+        where: { companyId: company.id },
+      });
+      const data = mapConfiguracaoToApi(prefeituraId, company, settings);
       return { data, message: 'Configuração buscada com sucesso!' };
     } catch (error) {
       console.error('Erro ao buscar configuração:', error);
@@ -63,7 +49,6 @@ export class ConfiguracoesService {
     }
   }
 
-  /** Escala da jornada — lê de CompanySettings (Postgres). */
   async obterEscala(prefeituraId: string) {
     try {
       const company = await resolverEmpresa(this.prisma, prefeituraId, {
@@ -92,7 +77,6 @@ export class ConfiguracoesService {
     }
   }
 
-  /** Cria ou atualiza a configuração da prefeitura (upsert por prefeituraId). */
   async salvar(dto: UpsertConfiguracaoDto) {
     try {
       const company = await this.prisma.company.findFirst({
@@ -109,74 +93,52 @@ export class ConfiguracoesService {
         },
       });
 
-      if (company) {
-        const alertas = (dto.alertas ?? {}) as Record<string, boolean>;
-        const bloqueio = (dto.bloqueio ?? {}) as Record<string, boolean>;
-        const intervalos = JSON.parse(
-          JSON.stringify(dto.intervalos ?? {}),
-        ) as Prisma.InputJsonValue;
-
-        const settings = await this.prisma.companySettings.upsert({
-          where: { companyId: company.id },
-          create: {
-            companyId: company.id,
-            alertBloqueioRevisaoVencida:
-              alertas.bloqueioRevisaoVencida ?? true,
-            alertNivelCriticoTanque: alertas.nivelCriticoTanque ?? true,
-            alertAbastecimentoIrregular:
-              alertas.abastecimentoIrregular ?? true,
-            alertCnhProximaVencimento: alertas.cnhProximaVencimento ?? true,
-            alertRelatorioSemanal: alertas.relatorioSemanal ?? false,
-            alertWhatsappEmergencia: alertas.whatsappEmergencia ?? false,
-            bloquearAoVencer: bloqueio.bloquearAoVencer ?? true,
-            alertar80: bloqueio.alertar80 ?? true,
-            alertar90: bloqueio.alertar90 ?? true,
-            intervalos,
-          },
-          update: {
-            alertBloqueioRevisaoVencida:
-              alertas.bloqueioRevisaoVencida ?? undefined,
-            alertNivelCriticoTanque: alertas.nivelCriticoTanque ?? undefined,
-            alertAbastecimentoIrregular:
-              alertas.abastecimentoIrregular ?? undefined,
-            alertCnhProximaVencimento:
-              alertas.cnhProximaVencimento ?? undefined,
-            alertRelatorioSemanal: alertas.relatorioSemanal ?? undefined,
-            alertWhatsappEmergencia: alertas.whatsappEmergencia ?? undefined,
-            bloquearAoVencer: bloqueio.bloquearAoVencer ?? undefined,
-            alertar80: bloqueio.alertar80 ?? undefined,
-            alertar90: bloqueio.alertar90 ?? undefined,
-            intervalos,
-          },
-        });
-
-        const data = mapConfiguracaoToApi(dto.prefeituraId, company, settings);
-        return { data, message: 'Configuração atualizada com sucesso!' };
+      if (!company) {
+        throw new NotFoundException('Empresa não encontrada.');
       }
 
-      const snap = await this.collection
-        .where('prefeituraId', '==', dto.prefeituraId)
-        .get();
+      const alertas = (dto.alertas ?? {}) as Record<string, boolean>;
+      const bloqueio = (dto.bloqueio ?? {}) as Record<string, boolean>;
+      const intervalos = JSON.parse(
+        JSON.stringify(dto.intervalos ?? {}),
+      ) as Prisma.InputJsonValue;
 
-      const dados = {
-        prefeituraId: dto.prefeituraId,
-        empresa: dto.empresa ?? {},
-        alertas: dto.alertas ?? {},
-        intervalos: dto.intervalos ?? {},
-        bloqueio: dto.bloqueio ?? {},
-        atualizadoEm: new Date().toISOString(),
-      };
+      const settings = await this.prisma.companySettings.upsert({
+        where: { companyId: company.id },
+        create: {
+          companyId: company.id,
+          alertBloqueioRevisaoVencida: alertas.bloqueioRevisaoVencida ?? true,
+          alertNivelCriticoTanque: alertas.nivelCriticoTanque ?? true,
+          alertAbastecimentoIrregular: alertas.abastecimentoIrregular ?? true,
+          alertCnhProximaVencimento: alertas.cnhProximaVencimento ?? true,
+          alertRelatorioSemanal: alertas.relatorioSemanal ?? false,
+          alertWhatsappEmergencia: alertas.whatsappEmergencia ?? false,
+          bloquearAoVencer: bloqueio.bloquearAoVencer ?? true,
+          alertar80: bloqueio.alertar80 ?? true,
+          alertar90: bloqueio.alertar90 ?? true,
+          intervalos,
+        },
+        update: {
+          alertBloqueioRevisaoVencida:
+            alertas.bloqueioRevisaoVencida ?? undefined,
+          alertNivelCriticoTanque: alertas.nivelCriticoTanque ?? undefined,
+          alertAbastecimentoIrregular:
+            alertas.abastecimentoIrregular ?? undefined,
+          alertCnhProximaVencimento:
+            alertas.cnhProximaVencimento ?? undefined,
+          alertRelatorioSemanal: alertas.relatorioSemanal ?? undefined,
+          alertWhatsappEmergencia: alertas.whatsappEmergencia ?? undefined,
+          bloquearAoVencer: bloqueio.bloquearAoVencer ?? undefined,
+          alertar80: bloqueio.alertar80 ?? undefined,
+          alertar90: bloqueio.alertar90 ?? undefined,
+          intervalos,
+        },
+      });
 
-      if (snap.empty) {
-        const novo = { id: randomUUID(), ...dados };
-        await this.collection.doc().set(novo);
-        return { data: novo, message: 'Configuração criada com sucesso!' };
-      }
-
-      const docId = snap.docs[0].id;
-      await this.collection.doc(docId).set(dados, { merge: true });
-      return { data: dados, message: 'Configuração atualizada com sucesso!' };
+      const data = mapConfiguracaoToApi(dto.prefeituraId, company, settings);
+      return { data, message: 'Configuração atualizada com sucesso!' };
     } catch (error) {
+      if (error instanceof NotFoundException) throw error;
       console.error('Erro ao salvar configuração:', error);
       throw new InternalServerErrorException(
         'Não foi possível salvar a configuração.',

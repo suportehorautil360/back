@@ -5,7 +5,20 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { FirebaseService } from '../../../config/firebase.service';
+import { mapAbastecimentoRowToDoc } from '../../../common/prisma/abastecimento-api.mapper';
+import {
+  atualizarMedicaoAtualPg,
+  fetchEquipmentMapPg,
+  resolveEquipmentByIdPg,
+  resolveEquipmentByPlateOrChassisPg,
+} from '../../../common/prisma/equipment-resolver';
+import { mapPartnerPostoToApi } from '../../../common/prisma/partner-api.mapper';
+import {
+  companyWhere,
+  resolverCompanyId,
+} from '../../../common/prisma/company-resolver';
+import { debitarTanquePrismaTx } from '../../../common/prisma/tank-saldo-prisma.helper';
+import { PrismaService } from '../../../prisma/prisma.service';
 import {
   CreateAbastecimentoDto,
   TipoMedicao,
@@ -26,20 +39,10 @@ import {
   verificarIntervaloAbastecimento,
 } from './helpers/intervalo-abastecimento.helper';
 import {
-  fetchEquipmentMap,
-  resolveEquipmentById,
-  resolveEquipmentByPlateOrChassis,
-} from '../shared/equipment.helper';
-import { debitarTanqueTx } from '../shared/tank-saldo.helper';
-import {
   formatDateTime,
   parseDateEnd,
   parseDateStart,
 } from '../shared/date.helper';
-import {
-  resolveCreatedAt,
-  fetchPrefeituraDocs,
-} from '../shared/prefeitura-query.helper';
 import { reverseGeocode } from '../shared/reverse-geocode.helper';
 import { ehCombustivelDiesel } from '../../fleetfuel/helpers/fleetfuel-rules.helper';
 import {
@@ -61,44 +64,25 @@ export interface AbastecimentoDoc {
   pricePerLiter?: number | null;
   total?: number | null;
   postoId?: string;
-  /** Comboio cujo tanque foi debitado (quando o combustível sai do comboio). */
   comboioId?: string;
-  /** Funcionário (comboista) que registrou o abastecimento. */
   funcionarioId?: string;
-  /** Posto avulso (não credenciado) — nome informado pelo motorista. */
   postoNome?: string;
-  /** Foto do cupom fiscal. */
   receiptPhoto?: string;
-  /** manual_motorista | comboio | fleetfuel */
   origem?: string;
-  /** pendente_aprovacao | aprovado | rejeitado */
   status?: string;
-  /** Nome do condutor (denormalizado). */
   motoristaNome?: string;
   latitude: number;
   longitude: number;
   createdAt: string;
 }
 
+const ABASTECIMENTO_INCLUDE = {
+  equipment: { select: { legacyId: true, placa: true, chassi: true } },
+} as const;
+
 @Injectable()
 export class AbastecimentosService {
-  constructor(private firebaseService: FirebaseService) {}
-
-  private get collection() {
-    return this.firebaseService.getFirestore().collection('abastecimentos');
-  }
-
-  private get equipamentosCollection() {
-    return this.firebaseService.getFirestore().collection('equipamentos');
-  }
-
-  private get postosCollection() {
-    return this.firebaseService.getFirestore().collection('postos');
-  }
-
-  private get funcionariosCollection() {
-    return this.firebaseService.getFirestore().collection('funcionarios');
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(input: CreateAbastecimentoDto): Promise<AbastecimentoDoc> {
     const liters = parseLiters(input.liters);
@@ -124,12 +108,12 @@ export class AbastecimentosService {
       );
     }
 
-    const equipamento = await resolveEquipmentByPlateOrChassis(
-      this.equipamentosCollection,
+    const companyId = await this.requireCompanyId(input.prefeituraId);
+    const equipamento = await resolveEquipmentByPlateOrChassisPg(
+      this.prisma,
       input.prefeituraId,
       input.plateOrChassis,
     );
-    const equipmentId = equipamento.id;
 
     if (!ehCombustivelDiesel(equipamento.raw.combustivel)) {
       throw new BadRequestException(
@@ -137,10 +121,6 @@ export class AbastecimentosService {
       );
     }
 
-    // Não abastecer mais do que o tanque ALVO comporta. Para comboio o alvo é o
-    // tanque do próprio caminhão (capacidadeTanqueCaminhao); para os demais, o
-    // tanque do equipamento (capacidadeTanque). A origem (reservatório/posto) é
-    // tratada à parte. Capacidade ausente/0 = sem limite.
     const capacidadeAlvo = capacidadeAlvoAbastecimento(equipamento.raw);
     if (capacidadeAlvo > 0 && liters > capacidadeAlvo) {
       const ondeCabe = ehComboio(equipamento.raw.tipo)
@@ -152,12 +132,10 @@ export class AbastecimentosService {
       );
     }
 
-    // A leitura (horímetro/km) não pode ser igual ou menor que a última já
-    // registrada para o equipamento — horímetro e hodômetro só aumentam.
     const leituraNova = Number(input.currentReading);
     const ultima = await this.ultimaLeitura(
       input.prefeituraId,
-      equipmentId,
+      equipamento.id,
       input.measurementType,
     );
     if (ultima !== null && leituraNova <= ultima) {
@@ -178,23 +156,22 @@ export class AbastecimentosService {
     const postoId = input.postoId?.trim() || undefined;
     const comboioId = input.comboioId?.trim() || undefined;
 
-    // Sem posto, o combustível sai do comboio: precisamos saber qual tanque
-    // debitar (e travar saldo negativo).
     if (!postoId && !comboioId) {
       throw new BadRequestException(
         'Informe o comboio (comboioId) do qual o combustível foi retirado.',
       );
     }
 
+    const now = new Date();
     const doc: AbastecimentoDoc = {
       id,
       prefeituraId: input.prefeituraId,
-      equipmentId,
+      equipmentId: equipamento.id,
       plateOrChassis: input.plateOrChassis,
       liters,
       tipo: 'comboio',
       measurementType: input.measurementType,
-      currentReading: Number(input.currentReading),
+      currentReading: leituraNova,
       meterPhoto: input.meterPhoto,
       pricePerLiter: pricing.pricePerLiter,
       total: pricing.total,
@@ -203,26 +180,46 @@ export class AbastecimentosService {
       funcionarioId: input.funcionarioId?.trim() || undefined,
       latitude: input.latitude,
       longitude: input.longitude,
-      createdAt: new Date().toISOString(),
+      createdAt: now.toISOString(),
     };
 
-    const firestore = this.firebaseService.getFirestore();
+    const createData = {
+      id,
+      legacyId: id,
+      companyId,
+      equipmentId: equipamento.equipmentUuid,
+      operadorLegacyId: input.funcionarioId?.trim() || null,
+      postoLegacyId: postoId ?? null,
+      comboioLegacyId: comboioId ?? null,
+      data: new Date(now.toISOString().slice(0, 10)),
+      litros: liters.toFixed(3),
+      valor: String(pricing.total ?? 0),
+      origem: postoId ? 'posto' : 'comboio',
+      leitura: leituraNova,
+      leituraUnidade: input.measurementType === 'horimetro' ? 'h' : 'km',
+      plateOrChassis: input.plateOrChassis.trim(),
+      precoLitro:
+        pricing.pricePerLiter != null
+          ? pricing.pricePerLiter.toFixed(4)
+          : null,
+      status: 'aprovado',
+      tipo: 'comboio',
+      latitude: input.latitude,
+      longitude: input.longitude,
+      meterPhoto: input.meterPhoto ?? null,
+      createdAt: now,
+    };
+
     try {
       if (postoId) {
-        // Posto credenciado: o combustível não sai do comboio, não mexe no tanque.
-        await this.collection.doc(id).set(doc);
+        await this.prisma.abastecimento.create({ data: createData });
       } else {
-        // Sai do comboio: grava o registro e debita o tanque na mesma transação
-        // (rejeita se faltar saldo — o tanque nunca fica negativo).
-        await firestore.runTransaction(async (tx) => {
-          await debitarTanqueTx(tx, firestore, comboioId as string, liters);
-          tx.set(this.collection.doc(id), doc);
+        await this.prisma.$transaction(async (tx) => {
+          await debitarTanquePrismaTx(tx, comboioId as string, liters);
+          await tx.abastecimento.create({ data: createData });
         });
       }
 
-      // Mantém a "KM/horímetro atual" (medicaoAtual) do equipamento em dia com a
-      // leitura do abastecimento — alimenta o painel e serve de baseline offline
-      // no app. Best-effort (denormalizado): se falhar, não derruba o registro.
       if (
         deveAtualizarMedicaoAtual(
           equipamento.raw.unidadeRevisao,
@@ -231,11 +228,13 @@ export class AbastecimentosService {
           leituraNova,
         )
       ) {
-        await equipamento.ref
-          .set({ medicaoAtual: leituraNova }, { merge: true })
-          .catch((e) =>
-            console.error('Falha ao atualizar medicaoAtual do equipamento:', e),
-          );
+        await atualizarMedicaoAtualPg(
+          this.prisma,
+          equipamento.id,
+          leituraNova,
+        ).catch((e) =>
+          console.error('Falha ao atualizar medicaoAtual do equipamento:', e),
+        );
       }
 
       return doc;
@@ -248,10 +247,6 @@ export class AbastecimentosService {
     }
   }
 
-  /**
-   * Abastecimento manual do motorista em posto avulso (não credenciado).
-   * Fica `pendente_aprovacao` — não debita crédito até aprovação no 360.
-   */
   async createManualMotorista(
     input: CreateAbastecimentoMotoristaDto,
   ): Promise<AbastecimentoDoc> {
@@ -284,12 +279,12 @@ export class AbastecimentosService {
       );
     }
 
-    const equipamento = await resolveEquipmentById(
-      this.equipamentosCollection,
+    const companyId = await this.requireCompanyId(input.prefeituraId);
+    const equipamento = await resolveEquipmentByIdPg(
+      this.prisma,
       input.prefeituraId,
       input.equipmentId,
     );
-    const equipmentId = equipamento.id;
 
     if (!motoristaEhCondutor(equipamento.raw, input.funcionarioId)) {
       throw new BadRequestException(
@@ -306,7 +301,8 @@ export class AbastecimentosService {
 
     await this.assertIntervaloMinimoAbastecimento(
       input.prefeituraId,
-      equipmentId,
+      equipamento.id,
+      equipamento.equipmentUuid,
     );
 
     const capacidadeAlvo = capacidadeAlvoAbastecimento(equipamento.raw);
@@ -323,7 +319,7 @@ export class AbastecimentosService {
     const leituraNova = Number(input.currentReading);
     const ultima = await this.ultimaLeitura(
       input.prefeituraId,
-      equipmentId,
+      equipamento.id,
       input.measurementType,
     );
     if (ultima !== null && leituraNova <= ultima) {
@@ -341,12 +337,16 @@ export class AbastecimentosService {
     );
 
     const id = input.id?.trim() || randomUUID();
-    const motoristaNome = await this.buscarNomeFuncionario(input.funcionarioId);
+    const motoristaNome = await this.buscarNomeFuncionario(
+      companyId,
+      input.funcionarioId,
+    );
+    const now = new Date();
 
     const doc: AbastecimentoDoc = {
       id,
       prefeituraId: input.prefeituraId,
-      equipmentId,
+      equipmentId: equipamento.id,
       plateOrChassis,
       liters,
       tipo: 'manual_motorista',
@@ -363,11 +363,39 @@ export class AbastecimentosService {
       status: 'pendente_aprovacao',
       latitude: input.latitude,
       longitude: input.longitude,
-      createdAt: new Date().toISOString(),
+      createdAt: now.toISOString(),
     };
 
     try {
-      await this.collection.doc(id).set(doc);
+      await this.prisma.abastecimento.create({
+        data: {
+          id,
+          legacyId: id,
+          companyId,
+          equipmentId: equipamento.equipmentUuid,
+          operadorLegacyId: input.funcionarioId.trim(),
+          data: new Date(now.toISOString().slice(0, 10)),
+          litros: liters.toFixed(3),
+          valor: String(pricing.total ?? 0),
+          origem: 'posto',
+          leitura: leituraNova,
+          leituraUnidade: input.measurementType === 'horimetro' ? 'h' : 'km',
+          plateOrChassis,
+          precoLitro:
+            pricing.pricePerLiter != null
+              ? pricing.pricePerLiter.toFixed(4)
+              : null,
+          status: 'pendente_aprovacao',
+          tipo: 'manual_motorista',
+          postoNome,
+          motoristaNome,
+          latitude: input.latitude,
+          longitude: input.longitude,
+          meterPhoto: input.meterPhoto.trim(),
+          receiptPhoto: input.receiptPhoto.trim(),
+          createdAt: now,
+        },
+      });
 
       if (
         deveAtualizarMedicaoAtual(
@@ -377,11 +405,13 @@ export class AbastecimentosService {
           leituraNova,
         )
       ) {
-        await equipamento.ref
-          .set({ medicaoAtual: leituraNova }, { merge: true })
-          .catch((e) =>
-            console.error('Falha ao atualizar medicaoAtual do equipamento:', e),
-          );
+        await atualizarMedicaoAtualPg(
+          this.prisma,
+          equipamento.id,
+          leituraNova,
+        ).catch((e) =>
+          console.error('Falha ao atualizar medicaoAtual do equipamento:', e),
+        );
       }
 
       return doc;
@@ -394,32 +424,41 @@ export class AbastecimentosService {
     }
   }
 
-  private async buscarNomeFuncionario(funcionarioId: string): Promise<string> {
+  private async buscarNomeFuncionario(
+    companyId: string,
+    funcionarioId: string,
+  ): Promise<string> {
     const id = funcionarioId.trim();
     if (!id) return '';
     try {
-      const snap = await this.funcionariosCollection.doc(id).get();
-      if (!snap.exists) return '';
-      const raw = snap.data() as Record<string, unknown>;
-      return asString(raw.nome);
+      const row = await this.prisma.operator.findFirst({
+        where: {
+          companyId,
+          OR: [{ id }, { legacyId: id }],
+        },
+        select: { nome: true },
+      });
+      return row?.nome ?? '';
     } catch {
       return '';
     }
   }
 
-  /** Impede novo abastecimento do mesmo veículo antes de 3 horas. */
   private async assertIntervaloMinimoAbastecimento(
     prefeituraId: string,
-    equipmentId: string,
+    equipmentPublicId: string,
+    equipmentUuid: string,
   ): Promise<void> {
-    const snap = await this.collection
-      .where('equipmentId', '==', equipmentId)
-      .get();
-    const docs = snap.docs.map((d) => d.data() as AbastecimentoDoc);
+    const rows = await this.prisma.abastecimento.findMany({
+      where: { equipmentId: equipmentUuid },
+    });
+    const docs = rows.map((row) =>
+      mapAbastecimentoRowToDoc({ ...row, equipment: null }, prefeituraId),
+    );
     const ultimoEmMs = ultimoAbastecimentoTimestampMs(
       docs,
       prefeituraId,
-      equipmentId,
+      equipmentPublicId,
     );
     const status = verificarIntervaloAbastecimento(ultimoEmMs);
     if (!status.liberado && status.proximoEmMs !== null) {
@@ -429,30 +468,31 @@ export class AbastecimentosService {
     }
   }
 
-  /**
-   * Maior leitura já registrada para o equipamento naquele tipo de medição
-   * (horímetro/hodômetro). `null` se ainda não houver nenhum abastecimento — aí
-   * não há referência e qualquer leitura é aceita. Filtra em memória (sem índice
-   * composto), no padrão do módulo.
-   */
   async ultimaLeitura(
     prefeituraId: string,
-    equipmentId: string,
+    equipmentPublicId: string,
     measurementType: TipoMedicao,
   ): Promise<number | null> {
-    if (!equipmentId) return null;
-    const snap = await this.collection
-      .where('equipmentId', '==', equipmentId)
-      .get();
-    const docs = snap.docs.map((d) => d.data() as AbastecimentoDoc);
+    if (!equipmentPublicId) return null;
+
+    const equip = await this.prisma.equipment.findFirst({
+      where: {
+        company: companyWhere(prefeituraId),
+        OR: [{ id: equipmentPublicId }, { legacyId: equipmentPublicId }],
+      },
+      select: { id: true },
+    });
+    if (!equip) return null;
+
+    const rows = await this.prisma.abastecimento.findMany({
+      where: { equipmentId: equip.id },
+    });
+    const docs = rows.map((row) =>
+      mapAbastecimentoRowToDoc({ ...row, equipment: null }, prefeituraId),
+    );
     return maiorLeituraRegistrada(docs, prefeituraId, measurementType);
   }
 
-  /**
-   * Última leitura por placa/chassi — para o app validar a próxima leitura antes
-   * de enviar. Equipamento fora do cadastro ou tipo inválido → `null` (sem
-   * referência, não bloqueia no app; o create é o gate final).
-   */
   async ultimaLeituraPorPlaca(
     prefeituraId: string,
     plateOrChassis: string,
@@ -465,8 +505,8 @@ export class AbastecimentosService {
       return { ultimaLeitura: null, measurementType };
     }
     try {
-      const equip = await resolveEquipmentByPlateOrChassis(
-        this.equipamentosCollection,
+      const equip = await resolveEquipmentByPlateOrChassisPg(
+        this.prisma,
         prefeituraId,
         plateOrChassis,
       );
@@ -477,21 +517,41 @@ export class AbastecimentosService {
       );
       return { ultimaLeitura, measurementType };
     } catch {
-      // Equipamento não encontrado: sem referência (o app não bloqueia).
       return { ultimaLeitura: null, measurementType };
     }
   }
 
-  /** Lista os abastecimentos da prefeitura formatados para a tela. */
   async listar(prefeituraId: string, startDate?: string, endDate?: string) {
     try {
-      const docs = await fetchPrefeituraDocs<AbastecimentoDoc>(
-        this.collection,
-        prefeituraId,
-        { startDate, endDate, order: 'desc' },
-      );
+      const companyId = await this.requireCompanyId(prefeituraId);
+      const where: {
+        companyId: string;
+        createdAt?: { gte?: Date; lte?: Date };
+      } = { companyId };
 
-      const data = await this.formatAbastecimentosDocs(docs);
+      if (startDate) {
+        where.createdAt = {
+          ...where.createdAt,
+          gte: parseDateStart(startDate, 'startDate'),
+        };
+      }
+      if (endDate) {
+        where.createdAt = {
+          ...where.createdAt,
+          lte: parseDateEnd(endDate, 'endDate'),
+        };
+      }
+
+      const rows = await this.prisma.abastecimento.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: ABASTECIMENTO_INCLUDE,
+      });
+
+      const docs = rows.map((row) =>
+        mapAbastecimentoRowToDoc(row, prefeituraId),
+      );
+      const data = await this.formatAbastecimentosDocs(docs, prefeituraId);
       return { data, message: 'Abastecimentos buscados com sucesso!' };
     } catch (error) {
       console.error('Erro ao buscar abastecimentos:', error);
@@ -501,7 +561,6 @@ export class AbastecimentosService {
     }
   }
 
-  /** Histórico do posto credenciado (portal posto-web). */
   async listarPorPosto(
     postoId: string,
     startDate?: string,
@@ -513,30 +572,45 @@ export class AbastecimentosService {
     }
 
     try {
-      const snap = await this.collection.where('postoId', '==', id).get();
-
-      let docs = snap.docs.map((doc) => {
-        const data = doc.data() as Record<string, unknown>;
-        return {
-          ...data,
-          id: asString(data.id) || doc.id,
-          // Fleetfuel: createdAt ISO; legado 360: criadoEm Timestamp ou só `data`.
-          createdAt: resolveCreatedAt(data),
-        } as AbastecimentoDoc;
-      });
+      const where: {
+        postoLegacyId: string;
+        createdAt?: { gte?: Date; lte?: Date };
+      } = { postoLegacyId: id };
 
       if (startDate) {
-        const startIso = parseDateStart(startDate, 'startDate').toISOString();
-        docs = docs.filter((d) => d.createdAt && d.createdAt >= startIso);
+        where.createdAt = {
+          ...where.createdAt,
+          gte: parseDateStart(startDate, 'startDate'),
+        };
       }
       if (endDate) {
-        const endIso = parseDateEnd(endDate, 'endDate').toISOString();
-        docs = docs.filter((d) => d.createdAt && d.createdAt <= endIso);
+        where.createdAt = {
+          ...where.createdAt,
+          lte: parseDateEnd(endDate, 'endDate'),
+        };
       }
 
-      docs.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+      const rows = await this.prisma.abastecimento.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: ABASTECIMENTO_INCLUDE,
+      });
 
-      const data = await this.formatAbastecimentosDocs(docs);
+      const docs = await Promise.all(
+        rows.map(async (row) => {
+          const company = await this.prisma.company.findUnique({
+            where: { id: row.companyId },
+            select: { legacyId: true },
+          });
+          return mapAbastecimentoRowToDoc(
+            row,
+            company?.legacyId ?? row.companyId,
+          );
+        }),
+      );
+
+      const prefeituraId = docs[0]?.prefeituraId ?? '';
+      const data = await this.formatAbastecimentosDocs(docs, prefeituraId);
       return {
         data,
         message: 'Abastecimentos do posto buscados com sucesso!',
@@ -550,18 +624,36 @@ export class AbastecimentosService {
     }
   }
 
-  private async formatAbastecimentosDocs(docs: AbastecimentoDoc[]) {
+  async remover(id: string) {
+    try {
+      const row = await this.prisma.abastecimento.findFirst({
+        where: { OR: [{ id }, { legacyId: id }] },
+      });
+      if (!row) {
+        throw new NotFoundException('Abastecimento não encontrado.');
+      }
+      await this.prisma.abastecimento.delete({ where: { id: row.id } });
+      return {
+        data: { id: row.legacyId ?? row.id },
+        message: 'Abastecimento removido.',
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      console.error('Erro ao remover abastecimento:', error);
+      throw new InternalServerErrorException(
+        'Não foi possível remover o abastecimento.',
+      );
+    }
+  }
+
+  private async formatAbastecimentosDocs(
+    docs: AbastecimentoDoc[],
+    prefeituraId: string,
+  ) {
     if (docs.length === 0) return [];
 
     const uniqueEquipmentIds = [
-      ...new Set(
-        docs
-          .map((d) => {
-            const raw = d as unknown as Record<string, unknown>;
-            return asString(d.equipmentId ?? raw.equipamentoId);
-          })
-          .filter(Boolean),
-      ),
+      ...new Set(docs.map((d) => d.equipmentId).filter(Boolean)),
     ];
     const uniquePostoIds = [
       ...new Set(
@@ -570,11 +662,10 @@ export class AbastecimentosService {
     ];
 
     const [equipmentMap, postoMap] = await Promise.all([
-      fetchEquipmentMap(this.equipamentosCollection, uniqueEquipmentIds),
+      fetchEquipmentMapPg(this.prisma, uniqueEquipmentIds),
       this.fetchPostoMap(uniquePostoIds),
     ]);
 
-    // Um doc quebrado não pode derrubar o histórico inteiro (500).
     const formatted = await Promise.all(
       docs.map(async (doc) => {
         try {
@@ -588,52 +679,25 @@ export class AbastecimentosService {
     return formatted.filter((row): row is NonNullable<typeof row> => row != null);
   }
 
-  /**
-   * Remove um abastecimento. NÃO reverte o saldo do tanque (uso de limpeza de
-   * registros). Ajuste o tanque manualmente se necessário.
-   */
-  async remover(id: string) {
-    try {
-      const ref = this.collection.doc(id);
-      const snap = await ref.get();
-      if (!snap.exists) {
-        throw new NotFoundException('Abastecimento não encontrado.');
-      }
-      await ref.delete();
-      return { data: { id }, message: 'Abastecimento removido.' };
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      console.error('Erro ao remover abastecimento:', error);
-      throw new InternalServerErrorException(
-        'Não foi possível remover o abastecimento.',
-      );
-    }
-  }
-
   private async fetchPostoMap(
     ids: string[],
   ): Promise<Map<string, Record<string, unknown>>> {
     const map = new Map<string, Record<string, unknown>>();
     if (!ids.length) return map;
 
-    await Promise.all(
-      ids.map(async (id) => {
-        const byField = await this.postosCollection
-          .where('id', '==', id)
-          .limit(1)
-          .get();
+    const partners = await this.prisma.partner.findMany({
+      where: {
+        OR: [{ id: { in: ids } }, { legacyId: { in: ids } }],
+      },
+    });
 
-        if (!byField.empty) {
-          map.set(id, byField.docs[0].data());
-          return;
-        }
-
-        const byDocId = await this.postosCollection.doc(id).get();
-        if (byDocId.exists) {
-          map.set(id, byDocId.data() as Record<string, unknown>);
-        }
-      }),
-    );
+    for (const partner of partners) {
+      const api = mapPartnerPostoToApi(partner, '') as Record<string, unknown>;
+      const publicId = String(api.id);
+      map.set(publicId, api);
+      map.set(partner.id, api);
+      if (partner.legacyId) map.set(partner.legacyId, api);
+    }
 
     return map;
   }
@@ -722,9 +786,6 @@ export class AbastecimentosService {
       pricePerLiter:
         doc.pricePerLiter ?? (precoLegado > 0 ? precoLegado : null),
       value: doc.total ?? (valorLegado > 0 ? valorLegado : null),
-      // Docs legados podem não ter currentReading — os helpers resolvem leitura
-      // (currentReading/leitura/km/horimetro) e devolvem null/'—' sem derrubar a
-      // listagem inteira (500).
       reading: readingLabel ?? '—',
       currentReading,
       measurementType: doc.measurementType ?? null,
@@ -745,6 +806,14 @@ export class AbastecimentosService {
       status: asString(raw.status) || 'aprovado',
     };
   }
+
+  private async requireCompanyId(prefeituraId: string): Promise<string> {
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) {
+      throw new BadRequestException('Empresa não encontrada.');
+    }
+    return companyId;
+  }
 }
 
 function asString(value: unknown): string {
@@ -755,7 +824,6 @@ function asString(value: unknown): string {
   return '';
 }
 
-/** Aceita número ou "R$ 1.234,56" (legado do portal 360). */
 function parseValorLegado(v: unknown): number {
   if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
   if (typeof v !== 'string') return 0;

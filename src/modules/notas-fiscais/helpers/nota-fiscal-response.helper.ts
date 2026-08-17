@@ -1,4 +1,5 @@
 import { timestampToIso } from '../../os/helpers/timestamp.helper';
+import type { NotaFiscal } from '../../../prisma/generated/client';
 import type { NotaFiscalApiItem, NotaFiscalFirestore } from '../notas-fiscais.types';
 
 function texto(valor: unknown): string {
@@ -55,4 +56,31 @@ export function mapNotaFiscalToApi(
 
 export function mapNotaFiscalDocToApi(doc: NotaFiscalFirestore): NotaFiscalApiItem {
   return mapNotaFiscalToApi(doc.id, doc as unknown as Record<string, unknown>);
+}
+
+export function mapNotaFiscalRowToApi(
+  row: NotaFiscal,
+  prefeituraId?: string,
+): NotaFiscalApiItem {
+  return mapNotaFiscalToApi(row.legacyId ?? row.id, {
+    id: row.legacyId ?? row.id,
+    oficinaId: row.oficinaLegacyId ?? '',
+    postoId: row.postoLegacyId ?? '',
+    parceiroId: row.parceiroLegacyId ?? '',
+    prefeituraId: prefeituraId ?? '',
+    solicitacaoOsId: row.solicitacaoOsId ?? '',
+    description: row.description ?? '',
+    category: row.category,
+    documentType: row.documentType,
+    number: row.number ?? '',
+    issuerName: row.issuerName ?? '',
+    issuedAt: row.issuedAt?.toISOString() ?? row.createdAt.toISOString(),
+    accessKey: row.accessKey ?? '',
+    value: Number(row.value),
+    status: row.status,
+    fileName: row.fileName ?? '',
+    fileUrl: row.fileUrl ?? '',
+    createdAt: row.createdAt.toISOString(),
+    parseCompleteness: row.parseCompleteness ?? undefined,
+  });
 }

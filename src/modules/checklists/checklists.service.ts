@@ -4,7 +4,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { FirebaseService } from '../../config/firebase.service';
+import type { Prisma } from '../../prisma/generated/client';
+import { resolverCompanyId } from '../../common/prisma/company-resolver';
+import { PrismaService } from '../../prisma/prisma.service';
 import { EmergenciesService } from '../emergencies/emergencies.service';
 import {
   AnswerChecklistQuestionDto,
@@ -26,16 +28,6 @@ function toSafeMillis(value: unknown): number {
     const parsed = Date.parse(value);
     return Number.isNaN(parsed) ? 0 : parsed;
   }
-
-  if (
-    value &&
-    typeof value === 'object' &&
-    'toDate' in value &&
-    typeof (value as { toDate: () => Date }).toDate === 'function'
-  ) {
-    return (value as { toDate: () => Date }).toDate().getTime();
-  }
-
   return 0;
 }
 
@@ -76,25 +68,114 @@ function normalizeText(value?: string): string {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
+type WorkflowAnswer = {
+  id: string;
+  runId: string;
+  questionId: string;
+  questionLabel: string | null;
+  value: unknown;
+  problemDescription: string | null;
+  photoUrls: string[];
+  impeditivo: boolean;
+  answeredAt: string;
+};
+
+type WorkflowMeta = {
+  status: string;
+  blockReason?: string | null;
+  generatedEmergencyIds: string[];
+  definitionId?: string | null;
+  definitionVersion?: number;
+  equipamentoId?: string;
+  startedAt: string;
+};
+
+type WorkflowState = {
+  meta: WorkflowMeta;
+  answers: WorkflowAnswer[];
+};
+
+function parseWorkflow(respostas: unknown): WorkflowState | null {
+  if (!respostas || typeof respostas !== 'object') return null;
+  const wf = (respostas as { _workflow?: WorkflowState })._workflow;
+  if (!wf?.meta || !Array.isArray(wf.answers)) return null;
+  return wf;
+}
+
+function buildWorkflowDoc(
+  row: {
+    id: string;
+    legacyId: string | null;
+    definitionLegacyId: string | null;
+    chassi: string | null;
+    operadorNome: string | null;
+    categoria: string | null;
+    executedAt: Date | null;
+    updatedAt: Date;
+  },
+  prefeituraId: string,
+  workflow: WorkflowState,
+) {
+  const runId = row.legacyId ?? row.id;
+  const respostas = workflow.answers.map((answer) => ({
+    ...answer,
+    valueNormalized: normalizeAnswerValue(answer.value),
+  }));
+  const totalOk = respostas.filter((r) => r.valueNormalized === 'sim').length;
+  const totalNao = respostas.filter((r) => r.valueNormalized === 'nao').length;
+
+  return {
+    id: runId,
+    definitionId: workflow.meta.definitionId ?? row.definitionLegacyId,
+    definitionVersion: workflow.meta.definitionVersion ?? 1,
+    prefeituraId,
+    equipamentoId: workflow.meta.equipamentoId ?? null,
+    chassis: row.chassi ?? '',
+    operadorNome: row.operadorNome ?? '',
+    categoria: row.categoria,
+    status: workflow.meta.status,
+    blockReason: workflow.meta.blockReason ?? null,
+    generatedEmergencyIds: workflow.meta.generatedEmergencyIds,
+    startedAt: workflow.meta.startedAt,
+    updatedAt: row.updatedAt.toISOString(),
+    resumo: {
+      totalPerguntas: respostas.length,
+      totalOk,
+      totalNao,
+    },
+    respostas,
+  };
+}
+
 @Injectable()
 export class ChecklistsService {
   constructor(
-    private firebase: FirebaseService,
+    private readonly prisma: PrismaService,
     private emergencies: EmergenciesService,
     private flow: ChecklistFlowService,
   ) {}
 
-  private get runs() {
-    return this.firebase.getFirestore().collection('checklistRuns');
-  }
-
-  private get answers() {
-    return this.firebase.getFirestore().collection('checklistAnswers');
-  }
-
   async createRun(dto: CreateChecklistRunDto) {
     const id = randomUUID();
     const agora = new Date().toISOString();
+    const companyId = await resolverCompanyId(this.prisma, dto.prefeituraId);
+    if (!companyId) {
+      throw new InternalServerErrorException('Empresa não encontrada.');
+    }
+
+    const workflow: WorkflowState = {
+      meta: {
+        status: 'in_progress',
+        blockReason: null,
+        generatedEmergencyIds: [],
+        definitionId: dto.definitionId ?? null,
+        definitionVersion: dto.definitionVersion ?? 1,
+        equipamentoId: dto.equipamentoId,
+        startedAt: agora,
+      },
+      answers: [],
+    };
+
     const doc = {
       id,
       definitionId: dto.definitionId ?? null,
@@ -111,7 +192,19 @@ export class ChecklistsService {
     };
 
     try {
-      await this.runs.doc(id).set(doc);
+      await this.prisma.checklistRun.create({
+        data: {
+          id,
+          legacyId: id,
+          companyId,
+          definitionLegacyId: dto.definitionId ?? null,
+          chassi: dto.chassis,
+          operadorNome: dto.operadorNome,
+          categoria: dto.categoria ?? null,
+          respostas: { _workflow: workflow } as Prisma.InputJsonValue,
+          executedAt: new Date(agora),
+        },
+      });
       return { data: doc, message: 'Execução de checklist iniciada.' };
     } catch (error) {
       console.error('Erro ao iniciar checklist:', error);
@@ -122,24 +215,32 @@ export class ChecklistsService {
   }
 
   async answer(runId: string, dto: AnswerChecklistQuestionDto) {
-    const runRef = this.runs.doc(runId);
-    const runSnap = await runRef.get();
-    if (!runSnap.exists) {
+    const row = await this.prisma.checklistRun.findFirst({
+      where: { OR: [{ id: runId }, { legacyId: runId }] },
+    });
+    if (!row) {
       throw new NotFoundException('Checklist não encontrado.');
     }
 
-    const run = runSnap.data() as Record<string, unknown>;
+    const company = await this.prisma.company.findUnique({
+      where: { id: row.companyId },
+      select: { legacyId: true },
+    });
+    const prefeituraId = company?.legacyId ?? row.companyId;
+    const workflow = parseWorkflow(row.respostas);
+    if (!workflow) {
+      throw new NotFoundException('Checklist não encontrado.');
+    }
+
     const agora = new Date().toISOString();
-    const answerDoc = {
+    const answerDoc: WorkflowAnswer = {
       id: randomUUID(),
-      runId,
+      runId: row.legacyId ?? row.id,
       questionId: dto.questionId,
       questionLabel: dto.questionLabel ?? null,
       value: dto.value,
       problemDescription: dto.problemDescription ?? null,
       photoUrls: Array.isArray(dto.photoUrls) ? dto.photoUrls : [],
-      // Impeditivo reprovado: triagem de risco usa este flag para forçar Alto
-      // (mesmo quando já gerou emergência).
       impeditivo: dto.impeditivo === true,
       answeredAt: agora,
     };
@@ -151,26 +252,28 @@ export class ChecklistsService {
       problemDescription: dto.problemDescription,
       actions: dto.actions,
     });
-    const generatedEmergencyIds: string[] = Array.isArray(
-      run.generatedEmergencyIds,
-    )
-      ? (run.generatedEmergencyIds as string[])
-      : [];
+
+    const runDoc = buildWorkflowDoc(row, prefeituraId, workflow);
+    const generatedEmergencyIds = [...workflow.meta.generatedEmergencyIds];
 
     try {
-      await this.answers.doc(answerDoc.id).set(answerDoc);
+      workflow.answers.push(answerDoc);
 
       for (const action of result.actions) {
         if (action.type !== 'CREATE_EMERGENCY') continue;
-        const created = await this.createEmergencyFromAction(run, dto, action);
+        const created = await this.createEmergencyFromAction(runDoc, dto, action);
         generatedEmergencyIds.push(created.id);
       }
 
-      await runRef.update({
-        status: result.status,
-        blockReason: result.blockReason,
-        generatedEmergencyIds,
-        updatedAt: agora,
+      workflow.meta.status = result.status;
+      workflow.meta.blockReason = result.blockReason ?? null;
+      workflow.meta.generatedEmergencyIds = generatedEmergencyIds;
+
+      await this.prisma.checklistRun.update({
+        where: { id: row.id },
+        data: {
+          respostas: { _workflow: workflow } as Prisma.InputJsonValue,
+        },
       });
 
       return {
@@ -199,78 +302,39 @@ export class ChecklistsService {
     try {
       const { prefeituraId, startDate, endDate, chassis, operadorNome } =
         params;
+      const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+      if (!companyId) {
+        return { data: [], message: 'Execuções de checklist listadas.' };
+      }
+
       const startDateIso = toDateFilterIso(startDate);
       const endDateIso = toDateFilterIso(endDate);
       const chassisTerm = normalizeText(chassis);
       const operadorTerm = normalizeText(operadorNome);
 
-      let runsQuery = this.runs.where('prefeituraId', '==', prefeituraId);
-      if (startDateIso) {
-        runsQuery = runsQuery.where('startedAt', '>=', startDateIso);
-      }
-      if (endDateIso) {
-        runsQuery = runsQuery.where('startedAt', '<=', endDateIso);
-      }
+      const rows = await this.prisma.checklistRun.findMany({
+        where: {
+          companyId,
+          ...(startDateIso || endDateIso
+            ? {
+                executedAt: {
+                  ...(startDateIso ? { gte: new Date(startDateIso) } : {}),
+                  ...(endDateIso ? { lte: new Date(endDateIso) } : {}),
+                },
+              }
+            : {}),
+        },
+        orderBy: { executedAt: 'desc' },
+      });
 
-      const snap = await runsQuery.get();
+      let filteredRows = rows
+        .map((row) => {
+          const workflow = parseWorkflow(row.respostas);
+          if (!workflow) return null;
+          return buildWorkflowDoc(row, prefeituraId, workflow);
+        })
+        .filter((row): row is NonNullable<typeof row> => row !== null);
 
-      const rows = await Promise.all(
-        snap.docs.map(async (doc) => {
-          const runData = doc.data() as Record<string, unknown>;
-          const runId = toSafeString(runData.id) || doc.id;
-
-          const answersSnap = await this.answers
-            .where('runId', '==', runId)
-            .get();
-
-          const respostas = answersSnap.docs
-            .map((answerDoc) => {
-              const answer = answerDoc.data() as Record<string, unknown>;
-              const normalized = normalizeAnswerValue(answer.value);
-              return {
-                id: toSafeString(answer.id) || answerDoc.id,
-                runId,
-                questionId: toSafeString(answer.questionId),
-                questionLabel: toSafeString(answer.questionLabel),
-                value: answer.value,
-                valueNormalized: normalized,
-                problemDescription: toSafeString(answer.problemDescription),
-                photoUrls: Array.isArray(answer.photoUrls)
-                  ? answer.photoUrls.filter(
-                      (url: unknown): url is string => typeof url === 'string',
-                    )
-                  : [],
-                answeredAt: toSafeString(answer.answeredAt),
-              };
-            })
-            .sort(
-              (a, b) => toSafeMillis(b.answeredAt) - toSafeMillis(a.answeredAt),
-            );
-
-          const totalOk = respostas.filter(
-            (resposta) => resposta.valueNormalized === 'sim',
-          ).length;
-          const totalNao = respostas.filter(
-            (resposta) => resposta.valueNormalized === 'nao',
-          ).length;
-
-          return {
-            ...runData,
-            id: runId,
-            startedAt: runData.startedAt ?? null,
-            chassis: toSafeString(runData.chassis),
-            operadorNome: toSafeString(runData.operadorNome),
-            resumo: {
-              totalPerguntas: respostas.length,
-              totalOk,
-              totalNao,
-            },
-            respostas,
-          };
-        }),
-      );
-
-      let filteredRows = rows;
       if (chassisTerm) {
         filteredRows = filteredRows.filter((row) =>
           normalizeText(toSafeString(row.chassis)).includes(chassisTerm),
@@ -325,4 +389,3 @@ export class ChecklistsService {
     return created.data;
   }
 }
-

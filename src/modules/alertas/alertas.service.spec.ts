@@ -1,69 +1,92 @@
+jest.mock('../../common/prisma/company-resolver', () => ({
+  resolverCompanyId: jest.fn().mockResolvedValue('company-uuid'),
+}));
+
+jest.mock('../../prisma/prisma.service', () => ({
+  PrismaService: class PrismaService {},
+}));
+
+import { resolverCompanyId } from '../../common/prisma/company-resolver';
+import type { PrismaService } from '../../prisma/prisma.service';
 import { AlertasService, type FlagsAlertas } from './alertas.service';
 
-/**
- * Firestore falso: cada coleção devolve os docs informados, ignorando o
- * `.where()` (os testes já passam só docs da prefeitura alvo).
- */
-function makeFirebase(data: {
-  equipamentos?: unknown[];
-  operadores?: unknown[];
-  tanks?: unknown[];
+const mockedResolver = jest.mocked(resolverCompanyId);
+
+const TODAS: FlagsAlertas = { revisao: true, cnh: true, tanque: true };
+
+function emDias(dias: number): Date {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + dias);
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+}
+
+function makePrisma(data: {
+  equipamentos?: Array<Record<string, unknown>>;
+  operadores?: Array<Record<string, unknown>>;
+  comboios?: Array<Record<string, unknown>>;
+  companyId?: string | null;
 }) {
-  const docsFor = (name: string) =>
-    ((data as Record<string, unknown[]>)[name] ?? []).map((d) => ({
-      data: () => d,
-    }));
-  const db = {
-    collection: (name: string) => ({
-      where: () => ({
-        get: () => Promise.resolve({ docs: docsFor(name) }),
-      }),
-    }),
+  const companyId = data.companyId ?? 'company-uuid';
+  const prisma = {
+    equipment: { findMany: jest.fn() },
+    operator: { findMany: jest.fn() },
   };
-  return { getFirestore: () => db } as never;
+
+  let equipmentCall = 0;
+  prisma.equipment.findMany.mockImplementation(async () => {
+    equipmentCall += 1;
+    if (data.comboios?.length && equipmentCall > 1) {
+      return data.comboios;
+    }
+    return data.equipamentos ?? data.comboios ?? [];
+  });
+
+  prisma.operator.findMany.mockImplementation(async (args: { where?: { companyId?: string } }) => {
+    if (args?.where?.companyId !== companyId) return [];
+    return data.operadores ?? [];
+  });
+
+  return prisma as unknown as PrismaService;
 }
 
 const mail = { habilitado: () => false, enviar: jest.fn() } as never;
-const TODAS: FlagsAlertas = { revisao: true, cnh: true, tanque: true };
-
-function emDias(dias: number): string {
-  const d = new Date(Date.now() + dias * 86_400_000);
-  return d.toISOString().slice(0, 10);
-}
 
 describe('AlertasService.coletar', () => {
+  beforeEach(() => {
+    mockedResolver.mockResolvedValue('company-uuid');
+  });
+
   it('detecta revisão vencida (uso >= intervalo) e calcula o excedente', async () => {
-    const fb = makeFirebase({
+    const prisma = makePrisma({
       equipamentos: [
         {
-          prefeituraId: 'p1',
           descricao: 'Trator',
           placa: 'ABC-1234',
           medicaoAtual: 1200,
           ultimaRevisao: 0,
           intervaloRevisao: 1000,
           unidadeRevisao: 'h',
+          status: 'ativo',
         },
         {
-          prefeituraId: 'p1',
           descricao: 'Em dia',
           medicaoAtual: 500,
           ultimaRevisao: 0,
           intervaloRevisao: 1000,
+          status: 'ativo',
         },
       ],
     });
-    const r = await new AlertasService(fb, mail).coletar('p1', TODAS);
+    const r = await new AlertasService(prisma, mail).coletar('p1', TODAS);
     expect(r.revisoes).toHaveLength(1);
     expect(r.revisoes[0].descricao).toBe('Trator');
     expect(r.revisoes[0].excedente).toBe(200);
   });
 
   it('ignora equipamento inativo', async () => {
-    const fb = makeFirebase({
+    const prisma = makePrisma({
       equipamentos: [
         {
-          prefeituraId: 'p1',
           status: 'inativo',
           medicaoAtual: 5000,
           ultimaRevisao: 0,
@@ -71,47 +94,59 @@ describe('AlertasService.coletar', () => {
         },
       ],
     });
-    const r = await new AlertasService(fb, mail).coletar('p1', TODAS);
+    const r = await new AlertasService(prisma, mail).coletar('p1', TODAS);
     expect(r.revisoes).toHaveLength(0);
   });
 
   it('detecta CNH a vencer em <= 30 dias e ignora as longe/sem CNH', async () => {
-    const fb = makeFirebase({
+    const prisma = makePrisma({
       operadores: [
-        {
-          prefeituraId: 'p1',
-          nome: 'João',
-          cnhValidade: emDias(10),
-          cnhCategoria: 'D',
-        },
-        { prefeituraId: 'p1', nome: 'Vencida', cnhValidade: emDias(-5) },
-        { prefeituraId: 'p1', nome: 'Longe', cnhValidade: emDias(200) },
-        { prefeituraId: 'p1', nome: 'SemCnh' },
+        { nome: 'João', cnhValidade: emDias(10), cnhCategoria: 'D' },
+        { nome: 'Vencida', cnhValidade: emDias(-5) },
+        { nome: 'Longe', cnhValidade: emDias(200) },
+        { nome: 'SemCnh', cnhValidade: null },
       ],
     });
-    const r = await new AlertasService(fb, mail).coletar('p1', TODAS);
+    const r = await new AlertasService(prisma, mail).coletar('p1', TODAS);
     expect(r.cnhs.map((c) => c.nome).sort()).toEqual(['João', 'Vencida']);
   });
 
   it('detecta tanque <= 20% e calcula o percentual', async () => {
-    const fb = makeFirebase({
-      tanks: [
-        { prefeituraId: 'p1', name: 'T1', capacity: 1000, currentVolume: 150 },
-        { prefeituraId: 'p1', name: 'T2', capacity: 1000, currentVolume: 800 },
+    const prisma = makePrisma({
+      comboios: [
+        {
+          tipo: 'Comboio',
+          descricao: 'T1',
+          capacidadeTanque: 1000,
+          volumeTanqueAtual: 150,
+          combustivel: 'diesel',
+        },
+        {
+          tipo: 'Comboio',
+          descricao: 'T2',
+          capacidadeTanque: 1000,
+          volumeTanqueAtual: 800,
+          combustivel: 'diesel',
+        },
       ],
     });
-    const r = await new AlertasService(fb, mail).coletar('p1', TODAS);
+    const r = await new AlertasService(prisma, mail).coletar('p1', TODAS);
     expect(r.tanques.map((t) => t.nome)).toEqual(['T1']);
     expect(r.tanques[0].percentual).toBe(15);
   });
 
   it('respeita as flags desligadas', async () => {
-    const fb = makeFirebase({
-      tanks: [
-        { prefeituraId: 'p1', name: 'T1', capacity: 1000, currentVolume: 50 },
+    const prisma = makePrisma({
+      comboios: [
+        {
+          tipo: 'Comboio',
+          descricao: 'T1',
+          capacidadeTanque: 1000,
+          volumeTanqueAtual: 50,
+        },
       ],
     });
-    const r = await new AlertasService(fb, mail).coletar('p1', {
+    const r = await new AlertasService(prisma, mail).coletar('p1', {
       revisao: true,
       cnh: true,
       tanque: false,

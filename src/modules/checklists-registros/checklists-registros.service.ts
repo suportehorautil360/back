@@ -3,13 +3,14 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { FirebaseService } from '../../config/firebase.service';
+import { resolverCompanyId } from '../../common/prisma/company-resolver';
+import { PrismaService } from '../../prisma/prisma.service';
 import type {
   ChecklistRegistroDoc,
   ChecklistRegistroResumoPainel,
   TopOperadorChecklist,
 } from './checklists-registros.types';
-import { mapChecklistRegistroFromFirestore } from './helpers/checklists-registros.mapper';
+import { mapChecklistRunRowToDoc } from './helpers/checklists-registros.mapper';
 import {
   calcularChecklistsPorSemana,
   calcularTopOperadores,
@@ -27,11 +28,7 @@ function mesAtualIso(): string {
 
 @Injectable()
 export class ChecklistsRegistrosService {
-  constructor(private readonly firebaseService: FirebaseService) {}
-
-  private get collection() {
-    return this.firebaseService.getFirestore().collection('checklistsRegistros');
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   private async listarDocsPorPrefeitura(
     prefeituraId: string,
@@ -42,16 +39,15 @@ export class ChecklistsRegistrosService {
     }
 
     try {
-      const snap = await this.collection.where('prefeituraId', '==', id).get();
+      const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+      if (!companyId) return [];
 
-      return snap.docs
-        .map((doc) =>
-          mapChecklistRegistroFromFirestore(
-            doc.id,
-            doc.data() as Record<string, unknown>,
-          ),
-        )
-        .sort((a, b) => b.dataHoraIso.localeCompare(a.dataHoraIso));
+      const rows = await this.prisma.checklistRun.findMany({
+        where: { companyId },
+        orderBy: [{ executedAt: 'desc' }, { createdAt: 'desc' }],
+      });
+
+      return rows.map((row) => mapChecklistRunRowToDoc(row, prefeituraId));
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
       console.error('Erro ao listar checklists de operador:', error);

@@ -4,14 +4,11 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { FirebaseService } from '../../../config/firebase.service';
+import { resolverCompanyId } from '../../../common/prisma/company-resolver';
+import { creditarTanquePrismaTx } from '../../../common/prisma/tank-saldo-prisma.helper';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { formatDateTime } from '../shared/date.helper';
-import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
-import { creditarTanqueTx } from '../shared/tank-saldo.helper';
-import {
-  CreateReabastecimentoDto,
-  ReabastecimentoSourceType,
-} from './dto/create-reabastecimento.dto';
+import { CreateReabastecimentoDto } from './dto/create-reabastecimento.dto';
 import {
   isSupportedSourceType,
   parseReceivedLiters,
@@ -21,7 +18,7 @@ export interface ReabastecimentoDoc {
   id: string;
   prefeituraId: string;
   comboioId: string;
-  sourceType: ReabastecimentoSourceType;
+  sourceType: string;
   receivedLiters: number;
   invoiceNumber?: string;
   funcionarioId?: string;
@@ -33,7 +30,7 @@ export interface ReabastecimentoListItem {
   id: string;
   dateTime: string;
   comboioId: string | null;
-  sourceType: ReabastecimentoSourceType;
+  sourceType: string;
   receivedLiters: number;
   invoiceNumber: string | null;
   funcionarioId: string | null;
@@ -42,11 +39,7 @@ export interface ReabastecimentoListItem {
 
 @Injectable()
 export class ReabastecimentoService {
-  constructor(private firebaseService: FirebaseService) {}
-
-  private get collection() {
-    return this.firebaseService.getFirestore().collection('reabastecimentos');
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(input: CreateReabastecimentoDto): Promise<ReabastecimentoDoc> {
     const receivedLiters = parseReceivedLiters(input.receivedLiters);
@@ -67,34 +60,55 @@ export class ReabastecimentoService {
       throw new BadRequestException('Informe o comboio (comboioId) da carga.');
     }
 
+    const companyId = await resolverCompanyId(this.prisma, input.prefeituraId);
+    if (!companyId) {
+      throw new BadRequestException('Empresa não encontrada.');
+    }
+
+    const comboio = await this.prisma.equipment.findFirst({
+      where: {
+        companyId,
+        OR: [{ id: comboioId }, { legacyId: comboioId }],
+      },
+      select: { id: true, legacyId: true },
+    });
+    if (!comboio) {
+      throw new BadRequestException('Comboio não encontrado.');
+    }
+
     const id = randomUUID();
+    const now = new Date();
 
     const doc: ReabastecimentoDoc = {
       id,
       prefeituraId: input.prefeituraId,
-      comboioId,
+      comboioId: comboio.legacyId ?? comboio.id,
       sourceType: input.sourceType,
       receivedLiters,
       invoiceNumber: input.invoiceNumber,
       funcionarioId: input.funcionarioId?.trim() || undefined,
       clientRequestId: input.clientRequestId,
-      createdAt: new Date().toISOString(),
+      createdAt: now.toISOString(),
     };
 
-    const firestore = this.firebaseService.getFirestore();
     try {
-      // Carga no comboio soma no saldo do tanque, mas TRAVA o estouro da
-      // capacidade. Grava o registro e credita o tanque na mesma transação
-      // (rejeita se passar do limite — o tanque nunca passa da capacidade).
-      await firestore.runTransaction(async (tx) => {
-        await creditarTanqueTx(tx, firestore, comboioId, receivedLiters);
-        tx.set(this.collection.doc(id), doc, { merge: true });
+      await this.prisma.$transaction(async (tx) => {
+        await creditarTanquePrismaTx(tx, comboioId, receivedLiters);
+        await tx.comboioReabastecimento.create({
+          data: {
+            id,
+            legacyId: id,
+            companyId,
+            equipmentId: comboio.id,
+            sourceType: input.sourceType,
+            receivedLiters: receivedLiters.toFixed(2),
+            invoiceNumber: input.invoiceNumber ?? null,
+            createdAt: now,
+          },
+        });
       });
       return doc;
     } catch (error) {
-      // Capacidade excedida vem como BadRequestException (400): propaga para o
-      // cliente. Se virasse 500, o outbox do app trataria como erro transitório
-      // e ficaria em loop de retry de um item que nunca passa.
       if (error instanceof BadRequestException) throw error;
       console.error('Erro ao criar reabastecimento:', error);
       throw new InternalServerErrorException(
@@ -109,19 +123,52 @@ export class ReabastecimentoService {
     endDate?: string,
   ): Promise<{ data: ReabastecimentoListItem[]; message: string }> {
     try {
-      const docs = await fetchPrefeituraDocs<ReabastecimentoDoc>(
-        this.collection,
-        prefeituraId,
-        { startDate, endDate, order: 'desc' },
-      );
+      const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+      if (!companyId) {
+        return { data: [], message: 'Reabastecimentos buscados com sucesso!' };
+      }
 
-      const data = docs.map((doc) => this.mapToListItem(doc));
+      const where: {
+        companyId: string;
+        createdAt?: { gte?: Date; lte?: Date };
+      } = { companyId };
+
+      if (startDate) {
+        where.createdAt = {
+          ...where.createdAt,
+          gte: new Date(`${startDate}T00:00:00.000Z`),
+        };
+      }
+      if (endDate) {
+        where.createdAt = {
+          ...where.createdAt,
+          lte: new Date(`${endDate}T23:59:59.999Z`),
+        };
+      }
+
+      const rows = await this.prisma.comboioReabastecimento.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          equipment: { select: { legacyId: true, id: true } },
+        },
+      });
+
+      const data = rows.map((row) =>
+        this.mapToListItem({
+          id: row.legacyId ?? row.id,
+          prefeituraId,
+          comboioId: row.equipment?.legacyId ?? row.equipmentId ?? '',
+          sourceType: row.sourceType,
+          receivedLiters: Number(row.receivedLiters),
+          invoiceNumber: row.invoiceNumber ?? undefined,
+          createdAt: row.createdAt.toISOString(),
+        }),
+      );
 
       return { data, message: 'Reabastecimentos buscados com sucesso!' };
     } catch (error) {
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
+      if (error instanceof BadRequestException) throw error;
       console.error('Erro ao buscar reabastecimentos:', error);
       throw new InternalServerErrorException(
         'Não foi possível buscar os reabastecimentos.',

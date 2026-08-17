@@ -1,7 +1,5 @@
-// Schema Prisma — Horautil (back NestJS)
-// FONTE DA VERDADE: horautil/prisma/schema.prisma. Este arquivo é uma cópia
-// sincronizada — sempre editar lá e copiar. Migrations rodam pelo horautil.
-// Aqui o back só CONSOME o cliente gerado — não corre migrations.
+// Schema Prisma — Horautil (painel admin)
+// Migrations aplicadas nunca são editadas — crie uma nova migration para mudanças.
 
 generator client {
   provider     = "prisma-client"
@@ -112,6 +110,8 @@ model Company {
   reabastecimentosComboio ComboioReabastecimento[]
   notasFiscais            NotaFiscal[]
   planoPreventivo         PlanoPreventivo?
+  fleetfuelIntencoes      FleetfuelIntencao[]
+  notificacoes            Notificacao[]
 
   @@map("clients")
 }
@@ -203,6 +203,8 @@ model Equipment {
   capacidadeTanque         Float?   @map("capacidade_tanque")
   /// Só faz sentido pra comboio (tanque acoplado ao caminhão em si).
   capacidadeTanqueCaminhao Float?   @map("capacidade_tanque_caminhao")
+  /// Volume atual do tanque do comboio (L). Substitui `tanks/{comboioId}`.
+  volumeTanqueAtual        Float?   @default(0) @map("volume_tanque_atual")
   valorVeiculo             Decimal? @map("valor_veiculo") @db.Decimal(12, 2)
 
   /// Operação — responsáveis. `condutoresIds` é `string[]` de `legacyId`
@@ -233,8 +235,9 @@ model Equipment {
   alocacoes      WorkFrontAllocation[]
   creditos       Credito[]
   lubrificacoes  Lubrificacao[]
-  cargasComboio  ComboioReabastecimento[]
-  serviceOrders  ServiceOrder[]
+  cargasComboio      ComboioReabastecimento[]
+  serviceOrders      ServiceOrder[]
+  fleetfuelIntencoes FleetfuelIntencao[]
 
   @@index([companyId, status])
   @@index([companyId, tipo])
@@ -673,6 +676,18 @@ model Abastecimento {
   /// "km" | "h"
   leituraUnidade String?  @map("leitura_unidade")
   postoNome      String?  @map("posto_nome")
+  plateOrChassis String?  @map("plate_or_chassis")
+  precoLitro     Decimal? @map("preco_litro") @db.Decimal(10, 4)
+  /// "aprovado" | "pendente_aprovacao" | "rejeitado"
+  status         String   @default("aprovado")
+  /// Tipo de operação legado: "comboio" | "manual_motorista" | "fleetfuel"
+  tipo           String?
+  motoristaNome  String?  @map("motorista_nome")
+  latitude       Float?
+  longitude      Float?
+  meterPhoto     String?  @map("meter_photo")
+  receiptPhoto   String?  @map("receipt_photo")
+  fleetfuelIntencaoId String? @map("fleetfuel_intencao_id") @db.Uuid
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -681,8 +696,56 @@ model Abastecimento {
   equipment Equipment? @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
 
   @@index([companyId, data])
+  @@index([companyId, createdAt])
   @@index([equipmentId])
+  @@index([postoLegacyId])
   @@map("abastecimentos")
+}
+
+/// Intenção FleetFuel (QR posto ↔ motorista). Substitui `fleetfuel_intencoes`.
+model FleetfuelIntencao {
+  id        String  @id @default(uuid()) @db.Uuid
+  legacyId  String? @unique @map("legacy_id")
+  companyId String  @map("company_id") @db.Uuid
+
+  postoLegacyId String  @map("posto_legacy_id")
+  postoNome     String? @map("posto_nome")
+  equipmentId   String? @map("equipment_id") @db.Uuid
+  plateOrChassis String @map("plate_or_chassis")
+
+  veiculoModelo     String? @map("veiculo_modelo")
+  veiculoDescricao  String? @map("veiculo_descricao")
+  combustivelVeiculo String? @map("combustivel_veiculo")
+
+  operadorLegacyId String? @map("operador_legacy_id")
+  motoristaCpf     String  @map("motorista_cpf")
+  motoristaNome    String  @map("motorista_nome")
+
+  tipoCombustivel String  @map("tipo_combustivel")
+  liters          Decimal @db.Decimal(10, 3)
+  pricePerLiter   Decimal @map("price_per_liter") @db.Decimal(10, 4)
+  total           Decimal @db.Decimal(12, 2)
+  currentReading  Float   @map("current_reading")
+  measurementType String  @map("measurement_type")
+
+  /// "pendente_validacao" | "concluido" | "expirado" | "cancelado"
+  status String @default("pendente_validacao")
+
+  abastecimentoId String? @map("abastecimento_id") @db.Uuid
+  jti             String?
+  expiresAt       DateTime @map("expires_at")
+  validatedAt     DateTime? @map("validated_at")
+  validadoPorOperadorLegacyId String? @map("validado_por_operador_legacy_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  equipment Equipment? @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, status])
+  @@index([postoLegacyId])
+  @@map("fleetfuel_intencoes")
 }
 
 /// Definição (modelo/variante) de checklist do operador. Catálogo GLOBAL —
@@ -875,11 +938,30 @@ model PartnerPortalUser {
 
   company Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   partner Partner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  passwordResets PartnerPortalPasswordReset[]
 
   @@unique([usuario])
   @@index([companyId])
   @@index([email])
   @@map("partner_portal_users")
+}
+
+/// Token de redefinição de senha do portal do posto (substitui Firestore `user_password_resets`).
+model PartnerPortalPasswordReset {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  email     String
+  token     String   @unique
+  used      Boolean  @default(false)
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user PartnerPortalUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([userId])
+  @@map("partner_portal_password_resets")
 }
 
 /// Catálogo de módulos do produto. As chaves são contratos estáveis do código.
@@ -1464,4 +1546,53 @@ model NotaFiscal {
   @@index([companyId, postoLegacyId])
   @@index([companyId, oficinaLegacyId])
   @@map("notas_fiscais")
+}
+
+/// Chaves de idempotência do outbox offline (header `Idempotency-Key`).
+/// Substitui a coleção Firestore `idempotencyKeys/{key}`.
+model IdempotencyKey {
+  key       String    @id @db.VarChar(128)
+  /// "processando" | "concluido"
+  status    String
+  rota      String?
+  resposta  Json?
+  createdAt DateTime  @default(now()) @map("created_at")
+  expiresAt DateTime? @map("expires_at")
+
+  @@index([expiresAt])
+  @@map("idempotency_keys")
+}
+
+/// Notificação in-app (sino do PWA + avisos ao RH). Substitui Firestore
+/// `notificacoes/{id}`. Destinatário polimórfico:
+///  - `destinatarioTipo = funcionario` → `destinatarioId` = CPF (só dígitos)
+///  - `destinatarioTipo = rh` → `destinatarioId` = legacyId da empresa
+model Notificacao {
+  id        String  @id @default(uuid()) @db.Uuid
+  legacyId  String? @unique @map("legacy_id")
+  companyId String  @map("company_id") @db.Uuid
+
+  destinatarioTipo String @map("destinatario_tipo")
+  destinatarioId   String @map("destinatario_id")
+  /// Snapshot do tenant (legacyId) — compat com API legada.
+  prefeituraLegacyId String @map("prefeitura_legacy_id")
+
+  titulo   String
+  mensagem String @db.Text
+  /// "info" | "sucesso" | "aviso" | "erro"
+  tipo     String @default("info")
+
+  referenciaTipo String? @map("referencia_tipo")
+  referenciaId   String? @map("referencia_id")
+
+  lida Boolean @default(false)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([destinatarioTipo, destinatarioId, createdAt])
+  @@index([companyId, destinatarioTipo, destinatarioId])
+  @@map("notificacoes")
 }

@@ -5,15 +5,17 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { FieldValue } from 'firebase-admin/firestore';
+import { Prisma } from '../../prisma/generated/client';
 import { randomUUID } from 'node:crypto';
-import { FirebaseService } from '../../config/firebase.service';
+import { resolverCompanyId } from '../../common/prisma/company-resolver';
+import { PrismaService } from '../../prisma/prisma.service';
 import { UploadsService } from '../uploads/uploads.service';
 import type { ListNotasFiscaisPrefeituraQueryDto } from './dto/list-notas-fiscais-prefeitura-query.dto';
-import { mapNotaFiscalToApi } from './helpers/nota-fiscal-response.helper';
+import {
+  mapNotaFiscalRowToApi,
+} from './helpers/nota-fiscal-response.helper';
 import {
   buildOsResolucaoMaps,
-  chunkArray,
   enriquecerNotaFiscalPrefeitura,
   filtrarNotasFiscaisPrefeitura,
   type NotaFiscalPrefeituraListItem,
@@ -54,7 +56,6 @@ export interface UploadNotaFiscalInput {
   parceiroId?: string;
   prefeituraId?: string;
   solicitacaoOsId?: string;
-  /** Valor total informado pela oficina (sobrescreve o parse do PDF). */
   value: unknown;
   file: Express.Multer.File;
 }
@@ -69,25 +70,9 @@ export interface UploadNotaFiscalPostoInput {
 @Injectable()
 export class NotasFiscaisService {
   constructor(
-    private readonly firebaseService: FirebaseService,
+    private readonly prisma: PrismaService,
     private readonly uploadsService: UploadsService,
   ) {}
-
-  private get collection() {
-    return this.firebaseService.getFirestore().collection('notasFiscais');
-  }
-
-  private get oficinasCollection() {
-    return this.firebaseService.getFirestore().collection('oficinas');
-  }
-
-  private get solicitacoesCollection() {
-    return this.firebaseService.getFirestore().collection('solicitacoesOS');
-  }
-
-  private get ordensCollection() {
-    return this.firebaseService.getFirestore().collection('ordensServico');
-  }
 
   private async validarEParsear(
     file: Express.Multer.File,
@@ -109,10 +94,35 @@ export class NotasFiscaisService {
     return parseDanfePdf(file.buffer, file.originalname || 'nota-fiscal.pdf');
   }
 
+  private dadosParseados(parsed: ParsedDanfeData) {
+    return {
+      description: parsed.description,
+      category: parsed.category,
+      documentType: parsed.documentType,
+      number: parsed.number,
+      issuerName: parsed.issuerName,
+      issuedAt: parsed.issuedAt ? new Date(parsed.issuedAt) : null,
+      accessKey: parsed.accessKey,
+      value: parsed.value,
+      status: 'pendente' as const,
+      parseCompleteness: parsed.parseCompleteness,
+    };
+  }
+
   private async persistir(
     id: string,
     ownerId: string,
-    payload: Record<string, unknown>,
+    payload: {
+      companyId: string;
+      prefeituraId: string;
+      oficinaId?: string;
+      postoId?: string;
+      parceiroId?: string;
+      solicitacaoOsId?: string;
+      parsed: ParsedDanfeData;
+      value: number;
+      status?: NotaFiscalStatus;
+    },
     file: Express.Multer.File,
   ): Promise<NotaFiscalApiItem> {
     const fileUrl = await this.uploadsService.uploadNotaFiscalPdf(ownerId, id, {
@@ -121,42 +131,30 @@ export class NotasFiscaisService {
       originalname: file.originalname || 'nota-fiscal.pdf',
     });
 
-    const doc = {
-      ...payload,
-      id,
-      fileName: file.originalname || 'nota-fiscal.pdf',
-      fileUrl,
-      criadoEm: FieldValue.serverTimestamp(),
-    };
-
     try {
-      await this.collection.doc(id).set(doc);
-      const saved = await this.collection.doc(id).get();
-      return mapNotaFiscalToApi(
-        id,
-        (saved.data() ?? doc) as Record<string, unknown>,
-      );
+      const row = await this.prisma.notaFiscal.create({
+        data: {
+          id,
+          legacyId: id,
+          companyId: payload.companyId,
+          oficinaLegacyId: payload.oficinaId ?? null,
+          postoLegacyId: payload.postoId ?? null,
+          parceiroLegacyId: payload.parceiroId ?? null,
+          solicitacaoOsId: payload.solicitacaoOsId ?? null,
+          ...this.dadosParseados(payload.parsed),
+          value: new Prisma.Decimal(payload.value),
+          status: payload.status ?? 'pendente',
+          fileName: file.originalname || 'nota-fiscal.pdf',
+          fileUrl,
+        },
+      });
+      return mapNotaFiscalRowToApi(row, payload.prefeituraId);
     } catch (error) {
       console.error('Erro ao salvar nota fiscal:', error);
       throw new InternalServerErrorException(
         'Não foi possível salvar a nota fiscal.',
       );
     }
-  }
-
-  private dadosParseados(parsed: ParsedDanfeData) {
-    return {
-      description: parsed.description,
-      category: parsed.category,
-      documentType: parsed.documentType,
-      number: parsed.number,
-      issuerName: parsed.issuerName,
-      issuedAt: parsed.issuedAt,
-      accessKey: parsed.accessKey,
-      value: parsed.value,
-      status: 'pendente' as const,
-      parseCompleteness: parsed.parseCompleteness,
-    };
   }
 
   async upload(input: UploadNotaFiscalInput): Promise<NotaFiscalApiItem> {
@@ -167,15 +165,22 @@ export class NotasFiscaisService {
 
     const parsed = await this.validarEParsear(input.file);
     const valorInformado = parseValorInformado(input.value);
+    const prefeituraId = texto(input.prefeituraId);
+    const companyId = prefeituraId
+      ? await resolverCompanyId(this.prisma, prefeituraId)
+      : null;
+    if (!companyId || !prefeituraId) {
+      throw new BadRequestException('prefeituraId inválido.');
+    }
 
     if (parsed.accessKey) {
-      const duplicate = await this.collection
-        .where('oficinaId', '==', oficinaId)
-        .where('accessKey', '==', parsed.accessKey)
-        .limit(1)
-        .get();
-
-      if (!duplicate.empty) {
+      const duplicate = await this.prisma.notaFiscal.findFirst({
+        where: {
+          oficinaLegacyId: oficinaId,
+          accessKey: parsed.accessKey,
+        },
+      });
+      if (duplicate) {
         throw new ConflictException(
           'Esta nota fiscal já foi enviada para esta oficina.',
         );
@@ -187,17 +192,12 @@ export class NotasFiscaisService {
       id,
       oficinaId,
       {
+        companyId,
+        prefeituraId,
         oficinaId,
-        ...(texto(input.parceiroId)
-          ? { parceiroId: texto(input.parceiroId) }
-          : {}),
-        ...(texto(input.prefeituraId)
-          ? { prefeituraId: texto(input.prefeituraId) }
-          : {}),
-        ...(texto(input.solicitacaoOsId)
-          ? { solicitacaoOsId: texto(input.solicitacaoOsId) }
-          : {}),
-        ...this.dadosParseados(parsed),
+        parceiroId: texto(input.parceiroId) || undefined,
+        solicitacaoOsId: texto(input.solicitacaoOsId) || undefined,
+        parsed,
         value: valorInformado,
       },
       input.file,
@@ -215,31 +215,49 @@ export class NotasFiscaisService {
     const parsed = await this.validarEParsear(input.file);
 
     if (parsed.accessKey) {
-      const duplicate = await this.collection
-        .where('postoId', '==', postoId)
-        .where('accessKey', '==', parsed.accessKey)
-        .limit(1)
-        .get();
-
-      if (!duplicate.empty) {
+      const duplicate = await this.prisma.notaFiscal.findFirst({
+        where: {
+          postoLegacyId: postoId,
+          accessKey: parsed.accessKey,
+        },
+      });
+      if (duplicate) {
         throw new ConflictException('Esta nota fiscal já foi enviada.');
       }
     }
 
     const valorInformado = parseValorInformado(input.value);
+    let companyId = texto(input.prefeituraId)
+      ? await resolverCompanyId(this.prisma, texto(input.prefeituraId))
+      : null;
+    let prefeituraId = texto(input.prefeituraId);
+
+    if (!companyId) {
+      const partner = await this.prisma.partner.findFirst({
+        where: { legacyId: postoId },
+        include: { company: { select: { id: true, legacyId: true } } },
+      });
+      companyId = partner?.company.id ?? null;
+      prefeituraId = partner?.company.legacyId ?? prefeituraId;
+    }
+
+    if (!companyId || !prefeituraId) {
+      throw new BadRequestException(
+        'Não foi possível identificar a prefeitura desta nota.',
+      );
+    }
 
     const id = randomUUID();
     return this.persistir(
       id,
       `posto-${postoId}`,
       {
+        companyId,
+        prefeituraId,
         postoId,
-        ...(texto(input.prefeituraId)
-          ? { prefeituraId: texto(input.prefeituraId) }
-          : {}),
-        ...this.dadosParseados(parsed),
+        parsed,
         value: valorInformado,
-        status: 'aprovada' as const,
+        status: 'aprovada',
       },
       input.file,
     );
@@ -253,12 +271,11 @@ export class NotasFiscaisService {
       throw new BadRequestException('postoId inválido.');
     }
     try {
-      const snap = await this.collection.where('postoId', '==', id).get();
-      const data = snap.docs
-        .map((doc) =>
-          mapNotaFiscalToApi(doc.id, doc.data() as Record<string, unknown>),
-        )
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      const rows = await this.prisma.notaFiscal.findMany({
+        where: { postoLegacyId: id },
+        orderBy: { createdAt: 'desc' },
+      });
+      const data = rows.map((row) => mapNotaFiscalRowToApi(row));
       return { data, message: 'Notas fiscais carregadas com sucesso.' };
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
@@ -269,7 +286,6 @@ export class NotasFiscaisService {
     }
   }
 
-  /** NF de combustível enviadas pelos postos. */
   async listarCombustivelPorPrefeitura(
     prefeituraId: string,
   ): Promise<{ data: NotaFiscalApiItem[]; message: string }> {
@@ -278,15 +294,16 @@ export class NotasFiscaisService {
       throw new BadRequestException('prefeituraId inválido.');
     }
     try {
-      const snap = await this.collection
-        .where('prefeituraId', '==', id)
-        .get();
-      const data = snap.docs
-        .map((doc) =>
-          mapNotaFiscalToApi(doc.id, doc.data() as Record<string, unknown>),
-        )
-        .filter((n) => !!n.postoId)
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      const companyId = await resolverCompanyId(this.prisma, id);
+      if (!companyId) {
+        return { data: [], message: 'Notas fiscais carregadas com sucesso.' };
+      }
+
+      const rows = await this.prisma.notaFiscal.findMany({
+        where: { companyId, postoLegacyId: { not: null } },
+        orderBy: { createdAt: 'desc' },
+      });
+      const data = rows.map((row) => mapNotaFiscalRowToApi(row, id));
       return { data, message: 'Notas fiscais carregadas com sucesso.' };
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
@@ -297,7 +314,6 @@ export class NotasFiscaisService {
     }
   }
 
-  /** NF enviadas pelas oficinas (O.S.), com cruzamento e resumo. */
   async listarOficinasPorPrefeitura(
     prefeituraId: string,
     query: ListNotasFiscaisPrefeituraQueryDto = {},
@@ -312,65 +328,73 @@ export class NotasFiscaisService {
     }
 
     try {
-      const [solSnap, ordensSnap, oficinasSnap, nfPorPref] = await Promise.all([
-        this.solicitacoesCollection.where('prefeituraId', '==', id).get(),
-        this.ordensCollection.where('prefeituraId', '==', id).get(),
-        this.oficinasCollection.where('prefeituraId', '==', id).get(),
-        this.collection.where('prefeituraId', '==', id).get(),
+      const companyId = await resolverCompanyId(this.prisma, id);
+      if (!companyId) {
+        return {
+          data: [],
+          resumo: calcularResumoNotasFiscais([]),
+          message: 'Notas fiscais carregadas com sucesso.',
+        };
+      }
+
+      const [rows, partners, orders] = await Promise.all([
+        this.prisma.notaFiscal.findMany({
+          where: { companyId, postoLegacyId: null },
+          orderBy: { createdAt: 'desc' },
+        }),
+        this.prisma.partner.findMany({
+          where: { companyId, type: 'OFICINA' },
+          select: {
+            legacyId: true,
+            razaoSocial: true,
+            nomeFantasia: true,
+          },
+        }),
+        this.prisma.serviceOrder.findMany({
+          where: { companyId },
+          select: {
+            id: true,
+            legacyId: true,
+            protocolo: true,
+            equipmentNome: true,
+            oficinaVencedoraId: true,
+            status: true,
+            valorAprovado: true,
+            createdAt: true,
+            aprovadoEm: true,
+          },
+        }),
       ]);
 
-      const oficinaIdsPref = oficinasSnap.docs.map((doc) => doc.id);
-      const oficinaIdsOrdens = ordensSnap.docs
-        .map((doc) => texto(doc.data().oficinaId))
-        .filter(Boolean);
-      const oficinaIdsCredenciadas = [
-        ...new Set([...oficinaIdsPref, ...oficinaIdsOrdens]),
-      ];
+      const base = rows
+        .map((row) => mapNotaFiscalRowToApi(row, id))
+        .filter((nf) => !nf.postoId);
 
-      const nfDocs = new Map<string, (typeof nfPorPref.docs)[number]>();
-      for (const doc of nfPorPref.docs) {
-        nfDocs.set(doc.id, doc);
+      const ordens = orders.map((ordem) => ({
+        id: ordem.legacyId ?? ordem.id,
+        data: {
+          protocolo: ordem.protocolo,
+          equipamento: ordem.equipmentNome ?? '',
+          oficinaId: ordem.oficinaVencedoraId ?? '',
+          status: ordem.status,
+          valorTotal: ordem.valorAprovado
+            ? Number(ordem.valorAprovado)
+            : 0,
+          criadoEm: ordem.createdAt.toISOString(),
+          aprovadoEm: ordem.aprovadoEm?.toISOString(),
+        } as Record<string, unknown>,
+      }));
+
+      const osMaps = buildOsResolucaoMaps([], ordens);
+
+      const oficinasMap = new Map<string, Record<string, unknown>>();
+      for (const partner of partners) {
+        if (!partner.legacyId) continue;
+        oficinasMap.set(partner.legacyId, {
+          razaoSocial: partner.razaoSocial,
+          nomeFantasia: partner.nomeFantasia,
+        });
       }
-
-      for (const chunk of chunkArray(oficinaIdsCredenciadas, 30)) {
-        if (chunk.length === 0) continue;
-        const extraSnap = await this.collection
-          .where('oficinaId', 'in', chunk)
-          .get();
-        for (const doc of extraSnap.docs) {
-          if (!nfDocs.has(doc.id)) {
-            nfDocs.set(doc.id, doc);
-          }
-        }
-      }
-
-      const oficinaIdsCredSet = new Set(oficinaIdsCredenciadas);
-      const base = [...nfDocs.values()]
-        .map((doc) =>
-          mapNotaFiscalToApi(doc.id, doc.data() as Record<string, unknown>),
-        )
-        .filter((nf) => {
-          if (nf.postoId) return false;
-          if (texto(nf.prefeituraId) === id) return true;
-          return oficinaIdsCredSet.has(nf.oficinaId);
-        })
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-
-      const osMaps = buildOsResolucaoMaps(
-        solSnap.docs.map((doc) => ({
-          id: doc.id,
-          data: doc.data() as Record<string, unknown>,
-        })),
-        ordensSnap.docs.map((doc) => ({
-          id: doc.id,
-          data: doc.data() as Record<string, unknown>,
-        })),
-      );
-
-      const oficinaIds = [
-        ...new Set(base.map((n) => n.oficinaId).filter(Boolean)),
-      ];
-      const oficinasMap = await this.carregarOficinasMap(oficinaIds);
 
       const enriquecidas = base.map((item) =>
         enriquecerNotaFiscalPrefeitura(
@@ -409,22 +433,22 @@ export class NotasFiscaisService {
         `status inválido. Use: ${NOTA_FISCAL_STATUS.join(', ')}.`,
       );
     }
-    const ref = this.collection.doc(notaId);
-    const snap = await ref.get();
-    if (!snap.exists) {
+
+    const row = await this.prisma.notaFiscal.findFirst({
+      where: { OR: [{ id: notaId }, { legacyId: notaId }] },
+      include: { company: { select: { legacyId: true } } },
+    });
+    if (!row) {
       throw new NotFoundException('Nota fiscal não encontrada.');
     }
+
     try {
-      await ref.update({
-        status,
-        statusAtualizadoEm: FieldValue.serverTimestamp(),
+      const updated = await this.prisma.notaFiscal.update({
+        where: { id: row.id },
+        data: { status },
       });
-      const saved = await ref.get();
       return {
-        data: mapNotaFiscalToApi(
-          notaId,
-          (saved.data() ?? {}) as Record<string, unknown>,
-        ),
+        data: mapNotaFiscalRowToApi(updated, row.company.legacyId ?? undefined),
         message: 'Status atualizado com sucesso.',
       };
     } catch (error) {
@@ -433,21 +457,6 @@ export class NotasFiscaisService {
         'Não foi possível atualizar o status da nota fiscal.',
       );
     }
-  }
-
-  private async carregarOficinasMap(
-    ids: string[],
-  ): Promise<Map<string, Record<string, unknown>>> {
-    const map = new Map<string, Record<string, unknown>>();
-    await Promise.all(
-      ids.map(async (oficinaId) => {
-        const snap = await this.oficinasCollection.doc(oficinaId).get();
-        if (snap.exists) {
-          map.set(oficinaId, snap.data() as Record<string, unknown>);
-        }
-      }),
-    );
-    return map;
   }
 
   async listarPorOficina(
@@ -459,14 +468,11 @@ export class NotasFiscaisService {
     }
 
     try {
-      const snap = await this.collection.where('oficinaId', '==', id).get();
-
-      const data = snap.docs
-        .map((doc) =>
-          mapNotaFiscalToApi(doc.id, doc.data() as Record<string, unknown>),
-        )
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-
+      const rows = await this.prisma.notaFiscal.findMany({
+        where: { oficinaLegacyId: id },
+        orderBy: { createdAt: 'desc' },
+      });
+      const data = rows.map((row) => mapNotaFiscalRowToApi(row));
       return {
         data,
         message: 'Notas fiscais carregadas com sucesso.',

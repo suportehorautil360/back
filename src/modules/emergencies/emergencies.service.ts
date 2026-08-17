@@ -5,7 +5,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { FirebaseService } from '../../config/firebase.service';
+import type { Prisma } from '../../prisma/generated/client';
+import { resolverCompanyId } from '../../common/prisma/company-resolver';
+import { PrismaService } from '../../prisma/prisma.service';
 import { WhatsAppService } from '../whatsapp/whatsapp.service';
 import { formatarJid } from '../whatsapp/phone';
 import { MailService } from '../mail/mail.service';
@@ -48,12 +50,10 @@ type EmergencyFilters = {
   operator?: string;
 };
 
-/** Dados mínimos de uma emergência para montar/disparar a notificação. */
 export interface DadosEmergenciaWhats {
   prefeituraId: string;
   severity: string;
   chassis?: string | null;
-  /** Id do equipamento — usado para achar a frente alocada e notificá-la. */
   equipamentoId?: string | null;
   idMaquina?: string | null;
   tipoFalha: string;
@@ -61,7 +61,6 @@ export interface DadosEmergenciaWhats {
   operadorNome?: string | null;
   localizacaoGps?: string | null;
   dataHoraIso: string;
-  /** Fotos anexadas (data URL/base64). Enviadas como imagem no WhatsApp. */
   fotos?: string[] | null;
 }
 
@@ -75,57 +74,116 @@ function normalizeEmergencyStatus(status: string | undefined): EmergencyStatus {
   return 'ABERTO';
 }
 
+function parseFotos(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((foto): foto is string => typeof foto === 'string');
+}
+
+function mapEmergencyRow(
+  row: {
+    id: string;
+    legacyId: string | null;
+    companyId: string;
+    source: string;
+    severity: string;
+    equipmentLegacyId: string | null;
+    idMaquina: string | null;
+    chassi: string | null;
+    operadorNome: string | null;
+    tipoFalha: string;
+    descricao: string;
+    localizacaoGps: string | null;
+    statusAtendimento: string;
+    fotos: unknown;
+    checklistLegacyId: string | null;
+    questionId: string | null;
+    questionLabel: string | null;
+    dataHora: Date;
+    createdAt: Date;
+    updatedAt: Date;
+  },
+  prefeituraId: string,
+): EmergencyDoc {
+  const fotos = parseFotos(row.fotos);
+  const equipamentoId = row.equipmentLegacyId ?? row.idMaquina;
+  const dataHoraIso = row.dataHora.toISOString();
+  return {
+    id: row.legacyId ?? row.id,
+    prefeituraId,
+    source: row.source as EmergencySource,
+    severity: row.severity as EmergencySeverity,
+    equipamentoId,
+    idMaquina: row.idMaquina ?? equipamentoId,
+    chassis: row.chassi ?? '',
+    operadorNome: row.operadorNome ?? '—',
+    operador: row.operadorNome ?? '—',
+    tipoFalha: row.tipoFalha,
+    descricao: row.descricao,
+    localizacaoGps: row.localizacaoGps,
+    statusAtendimento: normalizeEmergencyStatus(row.statusAtendimento),
+    fotos,
+    qtdFotos: fotos.length,
+    checklistRunId: row.checklistLegacyId,
+    checklistId: row.checklistLegacyId,
+    questionId: row.questionId,
+    questionLabel: row.questionLabel,
+    dataHoraIso,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
 @Injectable()
 export class EmergenciesService {
   private readonly logger = new Logger(EmergenciesService.name);
 
   constructor(
-    private firebase: FirebaseService,
+    private readonly prisma: PrismaService,
     private whatsapp: WhatsAppService,
     private mail: MailService,
   ) {}
 
-  private get collection() {
-    return this.firebase.getFirestore().collection('emergenciasRegistros');
-  }
-
   async create(dto: CreateEmergencyDto) {
     const id = randomUUID();
-    const agora = new Date().toISOString();
+    const agora = new Date();
     const fotos = Array.isArray(dto.fotos)
       ? dto.fotos.filter((foto) => typeof foto === 'string' && foto.length > 0)
       : [];
     const equipamentoId = dto.equipamentoId?.trim() || null;
-    const doc: EmergencyDoc = {
-      id,
-      prefeituraId: dto.prefeituraId,
-      source: dto.source ?? 'manual',
-      severity: dto.severity ?? 'critical',
-      equipamentoId,
-      idMaquina: equipamentoId,
-      chassis: dto.chassis?.trim() ?? '',
-      operadorNome: dto.operadorNome,
-      operador: dto.operadorNome,
-      tipoFalha: dto.tipoFalha,
-      descricao: dto.descricao,
-      localizacaoGps: dto.localizacaoGps?.trim() || null,
-      statusAtendimento: 'ABERTO',
-      fotos,
-      qtdFotos: fotos.length,
-      checklistRunId: dto.checklistRunId ?? null,
-      checklistId: dto.checklistId ?? null,
-      questionId: dto.questionId ?? null,
-      questionLabel: dto.questionLabel ?? null,
-      answerValue: dto.answerValue,
-      dataHoraIso: agora,
-      createdAt: agora,
-      updatedAt: agora,
-    };
+    const companyId = await resolverCompanyId(this.prisma, dto.prefeituraId);
+    if (!companyId) {
+      throw new InternalServerErrorException('Empresa não encontrada.');
+    }
 
     try {
-      await this.collection.doc(id).set(doc);
-      // Aguarda antes de responder: em serverless (Vercel) tarefas em
-      // background com `void` são cortadas quando a resposta HTTP termina.
+      const row = await this.prisma.emergency.create({
+        data: {
+          id,
+          legacyId: id,
+          companyId,
+          source: dto.source ?? 'manual',
+          severity: dto.severity ?? 'critical',
+          equipmentLegacyId: equipamentoId,
+          idMaquina: equipamentoId,
+          chassi: dto.chassis?.trim() || null,
+          operadorNome: dto.operadorNome,
+          tipoFalha: dto.tipoFalha,
+          descricao: dto.descricao,
+          localizacaoGps: dto.localizacaoGps?.trim() || null,
+          statusAtendimento: 'ABERTO',
+          fotos: fotos as Prisma.InputJsonValue,
+          checklistLegacyId: dto.checklistRunId ?? null,
+          questionId: dto.questionId ?? null,
+          questionLabel: dto.questionLabel ?? null,
+          dataHora: agora,
+        },
+      });
+
+      const doc: EmergencyDoc = {
+        ...mapEmergencyRow(row, dto.prefeituraId),
+        answerValue: dto.answerValue,
+      };
+
       await Promise.all([
         this.notificarWhatsApp(doc),
         this.notificarEmail(doc),
@@ -139,7 +197,6 @@ export class EmergenciesService {
     }
   }
 
-  /** Texto da mensagem de WhatsApp para uma emergência. */
   private montarMensagem(doc: DadosEmergenciaWhats): string {
     const sev: Record<string, string> = {
       critical: 'Crítica',
@@ -164,12 +221,6 @@ export class EmergenciesService {
       .join('\n');
   }
 
-  /**
-   * Dispara a notificação de WhatsApp se: o WhatsApp está conectado, a empresa
-   * ativou o toggle e cadastrou um número. Nunca lança (best-effort). Público
-   * porque a emergência do checklist é gravada direto no Firestore pelo front
-   * (não passa por `create`), então o front chama esta notificação à parte.
-   */
   async notificarWhatsApp(doc: DadosEmergenciaWhats): Promise<void> {
     try {
       if (!(await this.whatsapp.estaConectado())) {
@@ -178,40 +229,34 @@ export class EmergenciesService {
         );
         return;
       }
-      const snap = await this.firebase
-        .getFirestore()
-        .collection('configuracoes')
-        .where('prefeituraId', '==', doc.prefeituraId)
-        .get();
-      const cfg = snap.docs[0]?.data() as
-        | {
-            empresa?: { whatsappNumero?: string };
-            alertas?: { notificacaoWhatsapp?: boolean };
-          }
-        | undefined;
-      // O toggle global gateia tudo: desligado → ninguém é notificado.
-      const ativo = cfg?.alertas?.notificacaoWhatsapp === true;
+
+      const companyId = await resolverCompanyId(this.prisma, doc.prefeituraId);
+      if (!companyId) return;
+
+      const settings = await this.prisma.companySettings.findUnique({
+        where: { companyId },
+      });
+      const company = await this.prisma.company.findUnique({
+        where: { id: companyId },
+        select: { whatsapp: true },
+      });
+
+      const ativo = settings?.alertWhatsappEmergencia === true;
       if (!ativo) {
         this.logger.warn(
-          `Toggle notificacaoWhatsapp desligado — prefeitura ${doc.prefeituraId}.`,
+          `Toggle alertWhatsappEmergencia desligado — prefeitura ${doc.prefeituraId}.`,
         );
         return;
       }
 
-      // Destinatários: WhatsApp da empresa (clientes = fonte única) + telefone
-      // da frente onde o equipamento está alocado.
-      const numeroEmpresa = await this.buscarWhatsappEmpresa(
-        doc.prefeituraId,
-        cfg?.empresa?.whatsappNumero,
-      );
+      const numeroEmpresa = (company?.whatsapp ?? '').trim();
       const numeroFrente = await this.buscarTelefoneFrenteDoEquipamento(
         doc.idMaquina ?? doc.equipamentoId,
       );
       const destinos = this.dedupNumeros([numeroEmpresa, numeroFrente]);
       if (destinos.length === 0) {
         this.logger.warn(
-          `Nenhum WhatsApp de destino — prefeitura ${doc.prefeituraId} ` +
-            `(empresa="${numeroEmpresa || '—'}", frente="${numeroFrente || '—'}").`,
+          `Nenhum WhatsApp de destino — prefeitura ${doc.prefeituraId}.`,
         );
         return;
       }
@@ -221,140 +266,93 @@ export class EmergenciesService {
         (foto): foto is string => typeof foto === 'string' && foto.length > 0,
       );
 
-      this.logger.log(
-        `Notificando emergência por WhatsApp — prefeitura=${doc.prefeituraId}, ` +
-          `destinos=[${destinos.join(', ')}], fotos=${fotos.length}, ` +
-          `tipoFalha="${doc.tipoFalha}".`,
-      );
-
-      // Cada destino é independente: falhar num número não impede o outro.
       for (const numero of destinos) {
         try {
           await this.enviarParaNumero(numero, texto, fotos);
         } catch (e) {
           this.logger.warn(
-            `Falha ao notificar ${numero} por WhatsApp (prefeitura=${doc.prefeituraId}, ` +
-              `fotos=${fotos.length}): ${(e as Error).message}`,
+            `Falha ao notificar ${numero} por WhatsApp: ${(e as Error).message}`,
           );
         }
       }
     } catch (e) {
       this.logger.warn(
-        `Falha ao notificar emergência por WhatsApp (prefeitura=${doc.prefeituraId}): ` +
-          `${(e as Error).message}`,
+        `Falha ao notificar emergência por WhatsApp: ${(e as Error).message}`,
       );
     }
   }
 
-  /** Envia o texto da emergência (com fotos como imagem, se houver) a um número. */
   private async enviarParaNumero(
     numero: string,
     texto: string,
     fotos: string[],
   ): Promise<void> {
     if (fotos.length === 0) {
-      this.logger.debug(`WhatsApp sendText → ${numero}`);
       await this.whatsapp.enviarMensagem(numero, texto);
       return;
     }
-    // A 1ª foto leva o texto como legenda; as demais vão soltas — assim a
-    // emergência chega como uma única notificação com imagem + detalhes.
     for (let i = 0; i < fotos.length; i++) {
-      const foto = fotos[i];
-      this.logger.debug(
-        `WhatsApp sendMedia → ${numero} (foto ${i + 1}/${fotos.length}, ` +
-          `${foto.length} chars)`,
-      );
       await this.whatsapp.enviarImagem(
         numero,
-        foto,
+        fotos[i],
         i === 0 ? texto : undefined,
       );
     }
   }
 
-  /**
-   * Telefone (WhatsApp) da frente de trabalho onde o equipamento está alocado.
-   * Caminho: equipamento.id → allocations.vehicleId → allocations.workFrontId →
-   * work-fronts.telefone. Retorna `''` quando não há alocação/telefone.
-   */
   private async buscarTelefoneFrenteDoEquipamento(
     equipId?: string | null,
   ): Promise<string> {
+    const frente = await this.buscarFrenteDoEquipamento(equipId);
+    return frente?.telefone?.trim() ?? '';
+  }
+
+  private async buscarEmailFrenteDoEquipamento(
+    equipId?: string | null,
+  ): Promise<string> {
+    const frente = await this.buscarFrenteDoEquipamento(equipId);
+    return frente?.email?.trim() ?? '';
+  }
+
+  private async buscarFrenteDoEquipamento(equipId?: string | null) {
     const id = (equipId ?? '').trim();
-    if (!id) return '';
-    const db = this.firebase.getFirestore();
-    const alocacoes = await db
-      .collection('allocations')
-      .where('vehicleId', '==', id)
-      .get();
-    // allocate() garante no máximo 1 alocação por equipamento.
-    const workFrontId = alocacoes.docs[0]?.data()?.workFrontId as
-      | string
-      | undefined;
-    if (!workFrontId) return '';
-    const frentes = await db
-      .collection('work-fronts')
-      .where('id', '==', workFrontId)
-      .get();
-    const telefone = frentes.docs[0]?.data()?.telefone as string | undefined;
-    return typeof telefone === 'string' ? telefone.trim() : '';
+    if (!id) return null;
+
+    const equipment = await this.prisma.equipment.findFirst({
+      where: { OR: [{ legacyId: id }, { id }] },
+      select: { id: true },
+    });
+    if (!equipment) return null;
+
+    const alocacao = await this.prisma.workFrontAllocation.findFirst({
+      where: { equipmentId: equipment.id, endDate: null },
+      include: { workFront: { select: { telefone: true, email: true } } },
+      orderBy: { startDate: 'desc' },
+    });
+    return alocacao?.workFront ?? null;
   }
 
-  /**
-   * WhatsApp de emergências da empresa. Fonte única: coleção `clientes`
-   * (mesmo doc que Configurações grava ao salvar). Retrocompat: `configuracoes`.
-   */
-  private async buscarWhatsappEmpresa(
-    prefeituraId: string,
-    fallbackConfig?: string,
-  ): Promise<string> {
-    const db = this.firebase.getFirestore();
-    const cliente = await db.collection('clientes').doc(prefeituraId).get();
-    const doCliente = (
-      cliente.data()?.whatsapp as string | undefined
-    )?.trim();
-    if (doCliente) return doCliente;
-    return (fallbackConfig ?? '').trim();
+  private async buscarEmailEmpresa(prefeituraId: string): Promise<string> {
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) return '';
+    const company = await this.prisma.company.findUnique({
+      where: { id: companyId },
+      select: { email: true, contract: true },
+    });
+    if (!company) return '';
+    const direto = (company.email ?? '').trim();
+    if (direto) return direto;
+    const contract =
+      company.contract && typeof company.contract === 'object'
+        ? (company.contract as { emailContratante?: string })
+        : null;
+    return (contract?.emailContratante ?? '').trim();
   }
 
-  /**
-   * E-mail de alertas da empresa. Fonte única: `clientes.contrato.emailContratante`.
-   */
-  private async buscarEmailEmpresa(
-    prefeituraId: string,
-    fallbackConfig?: string,
-  ): Promise<string> {
-    const db = this.firebase.getFirestore();
-    const cliente = await db.collection('clientes').doc(prefeituraId).get();
-    const contrato = cliente.data()?.contrato as
-      | { emailContratante?: string }
-      | undefined;
-    const doCliente = (contrato?.emailContratante ?? '').trim();
-    if (doCliente) return doCliente;
-    return (fallbackConfig ?? '').trim();
-  }
-
-  /**
-   * Notifica a emergência por EMAIL: email da frente alocada + `emailAlertas`
-   * da empresa (deduplicados). Best-effort, nunca lança. Pública porque a
-   * emergência do checklist é gravada direto pelo front e chama esta à parte.
-   */
   async notificarEmail(doc: DadosEmergenciaWhats): Promise<void> {
     try {
       if (!this.mail.habilitado()) return;
-      const snap = await this.firebase
-        .getFirestore()
-        .collection('configuracoes')
-        .where('prefeituraId', '==', doc.prefeituraId)
-        .get();
-      const cfg = snap.docs[0]?.data() as
-        | { empresa?: { emailAlertas?: string } }
-        | undefined;
-      const emailEmpresa = await this.buscarEmailEmpresa(
-        doc.prefeituraId,
-        cfg?.empresa?.emailAlertas,
-      );
+      const emailEmpresa = await this.buscarEmailEmpresa(doc.prefeituraId);
       const emailFrente = await this.buscarEmailFrenteDoEquipamento(
         doc.idMaquina ?? doc.equipamentoId,
       );
@@ -377,47 +375,6 @@ export class EmergenciesService {
     }
   }
 
-  /**
-   * Email da frente de trabalho onde o equipamento está alocado.
-   * Caminho: equipamento.id → allocations.vehicleId → allocations.workFrontId →
-   * work-fronts.email. Retorna `''` quando não há alocação/email.
-   */
-  private async buscarEmailFrenteDoEquipamento(
-    equipId?: string | null,
-  ): Promise<string> {
-    const id = (equipId ?? '').trim();
-    if (!id) return '';
-    const db = this.firebase.getFirestore();
-    const alocacoes = await db
-      .collection('allocations')
-      .where('vehicleId', '==', id)
-      .get();
-    const workFrontId = alocacoes.docs[0]?.data()?.workFrontId as
-      | string
-      | undefined;
-    if (!workFrontId) return '';
-    const frentes = await db
-      .collection('work-fronts')
-      .where('id', '==', workFrontId)
-      .get();
-    const email = frentes.docs[0]?.data()?.email as string | undefined;
-    return typeof email === 'string' ? email.trim() : '';
-  }
-
-  /** Remove emails vazios/duplicados (case-insensitive), preservando a ordem. */
-  private dedupEmails(emails: string[]): string[] {
-    const vistos = new Set<string>();
-    const out: string[] = [];
-    for (const e of emails) {
-      const v = e.trim().toLowerCase();
-      if (!v || vistos.has(v)) continue;
-      vistos.add(v);
-      out.push(e.trim());
-    }
-    return out;
-  }
-
-  /** HTML do email de emergência. */
   private montarEmailHtml(doc: DadosEmergenciaWhats): string {
     const sev: Record<string, string> = {
       critical: 'Crítica',
@@ -456,7 +413,6 @@ export class EmergenciesService {
       </div>`;
   }
 
-  /** Remove vazios e duplicatas (comparando pelo JID normalizado). */
   private dedupNumeros(numeros: string[]): string[] {
     const vistos = new Set<string>();
     const saida: string[] = [];
@@ -471,16 +427,33 @@ export class EmergenciesService {
     return saida;
   }
 
+  private dedupEmails(emails: string[]): string[] {
+    const vistos = new Set<string>();
+    const out: string[] = [];
+    for (const e of emails) {
+      const v = e.trim().toLowerCase();
+      if (!v || vistos.has(v)) continue;
+      vistos.add(v);
+      out.push(e.trim());
+    }
+    return out;
+  }
+
   async listByPrefeitura(prefeituraId: string, filters?: EmergencyFilters) {
     try {
-      const snap = await this.collection
-        .where('prefeituraId', '==', prefeituraId)
-        .get();
-      const rows = snap.docs
-        .map((doc) => this.mapFirestoreDoc(doc.id, doc.data()))
-        .filter((row) => this.matchesFilters(row, filters))
-        .sort((a, b) => b.dataHoraIso.localeCompare(a.dataHoraIso));
-      return { data: rows, message: 'Emergências carregadas.' };
+      const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+      if (!companyId) {
+        return { data: [] as EmergencyDoc[], message: 'Emergências carregadas.' };
+      }
+
+      const rows = await this.prisma.emergency.findMany({
+        where: { companyId },
+        orderBy: { dataHora: 'desc' },
+      });
+      const data = rows
+        .map((row) => mapEmergencyRow(row, prefeituraId))
+        .filter((row) => this.matchesFilters(row, filters));
+      return { data, message: 'Emergências carregadas.' };
     } catch (error) {
       console.error('Erro ao listar emergências:', error);
       throw new InternalServerErrorException(
@@ -491,52 +464,19 @@ export class EmergenciesService {
 
   async updateStatus(id: string, status: string) {
     const normalized = normalizeEmergencyStatus(status);
-    const ref = this.collection.doc(id);
-    const snap = await ref.get();
-    if (!snap.exists) {
+    const row = await this.prisma.emergency.findFirst({
+      where: { OR: [{ id }, { legacyId: id }] },
+    });
+    if (!row) {
       throw new NotFoundException('Emergência não encontrada.');
     }
-    await ref.update({
-      statusAtendimento: normalized,
-      updatedAt: new Date().toISOString(),
+    await this.prisma.emergency.update({
+      where: { id: row.id },
+      data: { statusAtendimento: normalized },
     });
     return {
-      data: { id, statusAtendimento: normalized },
+      data: { id: row.legacyId ?? row.id, statusAtendimento: normalized },
       message: 'Status da emergência atualizado.',
-    };
-  }
-
-  private mapFirestoreDoc(id: string, data: FirebaseFirestore.DocumentData) {
-    const statusAtendimento = normalizeEmergencyStatus(
-      String(data.statusAtendimento ?? data.Status_Atendimento ?? ''),
-    );
-    const fotos = Array.isArray(data.fotos)
-      ? data.fotos.filter(
-          (foto: unknown): foto is string => typeof foto === 'string',
-        )
-      : [];
-    // GPS pode vir como string ou objeto de coordenadas — preserva o valor
-    // como veio, só tipando como unknown para não propagar `any`.
-    const localizacaoGps: unknown =
-      data.localizacaoGps ?? data.Localizacao_GPS ?? null;
-    return {
-      id,
-      ...data,
-      prefeituraId: String(data.prefeituraId ?? ''),
-      operadorNome: String(data.operadorNome ?? data.operador ?? '—'),
-      operador: String(data.operador ?? data.operadorNome ?? '—'),
-      chassis: String(data.chassis ?? ''),
-      equipamentoId: String(data.equipamentoId ?? data.idMaquina ?? ''),
-      idMaquina: String(data.idMaquina ?? data.equipamentoId ?? ''),
-      tipoFalha: String(data.tipoFalha ?? data.Tipo_Falha ?? '—'),
-      descricao: String(data.descricao ?? data.Descricao_Curta ?? '—'),
-      localizacaoGps: localizacaoGps,
-      fotos,
-      qtdFotos: Number(
-        data.qtdFotos ?? data.Qtd_Fotos_Evidencia ?? fotos.length,
-      ),
-      statusAtendimento,
-      dataHoraIso: String(data.dataHoraIso ?? data.Data_Hora ?? ''),
     };
   }
 
@@ -621,17 +561,5 @@ export class EmergenciesService {
       return String(value).trim().toLowerCase();
     }
     return '';
-  }
-
-  private toNullableString(value: unknown): string | null {
-    if (value == null) return null;
-    if (typeof value === 'string') {
-      const trimmed = value.trim();
-      return trimmed.length > 0 ? trimmed : null;
-    }
-    if (typeof value === 'number' || typeof value === 'boolean') {
-      return String(value);
-    }
-    return null;
   }
 }

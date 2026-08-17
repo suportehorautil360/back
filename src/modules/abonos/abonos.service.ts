@@ -4,7 +4,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { FirebaseService } from '../../config/firebase.service';
+import { resolverCompanyId } from '../../common/prisma/company-resolver';
+import { PrismaService } from '../../prisma/prisma.service';
+import type { PontoAbono } from '../../prisma/generated/client';
 
 export interface AbonoDoc {
   id: string;
@@ -22,29 +24,58 @@ export interface AbonoDoc {
   createdAt: string;
 }
 
+function mapAbonoRow(row: PontoAbono, prefeituraId: string): AbonoDoc {
+  return {
+    id: row.legacyId ?? row.id,
+    prefeituraId,
+    funcionarioCpf: row.operatorCpf,
+    funcionarioNome: row.operatorNome,
+    data: row.data,
+    motivo: row.motivo,
+    solicitacaoId: row.solicitacaoId,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
 /**
- * Coleção de dias "abonados" — gerada quando o RH aprova uma solicitação
- * de abono. O front lê pra classificar o dia como `abonado` em vez de
- * `falta` no cálculo de saldo/KPIs.
+ * Dias "abonados" — gerados quando o RH aprova uma solicitação de abono.
  */
 @Injectable()
 export class AbonosService {
-  constructor(private firebase: FirebaseService) {}
-
-  private get collection() {
-    return this.firebase.getFirestore().collection('abonos');
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async criar(input: Omit<AbonoDoc, 'id' | 'createdAt'>): Promise<AbonoDoc> {
     const id = randomUUID();
-    const doc: AbonoDoc = {
-      id,
-      ...input,
-      createdAt: new Date().toISOString(),
-    };
+    const companyId = await resolverCompanyId(this.prisma, input.prefeituraId);
+    if (!companyId) {
+      throw new InternalServerErrorException('Empresa não encontrada.');
+    }
+
+    const cpf = input.funcionarioCpf.replace(/\D/g, '');
+    let operatorId: string | null = null;
+    if (cpf) {
+      const op = await this.prisma.operator.findFirst({
+        where: { companyId, cpf },
+        select: { id: true },
+      });
+      operatorId = op?.id ?? null;
+    }
+
     try {
-      await this.collection.doc(id).set(doc);
-      return doc;
+      const row = await this.prisma.pontoAbono.create({
+        data: {
+          id,
+          legacyId: id,
+          companyId,
+          operatorId,
+          operatorNome: input.funcionarioNome,
+          operatorCpf: cpf,
+          data: input.data,
+          motivo: input.motivo ?? null,
+          solicitacaoId: input.solicitacaoId ?? null,
+        },
+      });
+      return mapAbonoRow(row, input.prefeituraId);
     } catch (e) {
       console.error('Erro ao criar abono:', e);
       throw new InternalServerErrorException(
@@ -55,13 +86,16 @@ export class AbonosService {
 
   async listar(prefeituraId: string) {
     try {
-      const snap = await this.collection
-        .where('prefeituraId', '==', prefeituraId)
-        .get();
-      const data = snap.docs
-        .map((d) => d.data() as AbonoDoc)
-        // Mais recentes primeiro (data desc).
-        .sort((a, b) => b.data.localeCompare(a.data));
+      const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+      if (!companyId) {
+        return { data: [] as AbonoDoc[], message: 'Abonos carregados.' };
+      }
+
+      const rows = await this.prisma.pontoAbono.findMany({
+        where: { companyId },
+        orderBy: { data: 'desc' },
+      });
+      const data = rows.map((row) => mapAbonoRow(row, prefeituraId));
       return { data, message: 'Abonos carregados.' };
     } catch (e) {
       console.error('Erro ao listar abonos:', e);
@@ -72,11 +106,11 @@ export class AbonosService {
   }
 
   async remover(id: string) {
-    const ref = this.collection.doc(id);
-    const snap = await ref.get();
-    if (!snap.exists) throw new NotFoundException('Abono não encontrado.');
-    await ref.delete();
-    return { data: { id }, message: 'Abono removido.' };
+    const row = await this.prisma.pontoAbono.findFirst({
+      where: { OR: [{ id }, { legacyId: id }] },
+    });
+    if (!row) throw new NotFoundException('Abono não encontrado.');
+    await this.prisma.pontoAbono.delete({ where: { id: row.id } });
+    return { data: { id: row.legacyId ?? row.id }, message: 'Abono removido.' };
   }
 }
-

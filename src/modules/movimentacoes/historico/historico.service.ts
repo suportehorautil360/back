@@ -1,7 +1,8 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { FirebaseService } from '../../../config/firebase.service';
-import { fetchEquipmentMap } from '../shared/equipment.helper';
-import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
+import { mapAbastecimentoRowToDoc } from '../../../common/prisma/abastecimento-api.mapper';
+import { resolverCompanyId } from '../../../common/prisma/company-resolver';
+import { fetchEquipmentMapPg } from '../../../common/prisma/equipment-resolver';
+import { PrismaService } from '../../../prisma/prisma.service';
 import type {
   HistoricoGroup,
   HistoricoItem,
@@ -11,44 +12,81 @@ import type {
 
 type RawDoc = Record<string, unknown>;
 
+const ABASTECIMENTO_INCLUDE = {
+  equipment: {
+    select: { legacyId: true, placa: true, chassi: true, descricao: true },
+  },
+} as const;
+
 @Injectable()
 export class HistoricoService {
-  constructor(private readonly firebaseService: FirebaseService) {}
-
-  private db() {
-    return this.firebaseService.getFirestore();
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async listarPorPrefeitura(
     prefeituraId: string,
     limit = 50,
   ): Promise<HistoricoResponse> {
     try {
-      const [abDocsRaw, lubDocsRaw, reaDocsRaw] = await Promise.all([
-        fetchPrefeituraDocs<RawDoc & { createdAt: string }>(
-          this.db().collection('abastecimentos'),
-          prefeituraId,
-          { order: 'desc', limit },
-        ),
-        fetchPrefeituraDocs<RawDoc & { createdAt: string }>(
-          this.db().collection('lubrificacoes'),
-          prefeituraId,
-          { order: 'desc', limit },
-        ),
-        fetchPrefeituraDocs<RawDoc & { createdAt: string }>(
-          this.db().collection('reabastecimentos'),
-          prefeituraId,
-          { order: 'desc', limit },
-        ),
+      const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+      if (!companyId) {
+        return {
+          summary: {
+            totalLitersToday: 0,
+            totalAbastecimentosToday: 0,
+            totalEngraxeToday: 0,
+          },
+          groups: [],
+          message: 'Histórico carregado com sucesso!',
+        };
+      }
+
+      const [abRows, lubRows, reaRows] = await Promise.all([
+        this.prisma.abastecimento.findMany({
+          where: { companyId },
+          orderBy: { createdAt: 'desc' },
+          take: limit,
+          include: ABASTECIMENTO_INCLUDE,
+        }),
+        this.prisma.lubrificacao.findMany({
+          where: { companyId },
+          orderBy: { createdAt: 'desc' },
+          take: limit,
+          include: {
+            equipment: { select: { legacyId: true, id: true } },
+          },
+        }),
+        this.prisma.comboioReabastecimento.findMany({
+          where: { companyId },
+          orderBy: { createdAt: 'desc' },
+          take: limit,
+        }),
       ]);
 
-      // Ignora docs legados/incompletos sem createdAt: não dá para datar/agrupar
-      // no histórico e quebrariam o summary, a ordenação e os formatadores.
-      const temData = (d: RawDoc): d is RawDoc & { createdAt: string } =>
-        typeof d.createdAt === 'string' && d.createdAt !== '';
-      const abDocs = abDocsRaw.filter(temData);
-      const lubDocs = lubDocsRaw.filter(temData);
-      const reaDocs = reaDocsRaw.filter(temData);
+      const abDocs = abRows
+        .map((row) => mapAbastecimentoRowToDoc(row, prefeituraId))
+        .filter((d) => d.createdAt !== '');
+
+      const lubDocs: (RawDoc & { createdAt: string })[] = lubRows
+        .map((row) => ({
+          id: row.legacyId ?? row.id,
+          equipmentId:
+            row.equipment?.legacyId ?? row.equipmentId ?? row.equipment?.id ?? '',
+          plateOrChassis: row.plateOrChassis ?? '',
+          greasedPoints: Array.isArray(row.greasedPoints)
+            ? row.greasedPoints
+            : [],
+          createdAt: row.createdAt.toISOString(),
+        }))
+        .filter((d) => d.createdAt !== '');
+
+      const reaDocs: (RawDoc & { createdAt: string })[] = reaRows
+        .map((row) => ({
+          id: row.legacyId ?? row.id,
+          receivedLiters: Number(row.receivedLiters),
+          sourceType: row.sourceType,
+          createdAt: row.createdAt.toISOString(),
+        }))
+        .filter((d) => d.createdAt !== '');
 
       const allEquipmentIds = [
         ...new Set(
@@ -58,13 +96,13 @@ export class HistoricoService {
         ),
       ];
 
-      const equipmentMap = await fetchEquipmentMap(
-        this.db().collection('equipamentos'),
+      const equipmentMap = await fetchEquipmentMapPg(
+        this.prisma,
         allEquipmentIds,
       );
 
       const abItems = abDocs.map((d) =>
-        this.formatAbastecimento(d, equipmentMap),
+        this.formatAbastecimento(d as unknown as RawDoc, equipmentMap),
       );
       const lubItems = lubDocs.map((d) =>
         this.formatLubrificacao(d, equipmentMap),
@@ -78,7 +116,10 @@ export class HistoricoService {
         )
         .slice(0, limit);
 
-      const summary = this.buildSummary(abDocs, lubDocs);
+      const summary = this.buildSummary(
+        abDocs as unknown as RawDoc[],
+        lubDocs,
+      );
       const groups = this.groupByDate(all);
 
       return { summary, groups, message: 'Histórico carregado com sucesso!' };
@@ -232,19 +273,19 @@ function buildDateLabel(isoString: string): string {
   return `${day} ${month}`;
 }
 
-function sourceLabel(sourceType: string | undefined): string {
-  const map: Record<string, string> = {
-    gasStation: 'Posto',
-    farmTank: 'Tanque fazenda',
-    distributor: 'Distribuidora',
-  };
-  return sourceType ? (map[sourceType] ?? sourceType) : '—';
+function asString(value: unknown): string {
+  return typeof value === 'string' ? value : '';
 }
 
-function asString(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'string') return value;
-  if (typeof value === 'number' || typeof value === 'boolean')
-    return String(value);
-  return '';
+function sourceLabel(sourceType: string | undefined): string {
+  switch (sourceType) {
+    case 'gasStation':
+      return 'Posto';
+    case 'farmTank':
+      return 'Tanque fazenda';
+    case 'distributor':
+      return 'Distribuidora';
+    default:
+      return 'Origem';
+  }
 }
