@@ -24,7 +24,7 @@ export class UserController {
   @ApiOperation({
     summary: 'Login de usuario e emissao de token JWT',
     description:
-      'Autentica por e-mail ou usuario/senha no Firestore (SHA-256).',
+      'Autentica por e-mail ou usuario/senha em partner_portal_users (Postgres).',
   })
   async login(@Body() dto: LoginUserDto) {
     return this.userService.login(dto);

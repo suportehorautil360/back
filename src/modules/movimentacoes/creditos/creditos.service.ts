@@ -5,13 +5,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { FirebaseService } from '../../../config/firebase.service';
-import { AbastecimentoDoc } from '../abastecimentos/abastecimentos.service';
+import { mapAbastecimentoRowsToGastoInput } from '../../../common/prisma/abastecimento-api.mapper';
+import { resolverCompanyId } from '../../../common/prisma/company-resolver';
 import {
-  fetchEquipmentMap,
-  resolveEquipmentIdByPlateOrChassis,
-} from '../shared/equipment.helper';
-import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
+  fetchEquipmentMapPg,
+  resolveEquipmentByIdPg,
+  resolveEquipmentIdByPlateOrChassisPg,
+} from '../../../common/prisma/equipment-resolver';
+import { mapEquipmentToApi } from '../../../common/prisma/equipment-api.mapper';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateCreditoDto } from './dto/create-credito.dto';
 import {
   buildEquipamentoKeywords,
@@ -35,27 +37,7 @@ import { RESPONSIBLE_OPTIONS } from './creditos.types';
 
 @Injectable()
 export class CreditosService {
-  constructor(private firebaseService: FirebaseService) {}
-
-  private get collection() {
-    return this.firebaseService.getFirestore().collection('creditos');
-  }
-
-  private get equipamentosCollection() {
-    return this.firebaseService.getFirestore().collection('equipamentos');
-  }
-
-  private get workFrontsCollection() {
-    return this.firebaseService.getFirestore().collection('work-fronts');
-  }
-
-  private get abastecimentosCollection() {
-    return this.firebaseService.getFirestore().collection('abastecimentos');
-  }
-
-  private get allocationsCollection() {
-    return this.firebaseService.getFirestore().collection('allocations');
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(input: CreateCreditoDto): Promise<CreditoDoc> {
     const amount = parseCreditAmount(input.amount);
@@ -65,27 +47,44 @@ export class CreditosService {
       );
     }
 
-    const target = await this.resolveTarget(input);
-
+    const companyId = await this.requireCompanyId(input.prefeituraId);
+    const target = await this.resolveTarget(input, companyId);
     const id = randomUUID();
-    const doc: CreditoDoc = {
-      id,
-      prefeituraId: input.prefeituraId.trim(),
-      type: input.type,
-      equipmentId: target.equipmentId,
-      plateOrChassis:
-        input.type === 'equipment' ? input.plateOrChassis!.trim() : null,
-      workFrontId: input.type === 'workFront' ? input.workFrontId! : null,
-      targetLabel: target.label,
-      amount,
-      responsible: input.responsible.trim(),
-      observation: input.observation?.trim() || undefined,
-      createdAt: new Date().toISOString(),
-    };
+    const now = new Date();
 
     try {
-      await this.collection.doc(id).set(doc);
-      return doc;
+      await this.prisma.credito.create({
+        data: {
+          id,
+          legacyId: id,
+          companyId,
+          tipo: input.type,
+          equipmentId: target.equipmentUuid,
+          plateOrChassis:
+            input.type === 'equipment' ? input.plateOrChassis!.trim() : null,
+          workFrontId: target.workFrontUuid,
+          targetLabel: target.label,
+          amount: amount.toFixed(2),
+          responsible: input.responsible.trim(),
+          observation: input.observation?.trim() || null,
+          createdAt: now,
+        },
+      });
+
+      return {
+        id,
+        prefeituraId: input.prefeituraId.trim(),
+        type: input.type,
+        equipmentId: target.equipmentPublicId,
+        plateOrChassis:
+          input.type === 'equipment' ? input.plateOrChassis!.trim() : null,
+        workFrontId: target.workFrontPublicId,
+        targetLabel: target.label,
+        amount,
+        responsible: input.responsible.trim(),
+        observation: input.observation?.trim() || undefined,
+        createdAt: now.toISOString(),
+      };
     } catch (error) {
       console.error('Erro ao criar crédito:', error);
       throw new InternalServerErrorException(
@@ -128,73 +127,90 @@ export class CreditosService {
     prefeituraId: string,
   ): Promise<{ data: CreditoSaldosPayload; message: string }> {
     try {
-      const [
-        creditosSnap,
-        abastecimentosSnap,
-        allocationsSnap,
-        workFrontsSnap,
-      ] = await Promise.all([
-        this.collection.where('prefeituraId', '==', prefeituraId).get(),
-        this.abastecimentosCollection
-          .where('prefeituraId', '==', prefeituraId)
-          .get(),
-        this.allocationsCollection
-          .where('prefeituraId', '==', prefeituraId)
-          .get(),
-        this.workFrontsCollection
-          .where('prefeituraId', '==', prefeituraId)
-          .get(),
-      ]);
-
-      const creditos = creditosSnap.docs.map((doc) => doc.data() as CreditoDoc);
-      const abastecimentos = abastecimentosSnap.docs.map(
-        (doc) => doc.data() as AbastecimentoDoc,
-      );
-      const allocations = allocationsSnap.docs.map((doc) => {
-        const raw = doc.data() as Record<string, unknown>;
+      const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+      if (!companyId) {
         return {
-          vehicleId: asString(raw.vehicleId),
-          workFrontId: asString(raw.workFrontId),
-          workFrontName: asString(raw.workFrontName),
+          data: { saldosEquipamento: [], saldosFrente: [] },
+          message: 'Saldos de crédito buscados com sucesso!',
         };
-      });
+      }
+
+      const [creditosRows, abastecimentosRows, allocationsRows, workFrontsRows] =
+        await Promise.all([
+          this.prisma.credito.findMany({
+            where: { companyId },
+            include: {
+              equipment: { select: { legacyId: true } },
+              workFront: { select: { legacyId: true } },
+            },
+          }),
+          this.prisma.abastecimento.findMany({
+            where: { companyId },
+            include: { equipment: { select: { legacyId: true } } },
+          }),
+          this.prisma.workFrontAllocation.findMany({
+            where: {
+              endDate: null,
+              workFront: { companyId },
+            },
+            include: {
+              workFront: { select: { legacyId: true, id: true, nome: true } },
+              equipment: { select: { legacyId: true, id: true } },
+            },
+          }),
+          this.prisma.workFront.findMany({
+            where: { companyId },
+            select: { id: true, legacyId: true, nome: true },
+          }),
+        ]);
+
+      const creditos: CreditoDoc[] = creditosRows.map((row) =>
+        this.mapCreditoRow(row, prefeituraId),
+      );
+
+      const allocations = allocationsRows
+        .filter((row) => row.equipment && row.workFront)
+        .map((row) => ({
+          vehicleId:
+            row.equipment!.legacyId ?? row.equipment!.id,
+          workFrontId:
+            row.workFront!.legacyId ?? row.workFront!.id,
+          workFrontName: row.workFront!.nome,
+        }));
 
       const workFrontNames = new Map<string, string>();
-      workFrontsSnap.docs.forEach((doc) => {
-        const raw = doc.data() as Record<string, unknown>;
-        const id = asString(raw.id ?? doc.id);
-        if (!id) return;
-        workFrontNames.set(id, buildFrenteLabel(raw));
-      });
+      for (const wf of workFrontsRows) {
+        const id = wf.legacyId ?? wf.id;
+        workFrontNames.set(id, buildFrenteLabel({ nome: wf.nome, id }));
+      }
 
       const equipmentIds = [
         ...new Set([
           ...creditos
             .map((item) => item.equipmentId)
             .filter((id): id is string => !!id),
-          ...abastecimentos.map((item) => item.equipmentId).filter(Boolean),
+          ...abastecimentosRows.map(
+            (row) => row.equipment?.legacyId ?? row.equipmentId ?? '',
+          ),
           ...allocations.map((item) => item.vehicleId).filter(Boolean),
         ]),
       ];
 
-      const equipmentMap = await fetchEquipmentMap(
-        this.equipamentosCollection,
-        equipmentIds,
+      const equipmentMap = await fetchEquipmentMapPg(
+        this.prisma,
+        equipmentIds.filter(Boolean),
       );
+
+      const gastoInputs = mapAbastecimentoRowsToGastoInput(abastecimentosRows);
 
       const data = buildCreditosSaldosPayload({
         creditos,
-        abastecimentos: abastecimentos.map((item) => {
-          const raw = item as unknown as Record<string, unknown>;
-          return {
-            equipmentId: item.equipmentId,
-            total: item.total ?? null,
-            status: asString(raw.status) || null,
-          };
-        }),
-        allocations: allocations.filter(
-          (item) => item.vehicleId && item.workFrontId,
-        ),
+        abastecimentos: gastoInputs.map((item) => ({
+          equipmentId: item.equipmentId ?? '',
+          total: item.total != null ? Number(item.total) : null,
+          status: item.status != null ? String(item.status) : null,
+        })),
+        allocations,
         equipmentMap,
         workFrontNames,
       });
@@ -212,13 +228,23 @@ export class CreditosService {
     prefeituraId: string,
   ): Promise<{ data: CreditoListItem[]; message: string }> {
     try {
-      const docs = await fetchPrefeituraDocs<CreditoDoc>(
-        this.collection,
-        prefeituraId,
-        { order: 'desc' },
-      );
+      const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+      if (!companyId) {
+        return { data: [], message: 'Créditos buscados com sucesso!' };
+      }
 
-      const data = docs.map((doc) => this.mapToListItem(doc));
+      const rows = await this.prisma.credito.findMany({
+        where: { companyId },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          equipment: { select: { legacyId: true } },
+          workFront: { select: { legacyId: true } },
+        },
+      });
+
+      const data = rows.map((row) =>
+        this.mapToListItem(this.mapCreditoRow(row, prefeituraId)),
+      );
 
       return { data, message: 'Créditos buscados com sucesso!' };
     } catch (error) {
@@ -229,9 +255,49 @@ export class CreditosService {
     }
   }
 
+  private mapCreditoRow(
+    row: {
+      id: string;
+      legacyId: string | null;
+      tipo: string;
+      equipmentId: string | null;
+      plateOrChassis: string | null;
+      workFrontId: string | null;
+      targetLabel: string;
+      amount: unknown;
+      responsible: string;
+      observation: string | null;
+      createdAt: Date;
+      equipment?: { legacyId: string | null } | null;
+      workFront?: { legacyId: string | null } | null;
+    },
+    prefeituraId: string,
+  ): CreditoDoc {
+    return {
+      id: row.legacyId ?? row.id,
+      prefeituraId,
+      type: row.tipo as CreditoDoc['type'],
+      equipmentId: row.equipment?.legacyId ?? row.equipmentId,
+      plateOrChassis: row.plateOrChassis,
+      workFrontId: row.workFront?.legacyId ?? row.workFrontId,
+      targetLabel: row.targetLabel,
+      amount: Number(row.amount),
+      responsible: row.responsible,
+      observation: row.observation ?? undefined,
+      createdAt: row.createdAt.toISOString(),
+    };
+  }
+
   private async resolveTarget(
     input: CreateCreditoDto,
-  ): Promise<{ label: string; equipmentId: string | null }> {
+    companyId: string,
+  ): Promise<{
+    label: string;
+    equipmentPublicId: string | null;
+    equipmentUuid: string | null;
+    workFrontPublicId: string | null;
+    workFrontUuid: string | null;
+  }> {
     if (input.type === 'equipment') {
       if (!input.plateOrChassis?.trim()) {
         throw new BadRequestException(
@@ -245,17 +311,22 @@ export class CreditosService {
       }
 
       const plateOrChassis = input.plateOrChassis.trim();
-      const equipmentId = await resolveEquipmentIdByPlateOrChassis(
-        this.equipamentosCollection,
+      const equip = await resolveEquipmentByIdPg(
+        this.prisma,
         input.prefeituraId,
-        plateOrChassis,
+        await resolveEquipmentIdByPlateOrChassisPg(
+          this.prisma,
+          input.prefeituraId,
+          plateOrChassis,
+        ),
       );
 
       return {
-        label: buildEquipamentoLabel(
-          await this.findEquipamentoRaw(input.prefeituraId, equipmentId),
-        ),
-        equipmentId,
+        label: buildEquipamentoLabel(equip.raw),
+        equipmentPublicId: equip.id,
+        equipmentUuid: equip.equipmentUuid,
+        workFrontPublicId: null,
+        workFrontUuid: null,
       };
     }
 
@@ -271,85 +342,60 @@ export class CreditosService {
     }
 
     const workFront = await this.findFrenteTrabalho(
-      input.prefeituraId,
+      companyId,
       input.workFrontId.trim(),
     );
-    return { label: buildFrenteLabel(workFront), equipmentId: null };
+
+    return {
+      label: buildFrenteLabel(workFront),
+      equipmentPublicId: null,
+      equipmentUuid: null,
+      workFrontPublicId: workFront.publicId,
+      workFrontUuid: workFront.uuid,
+    };
   }
 
-  private async findEquipamentoRaw(
-    prefeituraId: string,
-    equipmentId: string,
-  ): Promise<Record<string, unknown>> {
-    const byField = await this.equipamentosCollection
-      .where('id', '==', equipmentId)
-      .where('prefeituraId', '==', prefeituraId.trim())
-      .limit(1)
-      .get();
-
-    if (!byField.empty) {
-      return byField.docs[0].data();
-    }
-
-    const byDocId = await this.equipamentosCollection.doc(equipmentId).get();
-    if (byDocId.exists) {
-      const raw = byDocId.data() as Record<string, unknown>;
-      if (asString(raw.prefeituraId) === prefeituraId.trim()) {
-        return raw;
-      }
-    }
-
-    const snap = await this.equipamentosCollection
-      .where('prefeituraId', '==', prefeituraId.trim())
-      .get();
-
-    const match = snap.docs.find((doc) => {
-      const raw = doc.data() as Record<string, unknown>;
-      return (
-        asString(raw.id ?? doc.id) === equipmentId || doc.id === equipmentId
-      );
+  private async findFrenteTrabalho(companyId: string, workFrontId: string) {
+    const row = await this.prisma.workFront.findFirst({
+      where: {
+        companyId,
+        OR: [{ id: workFrontId }, { legacyId: workFrontId }],
+      },
     });
 
-    if (match) {
-      return match.data();
-    }
-
-    throw new NotFoundException(
-      'Equipamento não encontrado ou não cadastrado para esta empresa.',
-    );
-  }
-
-  private async findFrenteTrabalho(
-    prefeituraId: string,
-    workFrontId: string,
-  ): Promise<Record<string, unknown>> {
-    const snap = await this.workFrontsCollection
-      .where('id', '==', workFrontId)
-      .where('prefeituraId', '==', prefeituraId)
-      .limit(1)
-      .get();
-
-    if (snap.empty) {
+    if (!row) {
       throw new NotFoundException(
         'Frente de trabalho não encontrada para esta prefeitura.',
       );
     }
 
-    return snap.docs[0].data();
+    return {
+      uuid: row.id,
+      publicId: row.legacyId ?? row.id,
+      nome: row.nome,
+      id: row.legacyId ?? row.id,
+    };
   }
 
   private async listarEquipamentosOpcoes(
     prefeituraId: string,
   ): Promise<CreditoOpcaoItem[]> {
-    const snap = await this.equipamentosCollection
-      .where('prefeituraId', '==', prefeituraId)
-      .get();
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) return [];
 
-    return snap.docs
-      .map((doc) => {
-        const raw = doc.data() as Record<string, unknown>;
+    const rows = await this.prisma.equipment.findMany({
+      where: { companyId },
+      orderBy: { descricao: 'asc' },
+    });
+
+    return rows
+      .map((row) => {
+        const raw = mapEquipmentToApi(row, prefeituraId) as Record<
+          string,
+          unknown
+        >;
         const id =
-          resolveEquipmentPlateOrChassis(raw) || asString(raw.id ?? doc.id);
+          resolveEquipmentPlateOrChassis(raw) || String(raw.id ?? row.id);
         return {
           id,
           label: buildEquipamentoLabel(raw),
@@ -363,17 +409,20 @@ export class CreditosService {
   private async listarFrentesOpcoes(
     prefeituraId: string,
   ): Promise<CreditoOpcaoItem[]> {
-    const snap = await this.workFrontsCollection
-      .where('prefeituraId', '==', prefeituraId)
-      .get();
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) return [];
 
-    return snap.docs
-      .map((doc) => {
-        const raw = doc.data() as Record<string, unknown>;
-        const id = asString(raw.id ?? doc.id);
+    const rows = await this.prisma.workFront.findMany({
+      where: { companyId },
+      orderBy: { nome: 'asc' },
+    });
+
+    return rows
+      .map((row) => {
+        const id = row.legacyId ?? row.id;
         return {
           id,
-          label: buildFrenteLabel(raw),
+          label: buildFrenteLabel({ nome: row.nome, id }),
         };
       })
       .filter((item) => item.id)
@@ -394,13 +443,12 @@ export class CreditosService {
       dateLabel: formatCreditDateLabel(doc.createdAt),
     };
   }
-}
 
-function asString(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'string') return value.trim();
-  if (typeof value === 'number' || typeof value === 'boolean') {
-    return String(value);
+  private async requireCompanyId(prefeituraId: string): Promise<string> {
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) {
+      throw new BadRequestException('Empresa não encontrada.');
+    }
+    return companyId;
   }
-  return '';
 }

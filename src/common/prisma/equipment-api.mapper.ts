@@ -17,6 +17,7 @@ type EquipmentRow = {
   unidadeRevisao: string | null;
   combustivel?: string | null;
   capacidadeTanque?: number | null;
+  capacidadeTanqueCaminhao?: number | null;
   condutoresIds?: unknown;
 };
 
@@ -67,6 +68,7 @@ export function mapEquipmentToApi(
     unidadeRevisao: row.unidadeRevisao ?? 'h',
     combustivel: txt(row.combustivel),
     capacidadeTanque: row.capacidadeTanque ?? null,
+    capacidadeTanqueCaminhao: row.capacidadeTanqueCaminhao ?? null,
     condutoresResponsaveis: parseCondutoresIds(row.condutoresIds),
   };
 }

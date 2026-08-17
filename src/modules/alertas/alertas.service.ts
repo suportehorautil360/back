@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { FirebaseService } from '../../config/firebase.service';
+import { ehComboioTipo } from '../../common/prisma/equipment-api.mapper';
+import { resolverCompanyId } from '../../common/prisma/company-resolver';
+import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 
 /** Dias de antecedência para alertar CNH a vencer (inclui já vencidas). */
@@ -60,25 +62,32 @@ export interface ResumoVarredura {
   }[];
 }
 
-function rec(v: unknown): Record<string, unknown> {
-  return v && typeof v === 'object' ? (v as Record<string, unknown>) : {};
-}
 function texto(v: unknown): string {
   return typeof v === 'string' ? v : '';
 }
+
 function numero(v: unknown): number {
   return typeof v === 'number' && Number.isFinite(v) ? v : 0;
 }
 
-/** Aceita "YYYY-MM-DD" ou "DD/MM/YYYY"; senão tenta o parser nativo. */
-function parseData(s: string): Date | null {
-  const t = s.trim();
-  let m = /^(\d{4})-(\d{2})-(\d{2})/.exec(t);
-  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12);
-  m = /^(\d{2})\/(\d{2})\/(\d{4})/.exec(t);
-  if (m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), 12);
-  const d = new Date(t);
-  return Number.isNaN(d.getTime()) ? null : d;
+function formatDateBr(d: Date): string {
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const yyyy = d.getUTCFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+function resolveEmailAlertas(company: {
+  email: string | null;
+  contract: unknown;
+}): string {
+  const direto = texto(company.email).trim();
+  if (direto) return direto;
+  const contract =
+    company.contract && typeof company.contract === 'object'
+      ? (company.contract as { emailContratante?: string })
+      : null;
+  return texto(contract?.emailContratante).trim();
 }
 
 @Injectable()
@@ -86,7 +95,7 @@ export class AlertasService {
   private readonly logger = new Logger(AlertasService.name);
 
   constructor(
-    private firebase: FirebaseService,
+    private readonly prisma: PrismaService,
     private mail: MailService,
   ) {}
 
@@ -95,27 +104,38 @@ export class AlertasService {
     prefeituraId: string,
     flags: FlagsAlertas,
   ): Promise<AchadosAlertas> {
-    const db = this.firebase.getFirestore();
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
     const out: AchadosAlertas = { revisoes: [], cnhs: [], tanques: [] };
+    if (!companyId) return out;
 
     if (flags.revisao) {
-      const snap = await db
-        .collection('equipamentos')
-        .where('prefeituraId', '==', prefeituraId)
-        .get();
-      for (const doc of snap.docs) {
-        const d = rec(doc.data());
-        if (texto(d.status) === 'inativo') continue;
-        const medicao = numero(d.medicaoAtual);
-        const ultima = numero(d.ultimaRevisao);
-        const intervalo = numero(d.intervaloRevisao);
+      const equipamentos = await this.prisma.equipment.findMany({
+        where: { companyId },
+        select: {
+          status: true,
+          descricao: true,
+          modelo: true,
+          placa: true,
+          chassi: true,
+          medicaoAtual: true,
+          ultimaRevisao: true,
+          intervaloRevisao: true,
+          unidadeRevisao: true,
+        },
+      });
+
+      for (const eq of equipamentos) {
+        if (texto(eq.status).toLowerCase() === 'inativo') continue;
+        const medicao = numero(eq.medicaoAtual);
+        const ultima = numero(eq.ultimaRevisao);
+        const intervalo = numero(eq.intervaloRevisao);
         if (intervalo <= 0) continue;
         const usado = medicao - ultima;
         if (usado >= intervalo) {
           out.revisoes.push({
-            descricao: texto(d.descricao) || texto(d.modelo) || 'Equipamento',
-            identificacao: texto(d.placa) || texto(d.chassis) || '—',
-            unidade: texto(d.unidadeRevisao) || 'km',
+            descricao: texto(eq.descricao) || texto(eq.modelo) || 'Equipamento',
+            identificacao: texto(eq.placa) || texto(eq.chassi) || '—',
+            unidade: texto(eq.unidadeRevisao) || 'km',
             proxima: ultima + intervalo,
             medicaoAtual: medicao,
             excedente: usado - intervalo,
@@ -125,25 +145,22 @@ export class AlertasService {
     }
 
     if (flags.cnh) {
-      const snap = await db
-        .collection('operadores')
-        .where('prefeituraId', '==', prefeituraId)
-        .get();
+      const operadores = await this.prisma.operator.findMany({
+        where: { companyId, cnhValidade: { not: null } },
+        select: { nome: true, cnhCategoria: true, cnhValidade: true },
+      });
       const hoje = new Date();
-      for (const doc of snap.docs) {
-        const d = rec(doc.data());
-        const validadeStr = texto(d.cnhValidade).trim();
-        if (!validadeStr) continue;
-        const validade = parseData(validadeStr);
-        if (!validade) continue;
+      for (const op of operadores) {
+        if (!op.cnhValidade) continue;
+        const validade = op.cnhValidade;
         const dias = Math.floor(
           (validade.getTime() - hoje.getTime()) / 86_400_000,
         );
         if (dias <= CNH_DIAS_ALERTA) {
           out.cnhs.push({
-            nome: texto(d.nome) || 'Funcionário',
-            categoria: texto(d.cnhCategoria),
-            validade: validadeStr,
+            nome: texto(op.nome) || 'Funcionário',
+            categoria: texto(op.cnhCategoria),
+            validade: formatDateBr(validade),
             dias,
           });
         }
@@ -151,20 +168,27 @@ export class AlertasService {
     }
 
     if (flags.tanque) {
-      const snap = await db
-        .collection('tanks')
-        .where('prefeituraId', '==', prefeituraId)
-        .get();
-      for (const doc of snap.docs) {
-        const d = rec(doc.data());
-        const capacidade = numero(d.capacity);
-        const volume = numero(d.currentVolume);
+      const comboios = await this.prisma.equipment.findMany({
+        where: { companyId },
+        select: {
+          tipo: true,
+          descricao: true,
+          combustivel: true,
+          capacidadeTanque: true,
+          volumeTanqueAtual: true,
+        },
+      });
+
+      for (const comboio of comboios) {
+        if (!ehComboioTipo(comboio.tipo)) continue;
+        const capacidade = numero(comboio.capacidadeTanque);
+        const volume = numero(comboio.volumeTanqueAtual);
         if (capacidade <= 0) continue;
         const pct = (volume / capacidade) * 100;
         if (pct <= TANQUE_CRITICO_PCT) {
           out.tanques.push({
-            nome: texto(d.name) || 'Tanque',
-            combustivel: texto(d.fuelType),
+            nome: texto(comboio.descricao) || 'Comboio',
+            combustivel: texto(comboio.combustivel),
             percentual: Math.round(pct),
             volumeAtual: volume,
             capacidade,
@@ -182,30 +206,32 @@ export class AlertasService {
   }
 
   /**
-   * Varre todas as prefeituras (driver: coleção `configuracoes`), coleta os
-   * alertas habilitados e, havendo achados + email configurado, dispara o email.
+   * Varre todas as empresas ativas no Postgres, coleta os alertas habilitados
+   * e, havendo achados + email configurado, dispara o email.
    */
   async varrer(): Promise<ResumoVarredura> {
-    const db = this.firebase.getFirestore();
-    const snap = await db.collection('configuracoes').get();
+    const companies = await this.prisma.company.findMany({
+      where: { status: 'ACTIVE' },
+      include: { settings: true },
+    });
+
     const resumo: ResumoVarredura = {
-      prefeiturasVarridas: snap.size,
+      prefeiturasVarridas: companies.length,
       prefeiturasComAchados: 0,
       emailsEnviados: 0,
       falhas: 0,
       detalhes: [],
     };
 
-    for (const doc of snap.docs) {
-      const cfg = rec(doc.data());
-      const prefeituraId = texto(cfg.prefeituraId);
-      if (!prefeituraId) continue;
+    for (const company of companies) {
+      const prefeituraId = company.legacyId ?? company.id;
+      const settings = company.settings;
+      if (!settings) continue;
 
-      const flagsCfg = rec(cfg.alertas);
       const flags: FlagsAlertas = {
-        revisao: flagsCfg.bloqueioRevisaoVencida !== false,
-        cnh: flagsCfg.cnhProximaVencimento !== false,
-        tanque: flagsCfg.nivelCriticoTanque !== false,
+        revisao: settings.alertBloqueioRevisaoVencida,
+        cnh: settings.alertCnhProximaVencimento,
+        tanque: settings.alertNivelCriticoTanque,
       };
       if (!flags.revisao && !flags.cnh && !flags.tanque) continue;
 
@@ -214,8 +240,7 @@ export class AlertasService {
       if (total === 0) continue;
       resumo.prefeiturasComAchados++;
 
-      const empresa = rec(cfg.empresa);
-      const email = texto(empresa.emailAlertas).trim();
+      const email = resolveEmailAlertas(company);
       if (!email) {
         resumo.detalhes.push({
           prefeituraId,
@@ -230,7 +255,7 @@ export class AlertasService {
         to: email,
         subject: `Alertas operacionais — ${total} pendência(s) · Hora Útil 360`,
         html: this.montarHtml(
-          texto(empresa.razaoSocial) || 'Sua operação',
+          texto(company.razaoSocial) || company.name || 'Sua operação',
           achados,
         ),
       });
@@ -251,79 +276,47 @@ export class AlertasService {
     return resumo;
   }
 
-  /** Cron diário às 07:00 (America/Sao_Paulo). */
-  @Cron(CronExpression.EVERY_DAY_AT_7AM, { timeZone: 'America/Sao_Paulo' })
-  async rodarDiario(): Promise<void> {
-    if (!this.mail.habilitado()) return;
-    this.logger.log('Varredura diária de alertas operacionais…');
+  /** Cron diário às 07:00 (horário do servidor). */
+  @Cron(CronExpression.EVERY_DAY_AT_7AM)
+  async cronDiario(): Promise<void> {
     try {
-      const r = await this.varrer();
+      const resumo = await this.varrer();
       this.logger.log(
-        `Alertas: ${r.emailsEnviados} email(s) enviado(s) em ${r.prefeiturasComAchados} prefeitura(s).`,
+        `Varredura diária: ${resumo.prefeiturasVarridas} prefeituras, ` +
+          `${resumo.prefeiturasComAchados} com achados, ` +
+          `${resumo.emailsEnviados} emails enviados, ${resumo.falhas} falhas`,
       );
-    } catch (e) {
-      this.logger.error(
-        `Falha na varredura de alertas: ${(e as Error).message}`,
-      );
+    } catch (err) {
+      this.logger.error('Falha na varredura diária de alertas', err);
     }
   }
 
-  /** Monta o HTML do email de alertas. */
-  private montarHtml(empresa: string, a: AchadosAlertas): string {
-    const secoes: string[] = [];
+  private montarHtml(razaoSocial: string, achados: AchadosAlertas): string {
+    const bloco = (titulo: string, linhas: string[]) =>
+      linhas.length
+        ? `<h3>${titulo}</h3><ul>${linhas.map((l) => `<li>${l}</li>`).join('')}</ul>`
+        : '';
 
-    if (a.revisoes.length) {
-      const linhas = a.revisoes
-        .map(
-          (r) =>
-            `<li><strong>${r.descricao}</strong> (${r.identificacao}) — vencida há <strong>${r.excedente.toLocaleString('pt-BR')} ${r.unidade}</strong> (atual ${r.medicaoAtual.toLocaleString('pt-BR')} ${r.unidade}, revisão prevista em ${r.proxima.toLocaleString('pt-BR')} ${r.unidade}).</li>`,
-        )
-        .join('');
-      secoes.push(
-        `<h3 style="margin:18px 0 6px;color:#b91c1c">🔧 Revisões vencidas (${a.revisoes.length})</h3><ul style="margin:0;padding-left:18px">${linhas}</ul>`,
-      );
-    }
-
-    if (a.cnhs.length) {
-      const linhas = a.cnhs
-        .map((c) => {
-          const sit =
-            c.dias < 0
-              ? `vencida há ${Math.abs(c.dias)} dia(s)`
-              : c.dias === 0
-                ? 'vence hoje'
-                : `vence em ${c.dias} dia(s)`;
-          const cat = c.categoria ? ` · cat. ${c.categoria}` : '';
-          return `<li><strong>${c.nome}</strong>${cat} — CNH ${sit} (validade ${c.validade}).</li>`;
-        })
-        .join('');
-      secoes.push(
-        `<h3 style="margin:18px 0 6px;color:#b45309">🪪 CNH a vencer (${a.cnhs.length})</h3><ul style="margin:0;padding-left:18px">${linhas}</ul>`,
-      );
-    }
-
-    if (a.tanques.length) {
-      const linhas = a.tanques
-        .map(
-          (t) =>
-            `<li><strong>${t.nome}</strong>${t.combustivel ? ` (${t.combustivel})` : ''} — <strong>${t.percentual}%</strong> (${t.volumeAtual.toLocaleString('pt-BR')} / ${t.capacidade.toLocaleString('pt-BR')} L).</li>`,
-        )
-        .join('');
-      secoes.push(
-        `<h3 style="margin:18px 0 6px;color:#b91c1c">⛽ Tanques em nível crítico (${a.tanques.length})</h3><ul style="margin:0;padding-left:18px">${linhas}</ul>`,
-      );
-    }
+    const rev = achados.revisoes.map(
+      (r) =>
+        `${r.descricao} (${r.identificacao}) — ${r.excedente.toLocaleString('pt-BR')} ${r.unidade} além da revisão`,
+    );
+    const cnh = achados.cnhs.map(
+      (c) =>
+        `${c.nome} — CNH ${c.categoria} vence em ${c.dias} dia(s) (${c.validade})`,
+    );
+    const tan = achados.tanques.map(
+      (t) =>
+        `${t.nome} — ${t.percentual}% (${t.volumeAtual}/${t.capacidade} L, ${t.combustivel})`,
+    );
 
     return `
-      <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1f2937">
-        <h2 style="margin:0 0 4px;color:#0f2348">Hora Útil 360</h2>
-        <p style="margin:0 0 16px;color:#6b7280">Alertas operacionais · ${empresa}</p>
-        ${secoes.join('')}
-        <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0" />
-        <p style="font-size:12px;color:#9ca3af;margin:0">
-          Email automático da varredura diária. Ajuste quais alertas receber em
-          Configurações → Alertas.
-        </p>
-      </div>`;
+      <p>Olá, <strong>${razaoSocial}</strong>.</p>
+      <p>Resumo de alertas operacionais:</p>
+      ${bloco('Revisões vencidas', rev)}
+      ${bloco('CNH a vencer', cnh)}
+      ${bloco('Tanques críticos', tan)}
+      <p>— Hora Útil 360</p>
+    `.trim();
   }
 }

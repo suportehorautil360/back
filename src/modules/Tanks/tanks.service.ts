@@ -1,10 +1,8 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { FirebaseService } from 'src/config/firebase.service';
-import { tankStatus } from '../movimentacoes/shared/tank-saldo.helper';
-
-function texto(valor: unknown): string {
-  return typeof valor === 'string' ? valor : '';
-}
+import { ehComboioTipo, mapEquipmentToApi } from '../../common/prisma/equipment-api.mapper';
+import { companyWhere } from '../../common/prisma/company-resolver';
+import { tankStatusPg } from '../../common/prisma/tank-saldo-prisma.helper';
+import { PrismaService } from '../../prisma/prisma.service';
 
 function numero(valor: unknown): number {
   if (typeof valor === 'number') return Number.isFinite(valor) ? valor : 0;
@@ -17,68 +15,37 @@ function numero(valor: unknown): number {
 
 @Injectable()
 export class TanksService {
-  constructor(private readonly firebaseService: FirebaseService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  private get firestore() {
-    return this.firebaseService.getFirestore();
-  }
-
-  /**
-   * Tanques do comboio da prefeitura, com nível/capacidade e (quando o tanque
-   * está vinculado a um equipamento-comboio) o modelo/placa resolvidos da
-   * coleção `equipamentos`.
-   */
   async findAll(prefeituraId: string) {
     try {
-      const [tanksSnap, equipSnap] = await Promise.all([
-        this.firestore
-          .collection('tanks')
-          .where('prefeituraId', '==', prefeituraId)
-          .get(),
-        this.firestore
-          .collection('equipamentos')
-          .where('prefeituraId', '==', prefeituraId)
-          .get(),
-      ]);
+      const rows = await this.prisma.equipment.findMany({
+        where: {
+          company: companyWhere(prefeituraId),
+          tipo: { equals: 'Comboio', mode: 'insensitive' },
+        },
+      });
 
-      // Índice de equipamentos por chassi e por placa (para resolver o comboio).
-      const porChassis = new Map<string, { modelo: string; placa: string }>();
-      const porPlaca = new Map<string, { modelo: string; placa: string }>();
-      for (const doc of equipSnap.docs) {
-        const e = doc.data() as Record<string, unknown>;
-        const info = {
-          modelo: texto(e.modelo) || texto(e.descricao),
-          placa: texto(e.placa),
-        };
-        const chassis = texto(e.chassis);
-        const placa = texto(e.placa);
-        if (chassis) porChassis.set(chassis, info);
-        if (placa) porPlaca.set(placa.toUpperCase(), info);
-      }
-
-      const data = tanksSnap.docs.map((doc) => {
-        const d = doc.data() as Record<string, unknown>;
-        const capacity = numero(d.capacity);
-        const currentVolume = numero(d.currentVolume);
-        const percentage = capacity > 0 ? (currentVolume / capacity) * 100 : 0;
-
-        let status = 'Normal';
-        if (percentage <= 20) status = 'Critic';
-        else if (percentage <= 60) status = 'Moderate';
-
-        const vinculo =
-          porChassis.get(texto(d.veiculoChassis)) ??
-          porPlaca.get(texto(d.veiculoPlaca).toUpperCase());
+      const data = rows.map((row) => {
+        const api = mapEquipmentToApi(row, prefeituraId);
+        const capacity = numero(row.capacidadeTanque);
+        const currentVolume = numero(row.volumeTanqueAtual);
+        const { percentage, status } = tankStatusPg(capacity, currentVolume);
+        const publicId = row.legacyId ?? row.id;
 
         return {
-          id: doc.id,
-          ...d,
+          id: publicId,
+          comboioId: publicId,
+          prefeituraId,
           capacity,
           currentVolume,
           percentage,
           status,
-          veiculoModelo: texto(d.veiculoModelo) || vinculo?.modelo || '',
-          veiculoPlaca: texto(d.veiculoPlaca) || vinculo?.placa || '',
+          fuelType: api.combustivel ?? '',
+          name: api.descricao || api.modelo || 'Comboio',
+          veiculoModelo: api.modelo || api.descricao || '',
+          veiculoPlaca: api.placa || '',
+          veiculoChassis: api.chassis || api.chassi || '',
         };
       });
 
@@ -91,54 +58,38 @@ export class TanksService {
     }
   }
 
-  /**
-   * Tanque de um comboio específico (doc `tanks` keyed pelo `comboioId`), com
-   * nível/status e o modelo/placa resolvidos da coleção `equipamentos`.
-   * Alimenta a home do PWA quando o comboista escolhe qual comboio opera.
-   */
   async findByComboio(comboioId: string) {
     try {
-      const snap = await this.firestore
-        .collection('tanks')
-        .doc(comboioId)
-        .get();
-      if (!snap.exists) {
+      const row = await this.prisma.equipment.findFirst({
+        where: {
+          OR: [{ id: comboioId }, { legacyId: comboioId }],
+        },
+        include: { company: { select: { legacyId: true } } },
+      });
+
+      if (!row || !ehComboioTipo(row.tipo)) {
         return { data: null, message: 'Tanque do comboio não encontrado.' };
       }
 
-      const d = snap.data() as Record<string, unknown>;
-      const capacity = numero(d.capacity);
-      const currentVolume = numero(d.currentVolume);
-      const { percentage, status } = tankStatus(capacity, currentVolume);
-
-      let veiculoModelo = texto(d.veiculoModelo);
-      let veiculoPlaca = texto(d.veiculoPlaca);
-      if (!veiculoModelo || !veiculoPlaca) {
-        const eqSnap = await this.firestore
-          .collection('equipamentos')
-          .where('id', '==', comboioId)
-          .limit(1)
-          .get();
-        const e = eqSnap.empty
-          ? null
-          : (eqSnap.docs[0].data() as Record<string, unknown>);
-        if (e) {
-          veiculoModelo =
-            veiculoModelo || texto(e.modelo) || texto(e.descricao);
-          veiculoPlaca = veiculoPlaca || texto(e.placa);
-        }
-      }
+      const prefeituraId = row.company.legacyId ?? row.companyId;
+      const api = mapEquipmentToApi(row, prefeituraId);
+      const capacity = numero(row.capacidadeTanque);
+      const currentVolume = numero(row.volumeTanqueAtual);
+      const { percentage, status } = tankStatusPg(capacity, currentVolume);
+      const publicId = row.legacyId ?? row.id;
 
       return {
         data: {
-          id: snap.id,
-          ...d,
+          id: publicId,
+          comboioId: publicId,
+          prefeituraId,
           capacity,
           currentVolume,
           percentage,
           status,
-          veiculoModelo,
-          veiculoPlaca,
+          fuelType: api.combustivel ?? '',
+          veiculoModelo: api.modelo || api.descricao || '',
+          veiculoPlaca: api.placa || '',
         },
         message: 'Tanque do comboio encontrado com sucesso.',
       };

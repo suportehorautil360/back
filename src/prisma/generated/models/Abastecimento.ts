@@ -31,12 +31,18 @@ export type AbastecimentoAvgAggregateOutputType = {
   litros: runtime.Decimal | null
   valor: runtime.Decimal | null
   leitura: number | null
+  precoLitro: runtime.Decimal | null
+  latitude: number | null
+  longitude: number | null
 }
 
 export type AbastecimentoSumAggregateOutputType = {
   litros: runtime.Decimal | null
   valor: runtime.Decimal | null
   leitura: number | null
+  precoLitro: runtime.Decimal | null
+  latitude: number | null
+  longitude: number | null
 }
 
 export type AbastecimentoMinAggregateOutputType = {
@@ -56,6 +62,16 @@ export type AbastecimentoMinAggregateOutputType = {
   leitura: number | null
   leituraUnidade: string | null
   postoNome: string | null
+  plateOrChassis: string | null
+  precoLitro: runtime.Decimal | null
+  status: string | null
+  tipo: string | null
+  motoristaNome: string | null
+  latitude: number | null
+  longitude: number | null
+  meterPhoto: string | null
+  receiptPhoto: string | null
+  fleetfuelIntencaoId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -77,6 +93,16 @@ export type AbastecimentoMaxAggregateOutputType = {
   leitura: number | null
   leituraUnidade: string | null
   postoNome: string | null
+  plateOrChassis: string | null
+  precoLitro: runtime.Decimal | null
+  status: string | null
+  tipo: string | null
+  motoristaNome: string | null
+  latitude: number | null
+  longitude: number | null
+  meterPhoto: string | null
+  receiptPhoto: string | null
+  fleetfuelIntencaoId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -98,6 +124,16 @@ export type AbastecimentoCountAggregateOutputType = {
   leitura: number
   leituraUnidade: number
   postoNome: number
+  plateOrChassis: number
+  precoLitro: number
+  status: number
+  tipo: number
+  motoristaNome: number
+  latitude: number
+  longitude: number
+  meterPhoto: number
+  receiptPhoto: number
+  fleetfuelIntencaoId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -108,12 +144,18 @@ export type AbastecimentoAvgAggregateInputType = {
   litros?: true
   valor?: true
   leitura?: true
+  precoLitro?: true
+  latitude?: true
+  longitude?: true
 }
 
 export type AbastecimentoSumAggregateInputType = {
   litros?: true
   valor?: true
   leitura?: true
+  precoLitro?: true
+  latitude?: true
+  longitude?: true
 }
 
 export type AbastecimentoMinAggregateInputType = {
@@ -133,6 +175,16 @@ export type AbastecimentoMinAggregateInputType = {
   leitura?: true
   leituraUnidade?: true
   postoNome?: true
+  plateOrChassis?: true
+  precoLitro?: true
+  status?: true
+  tipo?: true
+  motoristaNome?: true
+  latitude?: true
+  longitude?: true
+  meterPhoto?: true
+  receiptPhoto?: true
+  fleetfuelIntencaoId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -154,6 +206,16 @@ export type AbastecimentoMaxAggregateInputType = {
   leitura?: true
   leituraUnidade?: true
   postoNome?: true
+  plateOrChassis?: true
+  precoLitro?: true
+  status?: true
+  tipo?: true
+  motoristaNome?: true
+  latitude?: true
+  longitude?: true
+  meterPhoto?: true
+  receiptPhoto?: true
+  fleetfuelIntencaoId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -175,6 +237,16 @@ export type AbastecimentoCountAggregateInputType = {
   leitura?: true
   leituraUnidade?: true
   postoNome?: true
+  plateOrChassis?: true
+  precoLitro?: true
+  status?: true
+  tipo?: true
+  motoristaNome?: true
+  latitude?: true
+  longitude?: true
+  meterPhoto?: true
+  receiptPhoto?: true
+  fleetfuelIntencaoId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -283,6 +355,16 @@ export type AbastecimentoGroupByOutputType = {
   leitura: number | null
   leituraUnidade: string | null
   postoNome: string | null
+  plateOrChassis: string | null
+  precoLitro: runtime.Decimal | null
+  status: string
+  tipo: string | null
+  motoristaNome: string | null
+  latitude: number | null
+  longitude: number | null
+  meterPhoto: string | null
+  receiptPhoto: string | null
+  fleetfuelIntencaoId: string | null
   createdAt: Date
   updatedAt: Date
   _count: AbastecimentoCountAggregateOutputType | null
@@ -327,6 +409,16 @@ export type AbastecimentoWhereInput = {
   leitura?: Prisma.FloatNullableFilter<"Abastecimento"> | number | null
   leituraUnidade?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
   postoNome?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
+  plateOrChassis?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
+  precoLitro?: Prisma.DecimalNullableFilter<"Abastecimento"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringFilter<"Abastecimento"> | string
+  tipo?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
+  motoristaNome?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
+  latitude?: Prisma.FloatNullableFilter<"Abastecimento"> | number | null
+  longitude?: Prisma.FloatNullableFilter<"Abastecimento"> | number | null
+  meterPhoto?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
+  receiptPhoto?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
+  fleetfuelIntencaoId?: Prisma.UuidNullableFilter<"Abastecimento"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Abastecimento"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Abastecimento"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
@@ -350,6 +442,16 @@ export type AbastecimentoOrderByWithRelationInput = {
   leitura?: Prisma.SortOrderInput | Prisma.SortOrder
   leituraUnidade?: Prisma.SortOrderInput | Prisma.SortOrder
   postoNome?: Prisma.SortOrderInput | Prisma.SortOrder
+  plateOrChassis?: Prisma.SortOrderInput | Prisma.SortOrder
+  precoLitro?: Prisma.SortOrderInput | Prisma.SortOrder
+  status?: Prisma.SortOrder
+  tipo?: Prisma.SortOrderInput | Prisma.SortOrder
+  motoristaNome?: Prisma.SortOrderInput | Prisma.SortOrder
+  latitude?: Prisma.SortOrderInput | Prisma.SortOrder
+  longitude?: Prisma.SortOrderInput | Prisma.SortOrder
+  meterPhoto?: Prisma.SortOrderInput | Prisma.SortOrder
+  receiptPhoto?: Prisma.SortOrderInput | Prisma.SortOrder
+  fleetfuelIntencaoId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   company?: Prisma.CompanyOrderByWithRelationInput
@@ -376,6 +478,16 @@ export type AbastecimentoWhereUniqueInput = Prisma.AtLeast<{
   leitura?: Prisma.FloatNullableFilter<"Abastecimento"> | number | null
   leituraUnidade?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
   postoNome?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
+  plateOrChassis?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
+  precoLitro?: Prisma.DecimalNullableFilter<"Abastecimento"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringFilter<"Abastecimento"> | string
+  tipo?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
+  motoristaNome?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
+  latitude?: Prisma.FloatNullableFilter<"Abastecimento"> | number | null
+  longitude?: Prisma.FloatNullableFilter<"Abastecimento"> | number | null
+  meterPhoto?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
+  receiptPhoto?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
+  fleetfuelIntencaoId?: Prisma.UuidNullableFilter<"Abastecimento"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Abastecimento"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Abastecimento"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
@@ -399,6 +511,16 @@ export type AbastecimentoOrderByWithAggregationInput = {
   leitura?: Prisma.SortOrderInput | Prisma.SortOrder
   leituraUnidade?: Prisma.SortOrderInput | Prisma.SortOrder
   postoNome?: Prisma.SortOrderInput | Prisma.SortOrder
+  plateOrChassis?: Prisma.SortOrderInput | Prisma.SortOrder
+  precoLitro?: Prisma.SortOrderInput | Prisma.SortOrder
+  status?: Prisma.SortOrder
+  tipo?: Prisma.SortOrderInput | Prisma.SortOrder
+  motoristaNome?: Prisma.SortOrderInput | Prisma.SortOrder
+  latitude?: Prisma.SortOrderInput | Prisma.SortOrder
+  longitude?: Prisma.SortOrderInput | Prisma.SortOrder
+  meterPhoto?: Prisma.SortOrderInput | Prisma.SortOrder
+  receiptPhoto?: Prisma.SortOrderInput | Prisma.SortOrder
+  fleetfuelIntencaoId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.AbastecimentoCountOrderByAggregateInput
@@ -428,6 +550,16 @@ export type AbastecimentoScalarWhereWithAggregatesInput = {
   leitura?: Prisma.FloatNullableWithAggregatesFilter<"Abastecimento"> | number | null
   leituraUnidade?: Prisma.StringNullableWithAggregatesFilter<"Abastecimento"> | string | null
   postoNome?: Prisma.StringNullableWithAggregatesFilter<"Abastecimento"> | string | null
+  plateOrChassis?: Prisma.StringNullableWithAggregatesFilter<"Abastecimento"> | string | null
+  precoLitro?: Prisma.DecimalNullableWithAggregatesFilter<"Abastecimento"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringWithAggregatesFilter<"Abastecimento"> | string
+  tipo?: Prisma.StringNullableWithAggregatesFilter<"Abastecimento"> | string | null
+  motoristaNome?: Prisma.StringNullableWithAggregatesFilter<"Abastecimento"> | string | null
+  latitude?: Prisma.FloatNullableWithAggregatesFilter<"Abastecimento"> | number | null
+  longitude?: Prisma.FloatNullableWithAggregatesFilter<"Abastecimento"> | number | null
+  meterPhoto?: Prisma.StringNullableWithAggregatesFilter<"Abastecimento"> | string | null
+  receiptPhoto?: Prisma.StringNullableWithAggregatesFilter<"Abastecimento"> | string | null
+  fleetfuelIntencaoId?: Prisma.UuidNullableWithAggregatesFilter<"Abastecimento"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Abastecimento"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Abastecimento"> | Date | string
 }
@@ -447,6 +579,16 @@ export type AbastecimentoCreateInput = {
   leitura?: number | null
   leituraUnidade?: string | null
   postoNome?: string | null
+  plateOrChassis?: string | null
+  precoLitro?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: string
+  tipo?: string | null
+  motoristaNome?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  meterPhoto?: string | null
+  receiptPhoto?: string | null
+  fleetfuelIntencaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutAbastecimentosInput
@@ -470,6 +612,16 @@ export type AbastecimentoUncheckedCreateInput = {
   leitura?: number | null
   leituraUnidade?: string | null
   postoNome?: string | null
+  plateOrChassis?: string | null
+  precoLitro?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: string
+  tipo?: string | null
+  motoristaNome?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  meterPhoto?: string | null
+  receiptPhoto?: string | null
+  fleetfuelIntencaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -489,6 +641,16 @@ export type AbastecimentoUpdateInput = {
   leitura?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   leituraUnidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postoNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  plateOrChassis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  precoLitro?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motoristaNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  meterPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  receiptPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fleetfuelIntencaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutAbastecimentosNestedInput
@@ -512,6 +674,16 @@ export type AbastecimentoUncheckedUpdateInput = {
   leitura?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   leituraUnidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postoNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  plateOrChassis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  precoLitro?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motoristaNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  meterPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  receiptPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fleetfuelIntencaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -533,6 +705,16 @@ export type AbastecimentoCreateManyInput = {
   leitura?: number | null
   leituraUnidade?: string | null
   postoNome?: string | null
+  plateOrChassis?: string | null
+  precoLitro?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: string
+  tipo?: string | null
+  motoristaNome?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  meterPhoto?: string | null
+  receiptPhoto?: string | null
+  fleetfuelIntencaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -552,6 +734,16 @@ export type AbastecimentoUpdateManyMutationInput = {
   leitura?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   leituraUnidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postoNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  plateOrChassis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  precoLitro?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motoristaNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  meterPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  receiptPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fleetfuelIntencaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -573,6 +765,16 @@ export type AbastecimentoUncheckedUpdateManyInput = {
   leitura?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   leituraUnidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postoNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  plateOrChassis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  precoLitro?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motoristaNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  meterPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  receiptPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fleetfuelIntencaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -604,6 +806,16 @@ export type AbastecimentoCountOrderByAggregateInput = {
   leitura?: Prisma.SortOrder
   leituraUnidade?: Prisma.SortOrder
   postoNome?: Prisma.SortOrder
+  plateOrChassis?: Prisma.SortOrder
+  precoLitro?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  tipo?: Prisma.SortOrder
+  motoristaNome?: Prisma.SortOrder
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
+  meterPhoto?: Prisma.SortOrder
+  receiptPhoto?: Prisma.SortOrder
+  fleetfuelIntencaoId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -612,6 +824,9 @@ export type AbastecimentoAvgOrderByAggregateInput = {
   litros?: Prisma.SortOrder
   valor?: Prisma.SortOrder
   leitura?: Prisma.SortOrder
+  precoLitro?: Prisma.SortOrder
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
 }
 
 export type AbastecimentoMaxOrderByAggregateInput = {
@@ -631,6 +846,16 @@ export type AbastecimentoMaxOrderByAggregateInput = {
   leitura?: Prisma.SortOrder
   leituraUnidade?: Prisma.SortOrder
   postoNome?: Prisma.SortOrder
+  plateOrChassis?: Prisma.SortOrder
+  precoLitro?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  tipo?: Prisma.SortOrder
+  motoristaNome?: Prisma.SortOrder
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
+  meterPhoto?: Prisma.SortOrder
+  receiptPhoto?: Prisma.SortOrder
+  fleetfuelIntencaoId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -652,6 +877,16 @@ export type AbastecimentoMinOrderByAggregateInput = {
   leitura?: Prisma.SortOrder
   leituraUnidade?: Prisma.SortOrder
   postoNome?: Prisma.SortOrder
+  plateOrChassis?: Prisma.SortOrder
+  precoLitro?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  tipo?: Prisma.SortOrder
+  motoristaNome?: Prisma.SortOrder
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
+  meterPhoto?: Prisma.SortOrder
+  receiptPhoto?: Prisma.SortOrder
+  fleetfuelIntencaoId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -660,6 +895,9 @@ export type AbastecimentoSumOrderByAggregateInput = {
   litros?: Prisma.SortOrder
   valor?: Prisma.SortOrder
   leitura?: Prisma.SortOrder
+  precoLitro?: Prisma.SortOrder
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
 }
 
 export type AbastecimentoCreateNestedManyWithoutCompanyInput = {
@@ -761,6 +999,16 @@ export type AbastecimentoCreateWithoutCompanyInput = {
   leitura?: number | null
   leituraUnidade?: string | null
   postoNome?: string | null
+  plateOrChassis?: string | null
+  precoLitro?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: string
+  tipo?: string | null
+  motoristaNome?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  meterPhoto?: string | null
+  receiptPhoto?: string | null
+  fleetfuelIntencaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   equipment?: Prisma.EquipmentCreateNestedOneWithoutAbastecimentosInput
@@ -782,6 +1030,16 @@ export type AbastecimentoUncheckedCreateWithoutCompanyInput = {
   leitura?: number | null
   leituraUnidade?: string | null
   postoNome?: string | null
+  plateOrChassis?: string | null
+  precoLitro?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: string
+  tipo?: string | null
+  motoristaNome?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  meterPhoto?: string | null
+  receiptPhoto?: string | null
+  fleetfuelIntencaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -832,6 +1090,16 @@ export type AbastecimentoScalarWhereInput = {
   leitura?: Prisma.FloatNullableFilter<"Abastecimento"> | number | null
   leituraUnidade?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
   postoNome?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
+  plateOrChassis?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
+  precoLitro?: Prisma.DecimalNullableFilter<"Abastecimento"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringFilter<"Abastecimento"> | string
+  tipo?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
+  motoristaNome?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
+  latitude?: Prisma.FloatNullableFilter<"Abastecimento"> | number | null
+  longitude?: Prisma.FloatNullableFilter<"Abastecimento"> | number | null
+  meterPhoto?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
+  receiptPhoto?: Prisma.StringNullableFilter<"Abastecimento"> | string | null
+  fleetfuelIntencaoId?: Prisma.UuidNullableFilter<"Abastecimento"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Abastecimento"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Abastecimento"> | Date | string
 }
@@ -851,6 +1119,16 @@ export type AbastecimentoCreateWithoutEquipmentInput = {
   leitura?: number | null
   leituraUnidade?: string | null
   postoNome?: string | null
+  plateOrChassis?: string | null
+  precoLitro?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: string
+  tipo?: string | null
+  motoristaNome?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  meterPhoto?: string | null
+  receiptPhoto?: string | null
+  fleetfuelIntencaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutAbastecimentosInput
@@ -872,6 +1150,16 @@ export type AbastecimentoUncheckedCreateWithoutEquipmentInput = {
   leitura?: number | null
   leituraUnidade?: string | null
   postoNome?: string | null
+  plateOrChassis?: string | null
+  precoLitro?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: string
+  tipo?: string | null
+  motoristaNome?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  meterPhoto?: string | null
+  receiptPhoto?: string | null
+  fleetfuelIntencaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -918,6 +1206,16 @@ export type AbastecimentoCreateManyCompanyInput = {
   leitura?: number | null
   leituraUnidade?: string | null
   postoNome?: string | null
+  plateOrChassis?: string | null
+  precoLitro?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: string
+  tipo?: string | null
+  motoristaNome?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  meterPhoto?: string | null
+  receiptPhoto?: string | null
+  fleetfuelIntencaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -937,6 +1235,16 @@ export type AbastecimentoUpdateWithoutCompanyInput = {
   leitura?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   leituraUnidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postoNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  plateOrChassis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  precoLitro?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motoristaNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  meterPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  receiptPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fleetfuelIntencaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipment?: Prisma.EquipmentUpdateOneWithoutAbastecimentosNestedInput
@@ -958,6 +1266,16 @@ export type AbastecimentoUncheckedUpdateWithoutCompanyInput = {
   leitura?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   leituraUnidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postoNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  plateOrChassis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  precoLitro?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motoristaNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  meterPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  receiptPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fleetfuelIntencaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -978,6 +1296,16 @@ export type AbastecimentoUncheckedUpdateManyWithoutCompanyInput = {
   leitura?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   leituraUnidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postoNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  plateOrChassis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  precoLitro?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motoristaNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  meterPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  receiptPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fleetfuelIntencaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -998,6 +1326,16 @@ export type AbastecimentoCreateManyEquipmentInput = {
   leitura?: number | null
   leituraUnidade?: string | null
   postoNome?: string | null
+  plateOrChassis?: string | null
+  precoLitro?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: string
+  tipo?: string | null
+  motoristaNome?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  meterPhoto?: string | null
+  receiptPhoto?: string | null
+  fleetfuelIntencaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1017,6 +1355,16 @@ export type AbastecimentoUpdateWithoutEquipmentInput = {
   leitura?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   leituraUnidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postoNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  plateOrChassis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  precoLitro?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motoristaNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  meterPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  receiptPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fleetfuelIntencaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutAbastecimentosNestedInput
@@ -1038,6 +1386,16 @@ export type AbastecimentoUncheckedUpdateWithoutEquipmentInput = {
   leitura?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   leituraUnidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postoNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  plateOrChassis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  precoLitro?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motoristaNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  meterPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  receiptPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fleetfuelIntencaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1058,6 +1416,16 @@ export type AbastecimentoUncheckedUpdateManyWithoutEquipmentInput = {
   leitura?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   leituraUnidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postoNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  plateOrChassis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  precoLitro?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motoristaNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  meterPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  receiptPhoto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fleetfuelIntencaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1081,6 +1449,16 @@ export type AbastecimentoSelect<ExtArgs extends runtime.Types.Extensions.Interna
   leitura?: boolean
   leituraUnidade?: boolean
   postoNome?: boolean
+  plateOrChassis?: boolean
+  precoLitro?: boolean
+  status?: boolean
+  tipo?: boolean
+  motoristaNome?: boolean
+  latitude?: boolean
+  longitude?: boolean
+  meterPhoto?: boolean
+  receiptPhoto?: boolean
+  fleetfuelIntencaoId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
@@ -1104,6 +1482,16 @@ export type AbastecimentoSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   leitura?: boolean
   leituraUnidade?: boolean
   postoNome?: boolean
+  plateOrChassis?: boolean
+  precoLitro?: boolean
+  status?: boolean
+  tipo?: boolean
+  motoristaNome?: boolean
+  latitude?: boolean
+  longitude?: boolean
+  meterPhoto?: boolean
+  receiptPhoto?: boolean
+  fleetfuelIntencaoId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
@@ -1127,6 +1515,16 @@ export type AbastecimentoSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   leitura?: boolean
   leituraUnidade?: boolean
   postoNome?: boolean
+  plateOrChassis?: boolean
+  precoLitro?: boolean
+  status?: boolean
+  tipo?: boolean
+  motoristaNome?: boolean
+  latitude?: boolean
+  longitude?: boolean
+  meterPhoto?: boolean
+  receiptPhoto?: boolean
+  fleetfuelIntencaoId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
@@ -1150,11 +1548,21 @@ export type AbastecimentoSelectScalar = {
   leitura?: boolean
   leituraUnidade?: boolean
   postoNome?: boolean
+  plateOrChassis?: boolean
+  precoLitro?: boolean
+  status?: boolean
+  tipo?: boolean
+  motoristaNome?: boolean
+  latitude?: boolean
+  longitude?: boolean
+  meterPhoto?: boolean
+  receiptPhoto?: boolean
+  fleetfuelIntencaoId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type AbastecimentoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "equipmentId" | "operadorLegacyId" | "postoLegacyId" | "comboioLegacyId" | "data" | "hora" | "litros" | "valor" | "combustivel" | "origem" | "leitura" | "leituraUnidade" | "postoNome" | "createdAt" | "updatedAt", ExtArgs["result"]["abastecimento"]>
+export type AbastecimentoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "equipmentId" | "operadorLegacyId" | "postoLegacyId" | "comboioLegacyId" | "data" | "hora" | "litros" | "valor" | "combustivel" | "origem" | "leitura" | "leituraUnidade" | "postoNome" | "plateOrChassis" | "precoLitro" | "status" | "tipo" | "motoristaNome" | "latitude" | "longitude" | "meterPhoto" | "receiptPhoto" | "fleetfuelIntencaoId" | "createdAt" | "updatedAt", ExtArgs["result"]["abastecimento"]>
 export type AbastecimentoInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.Abastecimento$equipmentArgs<ExtArgs>
@@ -1215,6 +1623,22 @@ export type $AbastecimentoPayload<ExtArgs extends runtime.Types.Extensions.Inter
      */
     leituraUnidade: string | null
     postoNome: string | null
+    plateOrChassis: string | null
+    precoLitro: runtime.Decimal | null
+    /**
+     * "aprovado" | "pendente_aprovacao" | "rejeitado"
+     */
+    status: string
+    /**
+     * Tipo de operação legado: "comboio" | "manual_motorista" | "fleetfuel"
+     */
+    tipo: string | null
+    motoristaNome: string | null
+    latitude: number | null
+    longitude: number | null
+    meterPhoto: string | null
+    receiptPhoto: string | null
+    fleetfuelIntencaoId: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["abastecimento"]>
@@ -1658,6 +2082,16 @@ export interface AbastecimentoFieldRefs {
   readonly leitura: Prisma.FieldRef<"Abastecimento", 'Float'>
   readonly leituraUnidade: Prisma.FieldRef<"Abastecimento", 'String'>
   readonly postoNome: Prisma.FieldRef<"Abastecimento", 'String'>
+  readonly plateOrChassis: Prisma.FieldRef<"Abastecimento", 'String'>
+  readonly precoLitro: Prisma.FieldRef<"Abastecimento", 'Decimal'>
+  readonly status: Prisma.FieldRef<"Abastecimento", 'String'>
+  readonly tipo: Prisma.FieldRef<"Abastecimento", 'String'>
+  readonly motoristaNome: Prisma.FieldRef<"Abastecimento", 'String'>
+  readonly latitude: Prisma.FieldRef<"Abastecimento", 'Float'>
+  readonly longitude: Prisma.FieldRef<"Abastecimento", 'Float'>
+  readonly meterPhoto: Prisma.FieldRef<"Abastecimento", 'String'>
+  readonly receiptPhoto: Prisma.FieldRef<"Abastecimento", 'String'>
+  readonly fleetfuelIntencaoId: Prisma.FieldRef<"Abastecimento", 'String'>
   readonly createdAt: Prisma.FieldRef<"Abastecimento", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Abastecimento", 'DateTime'>
 }

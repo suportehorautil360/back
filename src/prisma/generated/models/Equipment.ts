@@ -33,6 +33,7 @@ export type EquipmentAvgAggregateOutputType = {
   ultimaRevisao: number | null
   capacidadeTanque: number | null
   capacidadeTanqueCaminhao: number | null
+  volumeTanqueAtual: number | null
   valorVeiculo: runtime.Decimal | null
 }
 
@@ -42,6 +43,7 @@ export type EquipmentSumAggregateOutputType = {
   ultimaRevisao: number | null
   capacidadeTanque: number | null
   capacidadeTanqueCaminhao: number | null
+  volumeTanqueAtual: number | null
   valorVeiculo: runtime.Decimal | null
 }
 
@@ -73,6 +75,7 @@ export type EquipmentMinAggregateOutputType = {
   anoModelo: string | null
   capacidadeTanque: number | null
   capacidadeTanqueCaminhao: number | null
+  volumeTanqueAtual: number | null
   valorVeiculo: runtime.Decimal | null
   gestorResponsavel: string | null
   centroCusto: string | null
@@ -117,6 +120,7 @@ export type EquipmentMaxAggregateOutputType = {
   anoModelo: string | null
   capacidadeTanque: number | null
   capacidadeTanqueCaminhao: number | null
+  volumeTanqueAtual: number | null
   valorVeiculo: runtime.Decimal | null
   gestorResponsavel: string | null
   centroCusto: string | null
@@ -161,6 +165,7 @@ export type EquipmentCountAggregateOutputType = {
   anoModelo: number
   capacidadeTanque: number
   capacidadeTanqueCaminhao: number
+  volumeTanqueAtual: number
   valorVeiculo: number
   condutoresIds: number
   gestorResponsavel: number
@@ -186,6 +191,7 @@ export type EquipmentAvgAggregateInputType = {
   ultimaRevisao?: true
   capacidadeTanque?: true
   capacidadeTanqueCaminhao?: true
+  volumeTanqueAtual?: true
   valorVeiculo?: true
 }
 
@@ -195,6 +201,7 @@ export type EquipmentSumAggregateInputType = {
   ultimaRevisao?: true
   capacidadeTanque?: true
   capacidadeTanqueCaminhao?: true
+  volumeTanqueAtual?: true
   valorVeiculo?: true
 }
 
@@ -226,6 +233,7 @@ export type EquipmentMinAggregateInputType = {
   anoModelo?: true
   capacidadeTanque?: true
   capacidadeTanqueCaminhao?: true
+  volumeTanqueAtual?: true
   valorVeiculo?: true
   gestorResponsavel?: true
   centroCusto?: true
@@ -270,6 +278,7 @@ export type EquipmentMaxAggregateInputType = {
   anoModelo?: true
   capacidadeTanque?: true
   capacidadeTanqueCaminhao?: true
+  volumeTanqueAtual?: true
   valorVeiculo?: true
   gestorResponsavel?: true
   centroCusto?: true
@@ -314,6 +323,7 @@ export type EquipmentCountAggregateInputType = {
   anoModelo?: true
   capacidadeTanque?: true
   capacidadeTanqueCaminhao?: true
+  volumeTanqueAtual?: true
   valorVeiculo?: true
   condutoresIds?: true
   gestorResponsavel?: true
@@ -446,6 +456,7 @@ export type EquipmentGroupByOutputType = {
   anoModelo: string | null
   capacidadeTanque: number | null
   capacidadeTanqueCaminhao: number | null
+  volumeTanqueAtual: number | null
   valorVeiculo: runtime.Decimal | null
   condutoresIds: runtime.JsonValue
   gestorResponsavel: string | null
@@ -514,6 +525,7 @@ export type EquipmentWhereInput = {
   anoModelo?: Prisma.StringNullableFilter<"Equipment"> | string | null
   capacidadeTanque?: Prisma.FloatNullableFilter<"Equipment"> | number | null
   capacidadeTanqueCaminhao?: Prisma.FloatNullableFilter<"Equipment"> | number | null
+  volumeTanqueAtual?: Prisma.FloatNullableFilter<"Equipment"> | number | null
   valorVeiculo?: Prisma.DecimalNullableFilter<"Equipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonFilter<"Equipment">
   gestorResponsavel?: Prisma.StringNullableFilter<"Equipment"> | string | null
@@ -537,6 +549,7 @@ export type EquipmentWhereInput = {
   lubrificacoes?: Prisma.LubrificacaoListRelationFilter
   cargasComboio?: Prisma.ComboioReabastecimentoListRelationFilter
   serviceOrders?: Prisma.ServiceOrderListRelationFilter
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoListRelationFilter
 }
 
 export type EquipmentOrderByWithRelationInput = {
@@ -567,6 +580,7 @@ export type EquipmentOrderByWithRelationInput = {
   anoModelo?: Prisma.SortOrderInput | Prisma.SortOrder
   capacidadeTanque?: Prisma.SortOrderInput | Prisma.SortOrder
   capacidadeTanqueCaminhao?: Prisma.SortOrderInput | Prisma.SortOrder
+  volumeTanqueAtual?: Prisma.SortOrderInput | Prisma.SortOrder
   valorVeiculo?: Prisma.SortOrderInput | Prisma.SortOrder
   condutoresIds?: Prisma.SortOrder
   gestorResponsavel?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -590,6 +604,7 @@ export type EquipmentOrderByWithRelationInput = {
   lubrificacoes?: Prisma.LubrificacaoOrderByRelationAggregateInput
   cargasComboio?: Prisma.ComboioReabastecimentoOrderByRelationAggregateInput
   serviceOrders?: Prisma.ServiceOrderOrderByRelationAggregateInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoOrderByRelationAggregateInput
 }
 
 export type EquipmentWhereUniqueInput = Prisma.AtLeast<{
@@ -623,6 +638,7 @@ export type EquipmentWhereUniqueInput = Prisma.AtLeast<{
   anoModelo?: Prisma.StringNullableFilter<"Equipment"> | string | null
   capacidadeTanque?: Prisma.FloatNullableFilter<"Equipment"> | number | null
   capacidadeTanqueCaminhao?: Prisma.FloatNullableFilter<"Equipment"> | number | null
+  volumeTanqueAtual?: Prisma.FloatNullableFilter<"Equipment"> | number | null
   valorVeiculo?: Prisma.DecimalNullableFilter<"Equipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonFilter<"Equipment">
   gestorResponsavel?: Prisma.StringNullableFilter<"Equipment"> | string | null
@@ -646,6 +662,7 @@ export type EquipmentWhereUniqueInput = Prisma.AtLeast<{
   lubrificacoes?: Prisma.LubrificacaoListRelationFilter
   cargasComboio?: Prisma.ComboioReabastecimentoListRelationFilter
   serviceOrders?: Prisma.ServiceOrderListRelationFilter
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoListRelationFilter
 }, "id" | "legacyId">
 
 export type EquipmentOrderByWithAggregationInput = {
@@ -676,6 +693,7 @@ export type EquipmentOrderByWithAggregationInput = {
   anoModelo?: Prisma.SortOrderInput | Prisma.SortOrder
   capacidadeTanque?: Prisma.SortOrderInput | Prisma.SortOrder
   capacidadeTanqueCaminhao?: Prisma.SortOrderInput | Prisma.SortOrder
+  volumeTanqueAtual?: Prisma.SortOrderInput | Prisma.SortOrder
   valorVeiculo?: Prisma.SortOrderInput | Prisma.SortOrder
   condutoresIds?: Prisma.SortOrder
   gestorResponsavel?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -729,6 +747,7 @@ export type EquipmentScalarWhereWithAggregatesInput = {
   anoModelo?: Prisma.StringNullableWithAggregatesFilter<"Equipment"> | string | null
   capacidadeTanque?: Prisma.FloatNullableWithAggregatesFilter<"Equipment"> | number | null
   capacidadeTanqueCaminhao?: Prisma.FloatNullableWithAggregatesFilter<"Equipment"> | number | null
+  volumeTanqueAtual?: Prisma.FloatNullableWithAggregatesFilter<"Equipment"> | number | null
   valorVeiculo?: Prisma.DecimalNullableWithAggregatesFilter<"Equipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonWithAggregatesFilter<"Equipment">
   gestorResponsavel?: Prisma.StringNullableWithAggregatesFilter<"Equipment"> | string | null
@@ -773,6 +792,7 @@ export type EquipmentCreateInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -796,6 +816,7 @@ export type EquipmentCreateInput = {
   lubrificacoes?: Prisma.LubrificacaoCreateNestedManyWithoutEquipmentInput
   cargasComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateInput = {
@@ -826,6 +847,7 @@ export type EquipmentUncheckedCreateInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -848,6 +870,7 @@ export type EquipmentUncheckedCreateInput = {
   lubrificacoes?: Prisma.LubrificacaoUncheckedCreateNestedManyWithoutEquipmentInput
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUpdateInput = {
@@ -877,6 +900,7 @@ export type EquipmentUpdateInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -900,6 +924,7 @@ export type EquipmentUpdateInput = {
   lubrificacoes?: Prisma.LubrificacaoUpdateManyWithoutEquipmentNestedInput
   cargasComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateInput = {
@@ -930,6 +955,7 @@ export type EquipmentUncheckedUpdateInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -952,6 +978,7 @@ export type EquipmentUncheckedUpdateInput = {
   lubrificacoes?: Prisma.LubrificacaoUncheckedUpdateManyWithoutEquipmentNestedInput
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentCreateManyInput = {
@@ -982,6 +1009,7 @@ export type EquipmentCreateManyInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -1026,6 +1054,7 @@ export type EquipmentUpdateManyMutationInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1071,6 +1100,7 @@ export type EquipmentUncheckedUpdateManyInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1126,6 +1156,7 @@ export type EquipmentCountOrderByAggregateInput = {
   anoModelo?: Prisma.SortOrder
   capacidadeTanque?: Prisma.SortOrder
   capacidadeTanqueCaminhao?: Prisma.SortOrder
+  volumeTanqueAtual?: Prisma.SortOrder
   valorVeiculo?: Prisma.SortOrder
   condutoresIds?: Prisma.SortOrder
   gestorResponsavel?: Prisma.SortOrder
@@ -1149,6 +1180,7 @@ export type EquipmentAvgOrderByAggregateInput = {
   ultimaRevisao?: Prisma.SortOrder
   capacidadeTanque?: Prisma.SortOrder
   capacidadeTanqueCaminhao?: Prisma.SortOrder
+  volumeTanqueAtual?: Prisma.SortOrder
   valorVeiculo?: Prisma.SortOrder
 }
 
@@ -1180,6 +1212,7 @@ export type EquipmentMaxOrderByAggregateInput = {
   anoModelo?: Prisma.SortOrder
   capacidadeTanque?: Prisma.SortOrder
   capacidadeTanqueCaminhao?: Prisma.SortOrder
+  volumeTanqueAtual?: Prisma.SortOrder
   valorVeiculo?: Prisma.SortOrder
   gestorResponsavel?: Prisma.SortOrder
   centroCusto?: Prisma.SortOrder
@@ -1224,6 +1257,7 @@ export type EquipmentMinOrderByAggregateInput = {
   anoModelo?: Prisma.SortOrder
   capacidadeTanque?: Prisma.SortOrder
   capacidadeTanqueCaminhao?: Prisma.SortOrder
+  volumeTanqueAtual?: Prisma.SortOrder
   valorVeiculo?: Prisma.SortOrder
   gestorResponsavel?: Prisma.SortOrder
   centroCusto?: Prisma.SortOrder
@@ -1246,6 +1280,7 @@ export type EquipmentSumOrderByAggregateInput = {
   ultimaRevisao?: Prisma.SortOrder
   capacidadeTanque?: Prisma.SortOrder
   capacidadeTanqueCaminhao?: Prisma.SortOrder
+  volumeTanqueAtual?: Prisma.SortOrder
   valorVeiculo?: Prisma.SortOrder
 }
 
@@ -1381,6 +1416,22 @@ export type EquipmentUpdateOneWithoutAbastecimentosNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.EquipmentUpdateToOneWithWhereWithoutAbastecimentosInput, Prisma.EquipmentUpdateWithoutAbastecimentosInput>, Prisma.EquipmentUncheckedUpdateWithoutAbastecimentosInput>
 }
 
+export type EquipmentCreateNestedOneWithoutFleetfuelIntencoesInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutFleetfuelIntencoesInput, Prisma.EquipmentUncheckedCreateWithoutFleetfuelIntencoesInput>
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutFleetfuelIntencoesInput
+  connect?: Prisma.EquipmentWhereUniqueInput
+}
+
+export type EquipmentUpdateOneWithoutFleetfuelIntencoesNestedInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutFleetfuelIntencoesInput, Prisma.EquipmentUncheckedCreateWithoutFleetfuelIntencoesInput>
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutFleetfuelIntencoesInput
+  upsert?: Prisma.EquipmentUpsertWithoutFleetfuelIntencoesInput
+  disconnect?: Prisma.EquipmentWhereInput | boolean
+  delete?: Prisma.EquipmentWhereInput | boolean
+  connect?: Prisma.EquipmentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EquipmentUpdateToOneWithWhereWithoutFleetfuelIntencoesInput, Prisma.EquipmentUpdateWithoutFleetfuelIntencoesInput>, Prisma.EquipmentUncheckedUpdateWithoutFleetfuelIntencoesInput>
+}
+
 export type EquipmentCreateNestedOneWithoutCreditosInput = {
   create?: Prisma.XOR<Prisma.EquipmentCreateWithoutCreditosInput, Prisma.EquipmentUncheckedCreateWithoutCreditosInput>
   connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutCreditosInput
@@ -1456,6 +1507,7 @@ export type EquipmentCreateWithoutCompanyInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -1478,6 +1530,7 @@ export type EquipmentCreateWithoutCompanyInput = {
   lubrificacoes?: Prisma.LubrificacaoCreateNestedManyWithoutEquipmentInput
   cargasComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutCompanyInput = {
@@ -1507,6 +1560,7 @@ export type EquipmentUncheckedCreateWithoutCompanyInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -1529,6 +1583,7 @@ export type EquipmentUncheckedCreateWithoutCompanyInput = {
   lubrificacoes?: Prisma.LubrificacaoUncheckedCreateNestedManyWithoutEquipmentInput
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentCreateOrConnectWithoutCompanyInput = {
@@ -1588,6 +1643,7 @@ export type EquipmentScalarWhereInput = {
   anoModelo?: Prisma.StringNullableFilter<"Equipment"> | string | null
   capacidadeTanque?: Prisma.FloatNullableFilter<"Equipment"> | number | null
   capacidadeTanqueCaminhao?: Prisma.FloatNullableFilter<"Equipment"> | number | null
+  volumeTanqueAtual?: Prisma.FloatNullableFilter<"Equipment"> | number | null
   valorVeiculo?: Prisma.DecimalNullableFilter<"Equipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonFilter<"Equipment">
   gestorResponsavel?: Prisma.StringNullableFilter<"Equipment"> | string | null
@@ -1632,6 +1688,7 @@ export type EquipmentCreateWithoutRevisoesInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -1654,6 +1711,7 @@ export type EquipmentCreateWithoutRevisoesInput = {
   lubrificacoes?: Prisma.LubrificacaoCreateNestedManyWithoutEquipmentInput
   cargasComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutRevisoesInput = {
@@ -1684,6 +1742,7 @@ export type EquipmentUncheckedCreateWithoutRevisoesInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -1705,6 +1764,7 @@ export type EquipmentUncheckedCreateWithoutRevisoesInput = {
   lubrificacoes?: Prisma.LubrificacaoUncheckedCreateNestedManyWithoutEquipmentInput
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentCreateOrConnectWithoutRevisoesInput = {
@@ -1750,6 +1810,7 @@ export type EquipmentUpdateWithoutRevisoesInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1772,6 +1833,7 @@ export type EquipmentUpdateWithoutRevisoesInput = {
   lubrificacoes?: Prisma.LubrificacaoUpdateManyWithoutEquipmentNestedInput
   cargasComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutRevisoesInput = {
@@ -1802,6 +1864,7 @@ export type EquipmentUncheckedUpdateWithoutRevisoesInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1823,6 +1886,7 @@ export type EquipmentUncheckedUpdateWithoutRevisoesInput = {
   lubrificacoes?: Prisma.LubrificacaoUncheckedUpdateManyWithoutEquipmentNestedInput
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentCreateWithoutAlocacoesInput = {
@@ -1852,6 +1916,7 @@ export type EquipmentCreateWithoutAlocacoesInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -1874,6 +1939,7 @@ export type EquipmentCreateWithoutAlocacoesInput = {
   lubrificacoes?: Prisma.LubrificacaoCreateNestedManyWithoutEquipmentInput
   cargasComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutAlocacoesInput = {
@@ -1904,6 +1970,7 @@ export type EquipmentUncheckedCreateWithoutAlocacoesInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -1925,6 +1992,7 @@ export type EquipmentUncheckedCreateWithoutAlocacoesInput = {
   lubrificacoes?: Prisma.LubrificacaoUncheckedCreateNestedManyWithoutEquipmentInput
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentCreateOrConnectWithoutAlocacoesInput = {
@@ -1970,6 +2038,7 @@ export type EquipmentUpdateWithoutAlocacoesInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1992,6 +2061,7 @@ export type EquipmentUpdateWithoutAlocacoesInput = {
   lubrificacoes?: Prisma.LubrificacaoUpdateManyWithoutEquipmentNestedInput
   cargasComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutAlocacoesInput = {
@@ -2022,6 +2092,7 @@ export type EquipmentUncheckedUpdateWithoutAlocacoesInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2043,6 +2114,7 @@ export type EquipmentUncheckedUpdateWithoutAlocacoesInput = {
   lubrificacoes?: Prisma.LubrificacaoUncheckedUpdateManyWithoutEquipmentNestedInput
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentCreateWithoutServiceOrdersInput = {
@@ -2072,6 +2144,7 @@ export type EquipmentCreateWithoutServiceOrdersInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -2094,6 +2167,7 @@ export type EquipmentCreateWithoutServiceOrdersInput = {
   creditos?: Prisma.CreditoCreateNestedManyWithoutEquipmentInput
   lubrificacoes?: Prisma.LubrificacaoCreateNestedManyWithoutEquipmentInput
   cargasComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutServiceOrdersInput = {
@@ -2124,6 +2198,7 @@ export type EquipmentUncheckedCreateWithoutServiceOrdersInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -2145,6 +2220,7 @@ export type EquipmentUncheckedCreateWithoutServiceOrdersInput = {
   creditos?: Prisma.CreditoUncheckedCreateNestedManyWithoutEquipmentInput
   lubrificacoes?: Prisma.LubrificacaoUncheckedCreateNestedManyWithoutEquipmentInput
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentCreateOrConnectWithoutServiceOrdersInput = {
@@ -2190,6 +2266,7 @@ export type EquipmentUpdateWithoutServiceOrdersInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2212,6 +2289,7 @@ export type EquipmentUpdateWithoutServiceOrdersInput = {
   creditos?: Prisma.CreditoUpdateManyWithoutEquipmentNestedInput
   lubrificacoes?: Prisma.LubrificacaoUpdateManyWithoutEquipmentNestedInput
   cargasComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutServiceOrdersInput = {
@@ -2242,6 +2320,7 @@ export type EquipmentUncheckedUpdateWithoutServiceOrdersInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2263,6 +2342,7 @@ export type EquipmentUncheckedUpdateWithoutServiceOrdersInput = {
   creditos?: Prisma.CreditoUncheckedUpdateManyWithoutEquipmentNestedInput
   lubrificacoes?: Prisma.LubrificacaoUncheckedUpdateManyWithoutEquipmentNestedInput
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentCreateWithoutAbastecimentosInput = {
@@ -2292,6 +2372,7 @@ export type EquipmentCreateWithoutAbastecimentosInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -2314,6 +2395,7 @@ export type EquipmentCreateWithoutAbastecimentosInput = {
   lubrificacoes?: Prisma.LubrificacaoCreateNestedManyWithoutEquipmentInput
   cargasComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutAbastecimentosInput = {
@@ -2344,6 +2426,7 @@ export type EquipmentUncheckedCreateWithoutAbastecimentosInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -2365,6 +2448,7 @@ export type EquipmentUncheckedCreateWithoutAbastecimentosInput = {
   lubrificacoes?: Prisma.LubrificacaoUncheckedCreateNestedManyWithoutEquipmentInput
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentCreateOrConnectWithoutAbastecimentosInput = {
@@ -2410,6 +2494,7 @@ export type EquipmentUpdateWithoutAbastecimentosInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2432,6 +2517,7 @@ export type EquipmentUpdateWithoutAbastecimentosInput = {
   lubrificacoes?: Prisma.LubrificacaoUpdateManyWithoutEquipmentNestedInput
   cargasComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutAbastecimentosInput = {
@@ -2462,6 +2548,7 @@ export type EquipmentUncheckedUpdateWithoutAbastecimentosInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2477,6 +2564,235 @@ export type EquipmentUncheckedUpdateWithoutAbastecimentosInput = {
   inativarAposVigencia?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  revisoes?: Prisma.EquipmentRevisionUncheckedUpdateManyWithoutEquipmentNestedInput
+  alocacoes?: Prisma.WorkFrontAllocationUncheckedUpdateManyWithoutEquipmentNestedInput
+  creditos?: Prisma.CreditoUncheckedUpdateManyWithoutEquipmentNestedInput
+  lubrificacoes?: Prisma.LubrificacaoUncheckedUpdateManyWithoutEquipmentNestedInput
+  cargasComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutEquipmentNestedInput
+  serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
+}
+
+export type EquipmentCreateWithoutFleetfuelIntencoesInput = {
+  id?: string
+  legacyId?: string | null
+  status: string
+  descricao?: string | null
+  tipo?: string | null
+  linha?: string | null
+  placa?: string | null
+  chassi?: string | null
+  marca?: string | null
+  modelo?: string | null
+  ano?: string | null
+  medicaoAtual?: number | null
+  intervaloRevisao?: number | null
+  ultimaRevisao?: number | null
+  unidadeRevisao?: string | null
+  obra?: string | null
+  renavam?: string | null
+  numeroSerie?: string | null
+  patrimonioBase?: string | null
+  cor?: string | null
+  combustivel?: string | null
+  tipoFrota?: string | null
+  motorizacao?: string | null
+  anoModelo?: string | null
+  capacidadeTanque?: number | null
+  capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
+  valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  gestorResponsavel?: string | null
+  centroCusto?: string | null
+  cidade?: string | null
+  estado?: string | null
+  regiao?: string | null
+  ipva?: Date | string | null
+  seguro?: Date | string | null
+  licenciamento?: Date | string | null
+  vigenciaInicio?: Date | string | null
+  vigenciaFim?: Date | string | null
+  inativarAposVigencia?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutEquipmentsInput
+  abastecimentos?: Prisma.AbastecimentoCreateNestedManyWithoutEquipmentInput
+  revisoes?: Prisma.EquipmentRevisionCreateNestedManyWithoutEquipmentInput
+  alocacoes?: Prisma.WorkFrontAllocationCreateNestedManyWithoutEquipmentInput
+  creditos?: Prisma.CreditoCreateNestedManyWithoutEquipmentInput
+  lubrificacoes?: Prisma.LubrificacaoCreateNestedManyWithoutEquipmentInput
+  cargasComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutEquipmentInput
+  serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
+}
+
+export type EquipmentUncheckedCreateWithoutFleetfuelIntencoesInput = {
+  id?: string
+  legacyId?: string | null
+  companyId: string
+  status: string
+  descricao?: string | null
+  tipo?: string | null
+  linha?: string | null
+  placa?: string | null
+  chassi?: string | null
+  marca?: string | null
+  modelo?: string | null
+  ano?: string | null
+  medicaoAtual?: number | null
+  intervaloRevisao?: number | null
+  ultimaRevisao?: number | null
+  unidadeRevisao?: string | null
+  obra?: string | null
+  renavam?: string | null
+  numeroSerie?: string | null
+  patrimonioBase?: string | null
+  cor?: string | null
+  combustivel?: string | null
+  tipoFrota?: string | null
+  motorizacao?: string | null
+  anoModelo?: string | null
+  capacidadeTanque?: number | null
+  capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
+  valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  gestorResponsavel?: string | null
+  centroCusto?: string | null
+  cidade?: string | null
+  estado?: string | null
+  regiao?: string | null
+  ipva?: Date | string | null
+  seguro?: Date | string | null
+  licenciamento?: Date | string | null
+  vigenciaInicio?: Date | string | null
+  vigenciaFim?: Date | string | null
+  inativarAposVigencia?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  abastecimentos?: Prisma.AbastecimentoUncheckedCreateNestedManyWithoutEquipmentInput
+  revisoes?: Prisma.EquipmentRevisionUncheckedCreateNestedManyWithoutEquipmentInput
+  alocacoes?: Prisma.WorkFrontAllocationUncheckedCreateNestedManyWithoutEquipmentInput
+  creditos?: Prisma.CreditoUncheckedCreateNestedManyWithoutEquipmentInput
+  lubrificacoes?: Prisma.LubrificacaoUncheckedCreateNestedManyWithoutEquipmentInput
+  cargasComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutEquipmentInput
+  serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
+}
+
+export type EquipmentCreateOrConnectWithoutFleetfuelIntencoesInput = {
+  where: Prisma.EquipmentWhereUniqueInput
+  create: Prisma.XOR<Prisma.EquipmentCreateWithoutFleetfuelIntencoesInput, Prisma.EquipmentUncheckedCreateWithoutFleetfuelIntencoesInput>
+}
+
+export type EquipmentUpsertWithoutFleetfuelIntencoesInput = {
+  update: Prisma.XOR<Prisma.EquipmentUpdateWithoutFleetfuelIntencoesInput, Prisma.EquipmentUncheckedUpdateWithoutFleetfuelIntencoesInput>
+  create: Prisma.XOR<Prisma.EquipmentCreateWithoutFleetfuelIntencoesInput, Prisma.EquipmentUncheckedCreateWithoutFleetfuelIntencoesInput>
+  where?: Prisma.EquipmentWhereInput
+}
+
+export type EquipmentUpdateToOneWithWhereWithoutFleetfuelIntencoesInput = {
+  where?: Prisma.EquipmentWhereInput
+  data: Prisma.XOR<Prisma.EquipmentUpdateWithoutFleetfuelIntencoesInput, Prisma.EquipmentUncheckedUpdateWithoutFleetfuelIntencoesInput>
+}
+
+export type EquipmentUpdateWithoutFleetfuelIntencoesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linha?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  placa?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  chassi?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  marca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  modelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ano?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  medicaoAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  intervaloRevisao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  ultimaRevisao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  unidadeRevisao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  obra?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  renavam?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  numeroSerie?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  patrimonioBase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  combustivel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipoFrota?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motorizacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  centroCusto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  regiao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ipva?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  seguro?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  licenciamento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  vigenciaInicio?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  vigenciaFim?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  inativarAposVigencia?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutEquipmentsNestedInput
+  abastecimentos?: Prisma.AbastecimentoUpdateManyWithoutEquipmentNestedInput
+  revisoes?: Prisma.EquipmentRevisionUpdateManyWithoutEquipmentNestedInput
+  alocacoes?: Prisma.WorkFrontAllocationUpdateManyWithoutEquipmentNestedInput
+  creditos?: Prisma.CreditoUpdateManyWithoutEquipmentNestedInput
+  lubrificacoes?: Prisma.LubrificacaoUpdateManyWithoutEquipmentNestedInput
+  cargasComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutEquipmentNestedInput
+  serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
+}
+
+export type EquipmentUncheckedUpdateWithoutFleetfuelIntencoesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linha?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  placa?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  chassi?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  marca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  modelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ano?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  medicaoAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  intervaloRevisao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  ultimaRevisao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  unidadeRevisao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  obra?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  renavam?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  numeroSerie?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  patrimonioBase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  combustivel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipoFrota?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motorizacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  centroCusto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  regiao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ipva?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  seguro?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  licenciamento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  vigenciaInicio?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  vigenciaFim?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  inativarAposVigencia?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  abastecimentos?: Prisma.AbastecimentoUncheckedUpdateManyWithoutEquipmentNestedInput
   revisoes?: Prisma.EquipmentRevisionUncheckedUpdateManyWithoutEquipmentNestedInput
   alocacoes?: Prisma.WorkFrontAllocationUncheckedUpdateManyWithoutEquipmentNestedInput
   creditos?: Prisma.CreditoUncheckedUpdateManyWithoutEquipmentNestedInput
@@ -2512,6 +2828,7 @@ export type EquipmentCreateWithoutCreditosInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -2534,6 +2851,7 @@ export type EquipmentCreateWithoutCreditosInput = {
   lubrificacoes?: Prisma.LubrificacaoCreateNestedManyWithoutEquipmentInput
   cargasComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutCreditosInput = {
@@ -2564,6 +2882,7 @@ export type EquipmentUncheckedCreateWithoutCreditosInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -2585,6 +2904,7 @@ export type EquipmentUncheckedCreateWithoutCreditosInput = {
   lubrificacoes?: Prisma.LubrificacaoUncheckedCreateNestedManyWithoutEquipmentInput
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentCreateOrConnectWithoutCreditosInput = {
@@ -2630,6 +2950,7 @@ export type EquipmentUpdateWithoutCreditosInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2652,6 +2973,7 @@ export type EquipmentUpdateWithoutCreditosInput = {
   lubrificacoes?: Prisma.LubrificacaoUpdateManyWithoutEquipmentNestedInput
   cargasComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutCreditosInput = {
@@ -2682,6 +3004,7 @@ export type EquipmentUncheckedUpdateWithoutCreditosInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2703,6 +3026,7 @@ export type EquipmentUncheckedUpdateWithoutCreditosInput = {
   lubrificacoes?: Prisma.LubrificacaoUncheckedUpdateManyWithoutEquipmentNestedInput
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentCreateWithoutLubrificacoesInput = {
@@ -2732,6 +3056,7 @@ export type EquipmentCreateWithoutLubrificacoesInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -2754,6 +3079,7 @@ export type EquipmentCreateWithoutLubrificacoesInput = {
   creditos?: Prisma.CreditoCreateNestedManyWithoutEquipmentInput
   cargasComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutLubrificacoesInput = {
@@ -2784,6 +3110,7 @@ export type EquipmentUncheckedCreateWithoutLubrificacoesInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -2805,6 +3132,7 @@ export type EquipmentUncheckedCreateWithoutLubrificacoesInput = {
   creditos?: Prisma.CreditoUncheckedCreateNestedManyWithoutEquipmentInput
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentCreateOrConnectWithoutLubrificacoesInput = {
@@ -2850,6 +3178,7 @@ export type EquipmentUpdateWithoutLubrificacoesInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2872,6 +3201,7 @@ export type EquipmentUpdateWithoutLubrificacoesInput = {
   creditos?: Prisma.CreditoUpdateManyWithoutEquipmentNestedInput
   cargasComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutLubrificacoesInput = {
@@ -2902,6 +3232,7 @@ export type EquipmentUncheckedUpdateWithoutLubrificacoesInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2923,6 +3254,7 @@ export type EquipmentUncheckedUpdateWithoutLubrificacoesInput = {
   creditos?: Prisma.CreditoUncheckedUpdateManyWithoutEquipmentNestedInput
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentCreateWithoutCargasComboioInput = {
@@ -2952,6 +3284,7 @@ export type EquipmentCreateWithoutCargasComboioInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -2974,6 +3307,7 @@ export type EquipmentCreateWithoutCargasComboioInput = {
   creditos?: Prisma.CreditoCreateNestedManyWithoutEquipmentInput
   lubrificacoes?: Prisma.LubrificacaoCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutCargasComboioInput = {
@@ -3004,6 +3338,7 @@ export type EquipmentUncheckedCreateWithoutCargasComboioInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -3025,6 +3360,7 @@ export type EquipmentUncheckedCreateWithoutCargasComboioInput = {
   creditos?: Prisma.CreditoUncheckedCreateNestedManyWithoutEquipmentInput
   lubrificacoes?: Prisma.LubrificacaoUncheckedCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentCreateOrConnectWithoutCargasComboioInput = {
@@ -3070,6 +3406,7 @@ export type EquipmentUpdateWithoutCargasComboioInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3092,6 +3429,7 @@ export type EquipmentUpdateWithoutCargasComboioInput = {
   creditos?: Prisma.CreditoUpdateManyWithoutEquipmentNestedInput
   lubrificacoes?: Prisma.LubrificacaoUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutCargasComboioInput = {
@@ -3122,6 +3460,7 @@ export type EquipmentUncheckedUpdateWithoutCargasComboioInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3143,6 +3482,7 @@ export type EquipmentUncheckedUpdateWithoutCargasComboioInput = {
   creditos?: Prisma.CreditoUncheckedUpdateManyWithoutEquipmentNestedInput
   lubrificacoes?: Prisma.LubrificacaoUncheckedUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentCreateManyCompanyInput = {
@@ -3172,6 +3512,7 @@ export type EquipmentCreateManyCompanyInput = {
   anoModelo?: string | null
   capacidadeTanque?: number | null
   capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
   valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: string | null
@@ -3216,6 +3557,7 @@ export type EquipmentUpdateWithoutCompanyInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3238,6 +3580,7 @@ export type EquipmentUpdateWithoutCompanyInput = {
   lubrificacoes?: Prisma.LubrificacaoUpdateManyWithoutEquipmentNestedInput
   cargasComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutCompanyInput = {
@@ -3267,6 +3610,7 @@ export type EquipmentUncheckedUpdateWithoutCompanyInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3289,6 +3633,7 @@ export type EquipmentUncheckedUpdateWithoutCompanyInput = {
   lubrificacoes?: Prisma.LubrificacaoUncheckedUpdateManyWithoutEquipmentNestedInput
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateManyWithoutCompanyInput = {
@@ -3318,6 +3663,7 @@ export type EquipmentUncheckedUpdateManyWithoutCompanyInput = {
   anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3348,6 +3694,7 @@ export type EquipmentCountOutputType = {
   lubrificacoes: number
   cargasComboio: number
   serviceOrders: number
+  fleetfuelIntencoes: number
 }
 
 export type EquipmentCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3358,6 +3705,7 @@ export type EquipmentCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensi
   lubrificacoes?: boolean | EquipmentCountOutputTypeCountLubrificacoesArgs
   cargasComboio?: boolean | EquipmentCountOutputTypeCountCargasComboioArgs
   serviceOrders?: boolean | EquipmentCountOutputTypeCountServiceOrdersArgs
+  fleetfuelIntencoes?: boolean | EquipmentCountOutputTypeCountFleetfuelIntencoesArgs
 }
 
 /**
@@ -3419,6 +3767,13 @@ export type EquipmentCountOutputTypeCountServiceOrdersArgs<ExtArgs extends runti
   where?: Prisma.ServiceOrderWhereInput
 }
 
+/**
+ * EquipmentCountOutputType without action
+ */
+export type EquipmentCountOutputTypeCountFleetfuelIntencoesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FleetfuelIntencaoWhereInput
+}
+
 
 export type EquipmentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -3448,6 +3803,7 @@ export type EquipmentSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   anoModelo?: boolean
   capacidadeTanque?: boolean
   capacidadeTanqueCaminhao?: boolean
+  volumeTanqueAtual?: boolean
   valorVeiculo?: boolean
   condutoresIds?: boolean
   gestorResponsavel?: boolean
@@ -3471,6 +3827,7 @@ export type EquipmentSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   lubrificacoes?: boolean | Prisma.Equipment$lubrificacoesArgs<ExtArgs>
   cargasComboio?: boolean | Prisma.Equipment$cargasComboioArgs<ExtArgs>
   serviceOrders?: boolean | Prisma.Equipment$serviceOrdersArgs<ExtArgs>
+  fleetfuelIntencoes?: boolean | Prisma.Equipment$fleetfuelIntencoesArgs<ExtArgs>
   _count?: boolean | Prisma.EquipmentCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["equipment"]>
 
@@ -3502,6 +3859,7 @@ export type EquipmentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   anoModelo?: boolean
   capacidadeTanque?: boolean
   capacidadeTanqueCaminhao?: boolean
+  volumeTanqueAtual?: boolean
   valorVeiculo?: boolean
   condutoresIds?: boolean
   gestorResponsavel?: boolean
@@ -3548,6 +3906,7 @@ export type EquipmentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   anoModelo?: boolean
   capacidadeTanque?: boolean
   capacidadeTanqueCaminhao?: boolean
+  volumeTanqueAtual?: boolean
   valorVeiculo?: boolean
   condutoresIds?: boolean
   gestorResponsavel?: boolean
@@ -3594,6 +3953,7 @@ export type EquipmentSelectScalar = {
   anoModelo?: boolean
   capacidadeTanque?: boolean
   capacidadeTanqueCaminhao?: boolean
+  volumeTanqueAtual?: boolean
   valorVeiculo?: boolean
   condutoresIds?: boolean
   gestorResponsavel?: boolean
@@ -3611,7 +3971,7 @@ export type EquipmentSelectScalar = {
   updatedAt?: boolean
 }
 
-export type EquipmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "status" | "descricao" | "tipo" | "linha" | "placa" | "chassi" | "marca" | "modelo" | "ano" | "medicaoAtual" | "intervaloRevisao" | "ultimaRevisao" | "unidadeRevisao" | "obra" | "renavam" | "numeroSerie" | "patrimonioBase" | "cor" | "combustivel" | "tipoFrota" | "motorizacao" | "anoModelo" | "capacidadeTanque" | "capacidadeTanqueCaminhao" | "valorVeiculo" | "condutoresIds" | "gestorResponsavel" | "centroCusto" | "cidade" | "estado" | "regiao" | "ipva" | "seguro" | "licenciamento" | "vigenciaInicio" | "vigenciaFim" | "inativarAposVigencia" | "createdAt" | "updatedAt", ExtArgs["result"]["equipment"]>
+export type EquipmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "status" | "descricao" | "tipo" | "linha" | "placa" | "chassi" | "marca" | "modelo" | "ano" | "medicaoAtual" | "intervaloRevisao" | "ultimaRevisao" | "unidadeRevisao" | "obra" | "renavam" | "numeroSerie" | "patrimonioBase" | "cor" | "combustivel" | "tipoFrota" | "motorizacao" | "anoModelo" | "capacidadeTanque" | "capacidadeTanqueCaminhao" | "volumeTanqueAtual" | "valorVeiculo" | "condutoresIds" | "gestorResponsavel" | "centroCusto" | "cidade" | "estado" | "regiao" | "ipva" | "seguro" | "licenciamento" | "vigenciaInicio" | "vigenciaFim" | "inativarAposVigencia" | "createdAt" | "updatedAt", ExtArgs["result"]["equipment"]>
 export type EquipmentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   abastecimentos?: boolean | Prisma.Equipment$abastecimentosArgs<ExtArgs>
@@ -3621,6 +3981,7 @@ export type EquipmentInclude<ExtArgs extends runtime.Types.Extensions.InternalAr
   lubrificacoes?: boolean | Prisma.Equipment$lubrificacoesArgs<ExtArgs>
   cargasComboio?: boolean | Prisma.Equipment$cargasComboioArgs<ExtArgs>
   serviceOrders?: boolean | Prisma.Equipment$serviceOrdersArgs<ExtArgs>
+  fleetfuelIntencoes?: boolean | Prisma.Equipment$fleetfuelIntencoesArgs<ExtArgs>
   _count?: boolean | Prisma.EquipmentCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type EquipmentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3641,6 +4002,7 @@ export type $EquipmentPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     lubrificacoes: Prisma.$LubrificacaoPayload<ExtArgs>[]
     cargasComboio: Prisma.$ComboioReabastecimentoPayload<ExtArgs>[]
     serviceOrders: Prisma.$ServiceOrderPayload<ExtArgs>[]
+    fleetfuelIntencoes: Prisma.$FleetfuelIntencaoPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -3697,6 +4059,10 @@ export type $EquipmentPayload<ExtArgs extends runtime.Types.Extensions.InternalA
      * Só faz sentido pra comboio (tanque acoplado ao caminhão em si).
      */
     capacidadeTanqueCaminhao: number | null
+    /**
+     * Volume atual do tanque do comboio (L). Substitui `tanks/{comboioId}`.
+     */
+    volumeTanqueAtual: number | null
     valorVeiculo: runtime.Decimal | null
     /**
      * Operação — responsáveis. `condutoresIds` é `string[]` de `legacyId`
@@ -4124,6 +4490,7 @@ export interface Prisma__EquipmentClient<T, Null = never, ExtArgs extends runtim
   lubrificacoes<T extends Prisma.Equipment$lubrificacoesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$lubrificacoesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LubrificacaoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   cargasComboio<T extends Prisma.Equipment$cargasComboioArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$cargasComboioArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ComboioReabastecimentoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   serviceOrders<T extends Prisma.Equipment$serviceOrdersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$serviceOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  fleetfuelIntencoes<T extends Prisma.Equipment$fleetfuelIntencoesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$fleetfuelIntencoesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FleetfuelIntencaoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -4180,6 +4547,7 @@ export interface EquipmentFieldRefs {
   readonly anoModelo: Prisma.FieldRef<"Equipment", 'String'>
   readonly capacidadeTanque: Prisma.FieldRef<"Equipment", 'Float'>
   readonly capacidadeTanqueCaminhao: Prisma.FieldRef<"Equipment", 'Float'>
+  readonly volumeTanqueAtual: Prisma.FieldRef<"Equipment", 'Float'>
   readonly valorVeiculo: Prisma.FieldRef<"Equipment", 'Decimal'>
   readonly condutoresIds: Prisma.FieldRef<"Equipment", 'Json'>
   readonly gestorResponsavel: Prisma.FieldRef<"Equipment", 'String'>
@@ -4761,6 +5129,30 @@ export type Equipment$serviceOrdersArgs<ExtArgs extends runtime.Types.Extensions
   take?: number
   skip?: number
   distinct?: Prisma.ServiceOrderScalarFieldEnum | Prisma.ServiceOrderScalarFieldEnum[]
+}
+
+/**
+ * Equipment.fleetfuelIntencoes
+ */
+export type Equipment$fleetfuelIntencoesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FleetfuelIntencao
+   */
+  select?: Prisma.FleetfuelIntencaoSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FleetfuelIntencao
+   */
+  omit?: Prisma.FleetfuelIntencaoOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FleetfuelIntencaoInclude<ExtArgs> | null
+  where?: Prisma.FleetfuelIntencaoWhereInput
+  orderBy?: Prisma.FleetfuelIntencaoOrderByWithRelationInput | Prisma.FleetfuelIntencaoOrderByWithRelationInput[]
+  cursor?: Prisma.FleetfuelIntencaoWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FleetfuelIntencaoScalarFieldEnum | Prisma.FleetfuelIntencaoScalarFieldEnum[]
 }
 
 /**

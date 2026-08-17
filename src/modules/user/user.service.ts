@@ -3,7 +3,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { StringValue } from 'ms';
-import { FirebaseService } from '../../config/firebase.service';
 import { hashSenhaPosto } from '../../common/prisma/operator-auth.helper';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
@@ -27,8 +26,6 @@ type UsuarioAuth = {
   postoId?: string;
 };
 
-type UsuarioDoc = UsuarioAuth & { id: string };
-
 const RESET_EXPIRA_HORAS = 1;
 
 @Injectable()
@@ -38,23 +35,13 @@ export class UserService {
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
-    private readonly firebase: FirebaseService,
     private readonly mail: MailService,
     private readonly prisma: PrismaService,
   ) {}
 
-  private get usersCollection() {
-    return this.firebase.getFirestore().collection('users');
-  }
-
-  private get resetsCollection() {
-    return this.firebase.getFirestore().collection('user_password_resets');
-  }
-
   async login(dto: LoginUserDto) {
-    const user =
-      (await this.tryPostgresLogin(dto)) ??
-      (await this.tryFirestoreLogin(dto));
+    const candidates = await this.findPortalUsers(dto);
+    const user = this.matchPassword(candidates, dto.senha);
 
     if (!user) {
       return {
@@ -94,21 +81,23 @@ export class UserService {
   /** Sempre responde ok (não revela se o e-mail existe). */
   async esqueciSenha(dto: EsqueciSenhaDto) {
     const email = dto.email.trim().toLowerCase();
-    const user = await this.findUserByEmail(email);
+    const user = await this.prisma.partnerPortalUser.findFirst({
+      where: { email, vinculo: 'posto', status: 'ativo' },
+    });
 
-    if (user && user.vinculo === 'posto') {
+    if (user) {
       const token = randomBytes(32).toString('hex');
       const expiresAt = new Date(
         Date.now() + RESET_EXPIRA_HORAS * 60 * 60 * 1000,
-      ).toISOString();
+      );
 
-      await this.resetsCollection.add({
-        token,
-        userId: user.id,
-        email,
-        used: false,
-        expiresAt,
-        createdAt: new Date().toISOString(),
+      await this.prisma.partnerPortalPasswordReset.create({
+        data: {
+          userId: user.id,
+          email,
+          token,
+          expiresAt,
+        },
       });
 
       const link = `${this.postoWebUrl()}/redefinir-senha?token=${encodeURIComponent(token)}`;
@@ -140,39 +129,34 @@ export class UserService {
   }
 
   async redefinirSenha(dto: RedefinirSenhaDto) {
-    const snap = await this.resetsCollection
-      .where('token', '==', dto.token.trim())
-      .limit(1)
-      .get();
+    const reset = await this.prisma.partnerPortalPasswordReset.findUnique({
+      where: { token: dto.token.trim() },
+    });
 
-    if (snap.empty) {
+    if (!reset) {
       return { ok: false, message: 'Link inválido ou expirado.' };
     }
-
-    const resetDoc = snap.docs[0];
-    const reset = resetDoc.data() as {
-      userId: string;
-      used?: boolean;
-      expiresAt: string;
-    };
 
     if (reset.used) {
       return { ok: false, message: 'Este link já foi utilizado.' };
     }
 
-    if (new Date(reset.expiresAt).getTime() < Date.now()) {
+    if (reset.expiresAt.getTime() < Date.now()) {
       return { ok: false, message: 'Link expirado. Solicite um novo e-mail.' };
     }
 
-    const userRef = this.usersCollection.doc(reset.userId);
-    const userSnap = await userRef.get();
-    if (!userSnap.exists) {
-      return { ok: false, message: 'Usuário não encontrado.' };
-    }
+    const senhaHash = hashSenhaPosto(dto.novaSenha);
 
-    const senhaHash = this.hashSenha(dto.novaSenha);
-    await userRef.update({ senha: senhaHash });
-    await resetDoc.ref.update({ used: true, usedAt: new Date().toISOString() });
+    await this.prisma.$transaction([
+      this.prisma.partnerPortalUser.update({
+        where: { id: reset.userId },
+        data: { senhaHash },
+      }),
+      this.prisma.partnerPortalPasswordReset.update({
+        where: { id: reset.id },
+        data: { used: true, usedAt: new Date() },
+      }),
+    ]);
 
     return { ok: true, message: 'Senha redefinida com sucesso.' };
   }
@@ -204,134 +188,48 @@ export class UserService {
     return { ok: true, message: 'E-mail de boas-vindas enviado.' };
   }
 
-  private async tryPostgresLogin(
-    dto: LoginUserDto,
-  ): Promise<UsuarioAuth | null> {
-    try {
-      const senhaHash = hashSenhaPosto(dto.senha);
-      const email = dto.email?.trim().toLowerCase();
-      const usuario = dto.usuario?.trim();
+  private async findPortalUsers(dto: LoginUserDto) {
+    const email = dto.email?.trim().toLowerCase();
+    const usuario = dto.usuario?.trim();
 
-      const or: Array<{ email?: string; usuario?: string }> = [];
-      if (email) or.push({ email });
-      if (usuario) or.push({ usuario });
-      if (usuario?.includes('@') && !email) {
-        or.push({ email: usuario.toLowerCase() });
-      }
-      if (or.length === 0) return null;
-
-      const rows = await this.prisma.partnerPortalUser.findMany({
-        where: {
-          vinculo: 'posto',
-          status: 'ativo',
-          OR: or,
-        },
-        include: { company: { select: { legacyId: true } } },
-        take: 10,
-      });
-
-      for (const row of rows) {
-        if (row.senhaHash !== senhaHash) continue;
-        return {
-          nome: row.nome,
-          usuario: row.usuario,
-          email: row.email ?? undefined,
-          senha: row.senhaHash,
-          perfil: row.perfil,
-          vinculo: 'posto',
-          prefeituraId: row.company.legacyId ?? '',
-          postoId: row.partnerLegacyId ?? undefined,
-        };
-      }
-
-      return null;
-    } catch {
-      return null;
+    const or: Array<{ email?: string; usuario?: string }> = [];
+    if (email) or.push({ email });
+    if (usuario) or.push({ usuario });
+    if (usuario?.includes('@') && !email) {
+      or.push({ email: usuario.toLowerCase() });
     }
+    if (or.length === 0) return [];
+
+    return this.prisma.partnerPortalUser.findMany({
+      where: {
+        vinculo: 'posto',
+        status: 'ativo',
+        OR: or,
+      },
+      include: { company: { select: { legacyId: true } } },
+      take: 10,
+    });
   }
 
-  private async tryFirestoreLogin(
-    dto: LoginUserDto,
-  ): Promise<UsuarioAuth | null> {
-    try {
-      const senhaHash = this.hashSenha(dto.senha);
-      const email = dto.email?.trim().toLowerCase();
-      const usuario = dto.usuario?.trim();
-
-      const candidatos: UsuarioDoc[] = [];
-
-      if (email) {
-        candidatos.push(...(await this.findUsersByEmail(email)));
-      }
-
-      if (usuario) {
-        const porUsuario = await this.findUsersByUsuario(usuario);
-        for (const u of porUsuario) {
-          if (!candidatos.some((c) => c.id === u.id)) {
-            candidatos.push(u);
-          }
-        }
-        if (usuario.includes('@') && !email) {
-          const porEmail = await this.findUsersByEmail(usuario.toLowerCase());
-          for (const u of porEmail) {
-            if (!candidatos.some((c) => c.id === u.id)) {
-              candidatos.push(u);
-            }
-          }
-        }
-      }
-
-      for (const user of candidatos) {
-        if (user.senha === senhaHash) {
-          const { id: _id, ...auth } = user;
-          return auth;
-        }
-      }
-
-      return null;
-    } catch {
-      return null;
+  private matchPassword(
+    rows: Awaited<ReturnType<UserService['findPortalUsers']>>,
+    senha: string,
+  ): UsuarioAuth | null {
+    const senhaHash = hashSenhaPosto(senha);
+    for (const row of rows) {
+      if (row.senhaHash !== senhaHash) continue;
+      return {
+        nome: row.nome,
+        usuario: row.usuario,
+        email: row.email ?? undefined,
+        senha: row.senhaHash,
+        perfil: row.perfil,
+        vinculo: 'posto',
+        prefeituraId: row.company.legacyId ?? '',
+        postoId: row.partnerLegacyId ?? undefined,
+      };
     }
-  }
-
-  private async findUserByEmail(email: string): Promise<UsuarioDoc | null> {
-    const users = await this.findUsersByEmail(email);
-    return users[0] ?? null;
-  }
-
-  private async findUsersByEmail(email: string): Promise<UsuarioDoc[]> {
-    const snap = await this.usersCollection
-      .where('email', '==', email)
-      .limit(5)
-      .get();
-    return snap.docs.map((d) => this.docToUsuario(d.id, d.data()));
-  }
-
-  private async findUsersByUsuario(usuario: string): Promise<UsuarioDoc[]> {
-    const snap = await this.usersCollection
-      .where('usuario', '==', usuario)
-      .limit(5)
-      .get();
-    return snap.docs.map((d) => this.docToUsuario(d.id, d.data()));
-  }
-
-  private docToUsuario(id: string, data: Record<string, unknown>): UsuarioDoc {
-    return {
-      id,
-      nome: this.toSafeString(data.nome),
-      usuario: this.toSafeString(data.usuario),
-      email: this.toSafeString(data.email) || undefined,
-      senha: this.toSafeString(data.senha),
-      perfil: this.toSafeString(data.perfil) || 'gestor',
-      vinculo:
-        this.toSafeString(data.vinculo) ||
-        this.toSafeString(data.type) ||
-        'prefeitura',
-      prefeituraId: this.toSafeString(data.prefeituraId) || 'tl-ms',
-      ...(this.toSafeString(data.postoId)
-        ? { postoId: this.toSafeString(data.postoId) }
-        : {}),
-    };
+    return null;
   }
 
   private postoWebUrl(): string {
@@ -347,17 +245,5 @@ export class UserService {
       throw new Error('JWT_SECRET nao configurado no ambiente.');
     }
     return jwtSecret;
-  }
-
-  private hashSenha(value: string): string {
-    return hashSenhaPosto(value);
-  }
-
-  private toSafeString(value: unknown): string {
-    if (typeof value === 'string') return value;
-    if (typeof value === 'number' || typeof value === 'boolean') {
-      return String(value);
-    }
-    return '';
   }
 }

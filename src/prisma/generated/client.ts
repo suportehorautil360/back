@@ -161,6 +161,11 @@ export type Operator = Prisma.OperatorModel
  */
 export type Abastecimento = Prisma.AbastecimentoModel
 /**
+ * Model FleetfuelIntencao
+ * Intenção FleetFuel (QR posto ↔ motorista). Substitui `fleetfuel_intencoes`.
+ */
+export type FleetfuelIntencao = Prisma.FleetfuelIntencaoModel
+/**
  * Model ChecklistDefinition
  * Definição (modelo/variante) de checklist do operador. Catálogo GLOBAL —
  * sem FK Company. Espelhado no Firestore `checklistDefinitions/{legacyId}`
@@ -208,6 +213,11 @@ export type Partner = Prisma.PartnerModel
  * Senha em SHA-256 hex sem sal — paridade com o legado e `POST /user/auth/login`.
  */
 export type PartnerPortalUser = Prisma.PartnerPortalUserModel
+/**
+ * Model PartnerPortalPasswordReset
+ * Token de redefinição de senha do portal do posto (substitui Firestore `user_password_resets`).
+ */
+export type PartnerPortalPasswordReset = Prisma.PartnerPortalPasswordResetModel
 /**
  * Model Feature
  * Catálogo de módulos do produto. As chaves são contratos estáveis do código.
@@ -339,3 +349,17 @@ export type ComboioReabastecimento = Prisma.ComboioReabastecimentoModel
  * mostra "Ver PDF" no lugar do valor.
  */
 export type NotaFiscal = Prisma.NotaFiscalModel
+/**
+ * Model IdempotencyKey
+ * Chaves de idempotência do outbox offline (header `Idempotency-Key`).
+ * Substitui a coleção Firestore `idempotencyKeys/{key}`.
+ */
+export type IdempotencyKey = Prisma.IdempotencyKeyModel
+/**
+ * Model Notificacao
+ * Notificação in-app (sino do PWA + avisos ao RH). Substitui Firestore
+ * `notificacoes/{id}`. Destinatário polimórfico:
+ * - `destinatarioTipo = funcionario` → `destinatarioId` = CPF (só dígitos)
+ * - `destinatarioTipo = rh` → `destinatarioId` = legacyId da empresa
+ */
+export type Notificacao = Prisma.NotificacaoModel

@@ -413,6 +413,7 @@ export const ModelName = {
   PlanoPreventivo: 'PlanoPreventivo',
   Operator: 'Operator',
   Abastecimento: 'Abastecimento',
+  FleetfuelIntencao: 'FleetfuelIntencao',
   ChecklistDefinition: 'ChecklistDefinition',
   LancamentoFinanceiro: 'LancamentoFinanceiro',
   Role: 'Role',
@@ -420,6 +421,7 @@ export const ModelName = {
   RoleAccessGroup: 'RoleAccessGroup',
   Partner: 'Partner',
   PartnerPortalUser: 'PartnerPortalUser',
+  PartnerPortalPasswordReset: 'PartnerPortalPasswordReset',
   Feature: 'Feature',
   PontoRegistro: 'PontoRegistro',
   PontoNsrCounter: 'PontoNsrCounter',
@@ -435,7 +437,9 @@ export const ModelName = {
   Credito: 'Credito',
   Lubrificacao: 'Lubrificacao',
   ComboioReabastecimento: 'ComboioReabastecimento',
-  NotaFiscal: 'NotaFiscal'
+  NotaFiscal: 'NotaFiscal',
+  IdempotencyKey: 'IdempotencyKey',
+  Notificacao: 'Notificacao'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -451,7 +455,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "planoPreventivo" | "operator" | "abastecimento" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal"
+    modelProps: "user" | "company" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "idempotencyKey" | "notificacao"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1639,6 +1643,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    FleetfuelIntencao: {
+      payload: Prisma.$FleetfuelIntencaoPayload<ExtArgs>
+      fields: Prisma.FleetfuelIntencaoFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FleetfuelIntencaoFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FleetfuelIntencaoPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FleetfuelIntencaoFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FleetfuelIntencaoPayload>
+        }
+        findFirst: {
+          args: Prisma.FleetfuelIntencaoFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FleetfuelIntencaoPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FleetfuelIntencaoFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FleetfuelIntencaoPayload>
+        }
+        findMany: {
+          args: Prisma.FleetfuelIntencaoFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FleetfuelIntencaoPayload>[]
+        }
+        create: {
+          args: Prisma.FleetfuelIntencaoCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FleetfuelIntencaoPayload>
+        }
+        createMany: {
+          args: Prisma.FleetfuelIntencaoCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.FleetfuelIntencaoCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FleetfuelIntencaoPayload>[]
+        }
+        delete: {
+          args: Prisma.FleetfuelIntencaoDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FleetfuelIntencaoPayload>
+        }
+        update: {
+          args: Prisma.FleetfuelIntencaoUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FleetfuelIntencaoPayload>
+        }
+        deleteMany: {
+          args: Prisma.FleetfuelIntencaoDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FleetfuelIntencaoUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.FleetfuelIntencaoUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FleetfuelIntencaoPayload>[]
+        }
+        upsert: {
+          args: Prisma.FleetfuelIntencaoUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FleetfuelIntencaoPayload>
+        }
+        aggregate: {
+          args: Prisma.FleetfuelIntencaoAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFleetfuelIntencao>
+        }
+        groupBy: {
+          args: Prisma.FleetfuelIntencaoGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FleetfuelIntencaoGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FleetfuelIntencaoCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FleetfuelIntencaoCountAggregateOutputType> | number
+        }
+      }
+    }
     ChecklistDefinition: {
       payload: Prisma.$ChecklistDefinitionPayload<ExtArgs>
       fields: Prisma.ChecklistDefinitionFieldRefs
@@ -2154,6 +2232,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.PartnerPortalUserCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.PartnerPortalUserCountAggregateOutputType> | number
+        }
+      }
+    }
+    PartnerPortalPasswordReset: {
+      payload: Prisma.$PartnerPortalPasswordResetPayload<ExtArgs>
+      fields: Prisma.PartnerPortalPasswordResetFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PartnerPortalPasswordResetFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalPasswordResetPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PartnerPortalPasswordResetFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalPasswordResetPayload>
+        }
+        findFirst: {
+          args: Prisma.PartnerPortalPasswordResetFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalPasswordResetPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PartnerPortalPasswordResetFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalPasswordResetPayload>
+        }
+        findMany: {
+          args: Prisma.PartnerPortalPasswordResetFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalPasswordResetPayload>[]
+        }
+        create: {
+          args: Prisma.PartnerPortalPasswordResetCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalPasswordResetPayload>
+        }
+        createMany: {
+          args: Prisma.PartnerPortalPasswordResetCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PartnerPortalPasswordResetCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalPasswordResetPayload>[]
+        }
+        delete: {
+          args: Prisma.PartnerPortalPasswordResetDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalPasswordResetPayload>
+        }
+        update: {
+          args: Prisma.PartnerPortalPasswordResetUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalPasswordResetPayload>
+        }
+        deleteMany: {
+          args: Prisma.PartnerPortalPasswordResetDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PartnerPortalPasswordResetUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PartnerPortalPasswordResetUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalPasswordResetPayload>[]
+        }
+        upsert: {
+          args: Prisma.PartnerPortalPasswordResetUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PartnerPortalPasswordResetPayload>
+        }
+        aggregate: {
+          args: Prisma.PartnerPortalPasswordResetAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePartnerPortalPasswordReset>
+        }
+        groupBy: {
+          args: Prisma.PartnerPortalPasswordResetGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PartnerPortalPasswordResetGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PartnerPortalPasswordResetCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PartnerPortalPasswordResetCountAggregateOutputType> | number
         }
       }
     }
@@ -3341,6 +3493,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    IdempotencyKey: {
+      payload: Prisma.$IdempotencyKeyPayload<ExtArgs>
+      fields: Prisma.IdempotencyKeyFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.IdempotencyKeyFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.IdempotencyKeyFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>
+        }
+        findFirst: {
+          args: Prisma.IdempotencyKeyFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.IdempotencyKeyFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>
+        }
+        findMany: {
+          args: Prisma.IdempotencyKeyFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>[]
+        }
+        create: {
+          args: Prisma.IdempotencyKeyCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>
+        }
+        createMany: {
+          args: Prisma.IdempotencyKeyCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.IdempotencyKeyCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>[]
+        }
+        delete: {
+          args: Prisma.IdempotencyKeyDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>
+        }
+        update: {
+          args: Prisma.IdempotencyKeyUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>
+        }
+        deleteMany: {
+          args: Prisma.IdempotencyKeyDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.IdempotencyKeyUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.IdempotencyKeyUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>[]
+        }
+        upsert: {
+          args: Prisma.IdempotencyKeyUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>
+        }
+        aggregate: {
+          args: Prisma.IdempotencyKeyAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateIdempotencyKey>
+        }
+        groupBy: {
+          args: Prisma.IdempotencyKeyGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdempotencyKeyGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.IdempotencyKeyCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdempotencyKeyCountAggregateOutputType> | number
+        }
+      }
+    }
+    Notificacao: {
+      payload: Prisma.$NotificacaoPayload<ExtArgs>
+      fields: Prisma.NotificacaoFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.NotificacaoFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificacaoPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.NotificacaoFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificacaoPayload>
+        }
+        findFirst: {
+          args: Prisma.NotificacaoFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificacaoPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.NotificacaoFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificacaoPayload>
+        }
+        findMany: {
+          args: Prisma.NotificacaoFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificacaoPayload>[]
+        }
+        create: {
+          args: Prisma.NotificacaoCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificacaoPayload>
+        }
+        createMany: {
+          args: Prisma.NotificacaoCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.NotificacaoCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificacaoPayload>[]
+        }
+        delete: {
+          args: Prisma.NotificacaoDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificacaoPayload>
+        }
+        update: {
+          args: Prisma.NotificacaoUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificacaoPayload>
+        }
+        deleteMany: {
+          args: Prisma.NotificacaoDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.NotificacaoUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.NotificacaoUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificacaoPayload>[]
+        }
+        upsert: {
+          args: Prisma.NotificacaoUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificacaoPayload>
+        }
+        aggregate: {
+          args: Prisma.NotificacaoAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateNotificacao>
+        }
+        groupBy: {
+          args: Prisma.NotificacaoGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificacaoGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.NotificacaoCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificacaoCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -3469,6 +3769,7 @@ export const EquipmentScalarFieldEnum = {
   anoModelo: 'anoModelo',
   capacidadeTanque: 'capacidadeTanque',
   capacidadeTanqueCaminhao: 'capacidadeTanqueCaminhao',
+  volumeTanqueAtual: 'volumeTanqueAtual',
   valorVeiculo: 'valorVeiculo',
   condutoresIds: 'condutoresIds',
   gestorResponsavel: 'gestorResponsavel',
@@ -3720,11 +4021,54 @@ export const AbastecimentoScalarFieldEnum = {
   leitura: 'leitura',
   leituraUnidade: 'leituraUnidade',
   postoNome: 'postoNome',
+  plateOrChassis: 'plateOrChassis',
+  precoLitro: 'precoLitro',
+  status: 'status',
+  tipo: 'tipo',
+  motoristaNome: 'motoristaNome',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  meterPhoto: 'meterPhoto',
+  receiptPhoto: 'receiptPhoto',
+  fleetfuelIntencaoId: 'fleetfuelIntencaoId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type AbastecimentoScalarFieldEnum = (typeof AbastecimentoScalarFieldEnum)[keyof typeof AbastecimentoScalarFieldEnum]
+
+
+export const FleetfuelIntencaoScalarFieldEnum = {
+  id: 'id',
+  legacyId: 'legacyId',
+  companyId: 'companyId',
+  postoLegacyId: 'postoLegacyId',
+  postoNome: 'postoNome',
+  equipmentId: 'equipmentId',
+  plateOrChassis: 'plateOrChassis',
+  veiculoModelo: 'veiculoModelo',
+  veiculoDescricao: 'veiculoDescricao',
+  combustivelVeiculo: 'combustivelVeiculo',
+  operadorLegacyId: 'operadorLegacyId',
+  motoristaCpf: 'motoristaCpf',
+  motoristaNome: 'motoristaNome',
+  tipoCombustivel: 'tipoCombustivel',
+  liters: 'liters',
+  pricePerLiter: 'pricePerLiter',
+  total: 'total',
+  currentReading: 'currentReading',
+  measurementType: 'measurementType',
+  status: 'status',
+  abastecimentoId: 'abastecimentoId',
+  jti: 'jti',
+  expiresAt: 'expiresAt',
+  validatedAt: 'validatedAt',
+  validadoPorOperadorLegacyId: 'validadoPorOperadorLegacyId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FleetfuelIntencaoScalarFieldEnum = (typeof FleetfuelIntencaoScalarFieldEnum)[keyof typeof FleetfuelIntencaoScalarFieldEnum]
 
 
 export const ChecklistDefinitionScalarFieldEnum = {
@@ -3846,6 +4190,20 @@ export const PartnerPortalUserScalarFieldEnum = {
 } as const
 
 export type PartnerPortalUserScalarFieldEnum = (typeof PartnerPortalUserScalarFieldEnum)[keyof typeof PartnerPortalUserScalarFieldEnum]
+
+
+export const PartnerPortalPasswordResetScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  email: 'email',
+  token: 'token',
+  used: 'used',
+  expiresAt: 'expiresAt',
+  usedAt: 'usedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type PartnerPortalPasswordResetScalarFieldEnum = (typeof PartnerPortalPasswordResetScalarFieldEnum)[keyof typeof PartnerPortalPasswordResetScalarFieldEnum]
 
 
 export const FeatureScalarFieldEnum = {
@@ -4148,6 +4506,38 @@ export const NotaFiscalScalarFieldEnum = {
 } as const
 
 export type NotaFiscalScalarFieldEnum = (typeof NotaFiscalScalarFieldEnum)[keyof typeof NotaFiscalScalarFieldEnum]
+
+
+export const IdempotencyKeyScalarFieldEnum = {
+  key: 'key',
+  status: 'status',
+  rota: 'rota',
+  resposta: 'resposta',
+  createdAt: 'createdAt',
+  expiresAt: 'expiresAt'
+} as const
+
+export type IdempotencyKeyScalarFieldEnum = (typeof IdempotencyKeyScalarFieldEnum)[keyof typeof IdempotencyKeyScalarFieldEnum]
+
+
+export const NotificacaoScalarFieldEnum = {
+  id: 'id',
+  legacyId: 'legacyId',
+  companyId: 'companyId',
+  destinatarioTipo: 'destinatarioTipo',
+  destinatarioId: 'destinatarioId',
+  prefeituraLegacyId: 'prefeituraLegacyId',
+  titulo: 'titulo',
+  mensagem: 'mensagem',
+  tipo: 'tipo',
+  referenciaTipo: 'referenciaTipo',
+  referenciaId: 'referenciaId',
+  lida: 'lida',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NotificacaoScalarFieldEnum = (typeof NotificacaoScalarFieldEnum)[keyof typeof NotificacaoScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -4573,6 +4963,7 @@ export type GlobalOmitConfig = {
   planoPreventivo?: Prisma.PlanoPreventivoOmit
   operator?: Prisma.OperatorOmit
   abastecimento?: Prisma.AbastecimentoOmit
+  fleetfuelIntencao?: Prisma.FleetfuelIntencaoOmit
   checklistDefinition?: Prisma.ChecklistDefinitionOmit
   lancamentoFinanceiro?: Prisma.LancamentoFinanceiroOmit
   role?: Prisma.RoleOmit
@@ -4580,6 +4971,7 @@ export type GlobalOmitConfig = {
   roleAccessGroup?: Prisma.RoleAccessGroupOmit
   partner?: Prisma.PartnerOmit
   partnerPortalUser?: Prisma.PartnerPortalUserOmit
+  partnerPortalPasswordReset?: Prisma.PartnerPortalPasswordResetOmit
   feature?: Prisma.FeatureOmit
   pontoRegistro?: Prisma.PontoRegistroOmit
   pontoNsrCounter?: Prisma.PontoNsrCounterOmit
@@ -4596,6 +4988,8 @@ export type GlobalOmitConfig = {
   lubrificacao?: Prisma.LubrificacaoOmit
   comboioReabastecimento?: Prisma.ComboioReabastecimentoOmit
   notaFiscal?: Prisma.NotaFiscalOmit
+  idempotencyKey?: Prisma.IdempotencyKeyOmit
+  notificacao?: Prisma.NotificacaoOmit
 }
 
 /* Types for Logging */

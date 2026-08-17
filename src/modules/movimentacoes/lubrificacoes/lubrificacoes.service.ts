@@ -4,33 +4,29 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { FirebaseService } from '../../../config/firebase.service';
+import { resolverCompanyId } from '../../../common/prisma/company-resolver';
+import {
+  fetchEquipmentMapPg,
+  resolveEquipmentByPlateOrChassisPg,
+} from '../../../common/prisma/equipment-resolver';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateLubrificacaoDto } from './dto/create-lubrificacao.dto';
 import {
   isSupportedReadingUnit,
   parseReading,
   sanitizeGreasedPoints,
 } from './helpers/lubrificacoes-create.helper';
-import {
-  fetchEquipmentMap,
-  resolveEquipmentIdByPlateOrChassis,
-} from '../shared/equipment.helper';
-import { formatDateTime } from '../shared/date.helper';
-import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
+import { formatDateTime, parseDateEnd, parseDateStart } from '../shared/date.helper';
 import { reverseGeocode } from '../shared/reverse-geocode.helper';
 import { LubrificacaoDoc, LubrificacaoListItem } from './lubrificacoes.types';
 
+const LUBRIFICACAO_INCLUDE = {
+  equipment: { select: { legacyId: true, id: true } },
+} as const;
+
 @Injectable()
 export class LubrificacoesService {
-  constructor(private firebaseService: FirebaseService) {}
-
-  private get collection() {
-    return this.firebaseService.getFirestore().collection('lubrificacoes');
-  }
-
-  private get equipamentosCollection() {
-    return this.firebaseService.getFirestore().collection('equipamentos');
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(input: CreateLubrificacaoDto): Promise<LubrificacaoDoc> {
     const reading = parseReading(input.reading);
@@ -51,32 +47,49 @@ export class LubrificacoesService {
       );
     }
 
-    const equipmentId = await resolveEquipmentIdByPlateOrChassis(
-      this.equipamentosCollection,
+    const companyId = await this.requireCompanyId(input.prefeituraId);
+    const equipamento = await resolveEquipmentByPlateOrChassisPg(
+      this.prisma,
       input.prefeituraId,
       input.plateOrChassis,
     );
 
     const id = randomUUID();
-    const doc: LubrificacaoDoc = {
-      id,
-      prefeituraId: input.prefeituraId,
-      equipmentId,
-      plateOrChassis: input.plateOrChassis,
-      comboistaNome: input.comboistaNome,
-      tipo: 'lubrificacao',
-      reading,
-      readingUnit: input.readingUnit,
-      greasedPoints,
-      observation: input.observation,
-      latitude: input.latitude,
-      longitude: input.longitude,
-      createdAt: new Date().toISOString(),
-    };
+    const createdAt = new Date();
 
     try {
-      await this.collection.doc(id).set(doc);
-      return doc;
+      await this.prisma.lubrificacao.create({
+        data: {
+          legacyId: id,
+          companyId,
+          equipmentId: equipamento.equipmentUuid,
+          plateOrChassis: input.plateOrChassis,
+          comboistaNome: input.comboistaNome,
+          reading,
+          readingUnit: input.readingUnit,
+          greasedPoints: greasedPoints as unknown as string[],
+          observation: input.observation?.trim() || null,
+          latitude: input.latitude,
+          longitude: input.longitude,
+          createdAt,
+        },
+      });
+
+      return {
+        id,
+        prefeituraId: input.prefeituraId,
+        equipmentId: equipamento.id,
+        plateOrChassis: input.plateOrChassis,
+        comboistaNome: input.comboistaNome,
+        tipo: 'lubrificacao',
+        reading,
+        readingUnit: input.readingUnit,
+        greasedPoints,
+        observation: input.observation,
+        latitude: input.latitude,
+        longitude: input.longitude,
+        createdAt: createdAt.toISOString(),
+      };
     } catch (error) {
       console.error('Erro ao criar lubrificacao:', error);
       throw new InternalServerErrorException(
@@ -91,21 +104,48 @@ export class LubrificacoesService {
     endDate?: string,
   ): Promise<{ data: LubrificacaoListItem[]; message: string }> {
     try {
-      const docs = await fetchPrefeituraDocs<LubrificacaoDoc>(
-        this.collection,
-        prefeituraId,
-        { startDate, endDate, order: 'desc' },
-      );
-
-      if (docs.length === 0) {
+      const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+      if (!companyId) {
         return { data: [], message: 'Lubrificações buscadas com sucesso!' };
       }
+
+      const where: {
+        companyId: string;
+        createdAt?: { gte?: Date; lte?: Date };
+      } = { companyId };
+
+      if (startDate) {
+        where.createdAt = {
+          ...where.createdAt,
+          gte: parseDateStart(startDate, 'startDate'),
+        };
+      }
+      if (endDate) {
+        where.createdAt = {
+          ...where.createdAt,
+          lte: parseDateEnd(endDate, 'endDate'),
+        };
+      }
+
+      const rows = await this.prisma.lubrificacao.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: LUBRIFICACAO_INCLUDE,
+      });
+
+      if (rows.length === 0) {
+        return { data: [], message: 'Lubrificações buscadas com sucesso!' };
+      }
+
+      const docs: LubrificacaoDoc[] = rows.map((row) =>
+        mapRowToDoc(row, prefeituraId),
+      );
 
       const uniqueEquipmentIds = [
         ...new Set(docs.map((doc) => doc.equipmentId).filter(Boolean)),
       ];
-      const equipmentMap = await fetchEquipmentMap(
-        this.equipamentosCollection,
+      const equipmentMap = await fetchEquipmentMapPg(
+        this.prisma,
         uniqueEquipmentIds,
       );
 
@@ -124,6 +164,14 @@ export class LubrificacoesService {
         'Não foi possível buscar as lubrificações.',
       );
     }
+  }
+
+  private async requireCompanyId(prefeituraId: string): Promise<string> {
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) {
+      throw new BadRequestException('Empresa não encontrada.');
+    }
+    return companyId;
   }
 
   private async formatListItem(
@@ -158,6 +206,46 @@ export class LubrificacoesService {
 
     return listItem;
   }
+}
+
+function mapRowToDoc(
+  row: {
+    id: string;
+    legacyId: string | null;
+    plateOrChassis: string | null;
+    comboistaNome: string | null;
+    reading: number | null;
+    readingUnit: string | null;
+    greasedPoints: unknown;
+    observation: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    createdAt: Date;
+    equipment: { legacyId: string | null; id: string } | null;
+  },
+  prefeituraId: string,
+): LubrificacaoDoc {
+  const greasedRaw = Array.isArray(row.greasedPoints) ? row.greasedPoints : [];
+  const greasedPoints = greasedRaw.filter(
+    (v): v is LubrificacaoDoc['greasedPoints'][number] =>
+      typeof v === 'string',
+  );
+
+  return {
+    id: row.legacyId ?? row.id,
+    prefeituraId,
+    equipmentId: row.equipment?.legacyId ?? row.equipment?.id ?? '',
+    plateOrChassis: row.plateOrChassis ?? '',
+    comboistaNome: row.comboistaNome ?? '',
+    tipo: 'lubrificacao',
+    reading: row.reading ?? 0,
+    readingUnit: (row.readingUnit === 'km' ? 'km' : 'h') as 'h' | 'km',
+    greasedPoints,
+    observation: row.observation ?? undefined,
+    latitude: row.latitude ?? 0,
+    longitude: row.longitude ?? 0,
+    createdAt: row.createdAt.toISOString(),
+  };
 }
 
 function asString(value: unknown): string {

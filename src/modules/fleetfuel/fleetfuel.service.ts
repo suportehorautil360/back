@@ -10,14 +10,22 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { StringValue } from 'ms';
 import { randomUUID } from 'node:crypto';
-import { FirebaseService } from '../../config/firebase.service';
-import { AbastecimentoDoc } from '../movimentacoes/abastecimentos/abastecimentos.service';
+import {
+  mapAbastecimentoRowsToGastoInput,
+  mapCreditoRowsToSaldoInput,
+} from '../../common/prisma/abastecimento-api.mapper';
+import { companyWhere, resolverCompanyId } from '../../common/prisma/company-resolver';
+import {
+  atualizarMedicaoAtualPg,
+  resolveEquipmentByPlateOrChassisPg,
+} from '../../common/prisma/equipment-resolver';
+import { limparCpf } from '../../common/prisma/operator-auth.helper';
+import { PrismaService } from '../../prisma/prisma.service';
 import {
   mensagemIntervaloAbastecimento,
   ultimoAbastecimentoTimestampMs,
   verificarIntervaloAbastecimento,
 } from '../movimentacoes/abastecimentos/helpers/intervalo-abastecimento.helper';
-import { resolveEquipmentByPlateOrChassis } from '../movimentacoes/shared/equipment.helper';
 import { TipoMedicao } from '../movimentacoes/abastecimentos/dto/create-abastecimento.dto';
 import { CriarIntencaoDto } from './dto/criar-intencao.dto';
 import { ValidarAbastecimentoDto } from './dto/validar-abastecimento.dto';
@@ -32,7 +40,6 @@ import {
   calcularSaldo,
   calcularTotal,
   combustivelCompativel,
-  limparCpf,
   limiteRevisao,
   odometroIncoerente,
   revisaoObrigatoria,
@@ -47,9 +54,6 @@ interface FleetfuelTokenPayload {
   jti: string;
 }
 
-const COLECAO_INTENCOES = 'fleetfuel_intencoes';
-
-/** Prefixo do QR curto — ~40 chars vs ~250 do JWT, muito mais rápido de escanear. */
 const QR_PREFIX = 'ff:';
 
 const UUID_RE =
@@ -58,32 +62,10 @@ const UUID_RE =
 @Injectable()
 export class FleetfuelService {
   constructor(
-    private readonly firebaseService: FirebaseService,
+    private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
   ) {}
-
-  private get firestore() {
-    return this.firebaseService.getFirestore();
-  }
-  private get intencoesCollection() {
-    return this.firestore.collection(COLECAO_INTENCOES);
-  }
-  private get equipamentosCollection() {
-    return this.firestore.collection('equipamentos');
-  }
-  private get operadoresCollection() {
-    return this.firestore.collection('operadores');
-  }
-  private get creditosCollection() {
-    return this.firestore.collection('creditos');
-  }
-  private get abastecimentosCollection() {
-    return this.firestore.collection('abastecimentos');
-  }
-  private get postosCollection() {
-    return this.firestore.collection('postos');
-  }
 
   private getTokenSecret(): string {
     const secret =
@@ -111,7 +93,6 @@ export class FleetfuelService {
     return UUID_RE.test(value);
   }
 
-  /** Resolve intenção a partir do QR curto (`ff:uuid`) ou JWT legado. */
   private async resolveQrToken(
     token: string,
   ): Promise<{ intencaoId: string; jti?: string }> {
@@ -138,10 +119,6 @@ export class FleetfuelService {
       throw new UnauthorizedException('QR inválido ou expirado.');
     }
   }
-
-  // ---------------------------------------------------------------------------
-  // Etapa 1 — verificação do veículo + motorista
-  // ---------------------------------------------------------------------------
 
   async verificar(dto: VerificarVeiculoDto) {
     const prefeituraId = dto.prefeituraId.trim();
@@ -264,13 +241,10 @@ export class FleetfuelService {
     };
   }
 
-  // ---------------------------------------------------------------------------
-  // Etapa 2 — operador confirma e gera o QR (intenção pendente)
-  // ---------------------------------------------------------------------------
-
   async criarIntencao(dto: CriarIntencaoDto) {
     const prefeituraId = dto.prefeituraId.trim();
     const measurementType: TipoMedicao = dto.measurementType ?? 'hodometro';
+    const companyId = await this.requireCompanyId(prefeituraId);
 
     const equipamento = await this.resolverVeiculoOuNull(
       prefeituraId,
@@ -343,42 +317,44 @@ export class FleetfuelService {
     const createdAt = new Date();
     const expiresAt = new Date(createdAt.getTime() + ttlMs);
 
-    const doc: IntencaoAbastecimentoDoc = {
-      id,
-      prefeituraId,
-      postoId: dto.postoId.trim(),
-      postoNome: dto.postoNome?.trim() || undefined,
-      equipmentId: veiculo.equipmentId,
-      plateOrChassis: veiculo.placa || dto.placa,
-      veiculoModelo: veiculo.modelo || undefined,
-      veiculoDescricao: veiculo.descricao || undefined,
-      combustivelVeiculo: veiculo.combustivel || undefined,
-      motoristaId: motorista.id,
-      motoristaCpf: motorista.cpf,
-      motoristaNome: motorista.nome,
-      tipoCombustivel: dto.tipoCombustivel,
-      liters: dto.liters,
-      pricePerLiter: dto.pricePerLiter,
-      total,
-      currentReading: dto.kmAtual,
-      measurementType,
-      status: 'pendente_validacao',
-      createdAt: createdAt.toISOString(),
-      expiresAt: expiresAt.toISOString(),
-    };
-
     const token = await this.jwtService.signAsync(
       {
         intencaoId: id,
         prefeituraId,
-        postoId: doc.postoId,
+        postoId: dto.postoId.trim(),
         jti,
       } satisfies FleetfuelTokenPayload,
       { secret: this.getTokenSecret(), expiresIn: this.getTokenTtl() },
     );
 
     try {
-      await this.intencoesCollection.doc(id).set({ ...doc, jti });
+      await this.prisma.fleetfuelIntencao.create({
+        data: {
+          id,
+          legacyId: id,
+          companyId,
+          postoLegacyId: dto.postoId.trim(),
+          postoNome: dto.postoNome?.trim() || null,
+          equipmentId: equipamento.equipmentUuid,
+          plateOrChassis: veiculo.placa || dto.placa,
+          veiculoModelo: veiculo.modelo || null,
+          veiculoDescricao: veiculo.descricao || null,
+          combustivelVeiculo: veiculo.combustivel || null,
+          operadorLegacyId: motorista.id,
+          motoristaCpf: motorista.cpf,
+          motoristaNome: motorista.nome,
+          tipoCombustivel: dto.tipoCombustivel,
+          liters: dto.liters.toFixed(3),
+          pricePerLiter: dto.pricePerLiter.toFixed(4),
+          total: total.toFixed(2),
+          currentReading: dto.kmAtual,
+          measurementType,
+          status: 'pendente_validacao',
+          jti,
+          expiresAt,
+          createdAt,
+        },
+      });
     } catch (error) {
       console.error('Erro ao criar intenção de abastecimento:', error);
       throw new InternalServerErrorException(
@@ -391,108 +367,110 @@ export class FleetfuelService {
         intencaoId: id,
         token,
         qrConteudo: this.formatQrConteudo(id),
-        expiresAt: doc.expiresAt,
+        expiresAt: expiresAt.toISOString(),
         resumo: {
-          placa: doc.plateOrChassis,
-          motorista: doc.motoristaNome,
-          combustivel: doc.tipoCombustivel,
-          litros: doc.liters,
-          precoLitro: doc.pricePerLiter,
-          total: doc.total,
-          posto: doc.postoNome ?? null,
+          placa: veiculo.placa || dto.placa,
+          motorista: motorista.nome,
+          combustivel: dto.tipoCombustivel,
+          litros: dto.liters,
+          precoLitro: dto.pricePerLiter,
+          total,
+          posto: dto.postoNome?.trim() ?? null,
         },
       },
       message: 'QR gerado. Aguardando validação do motorista.',
     };
   }
 
-  // ---------------------------------------------------------------------------
-  // Etapa 3 — motorista valida (debita saldo na transação e conclui)
-  // ---------------------------------------------------------------------------
-
   async validar(dto: ValidarAbastecimentoDto) {
     const payload = await this.resolveQrToken(dto.token);
-
-    const ref = this.intencoesCollection.doc(payload.intencaoId);
     const cpfMotorista = dto.cpf ? limparCpf(dto.cpf) : '';
 
     try {
-      const resultado = await this.firestore.runTransaction(async (tx) => {
-        const snap = await tx.get(ref);
-        if (!snap.exists) {
+      const resultado = await this.prisma.$transaction(async (tx) => {
+        const intencaoRow = await tx.fleetfuelIntencao.findFirst({
+          where: {
+            OR: [{ id: payload.intencaoId }, { legacyId: payload.intencaoId }],
+          },
+          include: {
+            company: { select: { legacyId: true } },
+            equipment: { select: { id: true, legacyId: true } },
+          },
+        });
+
+        if (!intencaoRow) {
           throw new NotFoundException('Abastecimento não encontrado.');
         }
-        const intencao = snap.data() as IntencaoAbastecimentoDoc & {
-          jti?: string;
-        };
 
-        if (payload.jti && intencao.jti && intencao.jti !== payload.jti) {
+        const prefeituraId =
+          intencaoRow.company.legacyId ?? intencaoRow.companyId;
+        const equipmentPublicId =
+          intencaoRow.equipment?.legacyId ?? intencaoRow.equipmentId ?? '';
+
+        if (payload.jti && intencaoRow.jti && intencaoRow.jti !== payload.jti) {
           throw new UnauthorizedException(
             'QR não corresponde a este registro.',
           );
         }
-        if (intencao.status === 'concluido') {
+        if (intencaoRow.status === 'concluido') {
           throw new ConflictException('Abastecimento já validado.');
         }
-        if (intencao.status !== 'pendente_validacao') {
+        if (intencaoRow.status !== 'pendente_validacao') {
           throw new ConflictException(
             'Abastecimento não está mais disponível.',
           );
         }
-        if (new Date(intencao.expiresAt).getTime() < Date.now()) {
-          tx.update(ref, { status: 'expirado' });
+        if (intencaoRow.expiresAt.getTime() < Date.now()) {
+          await tx.fleetfuelIntencao.update({
+            where: { id: intencaoRow.id },
+            data: { status: 'expirado' },
+          });
           throw new UnauthorizedException('QR expirado.');
         }
 
-        // Identidade do motorista: o que escaneou precisa ser o da intenção.
-        if (dto.funcionarioId && intencao.motoristaId) {
-          if (dto.funcionarioId !== intencao.motoristaId) {
+        if (dto.funcionarioId && intencaoRow.operadorLegacyId) {
+          if (dto.funcionarioId !== intencaoRow.operadorLegacyId) {
             throw new UnauthorizedException(
               'Este abastecimento não é do motorista logado.',
             );
           }
         } else if (cpfMotorista) {
-          if (cpfMotorista !== limparCpf(intencao.motoristaCpf)) {
+          if (cpfMotorista !== limparCpf(intencaoRow.motoristaCpf)) {
             throw new UnauthorizedException(
               'Este abastecimento não é do motorista logado.',
             );
           }
         }
 
-        // --- Reads antes de writes: recomputa o saldo dentro da transação ---
-        const [creditosSnap, abastecimentosSnap] = await Promise.all([
-          tx.get(
-            this.creditosCollection.where(
-              'prefeituraId',
-              '==',
-              intencao.prefeituraId,
-            ),
-          ),
-          tx.get(
-            this.abastecimentosCollection.where(
-              'equipmentId',
-              '==',
-              intencao.equipmentId,
-            ),
-          ),
+        const [creditosRows, abastecimentosRows] = await Promise.all([
+          tx.credito.findMany({
+            where: { companyId: intencaoRow.companyId },
+            include: { equipment: { select: { legacyId: true } } },
+          }),
+          tx.abastecimento.findMany({
+            where: { equipmentId: intencaoRow.equipmentId ?? undefined },
+            include: { equipment: { select: { legacyId: true } } },
+          }),
         ]);
 
         const creditado = somaCreditadoEquipamento(
-          creditosSnap.docs.map((d) => d.data() as Record<string, unknown>),
-          intencao.equipmentId,
-          [intencao.plateOrChassis],
+          mapCreditoRowsToSaldoInput(creditosRows),
+          equipmentPublicId,
+          [intencaoRow.plateOrChassis],
         );
         const gasto = somaGastoEquipamento(
-          abastecimentosSnap.docs.map(
-            (d) => d.data() as { equipmentId?: string; total?: unknown },
-          ),
-          intencao.equipmentId,
+          mapAbastecimentoRowsToGastoInput(abastecimentosRows),
+          equipmentPublicId,
         );
 
         const ultimoEmMs = ultimoAbastecimentoTimestampMs(
-          abastecimentosSnap.docs.map((d) => d.data()),
-          intencao.prefeituraId,
-          intencao.equipmentId,
+          abastecimentosRows.map((row) => ({
+            prefeituraId,
+            equipmentId: equipmentPublicId,
+            createdAt: row.createdAt.toISOString(),
+          })),
+          prefeituraId,
+          equipmentPublicId,
         );
         const intervalo = verificarIntervaloAbastecimento(ultimoEmMs);
         if (!intervalo.liberado && intervalo.proximoEmMs !== null) {
@@ -501,66 +479,72 @@ export class FleetfuelService {
           );
         }
 
+        const total = Number(intencaoRow.total);
         const saldo = calcularSaldo(creditado, gasto);
-        if (intencao.total > saldo) {
+        if (total > saldo) {
           throw new BadRequestException(
             'Saldo insuficiente no momento da validação.',
           );
         }
 
-        // --- Writes: grava o abastecimento e conclui a intenção ---
         const abastecimentoId = randomUUID();
-        const validatedAtIso = new Date().toISOString();
-        const abastecimento: AbastecimentoDoc & {
-          origem: string;
-          motoristaId: string | null;
-          motoristaNome: string;
-          fleetfuelIntencaoId: string;
-        } = {
-          id: abastecimentoId,
-          prefeituraId: intencao.prefeituraId,
-          equipmentId: intencao.equipmentId,
-          plateOrChassis: intencao.plateOrChassis,
-          liters: intencao.liters,
-          tipo: 'comboio',
-          origem: 'posto',
-          measurementType: intencao.measurementType,
-          currentReading: intencao.currentReading,
-          pricePerLiter: intencao.pricePerLiter,
-          total: intencao.total,
-          postoId: intencao.postoId,
-          funcionarioId: intencao.motoristaId ?? undefined,
-          motoristaId: intencao.motoristaId,
-          motoristaNome: intencao.motoristaNome,
-          fleetfuelIntencaoId: intencao.id,
-          latitude: 0,
-          longitude: 0,
-          createdAt: validatedAtIso,
-        };
+        const validatedAt = new Date();
+        const validatedAtIso = validatedAt.toISOString();
 
-        tx.set(
-          this.abastecimentosCollection.doc(abastecimentoId),
-          abastecimento,
-        );
-        tx.update(ref, {
-          status: 'concluido',
-          abastecimentoId,
-          validatedAt: validatedAtIso,
-          validadoPorFuncionarioId: dto.funcionarioId ?? intencao.motoristaId,
+        await tx.abastecimento.create({
+          data: {
+            id: abastecimentoId,
+            legacyId: abastecimentoId,
+            companyId: intencaoRow.companyId,
+            equipmentId: intencaoRow.equipmentId,
+            operadorLegacyId: intencaoRow.operadorLegacyId,
+            postoLegacyId: intencaoRow.postoLegacyId,
+            data: new Date(validatedAtIso.slice(0, 10)),
+            litros: intencaoRow.liters,
+            valor: intencaoRow.total,
+            origem: 'posto',
+            leitura: intencaoRow.currentReading,
+            leituraUnidade:
+              intencaoRow.measurementType === 'horimetro' ? 'h' : 'km',
+            plateOrChassis: intencaoRow.plateOrChassis,
+            precoLitro: intencaoRow.pricePerLiter,
+            status: 'aprovado',
+            tipo: 'fleetfuel',
+            postoNome: intencaoRow.postoNome,
+            motoristaNome: intencaoRow.motoristaNome,
+            combustivel: intencaoRow.tipoCombustivel,
+            latitude: 0,
+            longitude: 0,
+            fleetfuelIntencaoId: intencaoRow.id,
+            createdAt: validatedAt,
+          },
+        });
+
+        await tx.fleetfuelIntencao.update({
+          where: { id: intencaoRow.id },
+          data: {
+            status: 'concluido',
+            abastecimentoId,
+            validatedAt,
+            validadoPorOperadorLegacyId:
+              dto.funcionarioId ?? intencaoRow.operadorLegacyId,
+          },
         });
 
         return {
-          intencao,
+          intencao: this.mapIntencaoRow(intencaoRow, prefeituraId),
           abastecimentoId,
           validatedAtIso,
-          saldoApos: calcularSaldo(creditado, gasto + intencao.total),
+          saldoApos: calcularSaldo(creditado, gasto + total),
+          currentReading: intencaoRow.currentReading,
+          equipmentPublicId,
         };
       });
 
-      // Best-effort: mantém a leitura atual do equipamento em dia (fora da tx).
-      await this.atualizarMedicaoAtual(
-        resultado.intencao.equipmentId,
-        resultado.intencao.currentReading,
+      await atualizarMedicaoAtualPg(
+        this.prisma,
+        resultado.equipmentPublicId,
+        resultado.currentReading,
       ).catch(() => undefined);
 
       return {
@@ -596,34 +580,27 @@ export class FleetfuelService {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Status (polling do posto-web)
-  // ---------------------------------------------------------------------------
-
   async statusIntencao(id: string) {
-    const snap = await this.intencoesCollection.doc(id).get();
-    if (!snap.exists) {
+    const row = await this.prisma.fleetfuelIntencao.findFirst({
+      where: { OR: [{ id }, { legacyId: id }] },
+    });
+    if (!row) {
       throw new NotFoundException('Intenção não encontrada.');
     }
-    const intencao = snap.data() as IntencaoAbastecimentoDoc;
     const expirado =
-      intencao.status === 'pendente_validacao' &&
-      new Date(intencao.expiresAt).getTime() < Date.now();
+      row.status === 'pendente_validacao' &&
+      row.expiresAt.getTime() < Date.now();
     return {
       data: {
-        id: intencao.id,
-        status: expirado ? 'expirado' : intencao.status,
-        abastecimentoId: intencao.abastecimentoId ?? null,
-        validatedAt: intencao.validatedAt ?? null,
-        expiresAt: intencao.expiresAt,
+        id: row.legacyId ?? row.id,
+        status: expirado ? 'expirado' : row.status,
+        abastecimentoId: row.abastecimentoId ?? null,
+        validatedAt: row.validatedAt?.toISOString() ?? null,
+        expiresAt: row.expiresAt.toISOString(),
       },
       message: 'OK',
     };
   }
-
-  // ---------------------------------------------------------------------------
-  // Helpers de I/O
-  // ---------------------------------------------------------------------------
 
   private ttlEmMs(): number {
     const ttl = String(this.getTokenTtl());
@@ -649,10 +626,11 @@ export class FleetfuelService {
     veiculo: VeiculoVerificado;
     ultimaRevisao: unknown;
     intervaloRevisao: unknown;
+    equipmentUuid: string;
   } | null> {
     try {
-      const equip = await resolveEquipmentByPlateOrChassis(
-        this.equipamentosCollection,
+      const equip = await resolveEquipmentByPlateOrChassisPg(
+        this.prisma,
         prefeituraId,
         placa,
       );
@@ -676,6 +654,7 @@ export class FleetfuelService {
         veiculo,
         ultimaRevisao: raw.ultimaRevisao,
         intervaloRevisao: raw.intervaloRevisao,
+        equipmentUuid: equip.equipmentUuid,
       };
     } catch {
       return null;
@@ -688,68 +667,123 @@ export class FleetfuelService {
   ): Promise<MotoristaVerificado | null> {
     const cpfLimpo = limparCpf(cpf);
     if (cpfLimpo.length !== 11) return null;
-    const snap = await this.operadoresCollection
-      .where('prefeituraId', '==', prefeituraId)
-      .where('cpf', '==', cpfLimpo)
-      .get();
-    if (snap.empty) return null;
-    const doc = snap.docs.find((d) => {
-      const status = asString((d.data() as Record<string, unknown>).status);
-      return status !== 'inativo';
+
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) return null;
+
+    const row = await this.prisma.operator.findFirst({
+      where: {
+        companyId,
+        cpf: cpfLimpo,
+        status: { not: 'inativo' },
+      },
     });
-    if (!doc) return null;
-    const data = doc.data() as Record<string, unknown>;
+    if (!row) return null;
+
     return {
-      id: doc.id,
-      nome: asString(data.nome),
+      id: row.legacyId ?? row.id,
+      nome: row.nome,
       cpf: cpfLimpo,
-      cargo: asString(data.cargo),
+      cargo: row.cargo ?? row.funcao ?? '',
     };
   }
 
   private async calcularSaldoEquipamento(
     prefeituraId: string,
-    equipmentId: string,
+    equipmentPublicId: string,
     identificadores: string[],
   ): Promise<number> {
-    const [creditosSnap, abastecimentosSnap] = await Promise.all([
-      this.creditosCollection.where('prefeituraId', '==', prefeituraId).get(),
-      this.abastecimentosCollection
-        .where('equipmentId', '==', equipmentId)
-        .get(),
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) return 0;
+
+    const equip = await this.prisma.equipment.findFirst({
+      where: {
+        companyId,
+        OR: [{ id: equipmentPublicId }, { legacyId: equipmentPublicId }],
+      },
+      select: { id: true, legacyId: true },
+    });
+    if (!equip) return 0;
+
+    const publicId = equip.legacyId ?? equip.id;
+
+    const [creditosRows, abastecimentosRows] = await Promise.all([
+      this.prisma.credito.findMany({
+        where: { companyId },
+        include: { equipment: { select: { legacyId: true } } },
+      }),
+      this.prisma.abastecimento.findMany({
+        where: { equipmentId: equip.id },
+        include: { equipment: { select: { legacyId: true } } },
+      }),
     ]);
+
     const creditado = somaCreditadoEquipamento(
-      creditosSnap.docs.map((d) => d.data() as Record<string, unknown>),
-      equipmentId,
+      mapCreditoRowsToSaldoInput(creditosRows),
+      publicId,
       identificadores,
     );
     const gasto = somaGastoEquipamento(
-      abastecimentosSnap.docs.map(
-        (d) => d.data() as { equipmentId?: string; total?: unknown; status?: unknown },
-      ),
-      equipmentId,
+      mapAbastecimentoRowsToGastoInput(abastecimentosRows),
+      publicId,
     );
     return calcularSaldo(creditado, gasto);
   }
 
-  private async atualizarMedicaoAtual(
-    equipmentId: string,
-    leitura: number,
-  ): Promise<void> {
-    const byField = await this.equipamentosCollection
-      .where('id', '==', equipmentId)
-      .limit(1)
-      .get();
-    const ref = byField.empty
-      ? this.equipamentosCollection.doc(equipmentId)
-      : byField.docs[0].ref;
-    const snap = byField.empty ? await ref.get() : byField.docs[0];
-    const atual = Number(
-      (snap.data() as Record<string, unknown>)?.medicaoAtual,
-    );
-    if (!Number.isFinite(atual) || leitura > atual) {
-      await ref.set({ medicaoAtual: leitura }, { merge: true });
+  private mapIntencaoRow(
+    row: {
+      id: string;
+      legacyId: string | null;
+      postoLegacyId: string;
+      postoNome: string | null;
+      plateOrChassis: string;
+      operadorLegacyId: string | null;
+      motoristaCpf: string;
+      motoristaNome: string;
+      tipoCombustivel: string;
+      liters: unknown;
+      pricePerLiter: unknown;
+      total: unknown;
+      currentReading: number;
+      measurementType: string;
+      status: string;
+      abastecimentoId: string | null;
+      expiresAt: Date;
+      validatedAt: Date | null;
+      equipmentId: string | null;
+    },
+    prefeituraId: string,
+  ): IntencaoAbastecimentoDoc {
+    return {
+      id: row.legacyId ?? row.id,
+      prefeituraId,
+      postoId: row.postoLegacyId,
+      postoNome: row.postoNome ?? undefined,
+      equipmentId: row.equipmentId ?? '',
+      plateOrChassis: row.plateOrChassis,
+      motoristaId: row.operadorLegacyId,
+      motoristaCpf: row.motoristaCpf,
+      motoristaNome: row.motoristaNome,
+      tipoCombustivel: row.tipoCombustivel,
+      liters: Number(row.liters),
+      pricePerLiter: Number(row.pricePerLiter),
+      total: Number(row.total),
+      currentReading: row.currentReading,
+      measurementType: row.measurementType as TipoMedicao,
+      status: row.status as IntencaoAbastecimentoDoc['status'],
+      abastecimentoId: row.abastecimentoId ?? undefined,
+      createdAt: '',
+      expiresAt: row.expiresAt.toISOString(),
+      validatedAt: row.validatedAt?.toISOString(),
+    };
+  }
+
+  private async requireCompanyId(prefeituraId: string): Promise<string> {
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) {
+      throw new BadRequestException('Empresa não encontrada.');
     }
+    return companyId;
   }
 }
 

@@ -257,6 +257,7 @@ export type PartnerPortalUserWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"PartnerPortalUser"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   partner?: Prisma.XOR<Prisma.PartnerNullableScalarRelationFilter, Prisma.PartnerWhereInput> | null
+  passwordResets?: Prisma.PartnerPortalPasswordResetListRelationFilter
 }
 
 export type PartnerPortalUserOrderByWithRelationInput = {
@@ -276,6 +277,7 @@ export type PartnerPortalUserOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   company?: Prisma.CompanyOrderByWithRelationInput
   partner?: Prisma.PartnerOrderByWithRelationInput
+  passwordResets?: Prisma.PartnerPortalPasswordResetOrderByRelationAggregateInput
 }
 
 export type PartnerPortalUserWhereUniqueInput = Prisma.AtLeast<{
@@ -298,6 +300,7 @@ export type PartnerPortalUserWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"PartnerPortalUser"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   partner?: Prisma.XOR<Prisma.PartnerNullableScalarRelationFilter, Prisma.PartnerWhereInput> | null
+  passwordResets?: Prisma.PartnerPortalPasswordResetListRelationFilter
 }, "id" | "legacyId" | "usuario">
 
 export type PartnerPortalUserOrderByWithAggregationInput = {
@@ -355,6 +358,7 @@ export type PartnerPortalUserCreateInput = {
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutPartnerPortalUsersInput
   partner?: Prisma.PartnerCreateNestedOneWithoutPartnerPortalUsersInput
+  passwordResets?: Prisma.PartnerPortalPasswordResetCreateNestedManyWithoutUserInput
 }
 
 export type PartnerPortalUserUncheckedCreateInput = {
@@ -372,6 +376,7 @@ export type PartnerPortalUserUncheckedCreateInput = {
   status?: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  passwordResets?: Prisma.PartnerPortalPasswordResetUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type PartnerPortalUserUpdateInput = {
@@ -389,6 +394,7 @@ export type PartnerPortalUserUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutPartnerPortalUsersNestedInput
   partner?: Prisma.PartnerUpdateOneWithoutPartnerPortalUsersNestedInput
+  passwordResets?: Prisma.PartnerPortalPasswordResetUpdateManyWithoutUserNestedInput
 }
 
 export type PartnerPortalUserUncheckedUpdateInput = {
@@ -406,6 +412,7 @@ export type PartnerPortalUserUncheckedUpdateInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  passwordResets?: Prisma.PartnerPortalPasswordResetUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type PartnerPortalUserCreateManyInput = {
@@ -518,6 +525,11 @@ export type PartnerPortalUserMinOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
 }
 
+export type PartnerPortalUserScalarRelationFilter = {
+  is?: Prisma.PartnerPortalUserWhereInput
+  isNot?: Prisma.PartnerPortalUserWhereInput
+}
+
 export type PartnerPortalUserCreateNestedManyWithoutCompanyInput = {
   create?: Prisma.XOR<Prisma.PartnerPortalUserCreateWithoutCompanyInput, Prisma.PartnerPortalUserUncheckedCreateWithoutCompanyInput> | Prisma.PartnerPortalUserCreateWithoutCompanyInput[] | Prisma.PartnerPortalUserUncheckedCreateWithoutCompanyInput[]
   connectOrCreate?: Prisma.PartnerPortalUserCreateOrConnectWithoutCompanyInput | Prisma.PartnerPortalUserCreateOrConnectWithoutCompanyInput[]
@@ -602,6 +614,20 @@ export type PartnerPortalUserUncheckedUpdateManyWithoutPartnerNestedInput = {
   deleteMany?: Prisma.PartnerPortalUserScalarWhereInput | Prisma.PartnerPortalUserScalarWhereInput[]
 }
 
+export type PartnerPortalUserCreateNestedOneWithoutPasswordResetsInput = {
+  create?: Prisma.XOR<Prisma.PartnerPortalUserCreateWithoutPasswordResetsInput, Prisma.PartnerPortalUserUncheckedCreateWithoutPasswordResetsInput>
+  connectOrCreate?: Prisma.PartnerPortalUserCreateOrConnectWithoutPasswordResetsInput
+  connect?: Prisma.PartnerPortalUserWhereUniqueInput
+}
+
+export type PartnerPortalUserUpdateOneRequiredWithoutPasswordResetsNestedInput = {
+  create?: Prisma.XOR<Prisma.PartnerPortalUserCreateWithoutPasswordResetsInput, Prisma.PartnerPortalUserUncheckedCreateWithoutPasswordResetsInput>
+  connectOrCreate?: Prisma.PartnerPortalUserCreateOrConnectWithoutPasswordResetsInput
+  upsert?: Prisma.PartnerPortalUserUpsertWithoutPasswordResetsInput
+  connect?: Prisma.PartnerPortalUserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PartnerPortalUserUpdateToOneWithWhereWithoutPasswordResetsInput, Prisma.PartnerPortalUserUpdateWithoutPasswordResetsInput>, Prisma.PartnerPortalUserUncheckedUpdateWithoutPasswordResetsInput>
+}
+
 export type PartnerPortalUserCreateWithoutCompanyInput = {
   id?: string
   legacyId?: string | null
@@ -616,6 +642,7 @@ export type PartnerPortalUserCreateWithoutCompanyInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   partner?: Prisma.PartnerCreateNestedOneWithoutPartnerPortalUsersInput
+  passwordResets?: Prisma.PartnerPortalPasswordResetCreateNestedManyWithoutUserInput
 }
 
 export type PartnerPortalUserUncheckedCreateWithoutCompanyInput = {
@@ -632,6 +659,7 @@ export type PartnerPortalUserUncheckedCreateWithoutCompanyInput = {
   status?: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  passwordResets?: Prisma.PartnerPortalPasswordResetUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type PartnerPortalUserCreateOrConnectWithoutCompanyInput = {
@@ -694,6 +722,7 @@ export type PartnerPortalUserCreateWithoutPartnerInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutPartnerPortalUsersInput
+  passwordResets?: Prisma.PartnerPortalPasswordResetCreateNestedManyWithoutUserInput
 }
 
 export type PartnerPortalUserUncheckedCreateWithoutPartnerInput = {
@@ -710,6 +739,7 @@ export type PartnerPortalUserUncheckedCreateWithoutPartnerInput = {
   status?: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  passwordResets?: Prisma.PartnerPortalPasswordResetUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type PartnerPortalUserCreateOrConnectWithoutPartnerInput = {
@@ -736,6 +766,90 @@ export type PartnerPortalUserUpdateWithWhereUniqueWithoutPartnerInput = {
 export type PartnerPortalUserUpdateManyWithWhereWithoutPartnerInput = {
   where: Prisma.PartnerPortalUserScalarWhereInput
   data: Prisma.XOR<Prisma.PartnerPortalUserUpdateManyMutationInput, Prisma.PartnerPortalUserUncheckedUpdateManyWithoutPartnerInput>
+}
+
+export type PartnerPortalUserCreateWithoutPasswordResetsInput = {
+  id?: string
+  legacyId?: string | null
+  partnerLegacyId?: string | null
+  nome: string
+  usuario: string
+  email?: string | null
+  senhaHash: string
+  perfil?: string
+  vinculo?: string
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutPartnerPortalUsersInput
+  partner?: Prisma.PartnerCreateNestedOneWithoutPartnerPortalUsersInput
+}
+
+export type PartnerPortalUserUncheckedCreateWithoutPasswordResetsInput = {
+  id?: string
+  legacyId?: string | null
+  companyId: string
+  partnerId?: string | null
+  partnerLegacyId?: string | null
+  nome: string
+  usuario: string
+  email?: string | null
+  senhaHash: string
+  perfil?: string
+  vinculo?: string
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type PartnerPortalUserCreateOrConnectWithoutPasswordResetsInput = {
+  where: Prisma.PartnerPortalUserWhereUniqueInput
+  create: Prisma.XOR<Prisma.PartnerPortalUserCreateWithoutPasswordResetsInput, Prisma.PartnerPortalUserUncheckedCreateWithoutPasswordResetsInput>
+}
+
+export type PartnerPortalUserUpsertWithoutPasswordResetsInput = {
+  update: Prisma.XOR<Prisma.PartnerPortalUserUpdateWithoutPasswordResetsInput, Prisma.PartnerPortalUserUncheckedUpdateWithoutPasswordResetsInput>
+  create: Prisma.XOR<Prisma.PartnerPortalUserCreateWithoutPasswordResetsInput, Prisma.PartnerPortalUserUncheckedCreateWithoutPasswordResetsInput>
+  where?: Prisma.PartnerPortalUserWhereInput
+}
+
+export type PartnerPortalUserUpdateToOneWithWhereWithoutPasswordResetsInput = {
+  where?: Prisma.PartnerPortalUserWhereInput
+  data: Prisma.XOR<Prisma.PartnerPortalUserUpdateWithoutPasswordResetsInput, Prisma.PartnerPortalUserUncheckedUpdateWithoutPasswordResetsInput>
+}
+
+export type PartnerPortalUserUpdateWithoutPasswordResetsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  partnerLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  usuario?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  senhaHash?: Prisma.StringFieldUpdateOperationsInput | string
+  perfil?: Prisma.StringFieldUpdateOperationsInput | string
+  vinculo?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutPartnerPortalUsersNestedInput
+  partner?: Prisma.PartnerUpdateOneWithoutPartnerPortalUsersNestedInput
+}
+
+export type PartnerPortalUserUncheckedUpdateWithoutPasswordResetsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  partnerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  partnerLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  usuario?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  senhaHash?: Prisma.StringFieldUpdateOperationsInput | string
+  perfil?: Prisma.StringFieldUpdateOperationsInput | string
+  vinculo?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type PartnerPortalUserCreateManyCompanyInput = {
@@ -768,6 +882,7 @@ export type PartnerPortalUserUpdateWithoutCompanyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partner?: Prisma.PartnerUpdateOneWithoutPartnerPortalUsersNestedInput
+  passwordResets?: Prisma.PartnerPortalPasswordResetUpdateManyWithoutUserNestedInput
 }
 
 export type PartnerPortalUserUncheckedUpdateWithoutCompanyInput = {
@@ -784,6 +899,7 @@ export type PartnerPortalUserUncheckedUpdateWithoutCompanyInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  passwordResets?: Prisma.PartnerPortalPasswordResetUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type PartnerPortalUserUncheckedUpdateManyWithoutCompanyInput = {
@@ -832,6 +948,7 @@ export type PartnerPortalUserUpdateWithoutPartnerInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutPartnerPortalUsersNestedInput
+  passwordResets?: Prisma.PartnerPortalPasswordResetUpdateManyWithoutUserNestedInput
 }
 
 export type PartnerPortalUserUncheckedUpdateWithoutPartnerInput = {
@@ -848,6 +965,7 @@ export type PartnerPortalUserUncheckedUpdateWithoutPartnerInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  passwordResets?: Prisma.PartnerPortalPasswordResetUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type PartnerPortalUserUncheckedUpdateManyWithoutPartnerInput = {
@@ -867,6 +985,35 @@ export type PartnerPortalUserUncheckedUpdateManyWithoutPartnerInput = {
 }
 
 
+/**
+ * Count Type PartnerPortalUserCountOutputType
+ */
+
+export type PartnerPortalUserCountOutputType = {
+  passwordResets: number
+}
+
+export type PartnerPortalUserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  passwordResets?: boolean | PartnerPortalUserCountOutputTypeCountPasswordResetsArgs
+}
+
+/**
+ * PartnerPortalUserCountOutputType without action
+ */
+export type PartnerPortalUserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PartnerPortalUserCountOutputType
+   */
+  select?: Prisma.PartnerPortalUserCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * PartnerPortalUserCountOutputType without action
+ */
+export type PartnerPortalUserCountOutputTypeCountPasswordResetsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PartnerPortalPasswordResetWhereInput
+}
+
 
 export type PartnerPortalUserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -885,6 +1032,8 @@ export type PartnerPortalUserSelect<ExtArgs extends runtime.Types.Extensions.Int
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   partner?: boolean | Prisma.PartnerPortalUser$partnerArgs<ExtArgs>
+  passwordResets?: boolean | Prisma.PartnerPortalUser$passwordResetsArgs<ExtArgs>
+  _count?: boolean | Prisma.PartnerPortalUserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["partnerPortalUser"]>
 
 export type PartnerPortalUserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -946,6 +1095,8 @@ export type PartnerPortalUserOmit<ExtArgs extends runtime.Types.Extensions.Inter
 export type PartnerPortalUserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   partner?: boolean | Prisma.PartnerPortalUser$partnerArgs<ExtArgs>
+  passwordResets?: boolean | Prisma.PartnerPortalUser$passwordResetsArgs<ExtArgs>
+  _count?: boolean | Prisma.PartnerPortalUserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type PartnerPortalUserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
@@ -961,6 +1112,7 @@ export type $PartnerPortalUserPayload<ExtArgs extends runtime.Types.Extensions.I
   objects: {
     company: Prisma.$CompanyPayload<ExtArgs>
     partner: Prisma.$PartnerPayload<ExtArgs> | null
+    passwordResets: Prisma.$PartnerPortalPasswordResetPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1376,6 +1528,7 @@ export interface Prisma__PartnerPortalUserClient<T, Null = never, ExtArgs extend
   readonly [Symbol.toStringTag]: "PrismaPromise"
   company<T extends Prisma.CompanyDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CompanyDefaultArgs<ExtArgs>>): Prisma.Prisma__CompanyClient<runtime.Types.Result.GetResult<Prisma.$CompanyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   partner<T extends Prisma.PartnerPortalUser$partnerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PartnerPortalUser$partnerArgs<ExtArgs>>): Prisma.Prisma__PartnerClient<runtime.Types.Result.GetResult<Prisma.$PartnerPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  passwordResets<T extends Prisma.PartnerPortalUser$passwordResetsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PartnerPortalUser$passwordResetsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PartnerPortalPasswordResetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1836,6 +1989,30 @@ export type PartnerPortalUser$partnerArgs<ExtArgs extends runtime.Types.Extensio
    */
   include?: Prisma.PartnerInclude<ExtArgs> | null
   where?: Prisma.PartnerWhereInput
+}
+
+/**
+ * PartnerPortalUser.passwordResets
+ */
+export type PartnerPortalUser$passwordResetsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PartnerPortalPasswordReset
+   */
+  select?: Prisma.PartnerPortalPasswordResetSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PartnerPortalPasswordReset
+   */
+  omit?: Prisma.PartnerPortalPasswordResetOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PartnerPortalPasswordResetInclude<ExtArgs> | null
+  where?: Prisma.PartnerPortalPasswordResetWhereInput
+  orderBy?: Prisma.PartnerPortalPasswordResetOrderByWithRelationInput | Prisma.PartnerPortalPasswordResetOrderByWithRelationInput[]
+  cursor?: Prisma.PartnerPortalPasswordResetWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PartnerPortalPasswordResetScalarFieldEnum | Prisma.PartnerPortalPasswordResetScalarFieldEnum[]
 }
 
 /**

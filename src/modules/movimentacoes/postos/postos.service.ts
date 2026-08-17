@@ -6,10 +6,8 @@ import {
 import { randomUUID } from 'node:crypto';
 import { mapPartnerPostoToApi } from '../../../common/prisma/partner-api.mapper';
 import { resolverCompanyId } from '../../../common/prisma/company-resolver';
-import { FirebaseService } from '../../../config/firebase.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { parseDateEnd, parseDateStart } from '../shared/date.helper';
-import { fetchPrefeituraDocs } from '../shared/prefeitura-query.helper';
 import { CreatePostoDto } from './dto/create-posto.dto';
 import {
   AbastecimentoPostoStats,
@@ -17,24 +15,12 @@ import {
   formatBRL,
   formatLitros,
   formatPrecoPorLitro,
-  isWithinPeriod,
 } from './helpers/postos-list.helper';
 import { PostoDoc, PostoListItem, TIPO_PARCEIRO_OPTIONS } from './postos.types';
 
 @Injectable()
 export class PostosService {
-  constructor(
-    private firebaseService: FirebaseService,
-    private readonly prisma: PrismaService,
-  ) {}
-
-  private get collection() {
-    return this.firebaseService.getFirestore().collection('postos');
-  }
-
-  private get abastecimentosCollection() {
-    return this.firebaseService.getFirestore().collection('abastecimentos');
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(input: CreatePostoDto): Promise<PostoDoc> {
     if (!TIPO_PARCEIRO_OPTIONS.includes(input.tipoParceiro)) {
@@ -43,24 +29,35 @@ export class PostosService {
       );
     }
 
+    const companyId = await resolverCompanyId(this.prisma, input.prefeituraId);
+    if (!companyId) {
+      throw new BadRequestException('Empresa não encontrada.');
+    }
+
     const id = randomUUID();
-    const doc: PostoDoc = {
-      id,
-      prefeituraId: input.prefeituraId.trim(),
-      tipoParceiro: input.tipoParceiro,
-      cnpj: input.cnpj.trim(),
-      telefonePrincipal: input.telefonePrincipal.trim(),
-      razaoSocial: input.razaoSocial.trim(),
-      nomeFantasia: input.nomeFantasia.trim(),
-      emailComercial: input.emailComercial.trim(),
-      cidadeUf: input.cidadeUf.trim(),
-      endereco: input.endereco.trim(),
-      createdAt: new Date().toISOString(),
-    };
+    const prefeituraId = input.prefeituraId.trim();
+    const partnerType = input.tipoParceiro === 'oficina' ? 'OFICINA' : 'POSTO';
 
     try {
-      await this.collection.doc(id).set(doc);
-      return doc;
+      const partner = await this.prisma.partner.create({
+        data: {
+          id,
+          legacyId: id,
+          companyId,
+          type: partnerType,
+          razaoSocial: input.razaoSocial.trim(),
+          nomeFantasia: input.nomeFantasia.trim(),
+          cnpj: input.cnpj.trim(),
+          telefonePrincipal: input.telefonePrincipal.trim(),
+          emailComercial: input.emailComercial.trim(),
+          cidadeUf: input.cidadeUf.trim(),
+          endereco: input.endereco.trim(),
+          status: 'ativo',
+          ativo: true,
+        },
+      });
+
+      return mapPartnerPostoToApi(partner, prefeituraId) as PostoDoc;
     } catch (error) {
       console.error('Erro ao criar posto:', error);
       throw new InternalServerErrorException(
@@ -108,30 +105,7 @@ export class PostosService {
         }
       }
 
-      const docs = (
-        await fetchPrefeituraDocs<PostoDoc>(this.collection, prefeituraId, {
-          order: 'asc',
-        })
-      ).filter((doc) => doc.tipoParceiro === 'posto');
-
-      if (docs.length === 0) {
-        return { data: [], message: 'Postos buscados com sucesso!' };
-      }
-      const codeMap = new Map(
-        docs.map((doc, index) => [doc.id, `P${index + 1}`]),
-      );
-      const statsMap = await this.fetchAbastecimentoStats(
-        prefeituraId,
-        docs.map((doc) => doc.id),
-        startIso,
-        endIso,
-      );
-
-      const data = [...docs]
-        .sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia, 'pt-BR'))
-        .map((doc) => this.mapToListItem(doc, codeMap, statsMap));
-
-      return { data, message: 'Postos buscados com sucesso!' };
+      return { data: [], message: 'Postos buscados com sucesso!' };
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;
@@ -163,15 +137,37 @@ export class PostosService {
       return stats;
     }
 
-    const snap = await this.abastecimentosCollection
-      .where('prefeituraId', '==', prefeituraId)
-      .get();
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) return stats;
 
-    for (const docSnap of snap.docs) {
-      const data = docSnap.data() as Record<string, unknown>;
-      const postoId = asString(data.postoId);
+    const where: {
+      companyId: string;
+      postoLegacyId: { in: string[] };
+      createdAt?: { gte?: Date; lte?: Date };
+    } = {
+      companyId,
+      postoLegacyId: { in: postoIds },
+    };
+
+    if (startIso) {
+      where.createdAt = { ...where.createdAt, gte: new Date(startIso) };
+    }
+    if (endIso) {
+      where.createdAt = { ...where.createdAt, lte: new Date(endIso) };
+    }
+
+    const rows = await this.prisma.abastecimento.findMany({ where });
+
+    for (const row of rows) {
+      const postoId = row.postoLegacyId ?? '';
       if (!postoId || !stats.has(postoId)) continue;
-      if (!isWithinPeriod(data.createdAt, startIso, endIso)) continue;
+
+      const data = {
+        liters: Number(row.litros),
+        total: Number(row.valor),
+        pricePerLiter: row.precoLitro != null ? Number(row.precoLitro) : null,
+        createdAt: row.createdAt.toISOString(),
+      };
 
       const { liters, gasto } = extractAbastecimentoValues(data);
       const current = stats.get(postoId)!;
@@ -231,13 +227,4 @@ export class PostosService {
       createdAt: doc.createdAt,
     };
   }
-}
-
-function asString(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'string') return value;
-  if (typeof value === 'number' || typeof value === 'boolean') {
-    return String(value);
-  }
-  return '';
 }

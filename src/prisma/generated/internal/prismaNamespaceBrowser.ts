@@ -67,6 +67,7 @@ export const ModelName = {
   PlanoPreventivo: 'PlanoPreventivo',
   Operator: 'Operator',
   Abastecimento: 'Abastecimento',
+  FleetfuelIntencao: 'FleetfuelIntencao',
   ChecklistDefinition: 'ChecklistDefinition',
   LancamentoFinanceiro: 'LancamentoFinanceiro',
   Role: 'Role',
@@ -74,6 +75,7 @@ export const ModelName = {
   RoleAccessGroup: 'RoleAccessGroup',
   Partner: 'Partner',
   PartnerPortalUser: 'PartnerPortalUser',
+  PartnerPortalPasswordReset: 'PartnerPortalPasswordReset',
   Feature: 'Feature',
   PontoRegistro: 'PontoRegistro',
   PontoNsrCounter: 'PontoNsrCounter',
@@ -89,7 +91,9 @@ export const ModelName = {
   Credito: 'Credito',
   Lubrificacao: 'Lubrificacao',
   ComboioReabastecimento: 'ComboioReabastecimento',
-  NotaFiscal: 'NotaFiscal'
+  NotaFiscal: 'NotaFiscal',
+  IdempotencyKey: 'IdempotencyKey',
+  Notificacao: 'Notificacao'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -197,6 +201,7 @@ export const EquipmentScalarFieldEnum = {
   anoModelo: 'anoModelo',
   capacidadeTanque: 'capacidadeTanque',
   capacidadeTanqueCaminhao: 'capacidadeTanqueCaminhao',
+  volumeTanqueAtual: 'volumeTanqueAtual',
   valorVeiculo: 'valorVeiculo',
   condutoresIds: 'condutoresIds',
   gestorResponsavel: 'gestorResponsavel',
@@ -448,11 +453,54 @@ export const AbastecimentoScalarFieldEnum = {
   leitura: 'leitura',
   leituraUnidade: 'leituraUnidade',
   postoNome: 'postoNome',
+  plateOrChassis: 'plateOrChassis',
+  precoLitro: 'precoLitro',
+  status: 'status',
+  tipo: 'tipo',
+  motoristaNome: 'motoristaNome',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  meterPhoto: 'meterPhoto',
+  receiptPhoto: 'receiptPhoto',
+  fleetfuelIntencaoId: 'fleetfuelIntencaoId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type AbastecimentoScalarFieldEnum = (typeof AbastecimentoScalarFieldEnum)[keyof typeof AbastecimentoScalarFieldEnum]
+
+
+export const FleetfuelIntencaoScalarFieldEnum = {
+  id: 'id',
+  legacyId: 'legacyId',
+  companyId: 'companyId',
+  postoLegacyId: 'postoLegacyId',
+  postoNome: 'postoNome',
+  equipmentId: 'equipmentId',
+  plateOrChassis: 'plateOrChassis',
+  veiculoModelo: 'veiculoModelo',
+  veiculoDescricao: 'veiculoDescricao',
+  combustivelVeiculo: 'combustivelVeiculo',
+  operadorLegacyId: 'operadorLegacyId',
+  motoristaCpf: 'motoristaCpf',
+  motoristaNome: 'motoristaNome',
+  tipoCombustivel: 'tipoCombustivel',
+  liters: 'liters',
+  pricePerLiter: 'pricePerLiter',
+  total: 'total',
+  currentReading: 'currentReading',
+  measurementType: 'measurementType',
+  status: 'status',
+  abastecimentoId: 'abastecimentoId',
+  jti: 'jti',
+  expiresAt: 'expiresAt',
+  validatedAt: 'validatedAt',
+  validadoPorOperadorLegacyId: 'validadoPorOperadorLegacyId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FleetfuelIntencaoScalarFieldEnum = (typeof FleetfuelIntencaoScalarFieldEnum)[keyof typeof FleetfuelIntencaoScalarFieldEnum]
 
 
 export const ChecklistDefinitionScalarFieldEnum = {
@@ -574,6 +622,20 @@ export const PartnerPortalUserScalarFieldEnum = {
 } as const
 
 export type PartnerPortalUserScalarFieldEnum = (typeof PartnerPortalUserScalarFieldEnum)[keyof typeof PartnerPortalUserScalarFieldEnum]
+
+
+export const PartnerPortalPasswordResetScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  email: 'email',
+  token: 'token',
+  used: 'used',
+  expiresAt: 'expiresAt',
+  usedAt: 'usedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type PartnerPortalPasswordResetScalarFieldEnum = (typeof PartnerPortalPasswordResetScalarFieldEnum)[keyof typeof PartnerPortalPasswordResetScalarFieldEnum]
 
 
 export const FeatureScalarFieldEnum = {
@@ -876,6 +938,38 @@ export const NotaFiscalScalarFieldEnum = {
 } as const
 
 export type NotaFiscalScalarFieldEnum = (typeof NotaFiscalScalarFieldEnum)[keyof typeof NotaFiscalScalarFieldEnum]
+
+
+export const IdempotencyKeyScalarFieldEnum = {
+  key: 'key',
+  status: 'status',
+  rota: 'rota',
+  resposta: 'resposta',
+  createdAt: 'createdAt',
+  expiresAt: 'expiresAt'
+} as const
+
+export type IdempotencyKeyScalarFieldEnum = (typeof IdempotencyKeyScalarFieldEnum)[keyof typeof IdempotencyKeyScalarFieldEnum]
+
+
+export const NotificacaoScalarFieldEnum = {
+  id: 'id',
+  legacyId: 'legacyId',
+  companyId: 'companyId',
+  destinatarioTipo: 'destinatarioTipo',
+  destinatarioId: 'destinatarioId',
+  prefeituraLegacyId: 'prefeituraLegacyId',
+  titulo: 'titulo',
+  mensagem: 'mensagem',
+  tipo: 'tipo',
+  referenciaTipo: 'referenciaTipo',
+  referenciaId: 'referenciaId',
+  lida: 'lida',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NotificacaoScalarFieldEnum = (typeof NotificacaoScalarFieldEnum)[keyof typeof NotificacaoScalarFieldEnum]
 
 
 export const SortOrder = {
