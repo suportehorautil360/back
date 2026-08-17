@@ -233,7 +233,7 @@ export class FuncionariosService {
   }
 
   /**
-   * Login do operador/funcionário (app de campo). Postgres → Firestore.
+   * Login do operador/funcionário (app de campo). Somente Postgres.
    */
   async autenticar(dto: AuthFuncionarioDto) {
     const ident = (dto.identificador ?? '').trim();
@@ -245,77 +245,13 @@ export class FuncionariosService {
     const pg = await this.autenticarPostgres(dto);
     if (pg !== null) return pg;
 
-    const limpo = limparCpf(ident);
-    const ehCpf = limpo.length === 11;
-
-    const snap = ehCpf
-      ? await this.collection.where('cpf', '==', limpo).get()
-      : await this.collection
-          .where('loginGerado', '==', ident.toLowerCase())
-          .get();
-
-    if (snap.empty) {
-      return { ok: false, msg: 'Identificador ou senha incorretos.' };
-    }
-
-    let temSenha = false;
-    for (const doc of snap.docs) {
-      const data = doc.data() as Record<string, unknown>;
-      const senhaHash =
-        typeof data.senhaHash === 'string' ? data.senhaHash : '';
-      if (!senhaHash) continue;
-      temSenha = true;
-
-      const cpfDoc = limparCpf(typeof data.cpf === 'string' ? data.cpf : '');
-      if (senhaHash !== hashSenhaFuncionario(cpfDoc, senha)) continue;
-
-      const status = typeof data.status === 'string' ? data.status : 'ativo';
-      if (status !== 'ativo') {
-        return { ok: false, msg: 'Funcionário inativo. Procure o gestor.' };
-      }
-
-      const funcionario = {
-        id: doc.id,
-        nome: typeof data.nome === 'string' ? data.nome : '',
-        cpf: cpfDoc,
-        cargo: typeof data.cargo === 'string' ? data.cargo : '',
-        loginGerado:
-          typeof data.loginGerado === 'string' ? data.loginGerado : '',
-        prefeituraId:
-          typeof data.prefeituraId === 'string' ? data.prefeituraId : '',
-      };
-
-      const appMotorista = dto.app === 'motorista';
-      const ehCondutor = appMotorista
-        ? await this.ehCondutorDeEquipamento(
-            funcionario.prefeituraId,
-            funcionario.id,
-          )
-        : await this.ehCondutorDeComboio(
-            funcionario.prefeituraId,
-            funcionario.id,
-          );
-      if (!ehCondutor) {
-        return {
-          ok: false,
-          msg: appMotorista
-            ? 'Você não está cadastrado como condutor de nenhum equipamento. Procure o gestor.'
-            : 'Você não está cadastrado como condutor de nenhum comboio. Procure o gestor.',
-        };
-      }
-
-      return this.emitirJwtFuncionario(funcionario);
-    }
-
-    return {
-      ok: false,
-      msg: temSenha
-        ? 'Identificador ou senha incorretos.'
-        : 'Funcionário sem senha cadastrada. Procure o gestor.',
-    };
+    return { ok: false, msg: 'Identificador ou senha incorretos.' };
   }
 
-  async credenciaisOffline(prefeituraId: string): Promise<
+  async credenciaisOffline(
+    prefeituraId: string,
+    escopo: 'comboio' | 'prefeitura' = 'comboio',
+  ): Promise<
     {
       id: string;
       cpf: string;
@@ -328,97 +264,69 @@ export class FuncionariosService {
   > {
     if (!prefeituraId) return [];
 
-    const companyId = await this.prisma.company.findFirst({
+    const company = await this.prisma.company.findFirst({
       where: companyWhere(prefeituraId),
       select: { id: true },
     });
-    if (companyId) {
-      const equipRows = await this.prisma.equipment.findMany({
-        where: { companyId: companyId.id },
-        select: { tipo: true, condutoresIds: true },
+    if (!company) return [];
+
+    if (escopo === 'prefeitura') {
+      const ops = await this.prisma.operator.findMany({
+        where: {
+          companyId: company.id,
+          status: 'ativo',
+          senhaHash: { not: null },
+        },
       });
-      const condutores = new Set<string>();
-      for (const e of equipRows) {
-        if (!ehComboioTipo(e.tipo)) continue;
-        for (const id of parseCondutoresIds(e.condutoresIds)) condutores.add(id);
-      }
-      if (condutores.size > 0) {
-        const ops = await this.prisma.operator.findMany({
-          where: { companyId: companyId.id, status: 'ativo' },
-        });
-        return ops
-          .filter((op) => condutores.has(op.legacyId ?? op.id) && op.senhaHash)
-          .map((op) => {
-            const cpf = limparCpf(op.cpf ?? '');
-            return {
-              id: op.legacyId ?? op.id,
-              cpf,
-              loginGerado:
-                op.loginGerado ?? gerarLoginOperador(op.nome, cpf),
-              nome: op.nome,
-              cargo: op.cargo ?? op.funcao ?? '',
-              prefeituraId,
-              senhaHash: op.senhaHash!,
-            };
-          });
-      }
+      return ops
+        .filter((op) => op.senhaHash)
+        .map((op) => this.mapOperadorCredencialOffline(op, prefeituraId));
     }
 
-    // 1) Condutores responsáveis de comboios da prefeitura (um Set de ids).
-    const equipSnap = await this.firestore
-      .collection('equipamentos')
-      .where('prefeituraId', '==', prefeituraId)
-      .get();
+    const equipRows = await this.prisma.equipment.findMany({
+      where: { companyId: company.id },
+      select: { tipo: true, condutoresIds: true },
+    });
     const condutores = new Set<string>();
-    for (const d of equipSnap.docs) {
-      const data = d.data() as {
-        tipo?: unknown;
-        condutoresResponsaveis?: unknown;
-      };
-      if (String(data.tipo).toLowerCase() !== 'comboio') continue;
-      const lista = Array.isArray(data.condutoresResponsaveis)
-        ? data.condutoresResponsaveis
-        : [];
-      for (const id of lista) if (typeof id === 'string') condutores.add(id);
+    for (const e of equipRows) {
+      if (!ehComboioTipo(e.tipo)) continue;
+      for (const id of parseCondutoresIds(e.condutoresIds)) condutores.add(id);
     }
     if (condutores.size === 0) return [];
 
-    // 2) Operadores da prefeitura que são condutores, ativos e com senha.
-    const opSnap = await this.collection
-      .where('prefeituraId', '==', prefeituraId)
-      .get();
-    const creds: {
+    const ops = await this.prisma.operator.findMany({
+      where: { companyId: company.id, status: 'ativo', senhaHash: { not: null } },
+    });
+    return ops
+      .filter(
+        (op) => condutores.has(op.legacyId ?? op.id) && op.senhaHash,
+      )
+      .map((op) => this.mapOperadorCredencialOffline(op, prefeituraId));
+  }
+
+  private mapOperadorCredencialOffline(
+    op: {
       id: string;
-      cpf: string;
-      loginGerado: string;
+      legacyId: string | null;
+      cpf: string | null;
+      loginGerado: string | null;
       nome: string;
-      cargo: string;
-      prefeituraId: string;
-      senhaHash: string;
-    }[] = [];
-    for (const doc of opSnap.docs) {
-      if (!condutores.has(doc.id)) continue;
-      const data = doc.data() as Record<string, unknown>;
-      const senhaHash =
-        typeof data.senhaHash === 'string' ? data.senhaHash : '';
-      if (!senhaHash) continue;
-      const status = typeof data.status === 'string' ? data.status : 'ativo';
-      if (status !== 'ativo') continue;
-      const cpf = limparCpf(typeof data.cpf === 'string' ? data.cpf : '');
-      const nome = typeof data.nome === 'string' ? data.nome : '';
-      const loginDoc =
-        typeof data.loginGerado === 'string' ? data.loginGerado : '';
-      creds.push({
-        id: doc.id,
-        cpf,
-        loginGerado: loginDoc || gerarLoginOperador(nome, cpf),
-        nome,
-        cargo: typeof data.cargo === 'string' ? data.cargo : '',
-        prefeituraId,
-        senhaHash,
-      });
-    }
-    return creds;
+      cargo: string | null;
+      funcao: string | null;
+      senhaHash: string | null;
+    },
+    prefeituraId: string,
+  ) {
+    const cpf = limparCpf(op.cpf ?? '');
+    return {
+      id: op.legacyId ?? op.id,
+      cpf,
+      loginGerado: op.loginGerado ?? gerarLoginOperador(op.nome, cpf),
+      nome: op.nome,
+      cargo: op.cargo ?? op.funcao ?? '',
+      prefeituraId,
+      senhaHash: op.senhaHash!,
+    };
   }
 
   /** Campos do documento (sem createdAt/senha), compartilhado por criar/editar. */
