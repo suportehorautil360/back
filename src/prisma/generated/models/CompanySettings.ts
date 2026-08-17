@@ -644,18 +644,6 @@ export type CompanySettingsUncheckedUpdateOneWithoutCompanyNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.CompanySettingsUpdateToOneWithWhereWithoutCompanyInput, Prisma.CompanySettingsUpdateWithoutCompanyInput>, Prisma.CompanySettingsUncheckedUpdateWithoutCompanyInput>
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type CompanySettingsCreateWithoutCompanyInput = {
   alertBloqueioRevisaoVencida?: boolean
   alertNivelCriticoTanque?: boolean

@@ -10,6 +10,8 @@
  */
 export type * from './models/User.js'
 export type * from './models/Company.js'
+export type * from './models/CompanyWhatsappRecipient.js'
+export type * from './models/WhatsappPlatformSession.js'
 export type * from './models/CompanySettings.js'
 export type * from './models/Equipment.js'
 export type * from './models/EquipmentRevision.js'

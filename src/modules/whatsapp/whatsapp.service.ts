@@ -2,8 +2,11 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Boom } from '@hapi/boom';
 import * as QRCode from 'qrcode';
 import type { WASocket } from '@whiskeysockets/baileys';
-import { FirebaseService } from '../../config/firebase.service';
-import { useFirestoreAuthState } from './firestore-auth-state';
+import { PrismaService } from '../../prisma/prisma.service';
+import {
+  usePrismaAuthState,
+  WHATSAPP_PLATFORM_SESSION_ID,
+} from './prisma-auth-state';
 import { formatarJid } from './phone';
 import { WhatsAppMetricsService } from './whatsapp-metrics.service';
 import {
@@ -35,9 +38,11 @@ export class WhatsAppService implements OnModuleInit {
   private conectadoDesde: string | null = null;
   private ultimaAtividade: string | null = null;
   private versaoSessao: string | null = null;
+  /** Evita reconectar automaticamente após `logout()` do admin. */
+  private desconexaoIntencional = false;
 
   constructor(
-    private firebase: FirebaseService,
+    private readonly prisma: PrismaService,
     private metrics: WhatsAppMetricsService,
     private remote: WhatsAppRemoteClient,
     private evolution: WhatsAppEvolutionClient,
@@ -57,13 +62,6 @@ export class WhatsAppService implements OnModuleInit {
     return this.evolution.isEnabled() ? 'Evolution API' : 'serviço remoto';
   }
 
-  private get docRef() {
-    return this.firebase
-      .getFirestore()
-      .collection('whatsappSessions')
-      .doc('default');
-  }
-
   /** Reconecta automaticamente se já houver uma sessão registrada (modo local). */
   async onModuleInit(): Promise<void> {
     if (this.useExternal()) {
@@ -77,13 +75,17 @@ export class WhatsAppService implements OnModuleInit {
     }
 
     try {
-      const snap = await this.docRef.get();
-      const credsRaw = (snap.data() as { creds?: string } | undefined)?.creds;
+      const row = await this.prisma.whatsappPlatformSession.findUnique({
+        where: { id: WHATSAPP_PLATFORM_SESSION_ID },
+      });
+      const credsRaw = row?.creds;
       const registered =
-        !!credsRaw && !!(JSON.parse(credsRaw) as { registered?: boolean })?.registered;
-      const data = snap.data() as { conectadoDesde?: string; versaoSessao?: string } | undefined;
-      if (data?.conectadoDesde) this.conectadoDesde = data.conectadoDesde;
-      if (data?.versaoSessao) this.versaoSessao = data.versaoSessao;
+        !!credsRaw &&
+        !!(JSON.parse(credsRaw) as { registered?: boolean })?.registered;
+      if (row?.conectadoDesde) {
+        this.conectadoDesde = row.conectadoDesde.toISOString();
+      }
+      if (row?.versaoSessao) this.versaoSessao = row.versaoSessao;
       if (registered) {
         this.logger.log('Sessão WhatsApp encontrada — reconectando…');
         await this.connect();
@@ -115,6 +117,10 @@ export class WhatsAppService implements OnModuleInit {
       return;
     }
 
+    if (options?.recriar) {
+      await this.resetLocalSession();
+    }
+
     if (this.sock || this.conectando) return;
     if (this.status === 'desconectado') this.tentativas = 0;
     this.conectando = true;
@@ -124,7 +130,7 @@ export class WhatsAppService implements OnModuleInit {
         config: unknown,
       ) => WASocket;
       const { DisconnectReason, fetchLatestBaileysVersion } = baileys;
-      const { state, saveCreds } = await useFirestoreAuthState(this.docRef);
+      const { state, saveCreds } = await usePrismaAuthState(this.prisma);
       const { version } = await fetchLatestBaileysVersion();
       this.versaoSessao = version.join('.');
       void this.metrics.registrarEvento('sessao_iniciada', 'sucesso');
@@ -164,11 +170,17 @@ export class WhatsAppService implements OnModuleInit {
           this.sock = null;
           this.qrAtual = null;
           if (loggedOut) {
+            const estavaPareando =
+              this.status === 'conectando' || this.status === 'aguardando_qr';
             this.status = 'desconectado';
             this.conectadoDesde = null;
             void this.metrics.registrarEvento('sessao_encerrada', 'aviso');
             this.logger.warn('WhatsApp deslogado — sessão encerrada.');
-            void this.limparSessao();
+            void this.limparSessao().then(() => {
+              if (!this.desconexaoIntencional && estavaPareando) {
+                setTimeout(() => void this.connect({ recriar: true }), 500);
+              }
+            });
             return;
           }
           void this.metrics.registrarEvento('queda', 'aviso');
@@ -266,10 +278,13 @@ export class WhatsAppService implements OnModuleInit {
       return;
     }
 
+    this.desconexaoIntencional = true;
     try {
       await this.sock?.logout();
     } catch {
       /* ignora erro de logout (socket pode já estar caído) */
+    } finally {
+      this.desconexaoIntencional = false;
     }
     this.sock = null;
     this.status = 'desconectado';
@@ -315,10 +330,22 @@ export class WhatsAppService implements OnModuleInit {
 
   private async persistirSessao(): Promise<void> {
     try {
-      await this.docRef.set(
-        { conectadoDesde: this.conectadoDesde, versaoSessao: this.versaoSessao },
-        { merge: true },
-      );
+      await this.prisma.whatsappPlatformSession.upsert({
+        where: { id: WHATSAPP_PLATFORM_SESSION_ID },
+        create: {
+          id: WHATSAPP_PLATFORM_SESSION_ID,
+          conectadoDesde: this.conectadoDesde
+            ? new Date(this.conectadoDesde)
+            : null,
+          versaoSessao: this.versaoSessao,
+        },
+        update: {
+          conectadoDesde: this.conectadoDesde
+            ? new Date(this.conectadoDesde)
+            : null,
+          versaoSessao: this.versaoSessao,
+        },
+      });
     } catch {
       /* best-effort */
     }
@@ -337,9 +364,28 @@ export class WhatsAppService implements OnModuleInit {
     return process.env.NODE_ENV === 'production' ? 'prod' : 'dev';
   }
 
+  private async resetLocalSession(): Promise<void> {
+    if (this.sock) {
+      try {
+        this.sock.end(undefined);
+      } catch {
+        /* socket pode já estar fechado */
+      }
+      this.sock = null;
+    }
+    this.qrAtual = null;
+    this.conectando = false;
+    this.status = 'desconectado';
+    this.tentativas = 0;
+    this.conectadoDesde = null;
+    await this.limparSessao();
+  }
+
   private async limparSessao(): Promise<void> {
     try {
-      await this.docRef.delete();
+      await this.prisma.whatsappPlatformSession.deleteMany({
+        where: { id: WHATSAPP_PLATFORM_SESSION_ID },
+      });
     } catch {
       /* ignora */
     }
