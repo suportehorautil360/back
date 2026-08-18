@@ -4,25 +4,19 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { FirebaseService } from '../../config/firebase.service';
 import { randomUUID } from 'node:crypto';
+import { PrismaService } from '../../prisma/prisma.service';
+import { companyWhere, resolverCompanyId } from '../../common/prisma/company-resolver';
+import { resolveEquipmentByIdPg } from '../../common/prisma/equipment-resolver';
+import {
+  mapRevisionToApi,
+  normalizeUnidadeRevisao,
+} from '../../common/prisma/revision-prisma.mapper';
 import { CreateRevisionDto } from './dto/create-revision.dto';
 
 @Injectable()
 export class RevisionService {
-  // Injetamos o FirebaseService para poder conversar com o banco
-  constructor(private firebaseService: FirebaseService) {}
-
-  // Um "atalho" para não ter que digitar esse caminho gigante toda hora
-  private get collection() {
-    return this.firebaseService.getFirestore().collection('revision');
-  }
-  private get vehiclesCollection() {
-    return this.firebaseService.getFirestore().collection('vehicles');
-  }
-  private get configuracoesCollection() {
-    return this.firebaseService.getFirestore().collection('configuracoes');
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   private normalizeTipo(value?: string): string {
     return (value ?? '')
@@ -53,7 +47,6 @@ export class RevisionService {
     if (tipo.includes('carro') || tipo === 'car' || tipo.includes('cars')) {
       return ['carro', 'carros', 'car'];
     }
-
     if (
       tipo.includes('caminhao') ||
       tipo.includes('caminhoes') ||
@@ -61,7 +54,6 @@ export class RevisionService {
     ) {
       return ['caminhao', 'caminhoes', 'truck'];
     }
-
     if (
       tipo.includes('maquina') ||
       tipo.includes('maquinas') ||
@@ -69,15 +61,12 @@ export class RevisionService {
     ) {
       return ['maquina', 'maquinas', 'machine'];
     }
-
     if (tipo.includes('ambulancia') || tipo.includes('ambulance')) {
       return ['ambulancia', 'ambulancias', 'ambulance'];
     }
-
     if (tipo.includes('van')) {
       return ['van', 'vans'];
     }
-
     return [];
   }
 
@@ -111,16 +100,15 @@ export class RevisionService {
   private resolveIntervaloRevisao(
     configuracao: Record<string, unknown> | null,
     vehicleData: {
-      type?: string;
-      tipo?: string;
-      maintenanceInterval?: number;
-      intervaloRevisao?: number;
-      maintenanceUnit?: string;
-      unidadeRevisao?: string;
+      intervaloRevisao?: number | null;
+      unidadeRevisao?: string | null;
+      tipo?: string | null;
     },
   ): { valor: number; unidade: 'km' | 'horas' } {
-    const tipoVeiculo = vehicleData.type ?? vehicleData.tipo;
-    const intervaloConfig = this.getIntervaloPorTipo(configuracao, tipoVeiculo);
+    const intervaloConfig = this.getIntervaloPorTipo(
+      configuracao,
+      vehicleData.tipo ?? undefined,
+    );
     if (intervaloConfig) {
       return {
         valor: intervaloConfig.valor,
@@ -128,8 +116,7 @@ export class RevisionService {
       };
     }
 
-    const intervaloVeiculo =
-      vehicleData.maintenanceInterval ?? vehicleData.intervaloRevisao;
+    const intervaloVeiculo = vehicleData.intervaloRevisao;
     if (
       typeof intervaloVeiculo === 'number' &&
       Number.isFinite(intervaloVeiculo) &&
@@ -138,62 +125,63 @@ export class RevisionService {
       return {
         valor: intervaloVeiculo,
         unidade:
-          this.normalizeUnidade(
-            vehicleData.maintenanceUnit ?? vehicleData.unidadeRevisao,
-          ) ?? 'km',
+          this.normalizeUnidade(vehicleData.unidadeRevisao ?? undefined) ??
+          'km',
       };
     }
 
     return { valor: 1000, unidade: 'km' };
   }
 
+  private async loadConfiguracao(prefeituraId: string) {
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) return null;
+
+    const settings = await this.prisma.companySettings.findUnique({
+      where: { companyId },
+      select: { intervalos: true },
+    });
+    if (!settings) return null;
+
+    return { intervalos: settings.intervalos } as Record<string, unknown>;
+  }
+
   async create(createRevisionDto: CreateRevisionDto) {
     const revisionId = randomUUID();
     try {
-      const newRevision = {
-        id: revisionId,
-        ...createRevisionDto,
-        status: 'Pendente',
-        createdAt: new Date().toISOString(),
-      };
+      const equip = await resolveEquipmentByIdPg(
+        this.prisma,
+        createRevisionDto.prefeituraId,
+        createRevisionDto.vehicleId,
+      );
 
-      const vehicleRef = await this.vehiclesCollection
-        .where('id', '==', createRevisionDto.vehicleId)
-        .get();
-
-      if (vehicleRef.empty) {
+      const row = await this.prisma.equipment.findUnique({
+        where: { id: equip.equipmentUuid },
+        select: {
+          id: true,
+          tipo: true,
+          medicaoAtual: true,
+          ultimaRevisao: true,
+          intervaloRevisao: true,
+          unidadeRevisao: true,
+        },
+      });
+      if (!row) {
         throw new NotFoundException(
           'Veículo não encontrado para o ID fornecido.',
         );
       }
 
-      const vehicleDocID = vehicleRef.docs[0].id;
-
-      const vehicleData = vehicleRef.docs[0].data() as {
-        currentMeter: number;
-        lastRevisionOdometerReading: number;
-        maintenanceInterval?: number;
-        intervaloRevisao?: number;
-        maintenanceUnit?: string;
-        unidadeRevisao?: string;
-        type?: string;
-        tipo?: string;
-      };
-
-      const lastOdometer = vehicleData?.lastRevisionOdometerReading || 0;
-      const configRef = await this.configuracoesCollection
-        .where('prefeituraId', '==', createRevisionDto.prefeituraId)
-        .get();
-      const configuracao = configRef.empty
-        ? null
-        : (configRef.docs[0].data() as Record<string, unknown>);
-      const intervaloRevisao = this.resolveIntervaloRevisao(
-        configuracao,
-        vehicleData,
+      const configuracao = await this.loadConfiguracao(
+        createRevisionDto.prefeituraId,
       );
+      const intervaloRevisao = this.resolveIntervaloRevisao(configuracao, row);
       const unidadeMensagem = intervaloRevisao.unidade;
       const descricaoMedicao =
         unidadeMensagem === 'horas' ? 'A medição' : 'A quilometragem';
+
+      const lastOdometer = row.ultimaRevisao ?? 0;
+      const currentMeter = row.medicaoAtual ?? 0;
 
       if (
         createRevisionDto.odometerReading <=
@@ -204,16 +192,43 @@ export class RevisionService {
         );
       }
 
-      if (createRevisionDto.odometerReading < vehicleData.currentMeter) {
+      if (createRevisionDto.odometerReading < currentMeter) {
         throw new BadRequestException(
           'A quilometragem não pode ser menor que a atual do veículo.',
         );
       }
 
-      await this.collection.doc().set(newRevision);
-      await this.vehiclesCollection.doc(vehicleDocID).update({
-        status: 'bloqueado',
-      });
+      const revisionDate = new Date(createRevisionDto.revisionDate);
+      const unidade =
+        normalizeUnidadeRevisao(row.unidadeRevisao) === 'horas' ? 'h' : 'km';
+
+      await this.prisma.$transaction([
+        this.prisma.equipmentRevision.create({
+          data: {
+            id: revisionId,
+            equipmentId: row.id,
+            data: revisionDate,
+            leitura: createRevisionDto.odometerReading,
+            unidade,
+            oficina: createRevisionDto.mechanicOrOfficeName,
+            custo: createRevisionDto.revisionCost,
+            notaFiscal: createRevisionDto.invoiceNumber,
+            servicos: createRevisionDto.servicesDescription,
+            status: 'Pendente',
+          },
+        }),
+        this.prisma.equipment.update({
+          where: { id: row.id },
+          data: { status: 'bloqueado' },
+        }),
+      ]);
+
+      const newRevision = {
+        id: revisionId,
+        ...createRevisionDto,
+        status: 'Pendente',
+        createdAt: new Date().toISOString(),
+      };
 
       return {
         data: newRevision,
@@ -233,35 +248,64 @@ export class RevisionService {
     }
   }
 
-  /**
-   * Registra uma revisão JÁ concluída e libera o veículo no mesmo passo:
-   * grava a revisão com status "Concluída", adota a leitura informada como
-   * leitura atual (currentMeter) e como base da próxima revisão
-   * (lastRevisionOdometerReading), e devolve o veículo para "ativo".
-   */
   async complete(createRevisionDto: CreateRevisionDto) {
     const revisionId = randomUUID();
     try {
-      const vehicleRef = await this.vehiclesCollection
-        .where('id', '==', createRevisionDto.vehicleId)
-        .get();
+      const equip = await resolveEquipmentByIdPg(
+        this.prisma,
+        createRevisionDto.prefeituraId,
+        createRevisionDto.vehicleId,
+      );
 
-      if (vehicleRef.empty) {
+      const row = await this.prisma.equipment.findUnique({
+        where: { id: equip.equipmentUuid },
+        select: {
+          id: true,
+          medicaoAtual: true,
+          unidadeRevisao: true,
+        },
+      });
+      if (!row) {
         throw new NotFoundException(
           'Veículo não encontrado para o ID fornecido.',
         );
       }
 
-      const vehicleDocID = vehicleRef.docs[0].id;
-      const vehicleData = vehicleRef.docs[0].data() as {
-        currentMeter: number;
-      };
-
-      if (createRevisionDto.odometerReading < vehicleData.currentMeter) {
+      const currentMeter = row.medicaoAtual ?? 0;
+      if (createRevisionDto.odometerReading < currentMeter) {
         throw new BadRequestException(
           'A quilometragem não pode ser menor que a atual do veículo.',
         );
       }
+
+      const revisionDate = new Date(createRevisionDto.revisionDate);
+      const unidade =
+        normalizeUnidadeRevisao(row.unidadeRevisao) === 'horas' ? 'h' : 'km';
+
+      await this.prisma.$transaction([
+        this.prisma.equipmentRevision.create({
+          data: {
+            id: revisionId,
+            equipmentId: row.id,
+            data: revisionDate,
+            leitura: createRevisionDto.odometerReading,
+            unidade,
+            oficina: createRevisionDto.mechanicOrOfficeName,
+            custo: createRevisionDto.revisionCost,
+            notaFiscal: createRevisionDto.invoiceNumber,
+            servicos: createRevisionDto.servicesDescription,
+            status: 'Concluída',
+          },
+        }),
+        this.prisma.equipment.update({
+          where: { id: row.id },
+          data: {
+            medicaoAtual: createRevisionDto.odometerReading,
+            ultimaRevisao: createRevisionDto.odometerReading,
+            status: 'ativo',
+          },
+        }),
+      ]);
 
       const newRevision = {
         id: revisionId,
@@ -269,14 +313,6 @@ export class RevisionService {
         status: 'Concluída',
         createdAt: new Date().toISOString(),
       };
-
-      await this.collection.doc().set(newRevision);
-      await this.vehiclesCollection.doc(vehicleDocID).update({
-        currentMeter: createRevisionDto.odometerReading,
-        lastRevisionOdometerReading: createRevisionDto.odometerReading,
-        status: 'ativo',
-        updatedAt: new Date().toISOString(),
-      });
 
       return {
         data: newRevision,
@@ -298,17 +334,30 @@ export class RevisionService {
 
   async findAllById(id: string) {
     try {
-      const docRef = await this.collection
-        .where('prefeituraId', '==', id)
-        .get();
+      const rows = await this.prisma.equipmentRevision.findMany({
+        where: {
+          equipment: { company: companyWhere(id) },
+        },
+        include: {
+          equipment: {
+            select: {
+              id: true,
+              legacyId: true,
+              tipo: true,
+              company: { select: { id: true, legacyId: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
 
-      if (docRef.empty) {
+      if (!rows.length) {
         throw new NotFoundException(
           'Nenhuma revisão encontrada para a prefeitura fornecida.',
         );
       }
 
-      const revisions = docRef.docs.map((doc) => doc.data());
+      const revisions = rows.map(mapRevisionToApi);
       return {
         data: revisions,
         message: 'Revisões buscadas com sucesso',

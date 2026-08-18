@@ -49,6 +49,7 @@ export type EquipmentRevisionMinAggregateOutputType = {
   custo: runtime.Decimal | null
   notaFiscal: string | null
   servicos: string | null
+  status: string | null
   createdById: string | null
   createdAt: Date | null
 }
@@ -63,6 +64,7 @@ export type EquipmentRevisionMaxAggregateOutputType = {
   custo: runtime.Decimal | null
   notaFiscal: string | null
   servicos: string | null
+  status: string | null
   createdById: string | null
   createdAt: Date | null
 }
@@ -77,6 +79,7 @@ export type EquipmentRevisionCountAggregateOutputType = {
   custo: number
   notaFiscal: number
   servicos: number
+  status: number
   createdById: number
   createdAt: number
   _all: number
@@ -103,6 +106,7 @@ export type EquipmentRevisionMinAggregateInputType = {
   custo?: true
   notaFiscal?: true
   servicos?: true
+  status?: true
   createdById?: true
   createdAt?: true
 }
@@ -117,6 +121,7 @@ export type EquipmentRevisionMaxAggregateInputType = {
   custo?: true
   notaFiscal?: true
   servicos?: true
+  status?: true
   createdById?: true
   createdAt?: true
 }
@@ -131,6 +136,7 @@ export type EquipmentRevisionCountAggregateInputType = {
   custo?: true
   notaFiscal?: true
   servicos?: true
+  status?: true
   createdById?: true
   createdAt?: true
   _all?: true
@@ -232,6 +238,7 @@ export type EquipmentRevisionGroupByOutputType = {
   custo: runtime.Decimal | null
   notaFiscal: string | null
   servicos: string | null
+  status: string
   createdById: string | null
   createdAt: Date
   _count: EquipmentRevisionCountAggregateOutputType | null
@@ -269,6 +276,7 @@ export type EquipmentRevisionWhereInput = {
   custo?: Prisma.DecimalNullableFilter<"EquipmentRevision"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   notaFiscal?: Prisma.StringNullableFilter<"EquipmentRevision"> | string | null
   servicos?: Prisma.StringNullableFilter<"EquipmentRevision"> | string | null
+  status?: Prisma.StringFilter<"EquipmentRevision"> | string
   createdById?: Prisma.UuidNullableFilter<"EquipmentRevision"> | string | null
   createdAt?: Prisma.DateTimeFilter<"EquipmentRevision"> | Date | string
   equipment?: Prisma.XOR<Prisma.EquipmentScalarRelationFilter, Prisma.EquipmentWhereInput>
@@ -284,6 +292,7 @@ export type EquipmentRevisionOrderByWithRelationInput = {
   custo?: Prisma.SortOrderInput | Prisma.SortOrder
   notaFiscal?: Prisma.SortOrderInput | Prisma.SortOrder
   servicos?: Prisma.SortOrderInput | Prisma.SortOrder
+  status?: Prisma.SortOrder
   createdById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   equipment?: Prisma.EquipmentOrderByWithRelationInput
@@ -302,6 +311,7 @@ export type EquipmentRevisionWhereUniqueInput = Prisma.AtLeast<{
   custo?: Prisma.DecimalNullableFilter<"EquipmentRevision"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   notaFiscal?: Prisma.StringNullableFilter<"EquipmentRevision"> | string | null
   servicos?: Prisma.StringNullableFilter<"EquipmentRevision"> | string | null
+  status?: Prisma.StringFilter<"EquipmentRevision"> | string
   createdById?: Prisma.UuidNullableFilter<"EquipmentRevision"> | string | null
   createdAt?: Prisma.DateTimeFilter<"EquipmentRevision"> | Date | string
   equipment?: Prisma.XOR<Prisma.EquipmentScalarRelationFilter, Prisma.EquipmentWhereInput>
@@ -317,6 +327,7 @@ export type EquipmentRevisionOrderByWithAggregationInput = {
   custo?: Prisma.SortOrderInput | Prisma.SortOrder
   notaFiscal?: Prisma.SortOrderInput | Prisma.SortOrder
   servicos?: Prisma.SortOrderInput | Prisma.SortOrder
+  status?: Prisma.SortOrder
   createdById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.EquipmentRevisionCountOrderByAggregateInput
@@ -339,6 +350,7 @@ export type EquipmentRevisionScalarWhereWithAggregatesInput = {
   custo?: Prisma.DecimalNullableWithAggregatesFilter<"EquipmentRevision"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   notaFiscal?: Prisma.StringNullableWithAggregatesFilter<"EquipmentRevision"> | string | null
   servicos?: Prisma.StringNullableWithAggregatesFilter<"EquipmentRevision"> | string | null
+  status?: Prisma.StringWithAggregatesFilter<"EquipmentRevision"> | string
   createdById?: Prisma.UuidNullableWithAggregatesFilter<"EquipmentRevision"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"EquipmentRevision"> | Date | string
 }
@@ -352,6 +364,7 @@ export type EquipmentRevisionCreateInput = {
   custo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   notaFiscal?: string | null
   servicos?: string | null
+  status?: string
   createdById?: string | null
   createdAt?: Date | string
   equipment: Prisma.EquipmentCreateNestedOneWithoutRevisoesInput
@@ -367,6 +380,7 @@ export type EquipmentRevisionUncheckedCreateInput = {
   custo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   notaFiscal?: string | null
   servicos?: string | null
+  status?: string
   createdById?: string | null
   createdAt?: Date | string
 }
@@ -380,6 +394,7 @@ export type EquipmentRevisionUpdateInput = {
   custo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   notaFiscal?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   servicos?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipment?: Prisma.EquipmentUpdateOneRequiredWithoutRevisoesNestedInput
@@ -395,6 +410,7 @@ export type EquipmentRevisionUncheckedUpdateInput = {
   custo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   notaFiscal?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   servicos?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -409,6 +425,7 @@ export type EquipmentRevisionCreateManyInput = {
   custo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   notaFiscal?: string | null
   servicos?: string | null
+  status?: string
   createdById?: string | null
   createdAt?: Date | string
 }
@@ -422,6 +439,7 @@ export type EquipmentRevisionUpdateManyMutationInput = {
   custo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   notaFiscal?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   servicos?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -436,6 +454,7 @@ export type EquipmentRevisionUncheckedUpdateManyInput = {
   custo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   notaFiscal?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   servicos?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -460,6 +479,7 @@ export type EquipmentRevisionCountOrderByAggregateInput = {
   custo?: Prisma.SortOrder
   notaFiscal?: Prisma.SortOrder
   servicos?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   createdById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -479,6 +499,7 @@ export type EquipmentRevisionMaxOrderByAggregateInput = {
   custo?: Prisma.SortOrder
   notaFiscal?: Prisma.SortOrder
   servicos?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   createdById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -493,6 +514,7 @@ export type EquipmentRevisionMinOrderByAggregateInput = {
   custo?: Prisma.SortOrder
   notaFiscal?: Prisma.SortOrder
   servicos?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   createdById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -561,6 +583,7 @@ export type EquipmentRevisionCreateWithoutEquipmentInput = {
   custo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   notaFiscal?: string | null
   servicos?: string | null
+  status?: string
   createdById?: string | null
   createdAt?: Date | string
 }
@@ -574,6 +597,7 @@ export type EquipmentRevisionUncheckedCreateWithoutEquipmentInput = {
   custo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   notaFiscal?: string | null
   servicos?: string | null
+  status?: string
   createdById?: string | null
   createdAt?: Date | string
 }
@@ -617,6 +641,7 @@ export type EquipmentRevisionScalarWhereInput = {
   custo?: Prisma.DecimalNullableFilter<"EquipmentRevision"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   notaFiscal?: Prisma.StringNullableFilter<"EquipmentRevision"> | string | null
   servicos?: Prisma.StringNullableFilter<"EquipmentRevision"> | string | null
+  status?: Prisma.StringFilter<"EquipmentRevision"> | string
   createdById?: Prisma.UuidNullableFilter<"EquipmentRevision"> | string | null
   createdAt?: Prisma.DateTimeFilter<"EquipmentRevision"> | Date | string
 }
@@ -630,6 +655,7 @@ export type EquipmentRevisionCreateManyEquipmentInput = {
   custo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   notaFiscal?: string | null
   servicos?: string | null
+  status?: string
   createdById?: string | null
   createdAt?: Date | string
 }
@@ -643,6 +669,7 @@ export type EquipmentRevisionUpdateWithoutEquipmentInput = {
   custo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   notaFiscal?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   servicos?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -656,6 +683,7 @@ export type EquipmentRevisionUncheckedUpdateWithoutEquipmentInput = {
   custo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   notaFiscal?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   servicos?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -669,6 +697,7 @@ export type EquipmentRevisionUncheckedUpdateManyWithoutEquipmentInput = {
   custo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   notaFiscal?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   servicos?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -685,6 +714,7 @@ export type EquipmentRevisionSelect<ExtArgs extends runtime.Types.Extensions.Int
   custo?: boolean
   notaFiscal?: boolean
   servicos?: boolean
+  status?: boolean
   createdById?: boolean
   createdAt?: boolean
   equipment?: boolean | Prisma.EquipmentDefaultArgs<ExtArgs>
@@ -700,6 +730,7 @@ export type EquipmentRevisionSelectCreateManyAndReturn<ExtArgs extends runtime.T
   custo?: boolean
   notaFiscal?: boolean
   servicos?: boolean
+  status?: boolean
   createdById?: boolean
   createdAt?: boolean
   equipment?: boolean | Prisma.EquipmentDefaultArgs<ExtArgs>
@@ -715,6 +746,7 @@ export type EquipmentRevisionSelectUpdateManyAndReturn<ExtArgs extends runtime.T
   custo?: boolean
   notaFiscal?: boolean
   servicos?: boolean
+  status?: boolean
   createdById?: boolean
   createdAt?: boolean
   equipment?: boolean | Prisma.EquipmentDefaultArgs<ExtArgs>
@@ -730,11 +762,12 @@ export type EquipmentRevisionSelectScalar = {
   custo?: boolean
   notaFiscal?: boolean
   servicos?: boolean
+  status?: boolean
   createdById?: boolean
   createdAt?: boolean
 }
 
-export type EquipmentRevisionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "equipmentId" | "data" | "leitura" | "unidade" | "oficina" | "custo" | "notaFiscal" | "servicos" | "createdById" | "createdAt", ExtArgs["result"]["equipmentRevision"]>
+export type EquipmentRevisionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "equipmentId" | "data" | "leitura" | "unidade" | "oficina" | "custo" | "notaFiscal" | "servicos" | "status" | "createdById" | "createdAt", ExtArgs["result"]["equipmentRevision"]>
 export type EquipmentRevisionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   equipment?: boolean | Prisma.EquipmentDefaultArgs<ExtArgs>
 }
@@ -763,6 +796,10 @@ export type $EquipmentRevisionPayload<ExtArgs extends runtime.Types.Extensions.I
     custo: runtime.Decimal | null
     notaFiscal: string | null
     servicos: string | null
+    /**
+     * "Pendente" | "Concluída" — fluxo legado do módulo `revision`.
+     */
+    status: string
     /**
      * Usuário que registrou (nullable pra tolerar imports/scripts).
      */
@@ -1201,6 +1238,7 @@ export interface EquipmentRevisionFieldRefs {
   readonly custo: Prisma.FieldRef<"EquipmentRevision", 'Decimal'>
   readonly notaFiscal: Prisma.FieldRef<"EquipmentRevision", 'String'>
   readonly servicos: Prisma.FieldRef<"EquipmentRevision", 'String'>
+  readonly status: Prisma.FieldRef<"EquipmentRevision", 'String'>
   readonly createdById: Prisma.FieldRef<"EquipmentRevision", 'String'>
   readonly createdAt: Prisma.FieldRef<"EquipmentRevision", 'DateTime'>
 }

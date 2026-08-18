@@ -92,6 +92,7 @@ model Company {
   pontoAbonos             PontoAbono[]
   pontoNsrCounter         PontoNsrCounter?
   checklistsDevolucao     ChecklistDevolucao[]
+  checklistsChegada       ChecklistChegada[]
   garantias               Garantia[]
   orcamentos              Orcamento[]
   features                CompanyFeature[]
@@ -297,6 +298,8 @@ model EquipmentRevision {
   custo       Decimal? @db.Decimal(12, 2)
   notaFiscal  String?  @map("nota_fiscal")
   servicos    String?
+  /// "Pendente" | "Concluída" — fluxo legado do módulo `revision`.
+  status      String   @default("Concluída")
   /// Usuário que registrou (nullable pra tolerar imports/scripts).
   createdById String?  @map("created_by_id") @db.Uuid
   createdAt   DateTime @default(now()) @map("created_at")
@@ -1230,6 +1233,36 @@ model ChecklistDevolucao {
   @@index([companyId, oficinaId])
   @@index([companyId, status])
   @@map("checklist_devolucao")
+}
+
+/// Checklist de chegada (CHE) — espelho do Firestore `checklistsChegada`.
+/// Shape idêntico ao Nest legado: identification / photos / inspection /
+/// blocks / term em JSONB.
+model ChecklistChegada {
+  id        String  @id @default(uuid()) @db.Uuid
+  legacyId  String? @unique @map("legacy_id")
+  companyId String  @map("company_id") @db.Uuid
+
+  number String
+  oficinaId String? @map("oficina_id")
+
+  osProtocolo     String? @map("os_protocolo")
+  solicitacaoOsId String? @map("solicitacao_os_id")
+
+  identification Json
+  photos         Json @default("{}")
+  inspection     Json @default("{}")
+  blocks         Json @default("{}")
+  term           Json @default("{}")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt])
+  @@index([companyId, oficinaId])
+  @@map("checklist_chegada")
 }
 
 /// Garantia de peça/serviço gerada ao aceitar CHD. Backfill do Firestore

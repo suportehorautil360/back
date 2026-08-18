@@ -277,6 +277,8 @@ export type CompanyWhereInput = {
   pontoAbonos?: Prisma.PontoAbonoListRelationFilter
   pontoNsrCounter?: Prisma.XOR<Prisma.PontoNsrCounterNullableScalarRelationFilter, Prisma.PontoNsrCounterWhereInput> | null
   checklistsDevolucao?: Prisma.ChecklistDevolucaoListRelationFilter
+  checklistsChegada?: Prisma.ChecklistChegadaListRelationFilter
+  garantias?: Prisma.GarantiaListRelationFilter
   orcamentos?: Prisma.OrcamentoListRelationFilter
   features?: Prisma.CompanyFeatureListRelationFilter
   featureChanges?: Prisma.CompanyFeatureChangeListRelationFilter
@@ -325,6 +327,8 @@ export type CompanyOrderByWithRelationInput = {
   pontoAbonos?: Prisma.PontoAbonoOrderByRelationAggregateInput
   pontoNsrCounter?: Prisma.PontoNsrCounterOrderByWithRelationInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoOrderByRelationAggregateInput
+  checklistsChegada?: Prisma.ChecklistChegadaOrderByRelationAggregateInput
+  garantias?: Prisma.GarantiaOrderByRelationAggregateInput
   orcamentos?: Prisma.OrcamentoOrderByRelationAggregateInput
   features?: Prisma.CompanyFeatureOrderByRelationAggregateInput
   featureChanges?: Prisma.CompanyFeatureChangeOrderByRelationAggregateInput
@@ -376,6 +380,8 @@ export type CompanyWhereUniqueInput = Prisma.AtLeast<{
   pontoAbonos?: Prisma.PontoAbonoListRelationFilter
   pontoNsrCounter?: Prisma.XOR<Prisma.PontoNsrCounterNullableScalarRelationFilter, Prisma.PontoNsrCounterWhereInput> | null
   checklistsDevolucao?: Prisma.ChecklistDevolucaoListRelationFilter
+  checklistsChegada?: Prisma.ChecklistChegadaListRelationFilter
+  garantias?: Prisma.GarantiaListRelationFilter
   orcamentos?: Prisma.OrcamentoListRelationFilter
   features?: Prisma.CompanyFeatureListRelationFilter
   featureChanges?: Prisma.CompanyFeatureChangeListRelationFilter
@@ -470,6 +476,8 @@ export type CompanyCreateInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -518,6 +526,8 @@ export type CompanyUncheckedCreateInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -566,6 +576,8 @@ export type CompanyUpdateInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -614,6 +626,8 @@ export type CompanyUncheckedUpdateInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1000,6 +1014,34 @@ export type CompanyUpdateOneRequiredWithoutChecklistsDevolucaoNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.CompanyUpdateToOneWithWhereWithoutChecklistsDevolucaoInput, Prisma.CompanyUpdateWithoutChecklistsDevolucaoInput>, Prisma.CompanyUncheckedUpdateWithoutChecklistsDevolucaoInput>
 }
 
+export type CompanyCreateNestedOneWithoutChecklistsChegadaInput = {
+  create?: Prisma.XOR<Prisma.CompanyCreateWithoutChecklistsChegadaInput, Prisma.CompanyUncheckedCreateWithoutChecklistsChegadaInput>
+  connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutChecklistsChegadaInput
+  connect?: Prisma.CompanyWhereUniqueInput
+}
+
+export type CompanyUpdateOneRequiredWithoutChecklistsChegadaNestedInput = {
+  create?: Prisma.XOR<Prisma.CompanyCreateWithoutChecklistsChegadaInput, Prisma.CompanyUncheckedCreateWithoutChecklistsChegadaInput>
+  connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutChecklistsChegadaInput
+  upsert?: Prisma.CompanyUpsertWithoutChecklistsChegadaInput
+  connect?: Prisma.CompanyWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CompanyUpdateToOneWithWhereWithoutChecklistsChegadaInput, Prisma.CompanyUpdateWithoutChecklistsChegadaInput>, Prisma.CompanyUncheckedUpdateWithoutChecklistsChegadaInput>
+}
+
+export type CompanyCreateNestedOneWithoutGarantiasInput = {
+  create?: Prisma.XOR<Prisma.CompanyCreateWithoutGarantiasInput, Prisma.CompanyUncheckedCreateWithoutGarantiasInput>
+  connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutGarantiasInput
+  connect?: Prisma.CompanyWhereUniqueInput
+}
+
+export type CompanyUpdateOneRequiredWithoutGarantiasNestedInput = {
+  create?: Prisma.XOR<Prisma.CompanyCreateWithoutGarantiasInput, Prisma.CompanyUncheckedCreateWithoutGarantiasInput>
+  connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutGarantiasInput
+  upsert?: Prisma.CompanyUpsertWithoutGarantiasInput
+  connect?: Prisma.CompanyWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CompanyUpdateToOneWithWhereWithoutGarantiasInput, Prisma.CompanyUpdateWithoutGarantiasInput>, Prisma.CompanyUncheckedUpdateWithoutGarantiasInput>
+}
+
 export type CompanyCreateNestedOneWithoutOrcamentosInput = {
   create?: Prisma.XOR<Prisma.CompanyCreateWithoutOrcamentosInput, Prisma.CompanyUncheckedCreateWithoutOrcamentosInput>
   connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutOrcamentosInput
@@ -1179,6 +1221,8 @@ export type CompanyCreateWithoutWhatsappRecipientsInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -1226,6 +1270,8 @@ export type CompanyUncheckedCreateWithoutWhatsappRecipientsInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -1289,6 +1335,8 @@ export type CompanyUpdateWithoutWhatsappRecipientsInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -1336,6 +1384,8 @@ export type CompanyUncheckedUpdateWithoutWhatsappRecipientsInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1383,6 +1433,8 @@ export type CompanyCreateWithoutSettingsInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -1430,6 +1482,8 @@ export type CompanyUncheckedCreateWithoutSettingsInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -1493,6 +1547,8 @@ export type CompanyUpdateWithoutSettingsInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -1540,6 +1596,8 @@ export type CompanyUncheckedUpdateWithoutSettingsInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1587,6 +1645,8 @@ export type CompanyCreateWithoutEquipmentsInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -1634,6 +1694,8 @@ export type CompanyUncheckedCreateWithoutEquipmentsInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -1697,6 +1759,8 @@ export type CompanyUpdateWithoutEquipmentsInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -1744,6 +1808,8 @@ export type CompanyUncheckedUpdateWithoutEquipmentsInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1791,6 +1857,8 @@ export type CompanyCreateWithoutWorkFrontsInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -1838,6 +1906,8 @@ export type CompanyUncheckedCreateWithoutWorkFrontsInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -1901,6 +1971,8 @@ export type CompanyUpdateWithoutWorkFrontsInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -1948,6 +2020,8 @@ export type CompanyUncheckedUpdateWithoutWorkFrontsInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1995,6 +2069,8 @@ export type CompanyCreateWithoutChecklistRunsInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -2042,6 +2118,8 @@ export type CompanyUncheckedCreateWithoutChecklistRunsInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -2105,6 +2183,8 @@ export type CompanyUpdateWithoutChecklistRunsInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -2152,6 +2232,8 @@ export type CompanyUncheckedUpdateWithoutChecklistRunsInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -2199,6 +2281,8 @@ export type CompanyCreateWithoutServiceOrdersInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -2246,6 +2330,8 @@ export type CompanyUncheckedCreateWithoutServiceOrdersInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -2309,6 +2395,8 @@ export type CompanyUpdateWithoutServiceOrdersInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -2356,6 +2444,8 @@ export type CompanyUncheckedUpdateWithoutServiceOrdersInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -2403,6 +2493,8 @@ export type CompanyCreateWithoutPlanoPreventivoInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -2450,6 +2542,8 @@ export type CompanyUncheckedCreateWithoutPlanoPreventivoInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -2513,6 +2607,8 @@ export type CompanyUpdateWithoutPlanoPreventivoInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -2560,6 +2656,8 @@ export type CompanyUncheckedUpdateWithoutPlanoPreventivoInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -2607,6 +2705,8 @@ export type CompanyCreateWithoutOperatorsInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -2654,6 +2754,8 @@ export type CompanyUncheckedCreateWithoutOperatorsInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -2717,6 +2819,8 @@ export type CompanyUpdateWithoutOperatorsInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -2764,6 +2868,8 @@ export type CompanyUncheckedUpdateWithoutOperatorsInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -2811,6 +2917,8 @@ export type CompanyCreateWithoutAbastecimentosInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -2858,6 +2966,8 @@ export type CompanyUncheckedCreateWithoutAbastecimentosInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -2921,6 +3031,8 @@ export type CompanyUpdateWithoutAbastecimentosInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -2968,6 +3080,8 @@ export type CompanyUncheckedUpdateWithoutAbastecimentosInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -3015,6 +3129,8 @@ export type CompanyCreateWithoutFleetfuelIntencoesInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -3062,6 +3178,8 @@ export type CompanyUncheckedCreateWithoutFleetfuelIntencoesInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -3125,6 +3243,8 @@ export type CompanyUpdateWithoutFleetfuelIntencoesInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -3172,6 +3292,8 @@ export type CompanyUncheckedUpdateWithoutFleetfuelIntencoesInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -3219,6 +3341,8 @@ export type CompanyCreateWithoutPartnersInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -3266,6 +3390,8 @@ export type CompanyUncheckedCreateWithoutPartnersInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -3329,6 +3455,8 @@ export type CompanyUpdateWithoutPartnersInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -3376,6 +3504,8 @@ export type CompanyUncheckedUpdateWithoutPartnersInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -3423,6 +3553,8 @@ export type CompanyCreateWithoutPartnerPortalUsersInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -3470,6 +3602,8 @@ export type CompanyUncheckedCreateWithoutPartnerPortalUsersInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -3533,6 +3667,8 @@ export type CompanyUpdateWithoutPartnerPortalUsersInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -3580,6 +3716,8 @@ export type CompanyUncheckedUpdateWithoutPartnerPortalUsersInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -3626,6 +3764,8 @@ export type CompanyCreateWithoutPontoRegistrosInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -3673,6 +3813,8 @@ export type CompanyUncheckedCreateWithoutPontoRegistrosInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -3736,6 +3878,8 @@ export type CompanyUpdateWithoutPontoRegistrosInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -3783,6 +3927,8 @@ export type CompanyUncheckedUpdateWithoutPontoRegistrosInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -3830,6 +3976,8 @@ export type CompanyCreateWithoutPontoNsrCounterInput = {
   pontoSolicitacoes?: Prisma.PontoSolicitacaoCreateNestedManyWithoutCompanyInput
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -3877,6 +4025,8 @@ export type CompanyUncheckedCreateWithoutPontoNsrCounterInput = {
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedCreateNestedManyWithoutCompanyInput
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -3940,6 +4090,8 @@ export type CompanyUpdateWithoutPontoNsrCounterInput = {
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUpdateManyWithoutCompanyNestedInput
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -3987,6 +4139,8 @@ export type CompanyUncheckedUpdateWithoutPontoNsrCounterInput = {
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -4034,6 +4188,8 @@ export type CompanyCreateWithoutPontoSolicitacoesInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -4081,6 +4237,8 @@ export type CompanyUncheckedCreateWithoutPontoSolicitacoesInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -4144,6 +4302,8 @@ export type CompanyUpdateWithoutPontoSolicitacoesInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -4191,6 +4351,8 @@ export type CompanyUncheckedUpdateWithoutPontoSolicitacoesInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -4238,6 +4400,8 @@ export type CompanyCreateWithoutPontoAbonosInput = {
   pontoSolicitacoes?: Prisma.PontoSolicitacaoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -4285,6 +4449,8 @@ export type CompanyUncheckedCreateWithoutPontoAbonosInput = {
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -4348,6 +4514,8 @@ export type CompanyUpdateWithoutPontoAbonosInput = {
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -4395,6 +4563,8 @@ export type CompanyUncheckedUpdateWithoutPontoAbonosInput = {
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -4442,6 +4612,8 @@ export type CompanyCreateWithoutChecklistsDevolucaoInput = {
   pontoSolicitacoes?: Prisma.PontoSolicitacaoCreateNestedManyWithoutCompanyInput
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -4489,6 +4661,8 @@ export type CompanyUncheckedCreateWithoutChecklistsDevolucaoInput = {
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedCreateNestedManyWithoutCompanyInput
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -4552,6 +4726,8 @@ export type CompanyUpdateWithoutChecklistsDevolucaoInput = {
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUpdateManyWithoutCompanyNestedInput
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -4599,6 +4775,432 @@ export type CompanyUncheckedUpdateWithoutChecklistsDevolucaoInput = {
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
+  orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
+  features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
+  featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
+  partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
+  equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
+  serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
+  operators?: Prisma.OperatorUncheckedUpdateManyWithoutCompanyNestedInput
+  abastecimentos?: Prisma.AbastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  workFronts?: Prisma.WorkFrontUncheckedUpdateManyWithoutCompanyNestedInput
+  settings?: Prisma.CompanySettingsUncheckedUpdateOneWithoutCompanyNestedInput
+  emergencies?: Prisma.EmergencyUncheckedUpdateManyWithoutCompanyNestedInput
+  creditos?: Prisma.CreditoUncheckedUpdateManyWithoutCompanyNestedInput
+  lubrificacoes?: Prisma.LubrificacaoUncheckedUpdateManyWithoutCompanyNestedInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
+  planoPreventivo?: Prisma.PlanoPreventivoUncheckedUpdateOneWithoutCompanyNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
+  notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
+  whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
+}
+
+export type CompanyCreateWithoutChecklistsChegadaInput = {
+  id?: string
+  legacyId?: string | null
+  name: string
+  slug: string
+  type?: $Enums.CompanyType
+  status?: $Enums.Status
+  uf?: string | null
+  cidade?: string | null
+  email?: string | null
+  cnpj?: string | null
+  caepf?: string | null
+  whatsapp?: string | null
+  razaoSocial?: string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.CompanyUserCreateNestedManyWithoutCompanyInput
+  roles?: Prisma.CompanyRoleCreateNestedManyWithoutCompanyInput
+  pontoRegistros?: Prisma.PontoRegistroCreateNestedManyWithoutCompanyInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoCreateNestedManyWithoutCompanyInput
+  pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
+  orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
+  features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
+  featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
+  partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
+  equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
+  checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
+  serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
+  operators?: Prisma.OperatorCreateNestedManyWithoutCompanyInput
+  abastecimentos?: Prisma.AbastecimentoCreateNestedManyWithoutCompanyInput
+  workFronts?: Prisma.WorkFrontCreateNestedManyWithoutCompanyInput
+  settings?: Prisma.CompanySettingsCreateNestedOneWithoutCompanyInput
+  emergencies?: Prisma.EmergencyCreateNestedManyWithoutCompanyInput
+  creditos?: Prisma.CreditoCreateNestedManyWithoutCompanyInput
+  lubrificacoes?: Prisma.LubrificacaoCreateNestedManyWithoutCompanyInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
+  notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
+  planoPreventivo?: Prisma.PlanoPreventivoCreateNestedOneWithoutCompanyInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
+  notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
+  whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
+}
+
+export type CompanyUncheckedCreateWithoutChecklistsChegadaInput = {
+  id?: string
+  legacyId?: string | null
+  name: string
+  slug: string
+  type?: $Enums.CompanyType
+  status?: $Enums.Status
+  uf?: string | null
+  cidade?: string | null
+  email?: string | null
+  cnpj?: string | null
+  caepf?: string | null
+  whatsapp?: string | null
+  razaoSocial?: string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.CompanyUserUncheckedCreateNestedManyWithoutCompanyInput
+  roles?: Prisma.CompanyRoleUncheckedCreateNestedManyWithoutCompanyInput
+  pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutCompanyInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedCreateNestedManyWithoutCompanyInput
+  pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
+  orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
+  features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
+  featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
+  partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
+  equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
+  checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
+  serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
+  operators?: Prisma.OperatorUncheckedCreateNestedManyWithoutCompanyInput
+  abastecimentos?: Prisma.AbastecimentoUncheckedCreateNestedManyWithoutCompanyInput
+  workFronts?: Prisma.WorkFrontUncheckedCreateNestedManyWithoutCompanyInput
+  settings?: Prisma.CompanySettingsUncheckedCreateNestedOneWithoutCompanyInput
+  emergencies?: Prisma.EmergencyUncheckedCreateNestedManyWithoutCompanyInput
+  creditos?: Prisma.CreditoUncheckedCreateNestedManyWithoutCompanyInput
+  lubrificacoes?: Prisma.LubrificacaoUncheckedCreateNestedManyWithoutCompanyInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
+  notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
+  planoPreventivo?: Prisma.PlanoPreventivoUncheckedCreateNestedOneWithoutCompanyInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
+  notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
+  whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
+}
+
+export type CompanyCreateOrConnectWithoutChecklistsChegadaInput = {
+  where: Prisma.CompanyWhereUniqueInput
+  create: Prisma.XOR<Prisma.CompanyCreateWithoutChecklistsChegadaInput, Prisma.CompanyUncheckedCreateWithoutChecklistsChegadaInput>
+}
+
+export type CompanyUpsertWithoutChecklistsChegadaInput = {
+  update: Prisma.XOR<Prisma.CompanyUpdateWithoutChecklistsChegadaInput, Prisma.CompanyUncheckedUpdateWithoutChecklistsChegadaInput>
+  create: Prisma.XOR<Prisma.CompanyCreateWithoutChecklistsChegadaInput, Prisma.CompanyUncheckedCreateWithoutChecklistsChegadaInput>
+  where?: Prisma.CompanyWhereInput
+}
+
+export type CompanyUpdateToOneWithWhereWithoutChecklistsChegadaInput = {
+  where?: Prisma.CompanyWhereInput
+  data: Prisma.XOR<Prisma.CompanyUpdateWithoutChecklistsChegadaInput, Prisma.CompanyUncheckedUpdateWithoutChecklistsChegadaInput>
+}
+
+export type CompanyUpdateWithoutChecklistsChegadaInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumCompanyTypeFieldUpdateOperationsInput | $Enums.CompanyType
+  status?: Prisma.EnumStatusFieldUpdateOperationsInput | $Enums.Status
+  uf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnpj?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caepf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razaoSocial?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.CompanyUserUpdateManyWithoutCompanyNestedInput
+  roles?: Prisma.CompanyRoleUpdateManyWithoutCompanyNestedInput
+  pontoRegistros?: Prisma.PontoRegistroUpdateManyWithoutCompanyNestedInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUpdateManyWithoutCompanyNestedInput
+  pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
+  orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
+  features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
+  featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
+  partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
+  equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
+  checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
+  serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
+  operators?: Prisma.OperatorUpdateManyWithoutCompanyNestedInput
+  abastecimentos?: Prisma.AbastecimentoUpdateManyWithoutCompanyNestedInput
+  workFronts?: Prisma.WorkFrontUpdateManyWithoutCompanyNestedInput
+  settings?: Prisma.CompanySettingsUpdateOneWithoutCompanyNestedInput
+  emergencies?: Prisma.EmergencyUpdateManyWithoutCompanyNestedInput
+  creditos?: Prisma.CreditoUpdateManyWithoutCompanyNestedInput
+  lubrificacoes?: Prisma.LubrificacaoUpdateManyWithoutCompanyNestedInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
+  notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
+  planoPreventivo?: Prisma.PlanoPreventivoUpdateOneWithoutCompanyNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
+  notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
+  whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
+}
+
+export type CompanyUncheckedUpdateWithoutChecklistsChegadaInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumCompanyTypeFieldUpdateOperationsInput | $Enums.CompanyType
+  status?: Prisma.EnumStatusFieldUpdateOperationsInput | $Enums.Status
+  uf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnpj?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caepf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razaoSocial?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.CompanyUserUncheckedUpdateManyWithoutCompanyNestedInput
+  roles?: Prisma.CompanyRoleUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
+  orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
+  features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
+  featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
+  partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
+  equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
+  serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
+  operators?: Prisma.OperatorUncheckedUpdateManyWithoutCompanyNestedInput
+  abastecimentos?: Prisma.AbastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  workFronts?: Prisma.WorkFrontUncheckedUpdateManyWithoutCompanyNestedInput
+  settings?: Prisma.CompanySettingsUncheckedUpdateOneWithoutCompanyNestedInput
+  emergencies?: Prisma.EmergencyUncheckedUpdateManyWithoutCompanyNestedInput
+  creditos?: Prisma.CreditoUncheckedUpdateManyWithoutCompanyNestedInput
+  lubrificacoes?: Prisma.LubrificacaoUncheckedUpdateManyWithoutCompanyNestedInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
+  planoPreventivo?: Prisma.PlanoPreventivoUncheckedUpdateOneWithoutCompanyNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
+  notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
+  whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
+}
+
+export type CompanyCreateWithoutGarantiasInput = {
+  id?: string
+  legacyId?: string | null
+  name: string
+  slug: string
+  type?: $Enums.CompanyType
+  status?: $Enums.Status
+  uf?: string | null
+  cidade?: string | null
+  email?: string | null
+  cnpj?: string | null
+  caepf?: string | null
+  whatsapp?: string | null
+  razaoSocial?: string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.CompanyUserCreateNestedManyWithoutCompanyInput
+  roles?: Prisma.CompanyRoleCreateNestedManyWithoutCompanyInput
+  pontoRegistros?: Prisma.PontoRegistroCreateNestedManyWithoutCompanyInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoCreateNestedManyWithoutCompanyInput
+  pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
+  features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
+  featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
+  partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
+  equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
+  checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
+  serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
+  operators?: Prisma.OperatorCreateNestedManyWithoutCompanyInput
+  abastecimentos?: Prisma.AbastecimentoCreateNestedManyWithoutCompanyInput
+  workFronts?: Prisma.WorkFrontCreateNestedManyWithoutCompanyInput
+  settings?: Prisma.CompanySettingsCreateNestedOneWithoutCompanyInput
+  emergencies?: Prisma.EmergencyCreateNestedManyWithoutCompanyInput
+  creditos?: Prisma.CreditoCreateNestedManyWithoutCompanyInput
+  lubrificacoes?: Prisma.LubrificacaoCreateNestedManyWithoutCompanyInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
+  notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
+  planoPreventivo?: Prisma.PlanoPreventivoCreateNestedOneWithoutCompanyInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
+  notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
+  whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
+}
+
+export type CompanyUncheckedCreateWithoutGarantiasInput = {
+  id?: string
+  legacyId?: string | null
+  name: string
+  slug: string
+  type?: $Enums.CompanyType
+  status?: $Enums.Status
+  uf?: string | null
+  cidade?: string | null
+  email?: string | null
+  cnpj?: string | null
+  caepf?: string | null
+  whatsapp?: string | null
+  razaoSocial?: string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.CompanyUserUncheckedCreateNestedManyWithoutCompanyInput
+  roles?: Prisma.CompanyRoleUncheckedCreateNestedManyWithoutCompanyInput
+  pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutCompanyInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedCreateNestedManyWithoutCompanyInput
+  pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
+  features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
+  featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
+  partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
+  equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
+  checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
+  serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
+  operators?: Prisma.OperatorUncheckedCreateNestedManyWithoutCompanyInput
+  abastecimentos?: Prisma.AbastecimentoUncheckedCreateNestedManyWithoutCompanyInput
+  workFronts?: Prisma.WorkFrontUncheckedCreateNestedManyWithoutCompanyInput
+  settings?: Prisma.CompanySettingsUncheckedCreateNestedOneWithoutCompanyInput
+  emergencies?: Prisma.EmergencyUncheckedCreateNestedManyWithoutCompanyInput
+  creditos?: Prisma.CreditoUncheckedCreateNestedManyWithoutCompanyInput
+  lubrificacoes?: Prisma.LubrificacaoUncheckedCreateNestedManyWithoutCompanyInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
+  notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
+  planoPreventivo?: Prisma.PlanoPreventivoUncheckedCreateNestedOneWithoutCompanyInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
+  notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
+  whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
+}
+
+export type CompanyCreateOrConnectWithoutGarantiasInput = {
+  where: Prisma.CompanyWhereUniqueInput
+  create: Prisma.XOR<Prisma.CompanyCreateWithoutGarantiasInput, Prisma.CompanyUncheckedCreateWithoutGarantiasInput>
+}
+
+export type CompanyUpsertWithoutGarantiasInput = {
+  update: Prisma.XOR<Prisma.CompanyUpdateWithoutGarantiasInput, Prisma.CompanyUncheckedUpdateWithoutGarantiasInput>
+  create: Prisma.XOR<Prisma.CompanyCreateWithoutGarantiasInput, Prisma.CompanyUncheckedCreateWithoutGarantiasInput>
+  where?: Prisma.CompanyWhereInput
+}
+
+export type CompanyUpdateToOneWithWhereWithoutGarantiasInput = {
+  where?: Prisma.CompanyWhereInput
+  data: Prisma.XOR<Prisma.CompanyUpdateWithoutGarantiasInput, Prisma.CompanyUncheckedUpdateWithoutGarantiasInput>
+}
+
+export type CompanyUpdateWithoutGarantiasInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumCompanyTypeFieldUpdateOperationsInput | $Enums.CompanyType
+  status?: Prisma.EnumStatusFieldUpdateOperationsInput | $Enums.Status
+  uf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnpj?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caepf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razaoSocial?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.CompanyUserUpdateManyWithoutCompanyNestedInput
+  roles?: Prisma.CompanyRoleUpdateManyWithoutCompanyNestedInput
+  pontoRegistros?: Prisma.PontoRegistroUpdateManyWithoutCompanyNestedInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUpdateManyWithoutCompanyNestedInput
+  pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
+  features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
+  featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
+  partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
+  equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
+  checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
+  serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
+  operators?: Prisma.OperatorUpdateManyWithoutCompanyNestedInput
+  abastecimentos?: Prisma.AbastecimentoUpdateManyWithoutCompanyNestedInput
+  workFronts?: Prisma.WorkFrontUpdateManyWithoutCompanyNestedInput
+  settings?: Prisma.CompanySettingsUpdateOneWithoutCompanyNestedInput
+  emergencies?: Prisma.EmergencyUpdateManyWithoutCompanyNestedInput
+  creditos?: Prisma.CreditoUpdateManyWithoutCompanyNestedInput
+  lubrificacoes?: Prisma.LubrificacaoUpdateManyWithoutCompanyNestedInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
+  notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
+  planoPreventivo?: Prisma.PlanoPreventivoUpdateOneWithoutCompanyNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
+  notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
+  whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
+}
+
+export type CompanyUncheckedUpdateWithoutGarantiasInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumCompanyTypeFieldUpdateOperationsInput | $Enums.CompanyType
+  status?: Prisma.EnumStatusFieldUpdateOperationsInput | $Enums.Status
+  uf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnpj?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caepf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razaoSocial?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.CompanyUserUncheckedUpdateManyWithoutCompanyNestedInput
+  roles?: Prisma.CompanyRoleUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -4647,6 +5249,8 @@ export type CompanyCreateWithoutOrcamentosInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
@@ -4694,6 +5298,8 @@ export type CompanyUncheckedCreateWithoutOrcamentosInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
@@ -4757,6 +5363,8 @@ export type CompanyUpdateWithoutOrcamentosInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
@@ -4804,6 +5412,8 @@ export type CompanyUncheckedUpdateWithoutOrcamentosInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
@@ -4850,6 +5460,8 @@ export type CompanyCreateWithoutRolesInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -4897,6 +5509,8 @@ export type CompanyUncheckedCreateWithoutRolesInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -4960,6 +5574,8 @@ export type CompanyUpdateWithoutRolesInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -5007,6 +5623,8 @@ export type CompanyUncheckedUpdateWithoutRolesInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -5055,6 +5673,8 @@ export type CompanyCreateWithoutFeaturesInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
@@ -5102,6 +5722,8 @@ export type CompanyUncheckedCreateWithoutFeaturesInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
@@ -5165,6 +5787,8 @@ export type CompanyUpdateWithoutFeaturesInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
@@ -5212,6 +5836,8 @@ export type CompanyUncheckedUpdateWithoutFeaturesInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
@@ -5259,6 +5885,8 @@ export type CompanyCreateWithoutFeatureChangesInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
@@ -5306,6 +5934,8 @@ export type CompanyUncheckedCreateWithoutFeatureChangesInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
@@ -5369,6 +5999,8 @@ export type CompanyUpdateWithoutFeatureChangesInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
@@ -5416,6 +6048,8 @@ export type CompanyUncheckedUpdateWithoutFeatureChangesInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
@@ -5462,6 +6096,8 @@ export type CompanyCreateWithoutUsersInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -5509,6 +6145,8 @@ export type CompanyUncheckedCreateWithoutUsersInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -5572,6 +6210,8 @@ export type CompanyUpdateWithoutUsersInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -5619,6 +6259,8 @@ export type CompanyUncheckedUpdateWithoutUsersInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -5667,6 +6309,8 @@ export type CompanyCreateWithoutEmergenciesInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -5714,6 +6358,8 @@ export type CompanyUncheckedCreateWithoutEmergenciesInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -5777,6 +6423,8 @@ export type CompanyUpdateWithoutEmergenciesInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -5824,6 +6472,8 @@ export type CompanyUncheckedUpdateWithoutEmergenciesInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -5871,6 +6521,8 @@ export type CompanyCreateWithoutCreditosInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -5918,6 +6570,8 @@ export type CompanyUncheckedCreateWithoutCreditosInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -5981,6 +6635,8 @@ export type CompanyUpdateWithoutCreditosInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -6028,6 +6684,8 @@ export type CompanyUncheckedUpdateWithoutCreditosInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -6075,6 +6733,8 @@ export type CompanyCreateWithoutLubrificacoesInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -6122,6 +6782,8 @@ export type CompanyUncheckedCreateWithoutLubrificacoesInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -6185,6 +6847,8 @@ export type CompanyUpdateWithoutLubrificacoesInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -6232,6 +6896,8 @@ export type CompanyUncheckedUpdateWithoutLubrificacoesInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -6279,6 +6945,8 @@ export type CompanyCreateWithoutReabastecimentosComboioInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -6326,6 +6994,8 @@ export type CompanyUncheckedCreateWithoutReabastecimentosComboioInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -6389,6 +7059,8 @@ export type CompanyUpdateWithoutReabastecimentosComboioInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -6436,6 +7108,8 @@ export type CompanyUncheckedUpdateWithoutReabastecimentosComboioInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -6483,6 +7157,8 @@ export type CompanyCreateWithoutNotasFiscaisInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -6530,6 +7206,8 @@ export type CompanyUncheckedCreateWithoutNotasFiscaisInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -6593,6 +7271,8 @@ export type CompanyUpdateWithoutNotasFiscaisInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -6640,6 +7320,8 @@ export type CompanyUncheckedUpdateWithoutNotasFiscaisInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -6687,6 +7369,8 @@ export type CompanyCreateWithoutNotificacoesInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
@@ -6734,6 +7418,8 @@ export type CompanyUncheckedCreateWithoutNotificacoesInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
   features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
@@ -6797,6 +7483,8 @@ export type CompanyUpdateWithoutNotificacoesInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
@@ -6844,6 +7532,8 @@ export type CompanyUncheckedUpdateWithoutNotificacoesInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
   pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
   checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
   features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
   featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -6878,6 +7568,8 @@ export type CompanyCountOutputType = {
   pontoSolicitacoes: number
   pontoAbonos: number
   checklistsDevolucao: number
+  checklistsChegada: number
+  garantias: number
   orcamentos: number
   features: number
   featureChanges: number
@@ -6906,6 +7598,8 @@ export type CompanyCountOutputTypeSelect<ExtArgs extends runtime.Types.Extension
   pontoSolicitacoes?: boolean | CompanyCountOutputTypeCountPontoSolicitacoesArgs
   pontoAbonos?: boolean | CompanyCountOutputTypeCountPontoAbonosArgs
   checklistsDevolucao?: boolean | CompanyCountOutputTypeCountChecklistsDevolucaoArgs
+  checklistsChegada?: boolean | CompanyCountOutputTypeCountChecklistsChegadaArgs
+  garantias?: boolean | CompanyCountOutputTypeCountGarantiasArgs
   orcamentos?: boolean | CompanyCountOutputTypeCountOrcamentosArgs
   features?: boolean | CompanyCountOutputTypeCountFeaturesArgs
   featureChanges?: boolean | CompanyCountOutputTypeCountFeatureChangesArgs
@@ -6977,6 +7671,20 @@ export type CompanyCountOutputTypeCountPontoAbonosArgs<ExtArgs extends runtime.T
  */
 export type CompanyCountOutputTypeCountChecklistsDevolucaoArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ChecklistDevolucaoWhereInput
+}
+
+/**
+ * CompanyCountOutputType without action
+ */
+export type CompanyCountOutputTypeCountChecklistsChegadaArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ChecklistChegadaWhereInput
+}
+
+/**
+ * CompanyCountOutputType without action
+ */
+export type CompanyCountOutputTypeCountGarantiasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.GarantiaWhereInput
 }
 
 /**
@@ -7138,6 +7846,8 @@ export type CompanySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   pontoAbonos?: boolean | Prisma.Company$pontoAbonosArgs<ExtArgs>
   pontoNsrCounter?: boolean | Prisma.Company$pontoNsrCounterArgs<ExtArgs>
   checklistsDevolucao?: boolean | Prisma.Company$checklistsDevolucaoArgs<ExtArgs>
+  checklistsChegada?: boolean | Prisma.Company$checklistsChegadaArgs<ExtArgs>
+  garantias?: boolean | Prisma.Company$garantiasArgs<ExtArgs>
   orcamentos?: boolean | Prisma.Company$orcamentosArgs<ExtArgs>
   features?: boolean | Prisma.Company$featuresArgs<ExtArgs>
   featureChanges?: boolean | Prisma.Company$featureChangesArgs<ExtArgs>
@@ -7231,6 +7941,8 @@ export type CompanyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   pontoAbonos?: boolean | Prisma.Company$pontoAbonosArgs<ExtArgs>
   pontoNsrCounter?: boolean | Prisma.Company$pontoNsrCounterArgs<ExtArgs>
   checklistsDevolucao?: boolean | Prisma.Company$checklistsDevolucaoArgs<ExtArgs>
+  checklistsChegada?: boolean | Prisma.Company$checklistsChegadaArgs<ExtArgs>
+  garantias?: boolean | Prisma.Company$garantiasArgs<ExtArgs>
   orcamentos?: boolean | Prisma.Company$orcamentosArgs<ExtArgs>
   features?: boolean | Prisma.Company$featuresArgs<ExtArgs>
   featureChanges?: boolean | Prisma.Company$featureChangesArgs<ExtArgs>
@@ -7267,6 +7979,8 @@ export type $CompanyPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     pontoAbonos: Prisma.$PontoAbonoPayload<ExtArgs>[]
     pontoNsrCounter: Prisma.$PontoNsrCounterPayload<ExtArgs> | null
     checklistsDevolucao: Prisma.$ChecklistDevolucaoPayload<ExtArgs>[]
+    checklistsChegada: Prisma.$ChecklistChegadaPayload<ExtArgs>[]
+    garantias: Prisma.$GarantiaPayload<ExtArgs>[]
     orcamentos: Prisma.$OrcamentoPayload<ExtArgs>[]
     features: Prisma.$CompanyFeaturePayload<ExtArgs>[]
     featureChanges: Prisma.$CompanyFeatureChangePayload<ExtArgs>[]
@@ -7723,6 +8437,8 @@ export interface Prisma__CompanyClient<T, Null = never, ExtArgs extends runtime.
   pontoAbonos<T extends Prisma.Company$pontoAbonosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$pontoAbonosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PontoAbonoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   pontoNsrCounter<T extends Prisma.Company$pontoNsrCounterArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$pontoNsrCounterArgs<ExtArgs>>): Prisma.Prisma__PontoNsrCounterClient<runtime.Types.Result.GetResult<Prisma.$PontoNsrCounterPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   checklistsDevolucao<T extends Prisma.Company$checklistsDevolucaoArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$checklistsDevolucaoArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChecklistDevolucaoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  checklistsChegada<T extends Prisma.Company$checklistsChegadaArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$checklistsChegadaArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChecklistChegadaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  garantias<T extends Prisma.Company$garantiasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$garantiasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GarantiaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   orcamentos<T extends Prisma.Company$orcamentosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$orcamentosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrcamentoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   features<T extends Prisma.Company$featuresArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$featuresArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CompanyFeaturePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   featureChanges<T extends Prisma.Company$featureChangesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$featureChangesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CompanyFeatureChangePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -8343,6 +9059,54 @@ export type Company$checklistsDevolucaoArgs<ExtArgs extends runtime.Types.Extens
   take?: number
   skip?: number
   distinct?: Prisma.ChecklistDevolucaoScalarFieldEnum | Prisma.ChecklistDevolucaoScalarFieldEnum[]
+}
+
+/**
+ * Company.checklistsChegada
+ */
+export type Company$checklistsChegadaArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ChecklistChegada
+   */
+  select?: Prisma.ChecklistChegadaSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ChecklistChegada
+   */
+  omit?: Prisma.ChecklistChegadaOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ChecklistChegadaInclude<ExtArgs> | null
+  where?: Prisma.ChecklistChegadaWhereInput
+  orderBy?: Prisma.ChecklistChegadaOrderByWithRelationInput | Prisma.ChecklistChegadaOrderByWithRelationInput[]
+  cursor?: Prisma.ChecklistChegadaWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ChecklistChegadaScalarFieldEnum | Prisma.ChecklistChegadaScalarFieldEnum[]
+}
+
+/**
+ * Company.garantias
+ */
+export type Company$garantiasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Garantia
+   */
+  select?: Prisma.GarantiaSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Garantia
+   */
+  omit?: Prisma.GarantiaOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GarantiaInclude<ExtArgs> | null
+  where?: Prisma.GarantiaWhereInput
+  orderBy?: Prisma.GarantiaOrderByWithRelationInput | Prisma.GarantiaOrderByWithRelationInput[]
+  cursor?: Prisma.GarantiaWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.GarantiaScalarFieldEnum | Prisma.GarantiaScalarFieldEnum[]
 }
 
 /**

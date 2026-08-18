@@ -257,6 +257,20 @@ export type PontoAbono = Prisma.PontoAbonoModel
  */
 export type ChecklistDevolucao = Prisma.ChecklistDevolucaoModel
 /**
+ * Model ChecklistChegada
+ * Checklist de chegada (CHE) — espelho do Firestore `checklistsChegada`.
+ * Shape idêntico ao Nest legado: identification / photos / inspection /
+ * blocks / term em JSONB.
+ */
+export type ChecklistChegada = Prisma.ChecklistChegadaModel
+/**
+ * Model Garantia
+ * Garantia de peça/serviço gerada ao aceitar CHD. Backfill do Firestore
+ * `garantias/{id}`. `equipamentoId` e `checklistDevolucaoId` são soft-refs
+ * (legacyId Firestore) pra compat com a API legada.
+ */
+export type Garantia = Prisma.GarantiaModel
+/**
  * Model Orcamento
  * Orçamento enviado por uma oficina em resposta a uma OS. Cada OS pode ter
  * múltiplos orçamentos (um por oficina convidada). Backfill vem do Firestore

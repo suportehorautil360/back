@@ -5,22 +5,29 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { FirebaseService } from '../../config/firebase.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import {
+  checklistChegadaPatchToPrisma,
+  checklistChegadaToPrismaCreate,
+  mapChecklistChegadaFromRow,
+} from '../../common/prisma/checklist-chegada-prisma.mapper';
+import { resolveChecklistChegadaPg } from '../../common/prisma/chegada-resolver';
+import {
+  assertOficinaTemOrcamentoNaSolicitacaoPg,
+  loadServiceOrderForChdPg,
+  resolveCompanyIdForChdPg,
+  resolveSolicitacaoIdPorProtocoloPg,
+} from '../../common/prisma/os-solicitacao.helper';
 import { EquipamentosService } from '../equipamentos/equipamentos.service';
 import type { ChecklistChegadaDoc } from './checklist-chegada.types';
 import { CreateChecklistChegadaDto } from './dto/create-checklist-chegada.dto';
 import { UpdateChecklistChegadaFotosDto } from './dto/update-checklist-chegada-fotos.dto';
 import {
   buildChecklistChegadaDoc,
-  mapChecklistChegadaFromFirestore,
   mapChecklistItems,
   mapPhotos,
 } from './helpers/checklist-chegada.mapper';
-import {
-  assertOficinaTemOrcamentoNaSolicitacao,
-  resolveSolicitacaoIdPorProtocolo,
-} from '../os/helpers/oficina-orcamento-solicitacao.helper';
-import { nextNumeroChegada } from './helpers/gerar-numero-chegada.helper';
+import { nextNumeroChegadaPg } from './helpers/gerar-numero-chegada.helper';
 
 function texto(valor: unknown): string {
   return typeof valor === 'string' ? valor.trim() : '';
@@ -29,29 +36,20 @@ function texto(valor: unknown): string {
 @Injectable()
 export class ChecklistChegadaService {
   constructor(
-    private readonly firebaseService: FirebaseService,
+    private readonly prisma: PrismaService,
     private readonly equipamentosService: EquipamentosService,
   ) {}
-
-  private get collection() {
-    return this.firebaseService.getFirestore().collection('checklistsChegada');
-  }
-
-  private get solicitacoesCollection() {
-    return this.firebaseService.getFirestore().collection('solicitacoesOS');
-  }
 
   private async equipamentoIdDaSolicitacao(
     solicitacaoOsId: string | null,
   ): Promise<string | null> {
     const solId = texto(solicitacaoOsId);
     if (!solId) return null;
-    const snap = await this.solicitacoesCollection.doc(solId).get();
-    if (!snap.exists) return null;
-    const equipamentoId = texto(
-      (snap.data() as Record<string, unknown>).equipamentoId,
-    );
-    return equipamentoId || null;
+
+    const sol = await loadServiceOrderForChdPg(this.prisma, solId);
+    if (!sol) return null;
+
+    return sol.equipment?.legacyId ?? sol.equipmentId ?? null;
   }
 
   async criar(dto: CreateChecklistChegadaDto): Promise<ChecklistChegadaDoc> {
@@ -65,13 +63,13 @@ export class ChecklistChegadaService {
 
     const solicitacaoOsId =
       texto(dto.solicitacaoOsId) ||
-      (await resolveSolicitacaoIdPorProtocolo(
-        this.solicitacoesCollection,
+      (await resolveSolicitacaoIdPorProtocoloPg(
+        this.prisma,
         dto.identification.os,
       ));
 
-    await assertOficinaTemOrcamentoNaSolicitacao(
-      this.solicitacoesCollection,
+    await assertOficinaTemOrcamentoNaSolicitacaoPg(
+      this.prisma,
       solicitacaoOsId ?? '',
       oficinaId,
     );
@@ -81,16 +79,40 @@ export class ChecklistChegadaService {
         ? { ...dto, solicitacaoOsId }
         : dto;
 
-    const id = texto(dtoComSolicitacao.id) || randomUUID();
+    const legacyId = texto(dtoComSolicitacao.id) || randomUUID();
     const createdAt = new Date().toISOString();
 
     try {
+      const companyCtx = await resolveCompanyIdForChdPg(
+        this.prisma,
+        dtoComSolicitacao.prefeituraId,
+        solicitacaoOsId,
+      );
+      if (!companyCtx) {
+        throw new BadRequestException('Prefeitura não encontrada para o CHE.');
+      }
+
       const number =
         texto(dto.number) ||
-        (await nextNumeroChegada(this.collection, oficinaId));
+        (await nextNumeroChegadaPg(this.prisma, oficinaId));
 
-      const doc = buildChecklistChegadaDoc(id, number, dtoComSolicitacao, createdAt);
-      await this.collection.doc(id).set(doc);
+      const doc = buildChecklistChegadaDoc(
+        legacyId,
+        number,
+        {
+          ...dtoComSolicitacao,
+          prefeituraId: companyCtx.prefeituraLegacyId,
+        },
+        createdAt,
+      );
+
+      await this.prisma.checklistChegada.create({
+        data: checklistChegadaToPrismaCreate(
+          doc,
+          companyCtx.companyId,
+          legacyId,
+        ),
+      });
 
       const equipamentoId = await this.equipamentoIdDaSolicitacao(
         doc.solicitacaoOsId,
@@ -129,46 +151,34 @@ export class ChecklistChegadaService {
     }
 
     try {
-      const ref = this.collection.doc(docId);
-      const snap = await ref.get();
-      if (!snap.exists) {
+      const row = await resolveChecklistChegadaPg(this.prisma, docId);
+      if (!row) {
         throw new NotFoundException('Checklist de chegada não encontrado.');
       }
 
-      const atual = mapChecklistChegadaFromFirestore(
-        snap.id,
-        snap.data() as Record<string, unknown>,
-      );
-
-      const payload: Record<string, unknown> = {
-        updatedAt: new Date().toISOString(),
-      };
+      const atual = mapChecklistChegadaFromRow(row);
+      const patch: Parameters<typeof checklistChegadaPatchToPrisma>[0] = {};
 
       if (temPhotos && dto.photos) {
-        payload.photos = {
-          ...atual.photos,
-          ...mapPhotos(dto.photos),
-        };
+        patch.photos = { ...atual.photos, ...mapPhotos(dto.photos) };
       }
       if (temInspection && dto.inspection) {
-        payload.inspection = {
+        patch.inspection = {
           ...atual.inspection,
           ...mapChecklistItems(dto.inspection),
         };
       }
       if (temBlocks && dto.blocks) {
-        payload.blocks = {
-          ...atual.blocks,
-          ...mapChecklistItems(dto.blocks),
-        };
+        patch.blocks = { ...atual.blocks, ...mapChecklistItems(dto.blocks) };
       }
 
-      await ref.update(payload);
-
-      return mapChecklistChegadaFromFirestore(docId, {
-        ...(snap.data() as Record<string, unknown>),
-        ...payload,
+      const updated = await this.prisma.checklistChegada.update({
+        where: { id: row.id },
+        data: checklistChegadaPatchToPrisma(patch),
+        include: { company: { select: { legacyId: true } } },
       });
+
+      return mapChecklistChegadaFromRow(updated);
     } catch (error) {
       if (
         error instanceof BadRequestException ||
@@ -188,14 +198,11 @@ export class ChecklistChegadaService {
     if (!docId) throw new BadRequestException('id inválido.');
 
     try {
-      const snap = await this.collection.doc(docId).get();
-      if (!snap.exists) {
+      const row = await resolveChecklistChegadaPg(this.prisma, docId);
+      if (!row) {
         throw new NotFoundException('Checklist de chegada não encontrado.');
       }
-      return mapChecklistChegadaFromFirestore(
-        snap.id,
-        snap.data() as Record<string, unknown>,
-      );
+      return mapChecklistChegadaFromRow(row);
     } catch (error) {
       if (
         error instanceof BadRequestException ||
@@ -217,19 +224,14 @@ export class ChecklistChegadaService {
     if (!id) throw new BadRequestException('oficinaId inválido.');
 
     try {
-      const snap = await this.collection.where('oficinaId', '==', id).get();
-
-      const data = snap.docs
-        .map((doc) =>
-          mapChecklistChegadaFromFirestore(
-            doc.id,
-            doc.data() as Record<string, unknown>,
-          ),
-        )
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      const rows = await this.prisma.checklistChegada.findMany({
+        where: { oficinaId: id },
+        include: { company: { select: { legacyId: true } } },
+        orderBy: { createdAt: 'desc' },
+      });
 
       return {
-        data,
+        data: rows.map(mapChecklistChegadaFromRow),
         message: 'Checklists de chegada carregados com sucesso.',
       };
     } catch (error) {
