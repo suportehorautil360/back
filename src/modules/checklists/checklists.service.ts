@@ -87,6 +87,7 @@ type WorkflowMeta = {
   definitionId?: string | null;
   definitionVersion?: number;
   equipamentoId?: string;
+  localizacaoGps?: string | null;
   startedAt: string;
 };
 
@@ -136,6 +137,7 @@ function buildWorkflowDoc(
     status: workflow.meta.status,
     blockReason: workflow.meta.blockReason ?? null,
     generatedEmergencyIds: workflow.meta.generatedEmergencyIds,
+    localizacaoGps: workflow.meta.localizacaoGps ?? null,
     startedAt: workflow.meta.startedAt,
     updatedAt: row.updatedAt.toISOString(),
     resumo: {
@@ -163,6 +165,8 @@ export class ChecklistsService {
       throw new InternalServerErrorException('Empresa não encontrada.');
     }
 
+    const localizacaoGps = dto.localizacaoGps?.trim() || null;
+
     const workflow: WorkflowState = {
       meta: {
         status: 'in_progress',
@@ -171,6 +175,7 @@ export class ChecklistsService {
         definitionId: dto.definitionId ?? null,
         definitionVersion: dto.definitionVersion ?? 1,
         equipamentoId: dto.equipamentoId,
+        localizacaoGps,
         startedAt: agora,
       },
       answers: [],
@@ -201,6 +206,7 @@ export class ChecklistsService {
           chassi: dto.chassis,
           operadorNome: dto.operadorNome,
           categoria: dto.categoria ?? null,
+          localizacaoGps,
           respostas: { _workflow: workflow } as Prisma.InputJsonValue,
           executedAt: new Date(agora),
         },
@@ -374,6 +380,7 @@ export class ChecklistsService {
       equipamentoId: toSafeString(run.equipamentoId),
       chassis: toSafeString(run.chassis),
       operadorNome: toSafeString(run.operadorNome),
+      localizacaoGps: toSafeString(run.localizacaoGps) || null,
       tipoFalha: action.failureType,
       descricao:
         action.description ??

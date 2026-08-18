@@ -21,4 +21,11 @@ export class CreateChecklistRunDto {
 
   @ApiProperty({ example: 'Motoniveladora', required: false })
   categoria?: string;
+
+  @ApiProperty({
+    example: '-20.469710, -54.620121',
+    required: false,
+    description: 'Coordenadas capturadas no save do checklist (lat, lng).',
+  })
+  localizacaoGps?: string | null;
 }
