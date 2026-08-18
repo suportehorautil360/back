@@ -236,10 +236,6 @@ export class EmergenciesService {
       const settings = await this.prisma.companySettings.findUnique({
         where: { companyId },
       });
-      const company = await this.prisma.company.findUnique({
-        where: { id: companyId },
-        select: { whatsapp: true },
-      });
 
       const ativo = settings?.alertWhatsappEmergencia === true;
       if (!ativo) {
@@ -249,11 +245,11 @@ export class EmergenciesService {
         return;
       }
 
-      const numeroEmpresa = (company?.whatsapp ?? '').trim();
+      const numerosEmpresa = await this.buscarNumerosWhatsappEmpresa(companyId);
       const numeroFrente = await this.buscarTelefoneFrenteDoEquipamento(
         doc.idMaquina ?? doc.equipamentoId,
       );
-      const destinos = this.dedupNumeros([numeroEmpresa, numeroFrente]);
+      const destinos = this.dedupNumeros([...numerosEmpresa, numeroFrente]);
       if (destinos.length === 0) {
         this.logger.warn(
           `Nenhum WhatsApp de destino — prefeitura ${doc.prefeituraId}.`,
@@ -298,6 +294,25 @@ export class EmergenciesService {
         i === 0 ? texto : undefined,
       );
     }
+  }
+
+  private async buscarNumerosWhatsappEmpresa(companyId: string): Promise<string[]> {
+    const recipients = await this.prisma.companyWhatsappRecipient.findMany({
+      where: { companyId, ativo: true },
+      orderBy: { sortOrder: 'asc' },
+      select: { telefone: true },
+    });
+    const numeros = recipients
+      .map((r) => r.telefone.trim())
+      .filter((n) => n.length > 0);
+    if (numeros.length > 0) return numeros;
+
+    const company = await this.prisma.company.findUnique({
+      where: { id: companyId },
+      select: { whatsapp: true },
+    });
+    const legado = (company?.whatsapp ?? '').trim();
+    return legado ? [legado] : [];
   }
 
   private async buscarTelefoneFrenteDoEquipamento(

@@ -112,8 +112,45 @@ model Company {
   planoPreventivo         PlanoPreventivo?
   fleetfuelIntencoes      FleetfuelIntencao[]
   notificacoes            Notificacao[]
+  whatsappRecipients      CompanyWhatsappRecipient[]
 
   @@map("clients")
+}
+
+/// Destinatários de WhatsApp para alertas de emergência (lista por empresa).
+model CompanyWhatsappRecipient {
+  id        String  @id @default(uuid()) @db.Uuid
+  companyId String  @map("company_id") @db.Uuid
+  /// Rótulo opcional — ex: "Plantão", "Gestor de frota".
+  label     String?
+  telefone  String
+  ativo     Boolean @default(true)
+  sortOrder Int     @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, sortOrder])
+  @@map("company_whatsapp_recipients")
+}
+
+/// Sessão mestre Baileys da plataforma (remetente único de emergências).
+/// Singleton — `id` fixo em `default`. Credenciais serializadas via BufferJSON.
+model WhatsappPlatformSession {
+  id String @id @default("default")
+
+  creds String? @db.Text
+  keys  String? @db.Text
+
+  conectadoDesde DateTime? @map("conectado_desde")
+  versaoSessao   String?  @map("versao_sessao")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("whatsapp_platform_sessions")
 }
 
 /// Parâmetros operacionais da empresa (1:1 com Company). Consolida as três

@@ -1,54 +1,56 @@
 /**
- * Auth state do Baileys persistido no Firestore (equivalente ao
- * `useMultiFileAuthState`, mas sem disco — sobrevive a redeploy no Railway).
+ * Auth state do Baileys persistido no Postgres/Supabase (equivalente ao
+ * `useMultiFileAuthState`, sem disco local).
  *
- * Guarda tudo num doc só (`whatsappSessions/default`): `creds` e `keys`
- * serializados via `BufferJSON` (lida com Buffers). Para um remetente único de
- * notificações o volume de chaves é pequeno; se um dia crescer (limite de 1MB
- * por doc no Firestore), dá para shardar as chaves em subcoleção.
- *
- * Baileys 7 é ESM-only e o backend é CommonJS, então os VALORES vêm por
- * `import()` dinâmico; os TIPOS por `import type` (somem na compilação).
+ * Singleton em `whatsapp_platform_sessions` (`id = default`): `creds` e `keys`
+ * serializados via `BufferJSON` (lida com Buffers).
  */
 import type {
   AuthenticationCreds,
   AuthenticationState,
 } from '@whiskeysockets/baileys';
+import type { PrismaService } from '../../prisma/prisma.service';
 
-export interface FirestoreAuthState {
+export const WHATSAPP_PLATFORM_SESSION_ID = 'default';
+
+export interface PrismaAuthState {
   state: AuthenticationState;
   saveCreds: () => Promise<void>;
   clear: () => Promise<void>;
 }
 
-export async function useFirestoreAuthState(
-  docRef: FirebaseFirestore.DocumentReference,
-): Promise<FirestoreAuthState> {
+export async function usePrismaAuthState(
+  prisma: PrismaService,
+  sessionId = WHATSAPP_PLATFORM_SESSION_ID,
+): Promise<PrismaAuthState> {
   const { initAuthCreds, BufferJSON, proto } = await import(
     '@whiskeysockets/baileys'
   );
 
-  const snap = await docRef.get();
-  const data = snap.exists
-    ? (snap.data() as { creds?: string; keys?: string })
-    : {};
+  const row = await prisma.whatsappPlatformSession.findUnique({
+    where: { id: sessionId },
+  });
 
-  const creds: AuthenticationCreds = data.creds
-    ? (JSON.parse(data.creds, BufferJSON.reviver) as AuthenticationCreds)
+  const creds: AuthenticationCreds = row?.creds
+    ? (JSON.parse(row.creds, BufferJSON.reviver) as AuthenticationCreds)
     : initAuthCreds();
-  const keys: Record<string, unknown> = data.keys
-    ? (JSON.parse(data.keys, BufferJSON.reviver) as Record<string, unknown>)
+  const keys: Record<string, unknown> = row?.keys
+    ? (JSON.parse(row.keys, BufferJSON.reviver) as Record<string, unknown>)
     : {};
 
   const persist = async () => {
-    await docRef.set(
-      {
+    await prisma.whatsappPlatformSession.upsert({
+      where: { id: sessionId },
+      create: {
+        id: sessionId,
         creds: JSON.stringify(creds, BufferJSON.replacer),
         keys: JSON.stringify(keys, BufferJSON.replacer),
-        atualizadoEm: new Date().toISOString(),
       },
-      { merge: true },
-    );
+      update: {
+        creds: JSON.stringify(creds, BufferJSON.replacer),
+        keys: JSON.stringify(keys, BufferJSON.replacer),
+      },
+    });
   };
 
   const keyStore = {
@@ -83,7 +85,9 @@ export async function useFirestoreAuthState(
     },
     saveCreds: persist,
     clear: async () => {
-      await docRef.delete();
+      await prisma.whatsappPlatformSession.deleteMany({
+        where: { id: sessionId },
+      });
     },
   };
 }

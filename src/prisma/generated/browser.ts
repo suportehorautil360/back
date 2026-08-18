@@ -29,6 +29,17 @@ export type User = Prisma.UserModel
  */
 export type Company = Prisma.CompanyModel
 /**
+ * Model CompanyWhatsappRecipient
+ * Destinatários de WhatsApp para alertas de emergência (lista por empresa).
+ */
+export type CompanyWhatsappRecipient = Prisma.CompanyWhatsappRecipientModel
+/**
+ * Model WhatsappPlatformSession
+ * Sessão mestre Baileys da plataforma (remetente único de emergências).
+ * Singleton — `id` fixo em `default`. Credenciais serializadas via BufferJSON.
+ */
+export type WhatsappPlatformSession = Prisma.WhatsappPlatformSessionModel
+/**
  * Model CompanySettings
  * Parâmetros operacionais da empresa (1:1 com Company). Consolida as três
  * seções da tela /empresa/[slug]/configuracoes: alertas, comportamento do
