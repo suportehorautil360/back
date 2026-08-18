@@ -92,6 +92,8 @@ model Company {
   pontoAbonos             PontoAbono[]
   pontoNsrCounter         PontoNsrCounter?
   checklistsDevolucao     ChecklistDevolucao[]
+  checklistsChegada       ChecklistChegada[]
+  garantias               Garantia[]
   orcamentos              Orcamento[]
   features                CompanyFeature[]
   featureChanges          CompanyFeatureChange[]
@@ -296,6 +298,8 @@ model EquipmentRevision {
   custo       Decimal? @db.Decimal(12, 2)
   notaFiscal  String?  @map("nota_fiscal")
   servicos    String?
+  /// "Pendente" | "Concluída" — fluxo legado do módulo `revision`.
+  status      String   @default("Concluída")
   /// Usuário que registrou (nullable pra tolerar imports/scripts).
   createdById String?  @map("created_by_id") @db.Uuid
   createdAt   DateTime @default(now()) @map("created_at")
@@ -1231,6 +1235,74 @@ model ChecklistDevolucao {
   @@map("checklist_devolucao")
 }
 
+/// Checklist de chegada (CHE) — espelho do Firestore `checklistsChegada`.
+/// Shape idêntico ao Nest legado: identification / photos / inspection /
+/// blocks / term em JSONB.
+model ChecklistChegada {
+  id        String  @id @default(uuid()) @db.Uuid
+  legacyId  String? @unique @map("legacy_id")
+  companyId String  @map("company_id") @db.Uuid
+
+  number String
+  oficinaId String? @map("oficina_id")
+
+  osProtocolo     String? @map("os_protocolo")
+  solicitacaoOsId String? @map("solicitacao_os_id")
+
+  identification Json
+  photos         Json @default("{}")
+  inspection     Json @default("{}")
+  blocks         Json @default("{}")
+  term           Json @default("{}")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt])
+  @@index([companyId, oficinaId])
+  @@map("checklist_chegada")
+}
+
+/// Garantia de peça/serviço gerada ao aceitar CHD. Backfill do Firestore
+/// `garantias/{id}`. `equipamentoId` e `checklistDevolucaoId` são soft-refs
+/// (legacyId Firestore) pra compat com a API legada.
+model Garantia {
+  id        String  @id @default(uuid()) @db.Uuid
+  legacyId  String? @unique @map("legacy_id")
+  companyId String  @map("company_id") @db.Uuid
+
+  equipamentoId        String  @map("equipamento_id")
+  equipamento          String
+  osOrigem             String  @map("os_origem")
+  solicitacaoOsId      String? @map("solicitacao_os_id")
+  ordemServicoId       String? @map("ordem_servico_id")
+  checklistDevolucaoId String  @map("checklist_devolucao_id")
+
+  tipo       String
+  item       String
+  partNumber String? @map("part_number")
+  fornecedor String
+  oficinaId  String  @map("oficina_id")
+
+  dataExecucao    DateTime @map("data_execucao") @db.Date
+  horimetroBase   Decimal  @default(0) @map("horimetro_base") @db.Decimal(12, 2)
+  prazoMeses      Int      @default(3) @map("prazo_meses")
+  limiteHorimetro Decimal  @default(0) @map("limite_horimetro") @db.Decimal(12, 2)
+  venceEm         DateTime @map("vence_em") @db.Date
+  status          String   @default("vigente")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, equipamentoId])
+  @@index([checklistDevolucaoId])
+  @@index([solicitacaoOsId])
+  @@map("garantias")
+}
+
 /// Orçamento enviado por uma oficina em resposta a uma OS. Cada OS pode ter
 /// múltiplos orçamentos (um por oficina convidada). Backfill vem do Firestore
 /// `ordensServico/{id}` (nome legado — Nest chamava "ordem" mas é orçamento).
@@ -1271,6 +1343,9 @@ model Orcamento {
 
   /// "aguardando_aprovacao" | "em_pregao" | "aprovado" | "recusado".
   status String @default("aguardando_aprovacao")
+
+  /// URLs de fotos anexadas ao orçamento (legado Firestore `fotosComprovacao`).
+  fotosComprovacao Json @default("[]") @map("fotos_comprovacao")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

@@ -1,24 +1,29 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { FirebaseService } from '../../config/firebase.service';
-import { mapOficinaListItem } from './helpers/oficinas-list.helper';
+import { PrismaService } from '../../prisma/prisma.service';
+import {
+  mapPartnerToOficinaListItem,
+} from '../../common/prisma/partner-prisma.mapper';
 import type { OficinaListItem } from './oficinas.types';
 
 @Injectable()
 export class OficinasService {
-  constructor(private readonly firebaseService: FirebaseService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  private get collection() {
-    return this.firebaseService.getFirestore().collection('oficinas');
-  }
-
-  /** Lista todas as oficinas da coleção `oficinas`. */
   async listar(): Promise<{ data: OficinaListItem[]; message: string }> {
     try {
-      const snap = await this.collection.get();
+      const rows = await this.prisma.partner.findMany({
+        where: { type: 'OFICINA' },
+        include: {
+          company: { select: { legacyId: true } },
+        },
+      });
 
-      const data = snap.docs
-        .map((doc) =>
-          mapOficinaListItem(doc.id, doc.data() as Record<string, unknown>),
+      const data = rows
+        .map((row) =>
+          mapPartnerToOficinaListItem(
+            row,
+            row.company.legacyId ?? row.companyId,
+          ),
         )
         .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 

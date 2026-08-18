@@ -430,6 +430,8 @@ export const ModelName = {
   PontoSolicitacao: 'PontoSolicitacao',
   PontoAbono: 'PontoAbono',
   ChecklistDevolucao: 'ChecklistDevolucao',
+  ChecklistChegada: 'ChecklistChegada',
+  Garantia: 'Garantia',
   Orcamento: 'Orcamento',
   CompanyRole: 'CompanyRole',
   CompanyFeature: 'CompanyFeature',
@@ -457,7 +459,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "idempotencyKey" | "notificacao"
+    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "idempotencyKey" | "notificacao"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2903,6 +2905,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ChecklistChegada: {
+      payload: Prisma.$ChecklistChegadaPayload<ExtArgs>
+      fields: Prisma.ChecklistChegadaFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ChecklistChegadaFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistChegadaPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ChecklistChegadaFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistChegadaPayload>
+        }
+        findFirst: {
+          args: Prisma.ChecklistChegadaFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistChegadaPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ChecklistChegadaFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistChegadaPayload>
+        }
+        findMany: {
+          args: Prisma.ChecklistChegadaFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistChegadaPayload>[]
+        }
+        create: {
+          args: Prisma.ChecklistChegadaCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistChegadaPayload>
+        }
+        createMany: {
+          args: Prisma.ChecklistChegadaCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ChecklistChegadaCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistChegadaPayload>[]
+        }
+        delete: {
+          args: Prisma.ChecklistChegadaDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistChegadaPayload>
+        }
+        update: {
+          args: Prisma.ChecklistChegadaUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistChegadaPayload>
+        }
+        deleteMany: {
+          args: Prisma.ChecklistChegadaDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ChecklistChegadaUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ChecklistChegadaUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistChegadaPayload>[]
+        }
+        upsert: {
+          args: Prisma.ChecklistChegadaUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistChegadaPayload>
+        }
+        aggregate: {
+          args: Prisma.ChecklistChegadaAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateChecklistChegada>
+        }
+        groupBy: {
+          args: Prisma.ChecklistChegadaGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ChecklistChegadaGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ChecklistChegadaCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ChecklistChegadaCountAggregateOutputType> | number
+        }
+      }
+    }
+    Garantia: {
+      payload: Prisma.$GarantiaPayload<ExtArgs>
+      fields: Prisma.GarantiaFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.GarantiaFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GarantiaPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.GarantiaFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GarantiaPayload>
+        }
+        findFirst: {
+          args: Prisma.GarantiaFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GarantiaPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.GarantiaFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GarantiaPayload>
+        }
+        findMany: {
+          args: Prisma.GarantiaFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GarantiaPayload>[]
+        }
+        create: {
+          args: Prisma.GarantiaCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GarantiaPayload>
+        }
+        createMany: {
+          args: Prisma.GarantiaCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.GarantiaCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GarantiaPayload>[]
+        }
+        delete: {
+          args: Prisma.GarantiaDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GarantiaPayload>
+        }
+        update: {
+          args: Prisma.GarantiaUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GarantiaPayload>
+        }
+        deleteMany: {
+          args: Prisma.GarantiaDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.GarantiaUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.GarantiaUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GarantiaPayload>[]
+        }
+        upsert: {
+          args: Prisma.GarantiaUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GarantiaPayload>
+        }
+        aggregate: {
+          args: Prisma.GarantiaAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateGarantia>
+        }
+        groupBy: {
+          args: Prisma.GarantiaGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GarantiaGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.GarantiaCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GarantiaCountAggregateOutputType> | number
+        }
+      }
+    }
     Orcamento: {
       payload: Prisma.$OrcamentoPayload<ExtArgs>
       fields: Prisma.OrcamentoFieldRefs
@@ -3977,6 +4127,7 @@ export const EquipmentRevisionScalarFieldEnum = {
   custo: 'custo',
   notaFiscal: 'notaFiscal',
   servicos: 'servicos',
+  status: 'status',
   createdById: 'createdById',
   createdAt: 'createdAt'
 } as const
@@ -4498,6 +4649,53 @@ export const ChecklistDevolucaoScalarFieldEnum = {
 export type ChecklistDevolucaoScalarFieldEnum = (typeof ChecklistDevolucaoScalarFieldEnum)[keyof typeof ChecklistDevolucaoScalarFieldEnum]
 
 
+export const ChecklistChegadaScalarFieldEnum = {
+  id: 'id',
+  legacyId: 'legacyId',
+  companyId: 'companyId',
+  number: 'number',
+  oficinaId: 'oficinaId',
+  osProtocolo: 'osProtocolo',
+  solicitacaoOsId: 'solicitacaoOsId',
+  identification: 'identification',
+  photos: 'photos',
+  inspection: 'inspection',
+  blocks: 'blocks',
+  term: 'term',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ChecklistChegadaScalarFieldEnum = (typeof ChecklistChegadaScalarFieldEnum)[keyof typeof ChecklistChegadaScalarFieldEnum]
+
+
+export const GarantiaScalarFieldEnum = {
+  id: 'id',
+  legacyId: 'legacyId',
+  companyId: 'companyId',
+  equipamentoId: 'equipamentoId',
+  equipamento: 'equipamento',
+  osOrigem: 'osOrigem',
+  solicitacaoOsId: 'solicitacaoOsId',
+  ordemServicoId: 'ordemServicoId',
+  checklistDevolucaoId: 'checklistDevolucaoId',
+  tipo: 'tipo',
+  item: 'item',
+  partNumber: 'partNumber',
+  fornecedor: 'fornecedor',
+  oficinaId: 'oficinaId',
+  dataExecucao: 'dataExecucao',
+  horimetroBase: 'horimetroBase',
+  prazoMeses: 'prazoMeses',
+  limiteHorimetro: 'limiteHorimetro',
+  venceEm: 'venceEm',
+  status: 'status',
+  createdAt: 'createdAt'
+} as const
+
+export type GarantiaScalarFieldEnum = (typeof GarantiaScalarFieldEnum)[keyof typeof GarantiaScalarFieldEnum]
+
+
 export const OrcamentoScalarFieldEnum = {
   id: 'id',
   legacyId: 'legacyId',
@@ -4513,6 +4711,7 @@ export const OrcamentoScalarFieldEnum = {
   valorTotal: 'valorTotal',
   prazoDias: 'prazoDias',
   status: 'status',
+  fotosComprovacao: 'fotosComprovacao',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -5157,6 +5356,8 @@ export type GlobalOmitConfig = {
   pontoSolicitacao?: Prisma.PontoSolicitacaoOmit
   pontoAbono?: Prisma.PontoAbonoOmit
   checklistDevolucao?: Prisma.ChecklistDevolucaoOmit
+  checklistChegada?: Prisma.ChecklistChegadaOmit
+  garantia?: Prisma.GarantiaOmit
   orcamento?: Prisma.OrcamentoOmit
   companyRole?: Prisma.CompanyRoleOmit
   companyFeature?: Prisma.CompanyFeatureOmit

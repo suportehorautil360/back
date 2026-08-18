@@ -1,80 +1,119 @@
-import { Injectable } from '@nestjs/common';
-import { FirebaseService } from 'src/config/firebase.service';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { PrismaService } from '../../prisma/prisma.service';
+import { resolverCompanyId } from '../../common/prisma/company-resolver';
+import { resolveEquipmentByIdPg } from '../../common/prisma/equipment-resolver';
+import {
+  mapAllocationToApi,
+  parseAllocationStartDate,
+} from '../../common/prisma/work-front-prisma.mapper';
+import {
+  allocationWhere,
+  resolveWorkFrontPg,
+} from '../../common/prisma/work-front-resolver';
 import { CreateAllocationDto } from './dto/create-allocation.dto';
 
 @Injectable()
 export class AllocationsService {
-  constructor(private readonly firebaseService: FirebaseService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Atualiza o campo `obra` do equipamento (= frente atual). Mantém a Frota /
-   * Revisões em sincronia com a alocação. `obra` vazio = sem frente.
-   */
-  private async setObraDoEquipamento(vehicleId: string, obra: string) {
-    if (!vehicleId) return;
-    const db = this.firebaseService.getFirestore();
-    const snapshot = await db
-      .collection('equipamentos')
-      .where('id', '==', vehicleId)
-      .get();
-    if (snapshot.empty) return;
-    const batch = db.batch();
-    snapshot.docs.forEach((doc) => batch.update(doc.ref, { obra }));
-    await batch.commit();
+  private async setObraDoEquipamento(equipmentUuid: string, obra: string) {
+    if (!equipmentUuid) return;
+    await this.prisma.equipment.update({
+      where: { id: equipmentUuid },
+      data: { obra },
+    });
   }
 
   async allocate(createDto: CreateAllocationDto) {
-    const db = this.firebaseService.getFirestore();
-    const id = randomUUID();
+    const companyId = await resolverCompanyId(
+      this.prisma,
+      createDto.prefeituraId,
+    );
+    if (!companyId) {
+      throw new BadRequestException('Prefeitura não encontrada.');
+    }
 
-    // "Mover": encerra qualquer alocação ativa anterior do mesmo veículo,
-    // garantindo no máximo 1 frente por equipamento.
-    const anteriores = await db
-      .collection('allocations')
-      .where('vehicleId', '==', createDto.vehicleId)
-      .get();
+    const workFront = await resolveWorkFrontPg(
+      this.prisma,
+      createDto.workFrontId,
+    );
+    if (!workFront || workFront.companyId !== companyId) {
+      throw new NotFoundException('Frente de trabalho não encontrada.');
+    }
 
-    const allocation = {
-      id,
-      ...createDto,
-      createdAt: new Date().toISOString(),
-      status: 'active',
-    };
-
-    const batch = db.batch();
-    anteriores.docs.forEach((doc) => batch.delete(doc.ref));
-    batch.set(db.collection('allocations').doc(), allocation);
-    await batch.commit();
-
-    // Sincroniza o `obra` do equipamento com a frente de destino.
-    await this.setObraDoEquipamento(
+    const equip = await resolveEquipmentByIdPg(
+      this.prisma,
+      createDto.prefeituraId,
       createDto.vehicleId,
+    );
+
+    const legacyId = randomUUID();
+    const startDate = parseAllocationStartDate(createDto.startDate);
+    const now = new Date();
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.workFrontAllocation.updateMany({
+        where: {
+          equipmentId: equip.equipmentUuid,
+          endDate: null,
+        },
+        data: { endDate: now },
+      });
+
+      await tx.workFrontAllocation.create({
+        data: {
+          legacyId,
+          workFrontId: workFront.id,
+          equipmentId: equip.equipmentUuid,
+          funcao: createDto.function,
+          startDate,
+        },
+      });
+    });
+
+    await this.setObraDoEquipamento(
+      equip.equipmentUuid,
       createDto.workFrontName,
     );
 
-    return allocation;
+    const row = await this.prisma.workFrontAllocation.findFirst({
+      where: { legacyId },
+      include: {
+        workFront: { select: { id: true, legacyId: true, nome: true } },
+        equipment: { select: { id: true, legacyId: true, placa: true } },
+      },
+    });
+
+    if (!row) {
+      throw new BadRequestException('Falha ao registrar alocação.');
+    }
+
+    return mapAllocationToApi(row, createDto.prefeituraId, createDto.workFrontName);
   }
 
   async remove(allocationId: string) {
-    const db = this.firebaseService.getFirestore();
-    const snapshot = await db
-      .collection('allocations')
-      .where('id', '==', allocationId)
-      .get();
+    const row = await this.prisma.workFrontAllocation.findFirst({
+      where: allocationWhere(allocationId),
+      include: {
+        equipment: { select: { id: true } },
+      },
+    });
 
-    const vehicleIds = snapshot.docs
-      .map((doc) => doc.data().vehicleId as string | undefined)
-      .filter((v): v is string => !!v);
+    if (!row) return;
 
-    const batch = db.batch();
-    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-    await batch.commit();
+    const equipmentUuid = row.equipment?.id;
 
-    // Limpa o `obra` dos veículos desalocados.
-    for (const vehicleId of vehicleIds) {
-      await this.setObraDoEquipamento(vehicleId, '');
+    await this.prisma.workFrontAllocation.delete({
+      where: { id: row.id },
+    });
+
+    if (equipmentUuid) {
+      await this.setObraDoEquipamento(equipmentUuid, '');
     }
   }
 }
-

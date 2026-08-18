@@ -84,6 +84,8 @@ export const ModelName = {
   PontoSolicitacao: 'PontoSolicitacao',
   PontoAbono: 'PontoAbono',
   ChecklistDevolucao: 'ChecklistDevolucao',
+  ChecklistChegada: 'ChecklistChegada',
+  Garantia: 'Garantia',
   Orcamento: 'Orcamento',
   CompanyRole: 'CompanyRole',
   CompanyFeature: 'CompanyFeature',
@@ -261,6 +263,7 @@ export const EquipmentRevisionScalarFieldEnum = {
   custo: 'custo',
   notaFiscal: 'notaFiscal',
   servicos: 'servicos',
+  status: 'status',
   createdById: 'createdById',
   createdAt: 'createdAt'
 } as const
@@ -782,6 +785,53 @@ export const ChecklistDevolucaoScalarFieldEnum = {
 export type ChecklistDevolucaoScalarFieldEnum = (typeof ChecklistDevolucaoScalarFieldEnum)[keyof typeof ChecklistDevolucaoScalarFieldEnum]
 
 
+export const ChecklistChegadaScalarFieldEnum = {
+  id: 'id',
+  legacyId: 'legacyId',
+  companyId: 'companyId',
+  number: 'number',
+  oficinaId: 'oficinaId',
+  osProtocolo: 'osProtocolo',
+  solicitacaoOsId: 'solicitacaoOsId',
+  identification: 'identification',
+  photos: 'photos',
+  inspection: 'inspection',
+  blocks: 'blocks',
+  term: 'term',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ChecklistChegadaScalarFieldEnum = (typeof ChecklistChegadaScalarFieldEnum)[keyof typeof ChecklistChegadaScalarFieldEnum]
+
+
+export const GarantiaScalarFieldEnum = {
+  id: 'id',
+  legacyId: 'legacyId',
+  companyId: 'companyId',
+  equipamentoId: 'equipamentoId',
+  equipamento: 'equipamento',
+  osOrigem: 'osOrigem',
+  solicitacaoOsId: 'solicitacaoOsId',
+  ordemServicoId: 'ordemServicoId',
+  checklistDevolucaoId: 'checklistDevolucaoId',
+  tipo: 'tipo',
+  item: 'item',
+  partNumber: 'partNumber',
+  fornecedor: 'fornecedor',
+  oficinaId: 'oficinaId',
+  dataExecucao: 'dataExecucao',
+  horimetroBase: 'horimetroBase',
+  prazoMeses: 'prazoMeses',
+  limiteHorimetro: 'limiteHorimetro',
+  venceEm: 'venceEm',
+  status: 'status',
+  createdAt: 'createdAt'
+} as const
+
+export type GarantiaScalarFieldEnum = (typeof GarantiaScalarFieldEnum)[keyof typeof GarantiaScalarFieldEnum]
+
+
 export const OrcamentoScalarFieldEnum = {
   id: 'id',
   legacyId: 'legacyId',
@@ -797,6 +847,7 @@ export const OrcamentoScalarFieldEnum = {
   valorTotal: 'valorTotal',
   prazoDias: 'prazoDias',
   status: 'status',
+  fotosComprovacao: 'fotosComprovacao',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

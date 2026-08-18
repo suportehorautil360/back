@@ -1,4 +1,5 @@
 import type { CollectionReference } from 'firebase-admin/firestore';
+import type { PrismaService } from '../../../prisma/prisma.service';
 
 export function parseNumeroDevolucaoSeq(
   number: string,
@@ -26,6 +27,25 @@ export async function nextNumeroDevolucao(
   for (const doc of snap.docs) {
     const numero = String(doc.data().number ?? '');
     const seq = parseNumeroDevolucaoSeq(numero, year);
+    if (seq !== null && seq > maxSeq) maxSeq = seq;
+  }
+
+  return formatNumeroDevolucao(year, maxSeq + 1);
+}
+
+export async function nextNumeroDevolucaoPg(
+  prisma: PrismaService,
+  oficinaId: string,
+  year = new Date().getFullYear(),
+): Promise<string> {
+  const rows = await prisma.checklistDevolucao.findMany({
+    where: { oficinaId },
+    select: { number: true },
+  });
+
+  let maxSeq = 0;
+  for (const row of rows) {
+    const seq = parseNumeroDevolucaoSeq(row.number, year);
     if (seq !== null && seq > maxSeq) maxSeq = seq;
   }
 

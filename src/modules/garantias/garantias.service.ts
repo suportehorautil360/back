@@ -4,13 +4,19 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { FirebaseService } from '../../config/firebase.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import {
-  buscarChdsPorEquipamento,
-  buscarChdsPorSolicitacao,
+  garantiaDocToPrismaCreate,
+  mapGarantiaFromRow,
+} from '../../common/prisma/garantia-prisma.mapper';
+import { resolverCompanyId } from '../../common/prisma/company-resolver';
+import { loadServiceOrderForChdPg } from '../../common/prisma/os-solicitacao.helper';
+import { findPartnerOficinaPg } from '../../common/prisma/partner-oficina.helper';
+import {
+  buscarChdsPorEquipamentoPg,
+  buscarChdsPorSolicitacaoPg,
 } from '../checklist-devolucao/helpers/chd-por-solicitacao.helper';
 import type { ChecklistDevolucaoDoc } from '../checklist-devolucao/checklist-devolucao.types';
-import { nomeFromOficinaDoc } from '../os/helpers/especialidade-oficina.helper';
 import type { GarantiaDoc, GarantiaListItem } from './garantias.types';
 import { gerarGarantiasDeChecklistDevolucao } from './helpers/gerar-garantias-de-chd.helper';
 import {
@@ -20,10 +26,7 @@ import {
   parseHorimetroQuery,
   type FiltrosGarantiaQuery,
 } from './helpers/garantias-query.helper';
-import {
-  mapGarantiaFromFirestore,
-  mapGarantiaParaLista,
-} from './helpers/garantias.mapper';
+import { mapGarantiaParaLista } from './helpers/garantias.mapper';
 
 function texto(valor: unknown): string {
   return typeof valor === 'string' ? valor.trim() : '';
@@ -31,23 +34,7 @@ function texto(valor: unknown): string {
 
 @Injectable()
 export class GarantiasService {
-  constructor(private readonly firebaseService: FirebaseService) {}
-
-  private get collection() {
-    return this.firebaseService.getFirestore().collection('garantias');
-  }
-
-  private get chdCollection() {
-    return this.firebaseService.getFirestore().collection('checklistsDevolucao');
-  }
-
-  private get solicitacoesCollection() {
-    return this.firebaseService.getFirestore().collection('solicitacoesOS');
-  }
-
-  private get oficinasCollection() {
-    return this.firebaseService.getFirestore().collection('oficinas');
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async gerarDeChecklistDevolucao(
     chd: ChecklistDevolucaoDoc,
@@ -62,11 +49,17 @@ export class GarantiasService {
     const registros = gerarGarantiasDeChecklistDevolucao(chd, ctx);
     if (!registros.length) return [];
 
-    const batch = this.firebaseService.getFirestore().batch();
-    for (const registro of registros) {
-      batch.set(this.collection.doc(registro.id), registro);
-    }
-    await batch.commit();
+    const companyId = await resolverCompanyId(this.prisma, ctx.prefeituraId);
+    if (!companyId) return [];
+
+    await this.prisma.$transaction(
+      registros.map((registro) =>
+        this.prisma.garantia.create({
+          data: garantiaDocToPrismaCreate(registro, companyId),
+        }),
+      ),
+    );
+
     return registros;
   }
 
@@ -80,18 +73,22 @@ export class GarantiasService {
     const horimetroAtual = parseHorimetroQuery(query.horimetroAtual);
 
     try {
-      const solSnap = await this.solicitacoesCollection.doc(solId).get();
-      if (!solSnap.exists) {
+      const sol = await loadServiceOrderForChdPg(this.prisma, solId);
+      if (!sol) {
         throw new NotFoundException('Solicitação de O.S. não encontrada.');
       }
 
-      const sol = solSnap.data() as Record<string, unknown>;
-      const equipamentoId = texto(sol.equipamentoId);
-      const equipamento = texto(sol.equipamento);
-      const prefeituraId = texto(sol.prefeituraId);
+      const equipamentoId =
+        sol.equipment?.legacyId ?? sol.equipmentId ?? '';
+      const equipamento = texto(sol.equipmentNome);
+      const prefeituraId = sol.company.legacyId ?? sol.companyId;
       const protocolo = texto(sol.protocolo);
 
-      const chds = await this.buscarChdsPorSolicitacao(solId, protocolo);
+      const chds = await buscarChdsPorSolicitacaoPg(
+        this.prisma,
+        solId,
+        protocolo,
+      );
       const linhasChd = await this.derivarLinhasDeChds(chds, {
         prefeituraId,
         equipamentoId,
@@ -152,7 +149,7 @@ export class GarantiasService {
         mapGarantiaParaLista(doc, horimetroAtual),
       );
 
-      const chds = await this.buscarChdsPorEquipamento(id);
+      const chds = await buscarChdsPorEquipamentoPg(this.prisma, id);
       const linhasChd = await this.derivarLinhasDeChds(chds, {
         prefeituraId: persistidas[0]?.prefeituraId ?? chds[0]?.prefeituraId ?? '',
         equipamentoId: id,
@@ -192,36 +189,13 @@ export class GarantiasService {
   private async carregarPersistidasPorEquipamento(
     equipamentoId: string,
   ): Promise<GarantiaDoc[]> {
-    const snap = await this.collection
-      .where('equipamentoId', '==', equipamentoId)
-      .get();
+    const rows = await this.prisma.garantia.findMany({
+      where: { equipamentoId },
+      include: { company: { select: { legacyId: true } } },
+      orderBy: { dataExecucao: 'desc' },
+    });
 
-    return snap.docs
-      .map((doc) =>
-        mapGarantiaFromFirestore(doc.id, doc.data() as Record<string, unknown>),
-      )
-      .sort((a, b) => b.dataExecucao.localeCompare(a.dataExecucao));
-  }
-
-  private async buscarChdsPorSolicitacao(
-    solicitacaoOsId: string,
-    protocolo?: string,
-  ): Promise<ChecklistDevolucaoDoc[]> {
-    return buscarChdsPorSolicitacao(
-      this.chdCollection,
-      solicitacaoOsId,
-      protocolo,
-    );
-  }
-
-  private async buscarChdsPorEquipamento(
-    equipamentoId: string,
-  ): Promise<ChecklistDevolucaoDoc[]> {
-    return buscarChdsPorEquipamento(
-      this.chdCollection,
-      this.solicitacoesCollection,
-      equipamentoId,
-    );
+    return rows.map(mapGarantiaFromRow);
   }
 
   private async derivarLinhasDeChds(
@@ -261,8 +235,7 @@ export class GarantiasService {
     const id = texto(oficinaId);
     if (!id) return '—';
 
-    const snap = await this.oficinasCollection.doc(id).get();
-    if (!snap.exists) return id;
-    return nomeFromOficinaDoc(snap.data() as Record<string, unknown>, id);
+    const oficina = await findPartnerOficinaPg(this.prisma, id);
+    return oficina?.nome ?? id;
   }
 }

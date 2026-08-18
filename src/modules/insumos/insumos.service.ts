@@ -4,10 +4,14 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { FirebaseService } from '../../config/firebase.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import {
-  extrairItensOrcamentoDoc,
-  selecionarOrdensParaInsumos,
+  publicLegacyId,
+  serviceOrderWhere,
+} from '../../common/prisma/service-order-resolver';
+import {
+  extrairItensOrcamentoPrisma,
+  selecionarOrdensParaInsumosPg,
 } from '../os/orcamentos/helpers/extrair-itens-orcamento.helper';
 import { derivarInsumosDeOrcamentoItem } from './helpers/derivar-insumos.helper';
 import {
@@ -18,41 +22,36 @@ import {
 
 @Injectable()
 export class InsumosService {
-  constructor(private readonly firebaseService: FirebaseService) {}
-
-  private get solicitacoesCollection() {
-    return this.firebaseService.getFirestore().collection('solicitacoesOS');
-  }
-
-  private get ordensCollection() {
-    return this.firebaseService.getFirestore().collection('ordensServico');
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async listarPorSolicitacao(solicitacaoOsId: string) {
     const solId = solicitacaoOsId.trim();
     if (!solId) throw new BadRequestException('solicitacaoOsId inválido.');
 
     try {
-      const solSnap = await this.solicitacoesCollection.doc(solId).get();
-      if (!solSnap.exists) {
+      const sol = await this.prisma.serviceOrder.findFirst({
+        where: serviceOrderWhere(solId),
+        select: { id: true, ordemServicoAprovadaId: true },
+      });
+      if (!sol) {
         throw new NotFoundException('Solicitação de O.S. não encontrada.');
       }
 
-      const ordSnap = await this.ordensCollection
-        .where('solicitacaoOsId', '==', solId)
-        .get();
+      const ordens = await this.prisma.orcamento.findMany({
+        where: { serviceOrderId: sol.id },
+        select: { id: true, legacyId: true, status: true, itens: true },
+      });
 
-      const sol = solSnap.data() as Record<string, unknown>;
-      const ordensDocs = selecionarOrdensParaInsumos(ordSnap.docs, sol);
+      const ordensSelecionadas = selecionarOrdensParaInsumosPg(ordens, sol);
 
       const linhas: InsumoDoc[] = [];
-      for (const doc of ordensDocs) {
-        const data = doc.data() as Record<string, unknown>;
-        const rawItens = extrairItensOrcamentoDoc(data);
+      for (const ordem of ordensSelecionadas) {
+        const ordemPublicId = publicLegacyId(ordem);
+        const rawItens = extrairItensOrcamentoPrisma(ordem.itens);
 
         rawItens.forEach((rawItem, index) => {
           const insumo = derivarInsumosDeOrcamentoItem(
-            doc.id,
+            ordemPublicId,
             rawItem,
             index,
           );
@@ -63,12 +62,12 @@ export class InsumosService {
       const data = linhas.map(mapInsumoParaLista);
 
       return {
-        resumo: montarResumoInsumos(linhas, ordensDocs.length),
+        resumo: montarResumoInsumos(linhas, ordensSelecionadas.length),
         data,
         message:
           linhas.length > 0
             ? 'Insumos carregados a partir do orçamento da O.S.'
-            : ordensDocs.length > 0
+            : ordensSelecionadas.length > 0
               ? 'Orçamento encontrado, mas sem itens de peça/material.'
               : 'Nenhum orçamento encontrado para esta O.S.',
       };
