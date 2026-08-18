@@ -92,6 +92,7 @@ model Company {
   pontoAbonos             PontoAbono[]
   pontoNsrCounter         PontoNsrCounter?
   checklistsDevolucao     ChecklistDevolucao[]
+  garantias               Garantia[]
   orcamentos              Orcamento[]
   features                CompanyFeature[]
   featureChanges          CompanyFeatureChange[]
@@ -1229,6 +1230,44 @@ model ChecklistDevolucao {
   @@index([companyId, oficinaId])
   @@index([companyId, status])
   @@map("checklist_devolucao")
+}
+
+/// Garantia de peça/serviço gerada ao aceitar CHD. Backfill do Firestore
+/// `garantias/{id}`. `equipamentoId` e `checklistDevolucaoId` são soft-refs
+/// (legacyId Firestore) pra compat com a API legada.
+model Garantia {
+  id        String  @id @default(uuid()) @db.Uuid
+  legacyId  String? @unique @map("legacy_id")
+  companyId String  @map("company_id") @db.Uuid
+
+  equipamentoId        String  @map("equipamento_id")
+  equipamento          String
+  osOrigem             String  @map("os_origem")
+  solicitacaoOsId      String? @map("solicitacao_os_id")
+  ordemServicoId       String? @map("ordem_servico_id")
+  checklistDevolucaoId String  @map("checklist_devolucao_id")
+
+  tipo       String
+  item       String
+  partNumber String? @map("part_number")
+  fornecedor String
+  oficinaId  String  @map("oficina_id")
+
+  dataExecucao    DateTime @map("data_execucao") @db.Date
+  horimetroBase   Decimal  @default(0) @map("horimetro_base") @db.Decimal(12, 2)
+  prazoMeses      Int      @default(3) @map("prazo_meses")
+  limiteHorimetro Decimal  @default(0) @map("limite_horimetro") @db.Decimal(12, 2)
+  venceEm         DateTime @map("vence_em") @db.Date
+  status          String   @default("vigente")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, equipamentoId])
+  @@index([checklistDevolucaoId])
+  @@index([solicitacaoOsId])
+  @@map("garantias")
 }
 
 /// Orçamento enviado por uma oficina em resposta a uma OS. Cada OS pode ter

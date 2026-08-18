@@ -6,36 +6,45 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { FirebaseService } from '../../config/firebase.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import {
+  checklistDevolucaoPatchToPrisma,
+  checklistDevolucaoToPrismaCreate,
+  mapChecklistDevolucaoFromRow,
+} from '../../common/prisma/checklist-devolucao-prisma.mapper';
+import { companyWhere, resolverCompanyId } from '../../common/prisma/company-resolver';
+import {
+  assertOficinaTemOrcamentoNaSolicitacaoPg,
+  listServiceOrderPublicIdsPg,
+  loadServiceOrderForChdPg,
+  resolveCompanyIdForChdPg,
+  resolveSolicitacaoIdPorProtocoloPg,
+} from '../../common/prisma/os-solicitacao.helper';
+import { findPartnerOficinaPg } from '../../common/prisma/partner-oficina.helper';
+import {
+  resolveChecklistDevolucaoPg,
+} from '../../common/prisma/chd-resolver';
+import { serviceOrderWhere } from '../../common/prisma/service-order-resolver';
 import { EquipamentosService } from '../equipamentos/equipamentos.service';
 import { GarantiasService } from '../garantias/garantias.service';
 import { parseHorimetro } from '../garantias/helpers/parse-horimetro.helper';
-import { nomeFromOficinaDoc } from '../os/helpers/especialidade-oficina.helper';
-import {
-  assertOficinaTemOrcamentoNaSolicitacao,
-  resolveSolicitacaoIdPorProtocolo,
-} from '../os/helpers/oficina-orcamento-solicitacao.helper';
 import type { ChecklistDevolucaoDoc } from './checklist-devolucao.types';
 import { ConferirChecklistDevolucaoDto } from './dto/conferir-checklist-devolucao.dto';
 import {
   buildChecklistDevolucaoDoc,
-  mapChecklistDevolucaoFromFirestore,
   mapGeneralStateItems,
 } from './helpers/checklist-devolucao.mapper';
-import { nextNumeroDevolucao } from './helpers/gerar-numero-devolucao.helper';
+import { nextNumeroDevolucaoPg } from './helpers/gerar-numero-devolucao.helper';
 import {
   countPartsHintInRawBody,
   extractPartsFromPatchBody,
   normalizeCreateChecklistDevolucaoDto,
 } from './helpers/normalize-chd-payload.helper';
-import {
-  buildChdCreateResponseFields,
-  chdBadRequest,
-} from './helpers/chd-response.helper';
+import { chdBadRequest } from './helpers/chd-response.helper';
 import { parseChdRequestBody } from './helpers/parse-chd-body.helper';
 import {
   mergeIdentificationOs,
-  resolveOsProtocolo,
+  resolveOsProtocoloPg,
 } from './helpers/resolve-os-protocolo.helper';
 
 function texto(valor: unknown): string {
@@ -45,34 +54,21 @@ function texto(valor: unknown): string {
 @Injectable()
 export class ChecklistDevolucaoService {
   constructor(
-    private readonly firebaseService: FirebaseService,
+    private readonly prisma: PrismaService,
     private readonly garantiasService: GarantiasService,
     private readonly equipamentosService: EquipamentosService,
   ) {}
-
-  private get collection() {
-    return this.firebaseService.getFirestore().collection('checklistsDevolucao');
-  }
-
-  private get solicitacoesCollection() {
-    return this.firebaseService.getFirestore().collection('solicitacoesOS');
-  }
-
-  private get oficinasCollection() {
-    return this.firebaseService.getFirestore().collection('oficinas');
-  }
 
   private async equipamentoIdDaSolicitacao(
     solicitacaoOsId: string | null,
   ): Promise<string | null> {
     const solId = texto(solicitacaoOsId);
     if (!solId) return null;
-    const snap = await this.solicitacoesCollection.doc(solId).get();
-    if (!snap.exists) return null;
-    const equipamentoId = texto(
-      (snap.data() as Record<string, unknown>).equipamentoId,
-    );
-    return equipamentoId || null;
+
+    const sol = await loadServiceOrderForChdPg(this.prisma, solId);
+    if (!sol) return null;
+
+    return sol.equipment?.legacyId ?? sol.equipmentId ?? null;
   }
 
   async criar(body: unknown): Promise<ChecklistDevolucaoDoc> {
@@ -84,10 +80,7 @@ export class ChecklistDevolucaoService {
       });
     }
 
-    const osProtocolo = await resolveOsProtocolo(
-      dto,
-      this.solicitacoesCollection,
-    );
+    const osProtocolo = await resolveOsProtocoloPg(dto, this.prisma);
     if (!osProtocolo) {
       throw chdBadRequest(
         'Informe o protocolo da O.S. em identification.os, protocolo/os no body, ou solicitacaoOsId de uma OS existente.',
@@ -142,13 +135,10 @@ export class ChecklistDevolucaoService {
     const solicitacaoOsId =
       texto(dtoNormalizado.solicitacaoOsId) ||
       texto(dto.solicitacaoOsId) ||
-      (await resolveSolicitacaoIdPorProtocolo(
-        this.solicitacoesCollection,
-        osProtocolo,
-      ));
+      (await resolveSolicitacaoIdPorProtocoloPg(this.prisma, osProtocolo));
 
-    await assertOficinaTemOrcamentoNaSolicitacao(
-      this.solicitacoesCollection,
+    await assertOficinaTemOrcamentoNaSolicitacaoPg(
+      this.prisma,
       solicitacaoOsId ?? '',
       oficinaId,
     );
@@ -160,22 +150,47 @@ export class ChecklistDevolucaoService {
       };
     }
 
-    const id = texto(dto.id) || randomUUID();
+    const legacyId = texto(dto.id) || randomUUID();
     const createdAt = new Date().toISOString();
 
     try {
+      const companyCtx = await resolveCompanyIdForChdPg(
+        this.prisma,
+        dtoNormalizado.prefeituraId,
+        solicitacaoOsId,
+      );
+      if (!companyCtx) {
+        throw new BadRequestException('Prefeitura não encontrada para o CHD.');
+      }
+
       const number =
         texto(dto.number) ||
-        (await nextNumeroDevolucao(this.collection, oficinaId));
+        (await nextNumeroDevolucaoPg(this.prisma, oficinaId));
 
-      const doc = buildChecklistDevolucaoDoc(id, number, dtoNormalizado, createdAt);
+      const doc = buildChecklistDevolucaoDoc(
+        legacyId,
+        number,
+        {
+          ...dtoNormalizado,
+          prefeituraId: companyCtx.prefeituraLegacyId,
+        },
+        createdAt,
+      );
+
       if (!doc.parts.items.length) {
         console.warn(
           'CHD salvo sem peças — verifique se o POST envia parts.items (JSON) ou campo data em multipart.',
           { id: doc.id, keys: Object.keys(body as object) },
         );
       }
-      await this.collection.doc(id).set(doc);
+
+      await this.prisma.checklistDevolucao.create({
+        data: checklistDevolucaoToPrismaCreate(
+          doc,
+          companyCtx.companyId,
+          legacyId,
+        ),
+      });
 
       const equipamentoId = await this.equipamentoIdDaSolicitacao(
         doc.solicitacaoOsId,
@@ -217,23 +232,16 @@ export class ChecklistDevolucaoService {
     }
 
     try {
-      const ref = this.collection.doc(docId);
-      const snap = await ref.get();
-      if (!snap.exists) {
+      const row = await resolveChecklistDevolucaoPg(this.prisma, docId);
+      if (!row) {
         throw new NotFoundException('Checklist de devolução não encontrado.');
       }
 
-      const atual = mapChecklistDevolucaoFromFirestore(
-        snap.id,
-        snap.data() as Record<string, unknown>,
-      );
-
-      const payload: Record<string, unknown> = {
-        updatedAt: new Date().toISOString(),
-      };
+      const atual = mapChecklistDevolucaoFromRow(row);
+      const patch: Parameters<typeof checklistDevolucaoPatchToPrisma>[0] = {};
 
       if (temGeneralState && raw.generalState) {
-        payload.generalState = {
+        patch.generalState = {
           ...atual.generalState,
           ...mapGeneralStateItems(
             raw.generalState as Record<
@@ -247,16 +255,17 @@ export class ChecklistDevolucaoService {
       if (temParts) {
         const partItems = extractPartsFromPatchBody(raw.parts);
         if (partItems.length > 0) {
-          payload.parts = { items: partItems };
+          patch.parts = { items: partItems };
         }
       }
 
-      await ref.update(payload);
-
-      return mapChecklistDevolucaoFromFirestore(docId, {
-        ...(snap.data() as Record<string, unknown>),
-        ...payload,
+      const updated = await this.prisma.checklistDevolucao.update({
+        where: { id: row.id },
+        data: checklistDevolucaoPatchToPrisma(patch),
+        include: { company: { select: { legacyId: true } } },
       });
+
+      return mapChecklistDevolucaoFromRow(updated);
     } catch (error) {
       if (
         error instanceof BadRequestException ||
@@ -293,16 +302,12 @@ export class ChecklistDevolucaoService {
     const novoStatus = dto.aceito ? 'aceito' : 'contestado';
 
     try {
-      const ref = this.collection.doc(docId);
-      const snap = await ref.get();
-      if (!snap.exists) {
+      const row = await resolveChecklistDevolucaoPg(this.prisma, docId);
+      if (!row) {
         throw new NotFoundException('Checklist de devolução não encontrado.');
       }
 
-      const atual = mapChecklistDevolucaoFromFirestore(
-        snap.id,
-        snap.data() as Record<string, unknown>,
-      );
+      const atual = mapChecklistDevolucaoFromRow(row);
 
       if (atual.status === 'aceito' || atual.status === 'contestado') {
         throw new ConflictException(
@@ -321,16 +326,16 @@ export class ChecklistDevolucaoService {
           );
         }
 
-        const solSnap = await this.solicitacoesCollection.doc(solId).get();
-        if (!solSnap.exists) {
+        const sol = await loadServiceOrderForChdPg(this.prisma, solId);
+        if (!sol) {
           throw new NotFoundException('Solicitação de OS não encontrada.');
         }
 
-        const sol = solSnap.data() as Record<string, unknown>;
-        const equipamentoId = texto(sol.equipamentoId);
-        const equipamento = texto(sol.equipamento);
+        const equipamentoId =
+          sol.equipment?.legacyId ?? sol.equipmentId ?? '';
+        const equipamento = texto(sol.equipmentNome);
         const prefeituraId =
-          texto(atual.prefeituraId) || texto(sol.prefeituraId);
+          texto(atual.prefeituraId) || sol.company.legacyId || sol.companyId;
 
         if (!equipamentoId) {
           throw new BadRequestException(
@@ -338,25 +343,18 @@ export class ChecklistDevolucaoService {
           );
         }
 
-        const oficinaSnap = await this.oficinasCollection
-          .doc(atual.oficinaId)
-          .get();
-        const oficinaData = oficinaSnap.exists
-          ? (oficinaSnap.data() as Record<string, unknown>)
-          : {};
-        const fornecedor = nomeFromOficinaDoc(oficinaData, atual.oficinaId);
+        const oficina = await findPartnerOficinaPg(this.prisma, atual.oficinaId);
+        const fornecedor = oficina?.nome ?? atual.oficinaId;
         const horimetroAtual =
           parseHorimetro(atual.identification.hourMeter) ??
           parseHorimetro(atual.identification.currentKm);
 
-        const existentes = await this.firebaseService
-          .getFirestore()
-          .collection('garantias')
-          .where('checklistDevolucaoId', '==', docId)
-          .get();
+        const existentes = await this.prisma.garantia.count({
+          where: { checklistDevolucaoId: docId },
+        });
 
-        if (!existentes.empty) {
-          garantiasGeradas = existentes.size;
+        if (existentes > 0) {
+          garantiasGeradas = existentes;
         } else {
           const chdAtualizado: ChecklistDevolucaoDoc = {
             ...atual,
@@ -379,28 +377,24 @@ export class ChecklistDevolucaoService {
           garantiasGeradas = registros.length;
         }
 
-        await this.solicitacoesCollection.doc(solId).update({
-          status: 'concluido',
-          updatedAt: conferidoEm,
+        await this.prisma.serviceOrder.updateMany({
+          where: serviceOrderWhere(solId),
+          data: { status: 'concluido' },
         });
         solicitacaoStatus = 'concluido';
       }
 
-      await ref.update({
-        status: novoStatus,
-        prefeituraConferencia,
-        updatedAt: conferidoEm,
-      });
-
-      const data = mapChecklistDevolucaoFromFirestore(docId, {
-        ...(snap.data() as Record<string, unknown>),
-        status: novoStatus,
-        prefeituraConferencia,
-        updatedAt: conferidoEm,
+      const updated = await this.prisma.checklistDevolucao.update({
+        where: { id: row.id },
+        data: checklistDevolucaoPatchToPrisma({
+          status: novoStatus,
+          prefeituraConferencia,
+        }),
+        include: { company: { select: { legacyId: true } } },
       });
 
       return {
-        data,
+        data: mapChecklistDevolucaoFromRow(updated),
         garantiasGeradas,
         solicitacaoStatus,
         message: dto.aceito
@@ -427,14 +421,11 @@ export class ChecklistDevolucaoService {
     if (!docId) throw new BadRequestException('id inválido.');
 
     try {
-      const snap = await this.collection.doc(docId).get();
-      if (!snap.exists) {
+      const row = await resolveChecklistDevolucaoPg(this.prisma, docId);
+      if (!row) {
         throw new NotFoundException('Checklist de devolução não encontrado.');
       }
-      return mapChecklistDevolucaoFromFirestore(
-        snap.id,
-        snap.data() as Record<string, unknown>,
-      );
+      return mapChecklistDevolucaoFromRow(row);
     } catch (error) {
       if (
         error instanceof BadRequestException ||
@@ -456,16 +447,13 @@ export class ChecklistDevolucaoService {
     if (!id) throw new BadRequestException('oficinaId inválido.');
 
     try {
-      const snap = await this.collection.where('oficinaId', '==', id).get();
+      const rows = await this.prisma.checklistDevolucao.findMany({
+        where: { oficinaId: id },
+        include: { company: { select: { legacyId: true } } },
+        orderBy: { createdAt: 'desc' },
+      });
 
-      const data = snap.docs
-        .map((doc) =>
-          mapChecklistDevolucaoFromFirestore(
-            doc.id,
-            doc.data() as Record<string, unknown>,
-          ),
-        )
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      const data = rows.map(mapChecklistDevolucaoFromRow);
 
       return {
         data,
@@ -487,40 +475,26 @@ export class ChecklistDevolucaoService {
     if (!id) throw new BadRequestException('prefeituraId inválido.');
 
     try {
-      const [directSnap, solSnap] = await Promise.all([
-        this.collection.where('prefeituraId', '==', id).get(),
-        this.solicitacoesCollection.where('prefeituraId', '==', id).get(),
-      ]);
+      const companyId = await resolverCompanyId(this.prisma, id);
+      const solIds = await listServiceOrderPublicIdsPg(this.prisma, id);
+
+      const rows = await this.prisma.checklistDevolucao.findMany({
+        where: {
+          OR: [
+            ...(companyId ? [{ companyId }] : []),
+            ...(solIds.length
+              ? [{ solicitacaoOsId: { in: solIds } }]
+              : []),
+            { company: companyWhere(id) },
+          ],
+        },
+        include: { company: { select: { legacyId: true } } },
+        orderBy: { createdAt: 'desc' },
+      });
 
       const porId = new Map<string, ChecklistDevolucaoDoc>();
-
-      for (const doc of directSnap.docs) {
-        porId.set(
-          doc.id,
-          mapChecklistDevolucaoFromFirestore(
-            doc.id,
-            doc.data() as Record<string, unknown>,
-          ),
-        );
-      }
-
-      const solIds = solSnap.docs.map((doc) => doc.id);
-      for (let i = 0; i < solIds.length; i += 30) {
-        const chunk = solIds.slice(i, i + 30);
-        if (chunk.length === 0) continue;
-        const linkedSnap = await this.collection
-          .where('solicitacaoOsId', 'in', chunk)
-          .get();
-        for (const doc of linkedSnap.docs) {
-          if (porId.has(doc.id)) continue;
-          porId.set(
-            doc.id,
-            mapChecklistDevolucaoFromFirestore(
-              doc.id,
-              doc.data() as Record<string, unknown>,
-            ),
-          );
-        }
+      for (const row of rows) {
+        porId.set(row.id, mapChecklistDevolucaoFromRow(row));
       }
 
       const data = Array.from(porId.values()).sort((a, b) =>

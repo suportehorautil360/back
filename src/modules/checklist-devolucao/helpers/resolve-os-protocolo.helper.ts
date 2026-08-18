@@ -1,4 +1,6 @@
 import type { CollectionReference } from 'firebase-admin/firestore';
+import type { PrismaService } from '../../../prisma/prisma.service';
+import { serviceOrderWhere } from '../../../common/prisma/service-order-resolver';
 import type { CreateChecklistDevolucaoDto } from '../dto/create-checklist-devolucao.dto';
 
 function texto(valor: unknown): string {
@@ -43,6 +45,36 @@ export async function resolveOsProtocolo(
 
   const sol = snap.data() as Record<string, unknown>;
   return texto(sol.protocolo) || texto(sol.protocol);
+}
+
+export async function resolveOsProtocoloPg(
+  dto: CreateChecklistDevolucaoDto,
+  prisma: PrismaService,
+): Promise<string> {
+  const loose = dto as unknown as Record<string, unknown>;
+  const idBlock = identificationRaw(dto);
+
+  const direto =
+    texto(idBlock.os) ||
+    texto(idBlock.protocolo) ||
+    texto(idBlock.protocol) ||
+    texto(idBlock.osRef) ||
+    texto(loose.os) ||
+    texto(loose.protocolo) ||
+    texto(loose.protocol);
+
+  if (direto) return direto;
+
+  const solId = texto(dto.solicitacaoOsId) || texto(loose.solicitacaoOsId);
+  if (!solId) return '';
+
+  const row = await prisma.serviceOrder.findFirst({
+    where: serviceOrderWhere(solId),
+    select: { protocolo: true },
+  });
+  if (!row) return '';
+
+  return texto(row.protocolo);
 }
 
 export function mergeIdentificationOs(
