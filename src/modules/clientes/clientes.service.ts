@@ -5,6 +5,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
+import type { Prisma } from '../../prisma/generated/client';
+import { PrismaService } from '../../prisma/prisma.service';
+import { resolverCompanyId, resolverEmpresa } from '../../common/prisma/company-resolver';
+import {
+  apiTypeToCompanyType,
+  companyTypeToApi,
+  mapCompanyToLegacyDoc,
+  mapCompanyToOverview,
+} from '../../common/prisma/company-prisma.mapper';
+import { publicLegacyId } from '../../common/prisma/service-order-resolver';
+import { slugUnicoEmpresa } from '../../common/prisma/slug.helper';
 import { FirebaseService } from '../../config/firebase.service';
 import {
   AcessoRow,
@@ -18,7 +29,6 @@ import { UpdateAcessoDto } from './dto/update-acesso.dto';
 import { ResetSenhaAcessoDto } from './dto/reset-senha-acesso.dto';
 import { ChecklistLoginConfigDto } from './dto/checklist-login-config.dto';
 
-/** SHA-256 sem salt (espelha utils/hashSenha do front, pra o login bater). */
 function hashSenha(senha: string): string {
   return createHash('sha256').update(senha, 'utf8').digest('hex');
 }
@@ -27,7 +37,6 @@ function booleano(valor: unknown, padrao = false): boolean {
   return typeof valor === 'boolean' ? valor : padrao;
 }
 
-/** Converte um campo solto do Firestore (unknown) em string segura. */
 function texto(valor: unknown): string {
   return typeof valor === 'string' ? valor : '';
 }
@@ -51,80 +60,61 @@ function mapAcessoRow(id: string, d: Record<string, unknown>): AcessoRow {
   };
 }
 
+function toInputJson(value: unknown): Prisma.InputJsonValue {
+  return value as Prisma.InputJsonValue;
+}
+
 @Injectable()
 export class ClientesService {
-  constructor(private firebaseService: FirebaseService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly firebaseService: FirebaseService,
+  ) {}
 
-  /**
-   * Lista todos os clientes contratantes com métricas agregadas por cliente:
-   * frota ativa, em manutenção e checklists. Custo e O.S. ficam zerados até a
-   * fonte desses números ser definida. As coleções são lidas no servidor
-   * (firebase-admin), então o front não toca no Firestore direto.
-   */
   async overview(): Promise<{ data: ClienteOverviewRow[] }> {
-    const db = this.firebaseService.getFirestore();
-
     try {
-      const [clientesSnap, equipamentosSnap, checklistsSnap] =
-        await Promise.all([
-          db.collection('clientes').get(),
-          db.collection('equipamentos').get(),
-          db.collection('checklists').get(),
-        ]);
+      const [companies, equipmentRows, checklistCounts] = await Promise.all([
+        this.prisma.company.findMany({ orderBy: { name: 'asc' } }),
+        this.prisma.equipment.findMany({
+          select: { companyId: true, status: true },
+        }),
+        this.prisma.checklistRun.groupBy({
+          by: ['companyId'],
+          _count: { _all: true },
+        }),
+      ]);
 
-      // Agrupa equipamentos por cliente (prefeituraId): ativos x manutenção.
       const frotaPorCliente = new Map<
         string,
         { ativos: number; emManutencao: number }
       >();
-      for (const doc of equipamentosSnap.docs) {
-        const d = doc.data() as Record<string, unknown>;
-        const clienteId = texto(d.prefeituraId);
-        if (!clienteId) continue;
-        const atual = frotaPorCliente.get(clienteId) ?? {
+      for (const row of equipmentRows) {
+        const atual = frotaPorCliente.get(row.companyId) ?? {
           ativos: 0,
           emManutencao: 0,
         };
-        const status = texto(d.status).toLowerCase();
+        const status = row.status.toLowerCase();
         if (status === 'ativo') atual.ativos += 1;
-        if (status === 'manutencao' || status === 'manutenção')
+        if (status === 'manutencao' || status === 'manutenção') {
           atual.emManutencao += 1;
-        frotaPorCliente.set(clienteId, atual);
+        }
+        frotaPorCliente.set(row.companyId, atual);
       }
 
-      // Conta checklists por cliente.
-      const checklistsPorCliente = new Map<string, number>();
-      for (const doc of checklistsSnap.docs) {
-        const d = doc.data() as Record<string, unknown>;
-        const clienteId = texto(d.prefeituraId);
-        if (!clienteId) continue;
-        checklistsPorCliente.set(
-          clienteId,
-          (checklistsPorCliente.get(clienteId) ?? 0) + 1,
-        );
-      }
+      const checklistsPorCliente = new Map(
+        checklistCounts.map((row) => [row.companyId, row._count._all]),
+      );
 
-      const data: ClienteOverviewRow[] = clientesSnap.docs.map((doc) => {
-        const d = doc.data() as Record<string, unknown>;
-        const id = doc.id;
-        const frota = frotaPorCliente.get(id) ?? { ativos: 0, emManutencao: 0 };
-        const tipoCliente: TipoClienteApi =
-          d.tipoCliente === 'locacao' ? 'locacao' : 'prefeitura';
-        const contrato = (d.contrato ?? {}) as Record<string, unknown>;
-
-        return {
-          id,
-          nome: texto(d.nome),
-          uf: texto(d.uf),
-          tipoCliente,
-          email: texto(contrato.emailContratante),
+      const data = companies.map((company) => {
+        const frota = frotaPorCliente.get(company.id) ?? {
+          ativos: 0,
+          emManutencao: 0,
+        };
+        return mapCompanyToOverview(company, {
           ativos: frota.ativos,
           emManutencao: frota.emManutencao,
-          checklists: checklistsPorCliente.get(id) ?? 0,
-          custoAcumulado: 0,
-          osCotacao: 0,
-          osNfPagamento: 0,
-        };
+          checklists: checklistsPorCliente.get(company.id) ?? 0,
+        });
       });
 
       return { data };
@@ -136,10 +126,6 @@ export class ClientesService {
     }
   }
 
-  /**
-   * Cria um cliente + contrato. Porta a validação/normalização que antes
-   * vivia no front (useClientes.adicionarCliente), agora no backend.
-   */
   async criar(dto: CreateClienteDto) {
     const nome = (dto.nome ?? '').trim();
     const uf = (dto.uf ?? '')
@@ -166,7 +152,7 @@ export class ClientesService {
       );
     }
 
-    const id = randomUUID();
+    const legacyId = randomUUID();
     const tipoCliente: TipoClienteApi =
       dto.tipoCliente === 'locacao' ? 'locacao' : 'prefeitura';
     const qtdInicialAtivos =
@@ -175,46 +161,46 @@ export class ClientesService {
         ? contrato.qtdInicialAtivos
         : 0;
 
-    const dados = {
-      id,
-      adminId: null,
-      criadoEm: new Date().toISOString(),
-      nome,
-      uf,
-      tipoCliente,
-      cnpj: (dto.cnpj ?? '').trim(),
-      caepf: (dto.caepf ?? '').trim(),
-      cidade: (dto.cidade ?? '').trim(),
-      whatsapp: (dto.whatsapp ?? '').trim(),
-      contrato: {
-        numero: contrato.numero.trim(),
-        processo: contrato.processo ?? '',
-        modalidade: contrato.modalidade ?? 'pregao_eletronico',
-        dataAssinatura: contrato.dataAssinatura ?? '',
-        vigenciaInicio: contrato.vigenciaInicio,
-        vigenciaFim: contrato.vigenciaFim ?? '',
-        objeto: contrato.objeto.trim(),
-        valorMensal: contrato.valorMensal ?? '',
-        valorTotal: contrato.valorTotal ?? '',
-        indiceReajuste: contrato.indiceReajuste ?? '',
-        periodicidadeFaturamento: contrato.periodicidadeFaturamento ?? 'mensal',
-        slaRespostaHoras: contrato.slaRespostaHoras ?? '',
-        responsavelContratante: contrato.responsavelContratante ?? '',
-        cargoContratante: contrato.cargoContratante ?? '',
-        emailContratante: contrato.emailContratante ?? '',
-        telefoneContratante: contrato.telefoneContratante ?? '',
-        observacoes: contrato.observacoes ?? '',
-        status: contrato.status ?? 'ativo',
-        qtdInicialAtivos,
-      },
+    const contractPayload = {
+      numero: contrato.numero.trim(),
+      processo: contrato.processo ?? '',
+      modalidade: contrato.modalidade ?? 'pregao_eletronico',
+      dataAssinatura: contrato.dataAssinatura ?? '',
+      vigenciaInicio: contrato.vigenciaInicio,
+      vigenciaFim: contrato.vigenciaFim ?? '',
+      objeto: contrato.objeto.trim(),
+      valorMensal: contrato.valorMensal ?? '',
+      valorTotal: contrato.valorTotal ?? '',
+      indiceReajuste: contrato.indiceReajuste ?? '',
+      periodicidadeFaturamento: contrato.periodicidadeFaturamento ?? 'mensal',
+      slaRespostaHoras: contrato.slaRespostaHoras ?? '',
+      responsavelContratante: contrato.responsavelContratante ?? '',
+      cargoContratante: contrato.cargoContratante ?? '',
+      emailContratante: contrato.emailContratante ?? '',
+      telefoneContratante: contrato.telefoneContratante ?? '',
+      observacoes: contrato.observacoes ?? '',
+      status: contrato.status ?? 'ativo',
+      qtdInicialAtivos,
     };
 
     try {
-      await this.firebaseService
-        .getFirestore()
-        .collection('clientes')
-        .doc(id)
-        .set(dados);
+      const slug = await slugUnicoEmpresa(this.prisma, nome, legacyId);
+      const row = await this.prisma.company.create({
+        data: {
+          legacyId,
+          name: nome,
+          slug,
+          type: apiTypeToCompanyType(tipoCliente),
+          uf,
+          cidade: (dto.cidade ?? '').trim() || null,
+          cnpj: (dto.cnpj ?? '').trim() || null,
+          caepf: (dto.caepf ?? '').trim() || null,
+          whatsapp: (dto.whatsapp ?? '').trim() || null,
+          contract: toInputJson(contractPayload),
+        },
+      });
+
+      const dados = mapCompanyToLegacyDoc(row);
       return { data: dados, message: 'Cliente cadastrado com sucesso.' };
     } catch (error) {
       console.error('Erro ao salvar cliente:', error);
@@ -224,31 +210,22 @@ export class ClientesService {
     }
   }
 
-  /**
-   * Atualização parcial de um cliente. Só grava os campos informados (merge),
-   * preservando o resto — inclusive o contrato, que é mesclado campo a campo.
-   * Fonte única dos dados da empresa: o admin e a tela de Configurações da
-   * prefeitura editam este mesmo documento.
-   */
   async atualizar(clienteId: string, dto: UpdateClienteDto) {
-    const ref = this.firebaseService
-      .getFirestore()
-      .collection('clientes')
-      .doc(clienteId);
-    const snap = await ref.get();
-    if (!snap.exists) {
+    const company = await resolverEmpresa(this.prisma, clienteId);
+    if (!company) {
       throw new NotFoundException('Cliente não encontrado.');
     }
-    const atual = (snap.data() ?? {}) as Record<string, unknown>;
 
-    const patch: Record<string, unknown> = {
-      atualizadoEm: new Date().toISOString(),
-    };
+    const atual = await this.prisma.company.findUniqueOrThrow({
+      where: { id: company.id },
+    });
+
+    const data: Prisma.CompanyUpdateInput = {};
 
     if (dto.nome !== undefined) {
       const nome = (dto.nome ?? '').trim();
       if (!nome) throw new BadRequestException('Informe o município/nome.');
-      patch.nome = nome;
+      data.name = nome;
     }
     if (dto.uf !== undefined) {
       const uf = (dto.uf ?? '')
@@ -259,29 +236,34 @@ export class ClientesService {
       if (uf.length !== 2) {
         throw new BadRequestException('Informe a UF com 2 letras.');
       }
-      patch.uf = uf;
+      data.uf = uf;
     }
     if (dto.tipoCliente !== undefined) {
-      patch.tipoCliente =
-        dto.tipoCliente === 'locacao' ? 'locacao' : 'prefeitura';
+      data.type = apiTypeToCompanyType(
+        dto.tipoCliente === 'locacao' ? 'locacao' : 'prefeitura',
+      );
     }
     for (const campo of ['cnpj', 'caepf', 'cidade', 'whatsapp'] as const) {
-      if (dto[campo] !== undefined) patch[campo] = (dto[campo] ?? '').trim();
+      if (dto[campo] !== undefined) {
+        data[campo] = (dto[campo] ?? '').trim() || null;
+      }
     }
 
     if (dto.contrato) {
-      const contratoAtual = (atual.contrato ?? {}) as Record<string, unknown>;
-      const merged: Record<string, unknown> = { ...contratoAtual };
-      for (const [chave, valor] of Object.entries(dto.contrato)) {
-        if (valor !== undefined) merged[chave] = valor;
-      }
-      patch.contrato = merged;
+      const contratoAtual =
+        atual.contract && typeof atual.contract === 'object'
+          ? (atual.contract as Record<string, unknown>)
+          : {};
+      data.contract = toInputJson({ ...contratoAtual, ...dto.contrato });
     }
 
     try {
-      await ref.set(patch, { merge: true });
+      const row = await this.prisma.company.update({
+        where: { id: company.id },
+        data,
+      });
       return {
-        data: { id: clienteId, ...atual, ...patch },
+        data: mapCompanyToLegacyDoc(row),
         message: 'Cliente atualizado com sucesso.',
       };
     } catch (error) {
@@ -292,21 +274,16 @@ export class ClientesService {
     }
   }
 
-  /**
-   * Dados crus de um cliente por id (= prefeituraId). Usado para pré-preencher
-   * a tela de Configurações da prefeitura com os dados da empresa.
-   */
   async obter(clienteId: string) {
     try {
-      const snap = await this.firebaseService
-        .getFirestore()
-        .collection('clientes')
-        .doc(clienteId)
-        .get();
-      if (!snap.exists) {
+      const row = await resolverEmpresa(this.prisma, clienteId);
+      if (!row) {
         throw new NotFoundException('Cliente não encontrado.');
       }
-      return { data: snap.data(), message: 'Cliente encontrado.' };
+      const company = await this.prisma.company.findUniqueOrThrow({
+        where: { id: row.id },
+      });
+      return { data: mapCompanyToLegacyDoc(company), message: 'Cliente encontrado.' };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       console.error('Erro ao buscar cliente:', error);
@@ -316,7 +293,7 @@ export class ClientesService {
     }
   }
 
-  /** Lista os acessos (coleção `users`) vinculados a um cliente. */
+  /** Acessos ainda no Firestore `users` — migrar na onda auth. */
   async listarAcessos(clienteId: string): Promise<{ data: AcessoRow[] }> {
     const db = this.firebaseService.getFirestore();
     try {
@@ -341,10 +318,8 @@ export class ClientesService {
     }
   }
 
-  /** Cria um acesso (usuário) vinculado a um cliente. */
   async criarAcesso(clienteId: string, dto: CreateAcessoDto) {
     const db = this.firebaseService.getFirestore();
-
     const nome = (dto.nome ?? '').trim();
     const usuario = (dto.usuario ?? '').trim();
     const senha = (dto.senha ?? '').trim();
@@ -356,14 +331,14 @@ export class ClientesService {
       throw new BadRequestException('A senha deve ter no mínimo 4 caracteres.');
     }
 
-    const clienteSnap = await db.collection('clientes').doc(clienteId).get();
-    if (!clienteSnap.exists) {
+    const company = await resolverEmpresa(this.prisma, clienteId);
+    if (!company) {
       throw new NotFoundException('Cliente não encontrado.');
     }
-    const tipoCliente: TipoClienteApi =
-      (clienteSnap.data() as Record<string, unknown>).tipoCliente === 'locacao'
-        ? 'locacao'
-        : 'prefeitura';
+    const full = await this.prisma.company.findUniqueOrThrow({
+      where: { id: company.id },
+    });
+    const tipoCliente = companyTypeToApi(full.type);
 
     const duplicado = await db
       .collection('users')
@@ -374,6 +349,7 @@ export class ClientesService {
     }
 
     const perfil = dto.perfil === 'admin' ? 'admin' : 'gestor';
+    const legacyPublicId = publicLegacyId(full);
     const novo = {
       id: randomUUID(),
       nome,
@@ -382,7 +358,7 @@ export class ClientesService {
       perfil,
       type: tipoCliente,
       vinculo: tipoCliente,
-      prefeituraId: clienteId,
+      prefeituraId: legacyPublicId,
       email: (dto.email ?? '').trim(),
       whatsapp: (dto.whatsapp ?? '').trim(),
       notificaEmail: booleano(dto.notificaEmail, true),
@@ -412,7 +388,6 @@ export class ClientesService {
     }
   }
 
-  /** Remove um acesso (usuário) pelo id do documento. */
   async removerAcesso(acessoId: string) {
     if (!acessoId) {
       throw new BadRequestException('ID inválido.');
@@ -440,7 +415,15 @@ export class ClientesService {
       throw new NotFoundException('Acesso não encontrado.');
     }
     const data = snap.data() as Record<string, unknown>;
-    if (texto(data.prefeituraId).trim() !== clienteId.trim()) {
+    const company = await resolverEmpresa(this.prisma, clienteId);
+    const legacyId = company
+      ? publicLegacyId(
+          await this.prisma.company.findUniqueOrThrow({
+            where: { id: company.id },
+          }),
+        )
+      : clienteId.trim();
+    if (texto(data.prefeituraId).trim() !== legacyId) {
       throw new BadRequestException('Acesso não pertence a este cliente.');
     }
     if (!isAcessoDoCliente(data)) {
@@ -451,7 +434,6 @@ export class ClientesService {
     return { ref, data };
   }
 
-  /** Atualiza dados de um acesso (sem alterar senha). */
   async atualizarAcesso(
     clienteId: string,
     acessoId: string,
@@ -493,8 +475,7 @@ export class ClientesService {
 
     if (dto.email !== undefined) patch.email = dto.email.trim();
     if (dto.whatsapp !== undefined) patch.whatsapp = dto.whatsapp.trim();
-    if (dto.notificaEmail !== undefined)
-      patch.notificaEmail = dto.notificaEmail;
+    if (dto.notificaEmail !== undefined) patch.notificaEmail = dto.notificaEmail;
     if (dto.notificaWhatsapp !== undefined) {
       patch.notificaWhatsapp = dto.notificaWhatsapp;
     }
@@ -524,7 +505,6 @@ export class ClientesService {
     }
   }
 
-  /** Redefine a senha de um acesso. */
   async resetarSenhaAcesso(
     clienteId: string,
     acessoId: string,
@@ -556,21 +536,22 @@ export class ClientesService {
     }
   }
 
-  /** Atualiza a configuração do checklist login (cpfSenha / chassi) de um cliente. */
   async atualizarChecklistLoginConfig(
     clienteId: string,
     config: ChecklistLoginConfigDto,
   ): Promise<void> {
-    const ref = this.firebaseService
-      .getFirestore()
-      .collection('clientes')
-      .doc(clienteId);
-    const doc = await ref.get();
-    if (!doc.exists) {
+    const company = await resolverEmpresa(this.prisma, clienteId);
+    if (!company) {
       throw new NotFoundException(`Cliente ${clienteId} não encontrado.`);
     }
-    await ref.update({
-      checklistLogin: { cpfSenha: config.cpfSenha, chassi: config.chassi },
+    await this.prisma.company.update({
+      where: { id: company.id },
+      data: {
+        checklistLogin: toInputJson({
+          cpfSenha: config.cpfSenha,
+          chassi: config.chassi,
+        }),
+      },
     });
   }
 }

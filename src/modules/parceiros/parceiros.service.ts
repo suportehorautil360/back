@@ -6,7 +6,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import type { DocumentReference } from 'firebase-admin/firestore';
+import type { Prisma } from '../../prisma/generated/client';
+import { PrismaService } from '../../prisma/prisma.service';
+import { resolverCompanyId } from '../../common/prisma/company-resolver';
+import {
+  apiTypeToPartnerType,
+  mapPartnerToDetalhe,
+  mapPartnerToOficinaOverview,
+  mapPartnerToPostoOverview,
+} from '../../common/prisma/partner-prisma.mapper';
+import { publicLegacyId } from '../../common/prisma/service-order-resolver';
 import { FirebaseService } from '../../config/firebase.service';
 import {
   OficinaParceiro,
@@ -43,11 +52,6 @@ function texto(valor: unknown): string {
   return typeof valor === 'string' ? valor : '';
 }
 
-/** "Ativa"/"ativo" => true; "Suspensa"/etc => false. */
-function ehAtivo(status: unknown): boolean {
-  return texto(status).toLowerCase().startsWith('ativ');
-}
-
 function numero(valor: unknown): number {
   if (typeof valor === 'number') return Number.isFinite(valor) ? valor : 0;
   if (typeof valor === 'string') {
@@ -66,79 +70,59 @@ function listaTexto(valor: unknown): string[] {
   return valor.filter((v): v is string => typeof v === 'string');
 }
 
+function toInputJson(value: unknown): Prisma.InputJsonValue {
+  return value as Prisma.InputJsonValue;
+}
+
 @Injectable()
 export class ParceirosService {
-  constructor(private firebaseService: FirebaseService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly firebaseService: FirebaseService,
+  ) {}
 
-  /**
-   * Rede de parceiros credenciados (todos os clientes): postos e oficinas.
-   * A cidade/UF vem do próprio parceiro; para os legados sem cidade, cai no
-   * cliente vinculado (`prefeituraId`).
-   */
   async overview(prefeituraId?: string): Promise<{ data: ParceirosOverview }> {
     const filtroPref = (prefeituraId ?? '').trim();
-    const db = this.firebaseService.getFirestore();
+
     try {
-      const [clientesSnap, postosSnap, oficinasSnap] = await Promise.all([
-        db.collection('clientes').get(),
-        db.collection('postos').get(),
-        db.collection('oficinas').get(),
+      const [companies, partners] = await Promise.all([
+        this.prisma.company.findMany({
+          select: { id: true, legacyId: true, name: true, uf: true },
+        }),
+        this.prisma.partner.findMany({
+          include: { company: { select: { legacyId: true } } },
+        }),
       ]);
 
       const clientePorId = new Map<string, { nome: string; uf: string }>();
-      for (const doc of clientesSnap.docs) {
-        const d = doc.data() as Record<string, unknown>;
-        clientePorId.set(doc.id, { nome: texto(d.nome), uf: texto(d.uf) });
+      for (const company of companies) {
+        if (!company.legacyId) continue;
+        clientePorId.set(company.legacyId, {
+          nome: company.name,
+          uf: company.uf ?? '',
+        });
       }
 
-      const localDoCliente = (prefeituraId: string): string => {
-        const c = clientePorId.get(prefeituraId);
+      const localDoCliente = (legacyCompanyId: string): string => {
+        const c = clientePorId.get(legacyCompanyId);
         if (!c || !c.nome) return '';
         return c.uf ? `${c.nome}/${c.uf}` : c.nome;
       };
 
-      const postos: PostoParceiro[] = postosSnap.docs
-        .map((doc) => {
-        const d = doc.data() as Record<string, unknown>;
-        const prefId = texto(d.prefeituraId);
-        if (filtroPref && prefId !== filtroPref) return null;
-        return {
-          id: doc.id,
-          prefeituraId: prefId,
-          nome: texto(d.nomeFantasia) || texto(d.razaoSocial) || '—',
-          razaoSocial: texto(d.razaoSocial) || texto(d.nomeFantasia) || '—',
-          cidadeUf: texto(d.cidadeUf) || localDoCliente(texto(d.prefeituraId)),
-          bandeira: texto(d.bandeira),
-          condicaoPagamento: texto(d.condicaoPagamento),
-          limiteCredito: numero(d.limiteCredito),
-          ativo: ehAtivo(d.status ?? 'Ativa'),
-        };
-      })
-        .filter((p): p is PostoParceiro => p !== null);
+      const postos: PostoParceiro[] = [];
+      const oficinas: OficinaParceiro[] = [];
 
-      const oficinas: OficinaParceiro[] = oficinasSnap.docs
-        .map((doc) => {
-        const d = doc.data() as Record<string, unknown>;
-        const prefId = texto(d.prefeituraId);
-        if (filtroPref && prefId !== filtroPref) return null;
-        const categorias = listaTexto(d.categoriasServico);
-        return {
-          id: doc.id,
-          prefeituraId: prefId,
-          nome:
-            texto(d.nomeFantasia) ||
-            texto(d.nome) ||
-            texto(d.razaoSocial) ||
-            '—',
-          razaoSocial: texto(d.razaoSocial) || texto(d.nome) || '—',
-          cidadeUf: texto(d.cidadeUf) || localDoCliente(texto(d.prefeituraId)),
-          especialidade: texto(d.especialidade) || categorias.join(', '),
-          condicaoPagamento: texto(d.condicaoPagamento),
-          limiteCredito: numero(d.limiteCredito),
-          ativo: ehAtivo(d.status ?? 'Ativa'),
-        };
-      })
-        .filter((o): o is OficinaParceiro => o !== null);
+      for (const row of partners) {
+        const prefId = row.company.legacyId ?? row.companyId;
+        if (filtroPref && prefId !== filtroPref) continue;
+        const localFallback = localDoCliente(prefId);
+
+        if (row.type === 'POSTO') {
+          postos.push(mapPartnerToPostoOverview(row, prefId, localFallback));
+        } else {
+          oficinas.push(mapPartnerToOficinaOverview(row, prefId, localFallback));
+        }
+      }
 
       postos.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
       oficinas.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
@@ -152,7 +136,6 @@ export class ParceirosService {
     }
   }
 
-  /** Cadastra um parceiro (posto ou oficina) na coleção correspondente. */
   async criar(dto: CreateParceiroDto) {
     const tipo: TipoParceiro = dto.tipo === 'oficina' ? 'oficina' : 'posto';
     const razaoSocial = (dto.razaoSocial ?? '').trim();
@@ -160,76 +143,87 @@ export class ParceirosService {
       throw new BadRequestException('Informe a razão social do parceiro.');
     }
 
-    const fs = this.firebaseService.getFirestore();
-    const id = randomUUID();
+    const legacyId = randomUUID();
     const prefeituraId = (dto.prefeituraId ?? '').trim();
-    const comum = {
-      id,
+    let companyId: string | null = null;
+    if (prefeituraId) {
+      companyId = await resolverCompanyId(this.prisma, prefeituraId);
+      if (!companyId) {
+        throw new BadRequestException('prefeituraId inválido.');
+      }
+    } else {
+      throw new BadRequestException(
+        'Informe prefeituraId para credenciar o parceiro.',
+      );
+    }
+
+    const baseData = {
+      legacyId,
+      companyId,
+      type: apiTypeToPartnerType(tipo),
       razaoSocial,
-      nomeFantasia: (dto.nomeFantasia ?? '').trim(),
-      cnpj: (dto.cnpj ?? '').trim(),
-      telefonePrincipal: (dto.telefonePrincipal ?? '').trim(),
-      emailComercial: (dto.emailComercial ?? '').trim(),
-      cidadeUf: (dto.cidadeUf ?? '').trim(),
-      endereco: (dto.endereco ?? '').trim(),
-      condicaoPagamento: (dto.condicaoPagamento ?? '').trim(),
-      limiteCredito: numero(dto.limiteCredito),
-      descontoComercial: (dto.descontoComercial ?? '').trim(),
-      observacoesFaturamento: (dto.observacoesFaturamento ?? '').trim(),
-      status: 'Ativa',
-      createdAt: new Date().toISOString(),
-      ...(prefeituraId ? { prefeituraId, parceiroId: id } : {}),
+      nomeFantasia: (dto.nomeFantasia ?? '').trim() || null,
+      cnpj: (dto.cnpj ?? '').trim() || null,
+      telefonePrincipal: (dto.telefonePrincipal ?? '').trim() || null,
+      emailComercial: (dto.emailComercial ?? '').trim() || null,
+      cidadeUf: (dto.cidadeUf ?? '').trim() || null,
+      endereco: (dto.endereco ?? '').trim() || null,
+      condicaoPagamento: (dto.condicaoPagamento ?? '').trim() || null,
+      limiteCredito: numero(dto.limiteCredito) || null,
+      descontoComercial: (dto.descontoComercial ?? '').trim() || null,
+      observacoesFaturamento: (dto.observacoesFaturamento ?? '').trim() || null,
+      status: 'ativo',
+      ativo: true,
     };
 
     try {
       if (tipo === 'posto') {
-        await fs
-          .collection('postos')
-          .doc(id)
-          .set({
-            ...comum,
-            tipoParceiro: 'posto',
-            bandeira: (dto.bandeira ?? '').trim(),
-            combustiveis: listaTexto(dto.combustiveis),
-            servicos: listaTexto(dto.servicos),
-          });
+        await this.prisma.partner.create({
+          data: {
+            ...baseData,
+            bandeira: (dto.bandeira ?? '').trim() || null,
+            combustiveis: toInputJson(listaTexto(dto.combustiveis)),
+            servicos: toInputJson(listaTexto(dto.servicos)),
+          },
+        });
       } else {
         const categorias = listaTexto(dto.categoriasServico);
         const { segmentosAtuacao, linhasAtuacao } =
           this.resolverOficinaAtuacao(listaTexto(dto.segmentosAtuacao));
         const dadosOficina = {
-          ...comum,
-          linhasAtuacao,
+          razaoSocial,
+          nomeFantasia: baseData.nomeFantasia,
           segmentosAtuacao,
+          linhasAtuacao,
           categoriasServico: categorias,
         };
-        const nome = nomeFromOficinaDoc(dadosOficina, razaoSocial);
-        const especialidade = especialidadeFromOficinaDoc(dadosOficina);
-        await fs
-          .collection('oficinas')
-          .doc(id)
-          .set({
-            ...dadosOficina,
-            tipoParceiro: 'oficina',
-            nome,
-            especialidade: especialidade || categorias.join(', '),
-            especificacoes: (dto.especificacoes ?? '').trim(),
-          });
+        const especialidade =
+          especialidadeFromOficinaDoc(dadosOficina) || categorias.join(', ');
+
+        await this.prisma.partner.create({
+          data: {
+            ...baseData,
+            especialidade,
+            linhasAtuacao: toInputJson(linhasAtuacao),
+            segmentosAtuacao: toInputJson(segmentosAtuacao),
+            categoriasServico: toInputJson(categorias),
+          },
+        });
       }
 
       let login: CredenciaisLoginAutomatico | undefined;
       if (prefeituraId) {
         login = await this.provisionarLoginAutomatico(
           tipo,
-          id,
+          legacyId,
           prefeituraId,
-          comum.nomeFantasia || razaoSocial,
-          comum.nomeFantasia || razaoSocial || 'Gestor do parceiro',
+          baseData.nomeFantasia || razaoSocial,
+          baseData.nomeFantasia || razaoSocial || 'Gestor do parceiro',
         );
       }
 
       return {
-        data: { id, tipo, ...(login ? { login } : {}) },
+        data: { id: legacyId, tipo, ...(login ? { login } : {}) },
         message: login
           ? 'Parceiro cadastrado. Login operacional criado automaticamente.'
           : 'Parceiro cadastrado.',
@@ -242,82 +236,89 @@ export class ParceirosService {
     }
   }
 
-  /** Detalhe completo de um parceiro para edição no Hub. */
   async obter(tipoStr: string, id: string): Promise<{ data: ParceiroDetalhe }> {
     const tipo: TipoParceiro = tipoStr === 'oficina' ? 'oficina' : 'posto';
     const docId = (id ?? '').trim();
     if (!docId) throw new BadRequestException('ID inválido.');
 
-    const colecao = tipo === 'oficina' ? 'oficinas' : 'postos';
-    const snap = await this.firebaseService
-      .getFirestore()
-      .collection(colecao)
-      .doc(docId)
-      .get();
-    if (!snap.exists) {
+    const row = await this.prisma.partner.findFirst({
+      where: {
+        type: apiTypeToPartnerType(tipo),
+        OR: [{ id: docId }, { legacyId: docId }],
+      },
+      include: { company: { select: { legacyId: true } } },
+    });
+    if (!row) {
       throw new NotFoundException('Parceiro não encontrado.');
     }
 
     return {
-      data: this.mapDocToDetalhe(
-        docId,
-        tipo,
-        snap.data() as Record<string, unknown>,
+      data: mapPartnerToDetalhe(
+        row,
+        row.company.legacyId ?? row.companyId,
       ),
     };
   }
 
-  /** Atualiza dados cadastrais de um parceiro existente. */
   async atualizar(tipoStr: string, id: string, dto: UpdateParceiroDto) {
     const tipo: TipoParceiro = tipoStr === 'oficina' ? 'oficina' : 'posto';
     const docId = (id ?? '').trim();
     if (!docId) throw new BadRequestException('ID inválido.');
 
-    const colecao = tipo === 'oficina' ? 'oficinas' : 'postos';
-    const ref = this.firebaseService.getFirestore().collection(colecao).doc(docId);
-    const snap = await ref.get();
-    if (!snap.exists) {
+    const atual = await this.prisma.partner.findFirst({
+      where: {
+        type: apiTypeToPartnerType(tipo),
+        OR: [{ id: docId }, { legacyId: docId }],
+      },
+    });
+    if (!atual) {
       throw new NotFoundException('Parceiro não encontrado.');
     }
 
-    const atual = snap.data() as Record<string, unknown>;
-    const razaoSocial = (dto.razaoSocial ?? texto(atual.razaoSocial)).trim();
+    const razaoSocial = (dto.razaoSocial ?? atual.razaoSocial).trim();
     if (!razaoSocial) {
       throw new BadRequestException('Informe a razão social do parceiro.');
     }
 
-    const comum: Record<string, unknown> = {
+    const comum: Prisma.PartnerUpdateInput = {
       razaoSocial,
-      nomeFantasia: (dto.nomeFantasia ?? texto(atual.nomeFantasia)).trim(),
-      cnpj: (dto.cnpj ?? texto(atual.cnpj)).trim(),
-      telefonePrincipal: (dto.telefonePrincipal ?? texto(atual.telefonePrincipal)).trim(),
-      emailComercial: (dto.emailComercial ?? texto(atual.emailComercial)).trim(),
-      cidadeUf: (dto.cidadeUf ?? texto(atual.cidadeUf)).trim(),
-      endereco: (dto.endereco ?? texto(atual.endereco)).trim(),
-      condicaoPagamento: (dto.condicaoPagamento ?? texto(atual.condicaoPagamento)).trim(),
+      nomeFantasia: (dto.nomeFantasia ?? atual.nomeFantasia ?? '').trim() || null,
+      cnpj: (dto.cnpj ?? atual.cnpj ?? '').trim() || null,
+      telefonePrincipal:
+        (dto.telefonePrincipal ?? atual.telefonePrincipal ?? '').trim() || null,
+      emailComercial:
+        (dto.emailComercial ?? atual.emailComercial ?? '').trim() || null,
+      cidadeUf: (dto.cidadeUf ?? atual.cidadeUf ?? '').trim() || null,
+      endereco: (dto.endereco ?? atual.endereco ?? '').trim() || null,
+      condicaoPagamento:
+        (dto.condicaoPagamento ?? atual.condicaoPagamento ?? '').trim() || null,
       limiteCredito:
         dto.limiteCredito !== undefined
           ? numero(dto.limiteCredito)
           : numero(atual.limiteCredito),
-      descontoComercial: (dto.descontoComercial ?? texto(atual.descontoComercial)).trim(),
+      descontoComercial:
+        (dto.descontoComercial ?? atual.descontoComercial ?? '').trim() || null,
       observacoesFaturamento: (
-        dto.observacoesFaturamento ?? texto(atual.observacoesFaturamento)
-      ).trim(),
+        dto.observacoesFaturamento ?? atual.observacoesFaturamento ?? ''
+      ).trim() || null,
     };
 
     try {
       if (tipo === 'posto') {
-        await ref.update({
-          ...comum,
-          bandeira: (dto.bandeira ?? texto(atual.bandeira)).trim(),
-          combustiveis:
-            dto.combustiveis !== undefined
-              ? listaTexto(dto.combustiveis)
-              : listaTexto(atual.combustiveis),
-          servicos:
-            dto.servicos !== undefined
-              ? listaTexto(dto.servicos)
-              : listaTexto(atual.servicos),
+        await this.prisma.partner.update({
+          where: { id: atual.id },
+          data: {
+            ...comum,
+            bandeira: (dto.bandeira ?? atual.bandeira ?? '').trim() || null,
+            combustiveis:
+              dto.combustiveis !== undefined
+                ? toInputJson(listaTexto(dto.combustiveis))
+                : atual.combustiveis ?? undefined,
+            servicos:
+              dto.servicos !== undefined
+                ? toInputJson(listaTexto(dto.servicos))
+                : atual.servicos ?? undefined,
+          },
         });
       } else {
         const categorias =
@@ -336,7 +337,8 @@ export class ParceirosService {
 
         const dadosOficina = {
           ...atual,
-          ...comum,
+          razaoSocial,
+          nomeFantasia: comum.nomeFantasia,
           linhasAtuacao,
           segmentosAtuacao,
           categoriasServico: categorias,
@@ -344,17 +346,18 @@ export class ParceirosService {
         const nome = nomeFromOficinaDoc(dadosOficina, razaoSocial);
         const especialidade = especialidadeFromOficinaDoc(dadosOficina);
 
-        await ref.update({
-          ...comum,
-          linhasAtuacao,
-          segmentosAtuacao,
-          categoriasServico: categorias,
-          especificacoes: (dto.especificacoes ?? texto(atual.especificacoes)).trim(),
-          nome,
-          especialidade: especialidade || categorias.join(', '),
+        await this.prisma.partner.update({
+          where: { id: atual.id },
+          data: {
+            ...comum,
+            linhasAtuacao: toInputJson(linhasAtuacao),
+            segmentosAtuacao: toInputJson(segmentosAtuacao),
+            categoriasServico: toInputJson(categorias),
+            especialidade: especialidade || categorias.join(', '),
+          },
         });
 
-        await this.syncCredenciamentosOficina(docId, {
+        await this.syncCredenciamentosOficina(publicLegacyId(atual), {
           linhasAtuacao,
           segmentosAtuacao,
           nome,
@@ -363,7 +366,7 @@ export class ParceirosService {
       }
 
       return {
-        data: { id: docId, tipo },
+        data: { id: publicLegacyId(atual), tipo },
         message: 'Parceiro atualizado.',
       };
     } catch (error) {
@@ -392,47 +395,6 @@ export class ParceirosService {
     };
   }
 
-  private mapDocToDetalhe(
-    id: string,
-    tipo: TipoParceiro,
-    d: Record<string, unknown>,
-  ): ParceiroDetalhe {
-    const status = texto(d.status) || 'Ativa';
-    const linhasLegado = listaTexto(d.linhasAtuacao);
-    const segmentosAtuacao = segmentosEfetivosCadastro(
-      listaTexto(d.segmentosAtuacao),
-      linhasLegado,
-    );
-    const linhasAtuacao = linhasAtuacaoFromSegmentos(segmentosAtuacao);
-
-    return {
-      id,
-      tipo,
-      prefeituraId: texto(d.prefeituraId),
-      razaoSocial: texto(d.razaoSocial),
-      nomeFantasia: texto(d.nomeFantasia),
-      cnpj: texto(d.cnpj),
-      telefonePrincipal: texto(d.telefonePrincipal),
-      emailComercial: texto(d.emailComercial),
-      cidadeUf: texto(d.cidadeUf),
-      endereco: texto(d.endereco),
-      bandeira: texto(d.bandeira),
-      combustiveis: listaTexto(d.combustiveis),
-      servicos: listaTexto(d.servicos),
-      linhasAtuacao,
-      segmentosAtuacao,
-      categoriasServico: listaTexto(d.categoriasServico),
-      especificacoes: texto(d.especificacoes),
-      condicaoPagamento: texto(d.condicaoPagamento),
-      limiteCredito: numero(d.limiteCredito),
-      descontoComercial: texto(d.descontoComercial),
-      observacoesFaturamento: texto(d.observacoesFaturamento),
-      status,
-      ativo: ehAtivo(status),
-    };
-  }
-
-  /** Propaga linhas/segmentos para docs de credenciamento municipal. */
   private async syncCredenciamentosOficina(
     parceiroId: string,
     dados: {
@@ -442,41 +404,36 @@ export class ParceirosService {
       especialidade: string;
     },
   ): Promise<void> {
-    const db = this.firebaseService.getFirestore();
-    const snap = await db.collection('oficinas').get();
-    const batch = db.batch();
-    let alterou = false;
-
-    for (const doc of snap.docs) {
-      const data = doc.data() as Record<string, unknown>;
-      const pid = texto(data.parceiroId);
-      const credenciado =
-        texto(data.prefeituraId) &&
-        (doc.id === parceiroId || pid === parceiroId);
-      if (!credenciado) continue;
-
-      batch.update(doc.ref, {
-        linhasAtuacao: dados.linhasAtuacao,
-        segmentosAtuacao: dados.segmentosAtuacao,
-        nome: dados.nome,
+    await this.prisma.partner.updateMany({
+      where: {
+        type: 'OFICINA',
+        OR: [{ legacyId: parceiroId }, { id: parceiroId }],
+      },
+      data: {
+        linhasAtuacao: toInputJson(dados.linhasAtuacao),
+        segmentosAtuacao: toInputJson(dados.segmentosAtuacao),
         especialidade: dados.especialidade,
-      });
-      alterou = true;
-    }
-
-    if (alterou) await batch.commit();
+        nomeFantasia: dados.nome,
+      },
+    });
   }
 
-  /** Remove um parceiro (posto/oficina) pelo id. */
   async remover(tipo: string, id: string) {
     if (!id) throw new BadRequestException('ID inválido.');
-    const colecao = tipo === 'oficina' ? 'oficinas' : 'postos';
+    const partnerType = tipo === 'oficina' ? 'OFICINA' : 'POSTO';
+
+    const row = await this.prisma.partner.findFirst({
+      where: {
+        type: partnerType,
+        OR: [{ id }, { legacyId: id }],
+      },
+    });
+    if (!row) {
+      throw new NotFoundException('Parceiro não encontrado.');
+    }
+
     try {
-      await this.firebaseService
-        .getFirestore()
-        .collection(colecao)
-        .doc(id)
-        .delete();
+      await this.prisma.partner.delete({ where: { id: row.id } });
       return { message: 'Parceiro removido.' };
     } catch (error) {
       console.error('Erro ao remover parceiro:', error);
@@ -489,25 +446,31 @@ export class ParceirosService {
   private async carregarParceiro(
     tipo: TipoParceiro,
     parceiroId: string,
-  ): Promise<{ prefeituraId: string; ref: DocumentReference }> {
+  ): Promise<{ prefeituraId: string; legacyId: string }> {
     const id = parceiroId.trim();
     if (!id) throw new BadRequestException('ID do parceiro inválido.');
 
-    const colecao = tipo === 'oficina' ? 'oficinas' : 'postos';
-    const ref = this.firebaseService.getFirestore().collection(colecao).doc(id);
-    const snap = await ref.get();
-    if (!snap.exists) {
+    const row = await this.prisma.partner.findFirst({
+      where: {
+        type: apiTypeToPartnerType(tipo),
+        OR: [{ id }, { legacyId: id }],
+      },
+      include: { company: { select: { legacyId: true } } },
+    });
+    if (!row) {
       throw new NotFoundException('Parceiro não encontrado.');
     }
-    const prefeituraId = texto(snap.data()?.prefeituraId);
+
+    const prefeituraId = row.company.legacyId ?? '';
     if (!prefeituraId) {
       throw new BadRequestException(
         'Parceiro sem cliente vinculado. Cadastre com prefeituraId.',
       );
     }
-    return { prefeituraId, ref };
+    return { prefeituraId, legacyId: publicLegacyId(row) };
   }
 
+  /** Logins operacionais ainda no Firestore — migrar na onda auth. */
   private async usuarioLoginDisponivel(usuario: string): Promise<boolean> {
     const snap = await this.firebaseService
       .getFirestore()
@@ -601,14 +564,14 @@ export class ParceirosService {
     parceiroId: string,
   ): Promise<{ data: ParceiroLoginRow[]; message: string }> {
     const t: TipoParceiro = tipo === 'oficina' ? 'oficina' : 'posto';
-    await this.carregarParceiro(t, parceiroId);
+    const { legacyId } = await this.carregarParceiro(t, parceiroId);
 
     const campo = t === 'posto' ? 'postoId' : 'officinaId';
     try {
       const snap = await this.firebaseService
         .getFirestore()
         .collection('users')
-        .where(campo, '==', parceiroId.trim())
+        .where(campo, '==', legacyId)
         .get();
 
       const data = snap.docs
@@ -639,10 +602,10 @@ export class ParceirosService {
     dto: CreateParceiroLoginDto,
   ): Promise<{ data: ParceiroLoginRow; message: string }> {
     const t: TipoParceiro = tipo === 'oficina' ? 'oficina' : 'posto';
-    const { prefeituraId } = await this.carregarParceiro(t, parceiroId);
+    const { prefeituraId, legacyId } = await this.carregarParceiro(t, parceiroId);
 
     try {
-      const data = await this.persistirLoginOperacional(t, parceiroId, prefeituraId, {
+      const data = await this.persistirLoginOperacional(t, legacyId, prefeituraId, {
         nome: dto.nome ?? '',
         usuario: dto.usuario ?? '',
         senha: dto.senha ?? '',

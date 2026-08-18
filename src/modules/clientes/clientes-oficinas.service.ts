@@ -5,8 +5,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import type { Firestore } from 'firebase-admin/firestore';
-import { FirebaseService } from '../../config/firebase.service';
+import type { Prisma } from '../../prisma/generated/client';
+import { PrismaService } from '../../prisma/prisma.service';
+import { resolverCompanyId } from '../../common/prisma/company-resolver';
+import { mapPartnerToCredenciadaListItem } from '../../common/prisma/partner-prisma.mapper';
+import { publicLegacyId } from '../../common/prisma/service-order-resolver';
 import {
   especialidadeFromOficinaDoc,
   nomeFromOficinaDoc,
@@ -15,10 +18,6 @@ import {
   linhasAtuacaoFromSegmentos,
   segmentosEfetivosCadastro,
 } from '../os/helpers/segmento-equipamento.helper';
-import {
-  ehOficinaAtiva,
-  mapOficinaCredenciadaDoc,
-} from '../os/helpers/oficinas-credenciadas.helper';
 import type { OficinaCredenciadaListItem } from './clientes-oficinas.types';
 
 function texto(valor: unknown): string {
@@ -30,28 +29,30 @@ function listaTexto(valor: unknown): string[] {
   return valor.filter((v): v is string => typeof v === 'string' && v.trim() !== '');
 }
 
+function toInputJson(value: unknown): Prisma.InputJsonValue {
+  return value as Prisma.InputJsonValue;
+}
+
 @Injectable()
 export class ClientesOficinasService {
-  constructor(private readonly firebaseService: FirebaseService) {}
-
-  private get db(): Firestore {
-    return this.firebaseService.getFirestore();
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async listarCredenciadas(
     prefeituraId: string,
   ): Promise<{ data: OficinaCredenciadaListItem[]; message: string }> {
-    await this.assertClienteExiste(prefeituraId);
+    const companyId = await this.assertClienteExiste(prefeituraId);
 
     try {
-      const snap = await this.db
-        .collection('oficinas')
-        .where('prefeituraId', '==', prefeituraId)
-        .get();
+      const rows = await this.prisma.partner.findMany({
+        where: {
+          companyId,
+          type: 'OFICINA',
+          ativo: true,
+        },
+      });
 
-      const data = snap.docs
-        .map((doc) => this.mapListItem(doc.id, doc.data() as Record<string, unknown>))
-        .filter((item): item is OficinaCredenciadaListItem => item !== null)
+      const data = rows
+        .map((row) => mapPartnerToCredenciadaListItem(row))
         .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
       return {
@@ -68,95 +69,127 @@ export class ClientesOficinasService {
   }
 
   async credenciar(prefeituraId: string, parceiroId: string) {
-    await this.assertClienteExiste(prefeituraId);
+    const companyId = await this.assertClienteExiste(prefeituraId);
+    const pid = parceiroId.trim();
 
-    const parceiroRef = this.db.collection('oficinas').doc(parceiroId);
-    const parceiroSnap = await parceiroRef.get();
-    if (!parceiroSnap.exists) {
+    const fonte = await this.prisma.partner.findFirst({
+      where: {
+        type: 'OFICINA',
+        OR: [{ id: pid }, { legacyId: pid }],
+      },
+    });
+    if (!fonte) {
       throw new NotFoundException('Parceiro oficina não encontrado.');
     }
 
-    const parceiro = parceiroSnap.data() as Record<string, unknown>;
-    const nome = nomeFromOficinaDoc(parceiro, parceiroId);
-    const especialidade = especialidadeFromOficinaDoc(parceiro);
+    const shape = {
+      razaoSocial: fonte.razaoSocial,
+      nomeFantasia: fonte.nomeFantasia,
+      nome: fonte.nomeFantasia ?? fonte.razaoSocial,
+      segmentosAtuacao: fonte.segmentosAtuacao,
+      linhasAtuacao: fonte.linhasAtuacao,
+      categoriasServico: fonte.categoriasServico,
+      especialidade: fonte.especialidade,
+    };
+    const nome = nomeFromOficinaDoc(shape, pid);
+    const especialidade = especialidadeFromOficinaDoc(shape);
     if (!especialidade) {
       throw new BadRequestException(
         'Informe segmentosAtuacao ou categoriasServico no cadastro do parceiro.',
       );
     }
 
-    const prefeituraAtual = texto(parceiro.prefeituraId);
-
     const segmentosAtuacao = segmentosEfetivosCadastro(
-      listaTexto(parceiro.segmentosAtuacao),
-      listaTexto(parceiro.linhasAtuacao),
+      listaTexto(fonte.segmentosAtuacao),
+      listaTexto(fonte.linhasAtuacao),
     );
     const linhasAtuacao = linhasAtuacaoFromSegmentos(segmentosAtuacao);
 
     try {
-      if (!prefeituraAtual || prefeituraAtual === prefeituraId) {
-        const payload = {
-          prefeituraId,
-          nome,
-          especialidade,
-          status: 'Ativa',
-          parceiroId,
-          linhasAtuacao,
-          segmentosAtuacao,
-          credenciadoEm: new Date().toISOString(),
-        };
-        await parceiroRef.set(payload, { merge: true });
-        return {
-          data: { id: parceiroId, prefeituraId, parceiroId, status: 'Ativa' },
-          message: 'Oficina credenciada no município.',
-        };
-      }
-
-      const existente = await this.buscarCredenciamento(prefeituraId, parceiroId);
-      if (existente) {
-        await existente.ref.update({
-          status: 'Ativa',
-          nome,
-          especialidade,
-          linhasAtuacao,
-          segmentosAtuacao,
-          credenciadoEm: new Date().toISOString(),
+      if (fonte.companyId === companyId) {
+        const row = await this.prisma.partner.update({
+          where: { id: fonte.id },
+          data: {
+            ativo: true,
+            status: 'ativo',
+            especialidade,
+            linhasAtuacao: toInputJson(linhasAtuacao),
+            segmentosAtuacao: toInputJson(segmentosAtuacao),
+          },
         });
         return {
           data: {
-            id: existente.id,
+            id: publicLegacyId(row),
             prefeituraId,
-            parceiroId,
+            parceiroId: pid,
             status: 'Ativa',
           },
           message: 'Oficina credenciada no município.',
         };
       }
 
-      const credId = randomUUID();
-      await this.db
-        .collection('oficinas')
-        .doc(credId)
-        .set({
-          id: credId,
-          prefeituraId,
-          parceiroId,
-          nome,
-          especialidade,
-          status: 'Ativa',
-          razaoSocial: texto(parceiro.razaoSocial),
-          nomeFantasia: texto(parceiro.nomeFantasia),
-          cidadeUf: texto(parceiro.cidadeUf),
-          endereco: texto(parceiro.endereco),
-          linhasAtuacao,
-          segmentosAtuacao,
-          categoriasServico: parceiro.categoriasServico ?? [],
-          tipoParceiro: 'oficina',
-          credenciadoEm: new Date().toISOString(),
+      const existente = await this.prisma.partner.findFirst({
+        where: {
+          companyId,
+          type: 'OFICINA',
+          OR: [{ legacyId: pid }, { razaoSocial: fonte.razaoSocial, cnpj: fonte.cnpj ?? undefined }],
+        },
+      });
+
+      if (existente) {
+        const row = await this.prisma.partner.update({
+          where: { id: existente.id },
+          data: {
+            ativo: true,
+            status: 'ativo',
+            nomeFantasia: fonte.nomeFantasia,
+            especialidade,
+            linhasAtuacao: toInputJson(linhasAtuacao),
+            segmentosAtuacao: toInputJson(segmentosAtuacao),
+          },
         });
+        return {
+          data: {
+            id: publicLegacyId(row),
+            prefeituraId,
+            parceiroId: pid,
+            status: 'Ativa',
+          },
+          message: 'Oficina credenciada no município.',
+        };
+      }
+
+      const credLegacyId = randomUUID();
+      const row = await this.prisma.partner.create({
+        data: {
+          legacyId: credLegacyId,
+          companyId,
+          type: 'OFICINA',
+          razaoSocial: fonte.razaoSocial,
+          nomeFantasia: fonte.nomeFantasia,
+          cnpj: fonte.cnpj,
+          telefonePrincipal: fonte.telefonePrincipal,
+          emailComercial: fonte.emailComercial,
+          cidadeUf: fonte.cidadeUf,
+          endereco: fonte.endereco,
+          especialidade,
+          linhasAtuacao: toInputJson(linhasAtuacao),
+          segmentosAtuacao: toInputJson(segmentosAtuacao),
+          categoriasServico: fonte.categoriasServico ?? toInputJson([]),
+          condicaoPagamento: fonte.condicaoPagamento,
+          limiteCredito: fonte.limiteCredito,
+          status: 'ativo',
+          ativo: true,
+        },
+      });
 
       return {
-        data: { id: credId, prefeituraId, parceiroId, status: 'Ativa' },
+        data: {
+          id: publicLegacyId(row),
+          prefeituraId,
+          parceiroId: pid,
+          status: 'Ativa',
+        },
         message: 'Oficina credenciada no município.',
       };
     } catch (error) {
@@ -174,28 +207,29 @@ export class ClientesOficinasService {
   }
 
   async descredenciar(prefeituraId: string, parceiroId: string) {
-    await this.assertClienteExiste(prefeituraId);
+    const companyId = await this.assertClienteExiste(prefeituraId);
+    const pid = parceiroId.trim();
 
     try {
-      const credenciamentos = await this.listarDocsCredenciamento(
-        prefeituraId,
-        parceiroId,
-      );
+      const rows = await this.prisma.partner.findMany({
+        where: {
+          companyId,
+          type: 'OFICINA',
+          ativo: true,
+          OR: [{ id: pid }, { legacyId: pid }],
+        },
+      });
 
-      if (credenciamentos.length === 0) {
+      if (rows.length === 0) {
         throw new NotFoundException(
           'Nenhum credenciamento ativo encontrado para este município.',
         );
       }
 
-      const batch = this.db.batch();
-      for (const { ref } of credenciamentos) {
-        batch.update(ref, {
-          status: 'Suspensa',
-          descredenciadoEm: new Date().toISOString(),
-        });
-      }
-      await batch.commit();
+      await this.prisma.partner.updateMany({
+        where: { id: { in: rows.map((row) => row.id) } },
+        data: { ativo: false, status: 'Suspensa' },
+      });
 
       return { message: 'Oficina descredenciada do município.' };
     } catch (error) {
@@ -207,58 +241,14 @@ export class ClientesOficinasService {
     }
   }
 
-  private mapListItem(
-    docId: string,
-    data: Record<string, unknown>,
-  ): OficinaCredenciadaListItem | null {
-    const mapped = mapOficinaCredenciadaDoc(docId, data);
-    if (!mapped) return null;
-
-    return {
-      id: mapped.id,
-      nome: mapped.nome,
-      especialidade: mapped.especialidade,
-      status: texto(data.status) || 'Ativa',
-      parceiroId: texto(data.parceiroId) || docId,
-      cidadeUf: texto(data.cidadeUf),
-      linhasAtuacao: listaTexto(data.linhasAtuacao),
-      segmentosAtuacao: mapped.segmentosAtuacao ?? [],
-    };
-  }
-
-  private async buscarCredenciamento(prefeituraId: string, parceiroId: string) {
-    const docs = await this.listarDocsCredenciamento(prefeituraId, parceiroId);
-    return docs[0] ?? null;
-  }
-
-  private async listarDocsCredenciamento(
-    prefeituraId: string,
-    parceiroId: string,
-  ): Promise<
-    Array<{ id: string; ref: FirebaseFirestore.DocumentReference<FirebaseFirestore.DocumentData> }>
-  > {
-    const snap = await this.db
-      .collection('oficinas')
-      .where('prefeituraId', '==', prefeituraId)
-      .get();
-
-    return snap.docs
-      .filter((doc) => {
-        const data = doc.data() as Record<string, unknown>;
-        if (!ehOficinaAtiva(data.status)) return false;
-        const pid = texto(data.parceiroId);
-        return doc.id === parceiroId || pid === parceiroId;
-      })
-      .map((doc) => ({ id: doc.id, ref: doc.ref }));
-  }
-
-  private async assertClienteExiste(prefeituraId: string): Promise<void> {
+  private async assertClienteExiste(prefeituraId: string): Promise<string> {
     const id = prefeituraId.trim();
     if (!id) throw new BadRequestException('prefeituraId inválido.');
 
-    const snap = await this.db.collection('clientes').doc(id).get();
-    if (!snap.exists) {
+    const companyId = await resolverCompanyId(this.prisma, id);
+    if (!companyId) {
       throw new NotFoundException('Cliente (prefeitura) não encontrado.');
     }
+    return companyId;
   }
 }
