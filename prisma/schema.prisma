@@ -1272,6 +1272,9 @@ model Orcamento {
   /// "aguardando_aprovacao" | "em_pregao" | "aprovado" | "recusado".
   status String @default("aguardando_aprovacao")
 
+  /// URLs de fotos anexadas ao orçamento (legado Firestore `fotosComprovacao`).
+  fotosComprovacao Json @default("[]") @map("fotos_comprovacao")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

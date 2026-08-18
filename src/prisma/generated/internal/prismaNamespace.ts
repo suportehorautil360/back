@@ -4513,6 +4513,7 @@ export const OrcamentoScalarFieldEnum = {
   valorTotal: 'valorTotal',
   prazoDias: 'prazoDias',
   status: 'status',
+  fotosComprovacao: 'fotosComprovacao',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

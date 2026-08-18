@@ -5,10 +5,18 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { FieldValue } from 'firebase-admin/firestore';
-import { FirebaseService } from '../../../config/firebase.service';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { findPartnerOficinaPg } from '../../../common/prisma/partner-oficina.helper';
+import {
+  mapOrcamentoToListItem,
+  toInputJson,
+} from '../../../common/prisma/os-prisma.mapper';
+import {
+  publicLegacyId,
+  resolveOrcamentoPg,
+  resolveServiceOrderPg,
+} from '../../../common/prisma/service-order-resolver';
 import { NotificacoesService } from '../../notificacoes/notificacoes.service';
-import { nomeFromOficinaDoc } from '../helpers/especialidade-oficina.helper';
 import {
   mergeLance,
   parseOficinasIds,
@@ -18,7 +26,6 @@ import {
 import type { CreateOrcamentoResult, LanceOs } from '../os.types';
 import { CreateOrcamentoDto } from './dto/create-orcamento.dto';
 import { UpdateOrcamentoDto } from './dto/update-orcamento.dto';
-import { mapOrdemServicoListItem } from '../helpers/ordem-servico-list.helper';
 import {
   ordemPermiteEdicao,
   solicitacaoPermiteEdicaoOrcamento,
@@ -44,138 +51,123 @@ function fmtBRL(valor: number): string {
 @Injectable()
 export class OrcamentosService {
   constructor(
-    private readonly firebaseService: FirebaseService,
+    private readonly prisma: PrismaService,
     private readonly notificacoes: NotificacoesService,
   ) {}
-
-  private get solicitacoesCollection() {
-    return this.firebaseService.getFirestore().collection('solicitacoesOS');
-  }
-
-  private get ordensCollection() {
-    return this.firebaseService.getFirestore().collection('ordensServico');
-  }
-
-  private get oficinasCollection() {
-    return this.firebaseService.getFirestore().collection('oficinas');
-  }
 
   async criar(dto: CreateOrcamentoDto): Promise<CreateOrcamentoResult> {
     const solicitacaoOsId = dto.solicitacaoOsId.trim();
     const oficinaId = dto.oficinaId.trim();
-
     const { itens, valorTotal } = parseOrcamentoItemsFromDto(dto.items);
     const prazoDias = dto.prazoDias ?? 7;
-    const solRef = this.solicitacoesCollection.doc(solicitacaoOsId);
-    const oficinaSnap = await this.oficinasCollection.doc(oficinaId).get();
-    const oficinaData = oficinaSnap.exists
-      ? (oficinaSnap.data() as Record<string, unknown>)
-      : {};
-    const oficinaNome = nomeFromOficinaDoc(oficinaData, oficinaId);
+    const fotosComprovacao = dto.fotosComprovacao.map((url) => url.trim());
+
+    const oficina = await findPartnerOficinaPg(this.prisma, oficinaId);
+    const oficinaNome = oficina?.nome ?? oficinaId;
 
     try {
-      const result = await this.firebaseService
-        .getFirestore()
-        .runTransaction(async (tx) => {
-          const solSnap = await tx.get(solRef);
-          if (!solSnap.exists) {
-            throw new NotFoundException('Solicitação de OS não encontrada.');
-          }
+      const result = await this.prisma.$transaction(async (tx) => {
+        const sol = await tx.serviceOrder.findFirst({
+          where: {
+            OR: [{ id: solicitacaoOsId }, { legacyId: solicitacaoOsId }],
+          },
+          include: { company: { select: { legacyId: true } } },
+        });
+        if (!sol) {
+          throw new NotFoundException('Solicitação de OS não encontrada.');
+        }
 
-          const sol = solSnap.data() as Record<string, unknown>;
-          const statusAtual = texto(sol.status) || 'aguardando_orcamento';
-          if (!solicitacaoPermiteNovoOrcamento(statusAtual)) {
-            throw new BadRequestException(
-              'Esta solicitação não está aceitando novos orçamentos.',
-            );
-          }
-
-          const oficinasIds = parseOficinasIds(sol.oficinasIds);
-          if (!oficinasIds.includes(oficinaId)) {
-            throw new BadRequestException(
-              'Esta oficina não foi convidada para esta OS.',
-            );
-          }
-
-          const responderam = parseOficinasResponderam(sol.oficinasResponderam);
-          if (responderam.includes(oficinaId)) {
-            throw new ConflictException(
-              'Esta oficina já enviou orçamento para esta OS.',
-            );
-          }
-
-          const dupSnap = await tx.get(
-            this.ordensCollection
-              .where('solicitacaoOsId', '==', solicitacaoOsId)
-              .where('oficinaId', '==', oficinaId)
-              .limit(1),
+        const statusAtual = texto(sol.status) || 'aguardando_orcamento';
+        if (!solicitacaoPermiteNovoOrcamento(statusAtual)) {
+          throw new BadRequestException(
+            'Esta solicitação não está aceitando novos orçamentos.',
           );
-          if (!dupSnap.empty) {
-            throw new ConflictException(
-              'Já existe orçamento desta oficina para esta solicitação.',
-            );
-          }
+        }
 
-          const protocolo =
-            texto(dto.protocol) || texto(sol.protocolo) || solicitacaoOsId;
-          const prefeituraId = texto(sol.prefeituraId);
-          const ordemRef = this.ordensCollection.doc();
-          const agora = new Date().toISOString();
+        const oficinasIds = parseOficinasIds(sol.oficinasIds);
+        if (!oficinasIds.includes(oficinaId)) {
+          throw new BadRequestException(
+            'Esta oficina não foi convidada para esta OS.',
+          );
+        }
 
-          tx.set(ordemRef, {
-            id: ordemRef.id,
+        const responderam = parseOficinasResponderam(sol.oficinasResponderam);
+        if (responderam.includes(oficinaId)) {
+          throw new ConflictException(
+            'Esta oficina já enviou orçamento para esta OS.',
+          );
+        }
+
+        const dup = await tx.orcamento.findFirst({
+          where: { serviceOrderId: sol.id, oficinaId },
+        });
+        if (dup) {
+          throw new ConflictException(
+            'Já existe orçamento desta oficina para esta solicitação.',
+          );
+        }
+
+        const protocolo =
+          texto(dto.protocol) || sol.protocolo || solicitacaoOsId;
+        const prefeituraId = sol.company.legacyId ?? sol.companyId;
+        const agora = new Date();
+
+        const ordem = await tx.orcamento.create({
+          data: {
+            companyId: sol.companyId,
+            serviceOrderId: sol.id,
             protocolo,
-            prefeituraId,
-            solicitacaoOsId,
             oficinaId,
             oficinaNome,
-            operador: oficinaNome,
-            equipamento: texto(sol.equipamento),
+            operadorNome: oficinaNome,
+            equipamento: texto(sol.equipmentNome),
             defeito: texto(sol.relato),
-            itens,
+            itens: toInputJson(itens),
             valorTotal,
             prazoDias,
-            fotosComprovacao: dto.fotosComprovacao.map((url) => url.trim()),
+            fotosComprovacao: toInputJson(fotosComprovacao),
             status: 'em_pregao',
-            criadoEm: FieldValue.serverTimestamp(),
-          });
-
-          const lance: LanceOs = {
-            oficinaId,
-            valor: valorTotal,
-            prazoDias,
-            ordemServicoId: ordemRef.id,
-            atualizadoEm: agora,
-          };
-
-          const lancesAtualizados = mergeLance(
-            Array.isArray(sol.lances) ? (sol.lances as LanceOs[]) : [],
-            lance,
-          );
-          const responderamAtualizados = [...responderam, oficinaId];
-          const novoStatus = statusAposOrcamento(
-            oficinasIds,
-            responderamAtualizados,
-          );
-
-          tx.update(solRef, {
-            oficinasResponderam: FieldValue.arrayUnion(oficinaId),
-            lances: lancesAtualizados,
-            status: novoStatus,
-          });
-
-          return {
-            id: ordemRef.id,
-            protocol: protocolo,
-            valorTotal,
-            prazoDias,
-            solicitacaoStatus: novoStatus,
-            prefeituraId,
-            oficinaNome,
-          };
+          },
         });
 
-      // Notifica o RH da prefeitura. Falha da notificação não quebra o envio.
+        const lance: LanceOs = {
+          oficinaId,
+          valor: valorTotal,
+          prazoDias,
+          ordemServicoId: publicLegacyId(ordem),
+          atualizadoEm: agora.toISOString(),
+        };
+
+        const lancesAtualizados = mergeLance(
+          Array.isArray(sol.lances) ? (sol.lances as unknown as LanceOs[]) : [],
+          lance,
+        );
+        const responderamAtualizados = [...responderam, oficinaId];
+        const novoStatus = statusAposOrcamento(
+          oficinasIds,
+          responderamAtualizados,
+        );
+
+        await tx.serviceOrder.update({
+          where: { id: sol.id },
+          data: {
+            oficinasResponderam: toInputJson(responderamAtualizados),
+            lances: toInputJson(lancesAtualizados),
+            status: novoStatus,
+          },
+        });
+
+        return {
+          id: publicLegacyId(ordem),
+          protocol: protocolo,
+          valorTotal,
+          prazoDias,
+          solicitacaoStatus: novoStatus,
+          prefeituraId,
+          oficinaNome,
+        };
+      });
+
       if (result.prefeituraId) {
         try {
           await this.notificacoes.create({
@@ -237,108 +229,98 @@ export class OrcamentosService {
     }
 
     const { itens, valorTotal } = parseOrcamentoItemsFromDto(dto.items);
-    const ordemRef = this.ordensCollection.doc(ordemId);
+    const fotosComprovacao = dto.fotosComprovacao.map((url) => url.trim());
 
     try {
-      const result = await this.firebaseService
-        .getFirestore()
-        .runTransaction(async (tx) => {
-          const ordemSnap = await tx.get(ordemRef);
-          if (!ordemSnap.exists) {
-            throw new NotFoundException('Orçamento não encontrado.');
-          }
-
-          const ordem = ordemSnap.data() as Record<string, unknown>;
-          const ordemOficinaId = texto(ordem.oficinaId);
-
-          if (ordemOficinaId !== oficinaId) {
-            throw new BadRequestException(
-              'Esta oficina não pode editar este orçamento.',
-            );
-          }
-
-          if (!ordemPermiteEdicao(ordem.status)) {
-            throw new BadRequestException(
-              'Este orçamento não pode mais ser editado.',
-            );
-          }
-
-          const solicitacaoOsId = texto(ordem.solicitacaoOsId);
-          if (!solicitacaoOsId) {
-            throw new BadRequestException(
-              'Orçamento sem vínculo com solicitação de OS.',
-            );
-          }
-
-          const solRef = this.solicitacoesCollection.doc(solicitacaoOsId);
-          const solSnap = await tx.get(solRef);
-          if (!solSnap.exists) {
-            throw new NotFoundException('Solicitação de OS não encontrada.');
-          }
-
-          const sol = solSnap.data() as Record<string, unknown>;
-          const statusAtual = texto(sol.status) || 'aguardando_orcamento';
-
-          if (!solicitacaoPermiteEdicaoOrcamento(statusAtual)) {
-            throw new BadRequestException(
-              'Esta solicitação não permite edição de orçamento.',
-            );
-          }
-
-          const oficinasIds = parseOficinasIds(sol.oficinasIds);
-          if (!oficinasIds.includes(oficinaId)) {
-            throw new BadRequestException(
-              'Esta oficina não foi convidada para esta OS.',
-            );
-          }
-
-          const responderam = parseOficinasResponderam(sol.oficinasResponderam);
-          if (!responderam.includes(oficinaId)) {
-            throw new BadRequestException(
-              'Esta oficina ainda não enviou orçamento para esta OS.',
-            );
-          }
-
-          const prazoDias =
-            dto.prazoDias ??
-            Math.max(1, Math.round(Number(ordem.prazoDias) || 7));
-          const protocolo =
-            texto(ordem.protocolo) || texto(ordem.protocol) || ordemId;
-          const agora = new Date().toISOString();
-
-          tx.update(ordemRef, {
-            itens,
-            valorTotal,
-            prazoDias,
-            fotosComprovacao: dto.fotosComprovacao.map((url) => url.trim()),
-            atualizadoEm: agora,
-          });
-
-          const lance: LanceOs = {
-            oficinaId,
-            valor: valorTotal,
-            prazoDias,
-            ordemServicoId: ordemId,
-            atualizadoEm: agora,
-          };
-
-          const lancesAtualizados = mergeLance(
-            Array.isArray(sol.lances) ? (sol.lances as LanceOs[]) : [],
-            lance,
-          );
-
-          tx.update(solRef, {
-            lances: lancesAtualizados,
-          });
-
-          return {
-            id: ordemId,
-            protocol: protocolo,
-            valorTotal,
-            prazoDias,
-            solicitacaoStatus: statusAtual,
-          };
+      const result = await this.prisma.$transaction(async (tx) => {
+        const ordem = await tx.orcamento.findFirst({
+          where: { OR: [{ id: ordemId }, { legacyId: ordemId }] },
         });
+        if (!ordem) {
+          throw new NotFoundException('Orçamento não encontrado.');
+        }
+
+        if (texto(ordem.oficinaId) !== oficinaId) {
+          throw new BadRequestException(
+            'Esta oficina não pode editar este orçamento.',
+          );
+        }
+
+        if (!ordemPermiteEdicao(ordem.status)) {
+          throw new BadRequestException(
+            'Este orçamento não pode mais ser editado.',
+          );
+        }
+
+        const sol = await tx.serviceOrder.findUnique({
+          where: { id: ordem.serviceOrderId },
+        });
+        if (!sol) {
+          throw new NotFoundException('Solicitação de OS não encontrada.');
+        }
+
+        const statusAtual = texto(sol.status) || 'aguardando_orcamento';
+        if (!solicitacaoPermiteEdicaoOrcamento(statusAtual)) {
+          throw new BadRequestException(
+            'Esta solicitação não permite edição de orçamento.',
+          );
+        }
+
+        const oficinasIds = parseOficinasIds(sol.oficinasIds);
+        if (!oficinasIds.includes(oficinaId)) {
+          throw new BadRequestException(
+            'Esta oficina não foi convidada para esta OS.',
+          );
+        }
+
+        const responderam = parseOficinasResponderam(sol.oficinasResponderam);
+        if (!responderam.includes(oficinaId)) {
+          throw new BadRequestException(
+            'Esta oficina ainda não enviou orçamento para esta OS.',
+          );
+        }
+
+        const prazoDias =
+          dto.prazoDias ?? Math.max(1, Math.round(Number(ordem.prazoDias) || 7));
+        const protocolo = ordem.protocolo || ordemId;
+        const agora = new Date();
+
+        await tx.orcamento.update({
+          where: { id: ordem.id },
+          data: {
+            itens: toInputJson(itens),
+            valorTotal,
+            prazoDias,
+            fotosComprovacao: toInputJson(fotosComprovacao),
+          },
+        });
+
+        const lance: LanceOs = {
+          oficinaId,
+          valor: valorTotal,
+          prazoDias,
+          ordemServicoId: publicLegacyId(ordem),
+          atualizadoEm: agora.toISOString(),
+        };
+
+        const lancesAtualizados = mergeLance(
+          Array.isArray(sol.lances) ? (sol.lances as unknown as LanceOs[]) : [],
+          lance,
+        );
+
+        await tx.serviceOrder.update({
+          where: { id: sol.id },
+          data: { lances: toInputJson(lancesAtualizados) },
+        });
+
+        return {
+          id: publicLegacyId(ordem),
+          protocol: protocolo,
+          valorTotal,
+          prazoDias,
+          solicitacaoStatus: statusAtual,
+        };
+      });
 
       return result;
     } catch (error) {
@@ -364,22 +346,18 @@ export class OrcamentosService {
     }
 
     try {
-      const snap = await this.ordensCollection.where('oficinaId', '==', id).get();
+      const rows = await this.prisma.orcamento.findMany({
+        where: { oficinaId: id },
+        include: {
+          serviceOrder: { select: { id: true, legacyId: true, status: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
 
-      const ordens = snap.docs
-        .map((doc) =>
-          mapOrdemServicoListItem(doc.id, doc.data() as Record<string, unknown>),
-        )
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-
-      const statusPorSolicitacao = await this.loadSolicitacaoStatusMap(
-        ordens.map((ordem) => ordem.solicitacaoOsId),
-      );
-
-      const data = ordens.map((ordem) =>
+      const data = rows.map((row) =>
         mapOrdemToOrcamentoApi(
-          ordem,
-          statusPorSolicitacao.get(ordem.solicitacaoOsId),
+          mapOrcamentoToListItem(row),
+          texto(row.serviceOrder.status),
         ),
       );
 
@@ -411,10 +389,13 @@ export class OrcamentosService {
         throw new NotFoundException('Orçamento não encontrado.');
       }
 
-      const status = await this.loadSolicitacaoStatus(ordem.solicitacaoOsId);
+      const status = ordem.serviceOrder.status;
 
       return {
-        data: mapOrdemToOrcamentoApi(ordem, status),
+        data: mapOrdemToOrcamentoApi(
+          mapOrcamentoToListItem(ordem),
+          texto(status),
+        ),
         message: 'Orçamento encontrado.',
       };
     } catch (error) {
@@ -431,73 +412,42 @@ export class OrcamentosService {
     }
   }
 
-  private async resolveOrdem(
-    id: string,
-    oficinaId?: string,
-  ): Promise<ReturnType<typeof mapOrdemServicoListItem> | null> {
-    const direct = await this.ordensCollection.doc(id).get();
-    if (direct.exists) {
-      return mapOrdemServicoListItem(
-        direct.id,
-        direct.data() as Record<string, unknown>,
-      );
-    }
+  private async resolveOrdem(id: string, oficinaId?: string) {
+    const direct = await resolveOrcamentoPg(this.prisma, id);
+    if (direct) return direct;
 
     const oficina = texto(oficinaId);
     if (oficina) {
-      const bySol = await this.ordensCollection
-        .where('solicitacaoOsId', '==', id)
-        .where('oficinaId', '==', oficina)
-        .limit(1)
-        .get();
-      if (!bySol.empty) {
-        const doc = bySol.docs[0];
-        return mapOrdemServicoListItem(
-          doc.id,
-          doc.data() as Record<string, unknown>,
-        );
+      const sol = await resolveServiceOrderPg(this.prisma, id);
+      if (sol) {
+        return this.prisma.orcamento.findFirst({
+          where: { serviceOrderId: sol.id, oficinaId: oficina },
+          include: {
+            serviceOrder: { select: { id: true, legacyId: true, status: true } },
+          },
+        });
       }
     }
 
-    const bySolOnly = await this.ordensCollection
-      .where('solicitacaoOsId', '==', id)
-      .limit(oficina ? 1 : 20)
-      .get();
+    const solOnly = await resolveServiceOrderPg(this.prisma, id);
+    if (!solOnly) return null;
 
-    if (bySolOnly.empty) return null;
+    const rows = await this.prisma.orcamento.findMany({
+      where: { serviceOrderId: solOnly.id },
+      include: {
+        serviceOrder: { select: { id: true, legacyId: true, status: true } },
+      },
+      take: oficina ? 1 : 20,
+    });
 
-    const doc =
-      oficina && bySolOnly.docs.length > 1
-        ? bySolOnly.docs.find(
-            (entry) =>
-              texto((entry.data() as Record<string, unknown>).oficinaId) ===
-              oficina,
-          ) ?? bySolOnly.docs[0]
-        : bySolOnly.docs[0];
+    if (!rows.length) return null;
 
-    return mapOrdemServicoListItem(
-      doc.id,
-      doc.data() as Record<string, unknown>,
-    );
-  }
+    if (oficina && rows.length > 1) {
+      return (
+        rows.find((entry) => texto(entry.oficinaId) === oficina) ?? rows[0]
+      );
+    }
 
-  private async loadSolicitacaoStatus(solicitacaoOsId: string): Promise<string> {
-    if (!solicitacaoOsId) return '';
-    const snap = await this.solicitacoesCollection.doc(solicitacaoOsId).get();
-    if (!snap.exists) return '';
-    return texto((snap.data() as Record<string, unknown>).status);
-  }
-
-  private async loadSolicitacaoStatusMap(
-    solicitacaoIds: string[],
-  ): Promise<Map<string, string>> {
-    const unique = [...new Set(solicitacaoIds.filter(Boolean))];
-    const entries = await Promise.all(
-      unique.map(async (solId) => {
-        const status = await this.loadSolicitacaoStatus(solId);
-        return [solId, status] as const;
-      }),
-    );
-    return new Map(entries);
+    return rows[0];
   }
 }

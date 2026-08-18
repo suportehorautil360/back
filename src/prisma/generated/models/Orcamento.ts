@@ -90,6 +90,7 @@ export type OrcamentoCountAggregateOutputType = {
   valorTotal: number
   prazoDias: number
   status: number
+  fotosComprovacao: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -157,6 +158,7 @@ export type OrcamentoCountAggregateInputType = {
   valorTotal?: true
   prazoDias?: true
   status?: true
+  fotosComprovacao?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -263,6 +265,7 @@ export type OrcamentoGroupByOutputType = {
   valorTotal: runtime.Decimal
   prazoDias: number | null
   status: string
+  fotosComprovacao: runtime.JsonValue
   createdAt: Date
   updatedAt: Date
   _count: OrcamentoCountAggregateOutputType | null
@@ -305,6 +308,7 @@ export type OrcamentoWhereInput = {
   valorTotal?: Prisma.DecimalFilter<"Orcamento"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: Prisma.IntNullableFilter<"Orcamento"> | number | null
   status?: Prisma.StringFilter<"Orcamento"> | string
+  fotosComprovacao?: Prisma.JsonFilter<"Orcamento">
   createdAt?: Prisma.DateTimeFilter<"Orcamento"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Orcamento"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
@@ -326,6 +330,7 @@ export type OrcamentoOrderByWithRelationInput = {
   valorTotal?: Prisma.SortOrder
   prazoDias?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  fotosComprovacao?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   company?: Prisma.CompanyOrderByWithRelationInput
@@ -350,6 +355,7 @@ export type OrcamentoWhereUniqueInput = Prisma.AtLeast<{
   valorTotal?: Prisma.DecimalFilter<"Orcamento"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: Prisma.IntNullableFilter<"Orcamento"> | number | null
   status?: Prisma.StringFilter<"Orcamento"> | string
+  fotosComprovacao?: Prisma.JsonFilter<"Orcamento">
   createdAt?: Prisma.DateTimeFilter<"Orcamento"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Orcamento"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
@@ -371,6 +377,7 @@ export type OrcamentoOrderByWithAggregationInput = {
   valorTotal?: Prisma.SortOrder
   prazoDias?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  fotosComprovacao?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.OrcamentoCountOrderByAggregateInput
@@ -398,6 +405,7 @@ export type OrcamentoScalarWhereWithAggregatesInput = {
   valorTotal?: Prisma.DecimalWithAggregatesFilter<"Orcamento"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: Prisma.IntNullableWithAggregatesFilter<"Orcamento"> | number | null
   status?: Prisma.StringWithAggregatesFilter<"Orcamento"> | string
+  fotosComprovacao?: Prisma.JsonWithAggregatesFilter<"Orcamento">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Orcamento"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Orcamento"> | Date | string
 }
@@ -415,6 +423,7 @@ export type OrcamentoCreateInput = {
   valorTotal?: runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: number | null
   status?: string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutOrcamentosInput
@@ -436,6 +445,7 @@ export type OrcamentoUncheckedCreateInput = {
   valorTotal?: runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: number | null
   status?: string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -453,6 +463,7 @@ export type OrcamentoUpdateInput = {
   valorTotal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutOrcamentosNestedInput
@@ -474,6 +485,7 @@ export type OrcamentoUncheckedUpdateInput = {
   valorTotal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -493,6 +505,7 @@ export type OrcamentoCreateManyInput = {
   valorTotal?: runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: number | null
   status?: string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -510,6 +523,7 @@ export type OrcamentoUpdateManyMutationInput = {
   valorTotal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -529,6 +543,7 @@ export type OrcamentoUncheckedUpdateManyInput = {
   valorTotal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -558,6 +573,7 @@ export type OrcamentoCountOrderByAggregateInput = {
   valorTotal?: Prisma.SortOrder
   prazoDias?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  fotosComprovacao?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -705,6 +721,7 @@ export type OrcamentoCreateWithoutCompanyInput = {
   valorTotal?: runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: number | null
   status?: string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   serviceOrder: Prisma.ServiceOrderCreateNestedOneWithoutOrcamentosInput
@@ -724,6 +741,7 @@ export type OrcamentoUncheckedCreateWithoutCompanyInput = {
   valorTotal?: runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: number | null
   status?: string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -772,6 +790,7 @@ export type OrcamentoScalarWhereInput = {
   valorTotal?: Prisma.DecimalFilter<"Orcamento"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: Prisma.IntNullableFilter<"Orcamento"> | number | null
   status?: Prisma.StringFilter<"Orcamento"> | string
+  fotosComprovacao?: Prisma.JsonFilter<"Orcamento">
   createdAt?: Prisma.DateTimeFilter<"Orcamento"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Orcamento"> | Date | string
 }
@@ -789,6 +808,7 @@ export type OrcamentoCreateWithoutServiceOrderInput = {
   valorTotal?: runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: number | null
   status?: string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutOrcamentosInput
@@ -808,6 +828,7 @@ export type OrcamentoUncheckedCreateWithoutServiceOrderInput = {
   valorTotal?: runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: number | null
   status?: string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -852,6 +873,7 @@ export type OrcamentoCreateManyCompanyInput = {
   valorTotal?: runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: number | null
   status?: string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -869,6 +891,7 @@ export type OrcamentoUpdateWithoutCompanyInput = {
   valorTotal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   serviceOrder?: Prisma.ServiceOrderUpdateOneRequiredWithoutOrcamentosNestedInput
@@ -888,6 +911,7 @@ export type OrcamentoUncheckedUpdateWithoutCompanyInput = {
   valorTotal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -906,6 +930,7 @@ export type OrcamentoUncheckedUpdateManyWithoutCompanyInput = {
   valorTotal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -924,6 +949,7 @@ export type OrcamentoCreateManyServiceOrderInput = {
   valorTotal?: runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: number | null
   status?: string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -941,6 +967,7 @@ export type OrcamentoUpdateWithoutServiceOrderInput = {
   valorTotal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutOrcamentosNestedInput
@@ -960,6 +987,7 @@ export type OrcamentoUncheckedUpdateWithoutServiceOrderInput = {
   valorTotal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -978,6 +1006,7 @@ export type OrcamentoUncheckedUpdateManyWithoutServiceOrderInput = {
   valorTotal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   prazoDias?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  fotosComprovacao?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -999,6 +1028,7 @@ export type OrcamentoSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   valorTotal?: boolean
   prazoDias?: boolean
   status?: boolean
+  fotosComprovacao?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
@@ -1020,6 +1050,7 @@ export type OrcamentoSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   valorTotal?: boolean
   prazoDias?: boolean
   status?: boolean
+  fotosComprovacao?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
@@ -1041,6 +1072,7 @@ export type OrcamentoSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   valorTotal?: boolean
   prazoDias?: boolean
   status?: boolean
+  fotosComprovacao?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
@@ -1062,11 +1094,12 @@ export type OrcamentoSelectScalar = {
   valorTotal?: boolean
   prazoDias?: boolean
   status?: boolean
+  fotosComprovacao?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type OrcamentoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "serviceOrderId" | "protocolo" | "oficinaId" | "oficinaNome" | "operadorNome" | "equipamento" | "defeito" | "itens" | "valorTotal" | "prazoDias" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["orcamento"]>
+export type OrcamentoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "serviceOrderId" | "protocolo" | "oficinaId" | "oficinaNome" | "operadorNome" | "equipamento" | "defeito" | "itens" | "valorTotal" | "prazoDias" | "status" | "fotosComprovacao" | "createdAt" | "updatedAt", ExtArgs["result"]["orcamento"]>
 export type OrcamentoInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   serviceOrder?: boolean | Prisma.ServiceOrderDefaultArgs<ExtArgs>
@@ -1129,6 +1162,10 @@ export type $OrcamentoPayload<ExtArgs extends runtime.Types.Extensions.InternalA
      * "aguardando_aprovacao" | "em_pregao" | "aprovado" | "recusado".
      */
     status: string
+    /**
+     * URLs de fotos anexadas ao orçamento (legado Firestore `fotosComprovacao`).
+     */
+    fotosComprovacao: runtime.JsonValue
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["orcamento"]>
@@ -1570,6 +1607,7 @@ export interface OrcamentoFieldRefs {
   readonly valorTotal: Prisma.FieldRef<"Orcamento", 'Decimal'>
   readonly prazoDias: Prisma.FieldRef<"Orcamento", 'Int'>
   readonly status: Prisma.FieldRef<"Orcamento", 'String'>
+  readonly fotosComprovacao: Prisma.FieldRef<"Orcamento", 'Json'>
   readonly createdAt: Prisma.FieldRef<"Orcamento", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Orcamento", 'DateTime'>
 }

@@ -6,53 +6,46 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { FieldValue } from 'firebase-admin/firestore';
-import { FirebaseService } from '../../../config/firebase.service';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { resolverCompanyId } from '../../../common/prisma/company-resolver';
+import { fetchEquipmentMapPg, resolveEquipmentByIdPg } from '../../../common/prisma/equipment-resolver';
+import { nextProtocoloOsPg } from '../../../common/prisma/gerar-protocolo-os-prisma.helper';
+import {
+  mapOrcamentoToListItem,
+  mapServiceOrderToListItem,
+  serviceOrderToFirestoreShape,
+  toInputJson,
+} from '../../../common/prisma/os-prisma.mapper';
+import { listarOficinasAtivasPg, partnerPublicId as publicLegacyId } from '../../../common/prisma/partner-oficina.helper';
+import {
+  publicLegacyId as publicId,
+  serviceOrderWhere,
+} from '../../../common/prisma/service-order-resolver';
 import {
   parseDateEnd,
   parseDateStart,
 } from '../../movimentacoes/shared/date.helper';
-import { fetchEquipmentMap } from '../../movimentacoes/shared/equipment.helper';
 import {
   enrichSolicitacoesWithEquipamento,
-  parseHorimetroMedicaoFields,
+  formatEquipamentoHorimetro,
 } from '../helpers/enrich-solicitacoes-equipamento.helper';
-import { nextProtocoloOs } from '../helpers/gerar-protocolo.helper';
 import {
   normalizeOsServiceType,
-  osServiceTypeFromFirestore,
   osServiceTypeLabel,
   tipoOsLegacyCode,
 } from '../helpers/os-service-type.helper';
-import { mapOficinaCredenciadaDoc } from '../helpers/oficinas-credenciadas.helper';
 import { resolveSegmentoEquipamento, resolveLinhaEquipamento } from '../helpers/segmento-equipamento.helper';
 import { filtrarOficinasElegiveis } from '../helpers/selecionar-oficinas.helper';
-import { solicitacaoStatusLabel } from '../helpers/status-label.helper';
-import {
-  formatDateBrFromIso,
-  timestampToIso,
-  timestampToSeconds,
-} from '../helpers/timestamp.helper';
-import { mapOrdemServicoListItem } from '../helpers/ordem-servico-list.helper';
 import {
   ordemElegivelParaAprovacao,
   ordemElegivelParaRecusa,
   solicitacaoPermiteAprovacao,
 } from '../helpers/aprovar-orcamento.helper';
-import {
-  parseLances,
-  parseOficinasResponderam,
-  resolveOficinaVencedoraId,
-  resolveValorAprovado,
-  valorOrcadoForOficina,
-} from '../helpers/lances-os.helper';
 import type {
   AprovarSolicitacaoResult,
   CreateSolicitacaoResult,
-  OficinaAtiva,
   OrdemOrcamentoListItem,
   SolicitacaoComOrcamentosListItem,
-  SolicitacaoOsFirestore,
   SolicitacaoOsListItem,
 } from '../os.types';
 import { shouldIncludeSolicitacaoForOficina } from '../helpers/solicitacoes-oficina.helper';
@@ -64,22 +57,6 @@ function texto(valor: unknown): string {
   return typeof valor === 'string' ? valor.trim() : '';
 }
 
-function numero(valor: unknown): number {
-  if (typeof valor === 'number') return Number.isFinite(valor) ? valor : 0;
-  if (typeof valor === 'string') {
-    const n = Number(valor.replace(',', '.'));
-    return Number.isFinite(n) ? n : 0;
-  }
-  return 0;
-}
-
-function formatHorimetro(raw: Record<string, unknown>): string {
-  const medicao = numero(raw.medicaoAtual);
-  const unidade = texto(raw.unidadeRevisao) === 'h' ? 'h' : 'km';
-  if (medicao <= 0) return '';
-  return `${medicao.toLocaleString('pt-BR')} ${unidade}`;
-}
-
 function resolveNomeEquipamento(raw: Record<string, unknown>): string {
   return (
     texto(raw.descricao) ||
@@ -89,25 +66,14 @@ function resolveNomeEquipamento(raw: Record<string, unknown>): string {
   );
 }
 
+const serviceOrderInclude = {
+  company: { select: { legacyId: true } },
+  equipment: { select: { id: true, legacyId: true } },
+} as const;
+
 @Injectable()
 export class SolicitacoesService {
-  constructor(private readonly firebaseService: FirebaseService) {}
-
-  private get solicitacoesCollection() {
-    return this.firebaseService.getFirestore().collection('solicitacoesOS');
-  }
-
-  private get equipamentosCollection() {
-    return this.firebaseService.getFirestore().collection('equipamentos');
-  }
-
-  private get oficinasCollection() {
-    return this.firebaseService.getFirestore().collection('oficinas');
-  }
-
-  private get ordensCollection() {
-    return this.firebaseService.getFirestore().collection('ordensServico');
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateSolicitacaoDto): Promise<CreateSolicitacaoResult> {
     const prefeituraId = dto.prefeituraId.trim();
@@ -115,7 +81,17 @@ export class SolicitacoesService {
     const operator = dto.operator.trim();
     const report = dto.report.trim();
 
-    const equipamento = await this.findEquipamento(prefeituraId, equipmentId);
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) {
+      throw new BadRequestException('prefeituraId inválido.');
+    }
+
+    const equipamentoResolvido = await resolveEquipmentByIdPg(
+      this.prisma,
+      prefeituraId,
+      equipmentId,
+    );
+    const equipamento = equipamentoResolvido.raw;
     const linha = resolveLinhaEquipamento(equipamento);
     if (!linha) {
       throw new BadRequestException(
@@ -124,8 +100,11 @@ export class SolicitacoesService {
     }
 
     const segmento = resolveSegmentoEquipamento(equipamento);
-
-    const oficinas = await this.listarOficinasAtivas(prefeituraId);
+    const oficinas = await listarOficinasAtivasPg(
+      this.prisma,
+      companyId,
+      prefeituraId,
+    );
     if (oficinas.length === 0) {
       throw new UnprocessableEntityException(
         'Nenhuma oficina credenciada e ativa para este município. ' +
@@ -149,43 +128,40 @@ export class SolicitacoesService {
     }
 
     const convidadas = elegiveis;
-
-    const serviceType = normalizeOsServiceType(
-      dto.serviceType ?? dto.type,
-    );
+    const serviceType = normalizeOsServiceType(dto.serviceType ?? dto.type);
 
     try {
-      const protocolo = await nextProtocoloOs(
-        this.solicitacoesCollection,
-        prefeituraId,
-      );
+      const protocolo = await nextProtocoloOsPg(this.prisma, companyId);
+      const horimetro =
+        formatEquipamentoHorimetro(equipamento) || undefined;
 
-      const payload = {
-        protocolo,
-        prefeituraId,
-        equipamentoId: texto(equipamento.id) || equipmentId,
-        equipamento: resolveNomeEquipamento(equipamento),
-        linha,
-        ...(segmento ? { segmento } : {}),
-        operador: operator,
-        horimetro: formatHorimetro(equipamento) || undefined,
-        relato: report,
-        oficinas: convidadas.map((o) => o.nome),
-        oficinasIds: convidadas.map((o) => o.id),
-        oficinasResponderam: [] as string[],
-        status: 'aguardando_orcamento',
-        serviceType,
-        tipoOs: tipoOsLegacyCode(serviceType),
-        ...(dto.scheduledDate?.trim()
-          ? { dataAgendamento: dto.scheduledDate.trim() }
-          : {}),
-        criadoEm: FieldValue.serverTimestamp(),
-      };
-
-      const ref = await this.solicitacoesCollection.add(payload);
+      const row = await this.prisma.serviceOrder.create({
+        data: {
+          companyId,
+          protocolo,
+          tipoOs: tipoOsLegacyCode(serviceType),
+          serviceType,
+          equipmentId: equipamentoResolvido.equipmentUuid,
+          equipmentNome: resolveNomeEquipamento(equipamento),
+          linha,
+          ...(segmento ? { segmento } : {}),
+          horimetro,
+          operadorNome: operator,
+          relato: report,
+          oficinasIds: toInputJson(convidadas.map((o) => o.id)),
+          oficinasNomes: toInputJson(convidadas.map((o) => o.nome)),
+          oficinasResponderam: toInputJson([]),
+          lances: toInputJson([]),
+          status: 'aguardando_orcamento',
+          ...(dto.scheduledDate?.trim()
+            ? { dataAgendamento: new Date(`${dto.scheduledDate.trim()}T12:00:00`) }
+            : {}),
+        },
+        include: serviceOrderInclude,
+      });
 
       return {
-        id: ref.id,
+        id: publicLegacyId(row),
         protocol: protocolo,
         serviceType,
         serviceTypeLabel: osServiceTypeLabel(serviceType),
@@ -219,21 +195,19 @@ export class SolicitacoesService {
     const statusFiltro = query.status?.trim();
 
     try {
-      let firestoreQuery = this.solicitacoesCollection.where(
-        'oficinasIds',
-        'array-contains',
-        id,
-      );
+      const rows = await this.prisma.serviceOrder.findMany({
+        where: {
+          oficinasIds: { array_contains: id },
+          ...(statusFiltro && statusFiltro !== 'todos'
+            ? { status: statusFiltro }
+            : {}),
+        },
+        include: serviceOrderInclude,
+      });
 
-      if (statusFiltro && statusFiltro !== 'todos') {
-        firestoreQuery = firestoreQuery.where('status', '==', statusFiltro);
-      }
-
-      const snap = await firestoreQuery.get();
-
-      let items = snap.docs
-        .filter((doc) => {
-          const data = doc.data() as Record<string, unknown>;
+      let items = rows
+        .filter((row) => {
+          const data = serviceOrderToFirestoreShape(row);
           const pref = texto(query.prefeituraId);
           if (pref && texto(data.prefeituraId) !== pref) return false;
 
@@ -253,19 +227,10 @@ export class SolicitacoesService {
 
           return true;
         })
-        .map((doc) =>
-          this.mapToListItem(
-            doc.id,
-            doc.data() as SolicitacaoOsFirestore,
-            id,
-          ),
-        );
+        .map((row) => mapServiceOrderToListItem(row, id));
 
       if (query.startDate) {
-        const startMs = parseDateStart(
-          query.startDate,
-          'startDate',
-        ).getTime();
+        const startMs = parseDateStart(query.startDate, 'startDate').getTime();
         items = items.filter((item) => {
           const ms = new Date(item.createdAt).getTime();
           return !Number.isNaN(ms) && ms >= startMs;
@@ -281,7 +246,6 @@ export class SolicitacoesService {
       }
 
       items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-
       items = await this.enrichWithEquipamentoChassis(items);
 
       return {
@@ -307,82 +271,78 @@ export class SolicitacoesService {
       throw new BadRequestException('solicitacaoId e ordemServicoId são obrigatórios.');
     }
 
-    const solRef = this.solicitacoesCollection.doc(solId);
-    const ordemRef = this.ordensCollection.doc(ordemId);
-
     try {
-      return await this.firebaseService.getFirestore().runTransaction(
-        async (tx) => {
-          const [solSnap, ordemSnap, outrasSnap] = await Promise.all([
-            tx.get(solRef),
-            tx.get(ordemRef),
-            tx.get(
-              this.ordensCollection
-                .where('solicitacaoOsId', '==', solId),
-            ),
-          ]);
+      return await this.prisma.$transaction(async (tx) => {
+        const sol = await tx.serviceOrder.findFirst({
+          where: serviceOrderWhere(solId),
+        });
+        if (!sol) {
+          throw new NotFoundException('Solicitação de OS não encontrada.');
+        }
 
-          if (!solSnap.exists) {
-            throw new NotFoundException('Solicitação de OS não encontrada.');
+        const ordem = await tx.orcamento.findFirst({
+          where: {
+            OR: [{ id: ordemId }, { legacyId: ordemId }],
+            serviceOrderId: sol.id,
+          },
+        });
+        if (!ordem) {
+          throw new NotFoundException('Orçamento não encontrado.');
+        }
+
+        if (!solicitacaoPermiteAprovacao(sol.status)) {
+          throw new ConflictException(
+            'Esta O.S. já foi finalizada e não pode ser aprovada novamente.',
+          );
+        }
+
+        if (!ordemElegivelParaAprovacao(ordem.status)) {
+          throw new UnprocessableEntityException(
+            'Este orçamento não está elegível para aprovação.',
+          );
+        }
+
+        const agora = new Date();
+        const ordemPublicId = publicId(ordem);
+
+        await tx.orcamento.update({
+          where: { id: ordem.id },
+          data: { status: 'aprovado' },
+        });
+
+        const outras = await tx.orcamento.findMany({
+          where: {
+            serviceOrderId: sol.id,
+            id: { not: ordem.id },
+          },
+        });
+
+        for (const outra of outras) {
+          if (ordemElegivelParaRecusa(outra.status)) {
+            await tx.orcamento.update({
+              where: { id: outra.id },
+              data: { status: 'recusado' },
+            });
           }
-          if (!ordemSnap.exists) {
-            throw new NotFoundException('Orçamento não encontrado.');
-          }
+        }
 
-          const sol = solSnap.data() as Record<string, unknown>;
-          const ordem = ordemSnap.data() as Record<string, unknown>;
-
-          if (!solicitacaoPermiteAprovacao(sol.status)) {
-            throw new ConflictException(
-              'Esta O.S. já foi finalizada e não pode ser aprovada novamente.',
-            );
-          }
-
-          if (texto(ordem.solicitacaoOsId) !== solId) {
-            throw new BadRequestException(
-              'O orçamento não pertence a esta solicitação.',
-            );
-          }
-
-          if (!ordemElegivelParaAprovacao(ordem.status)) {
-            throw new UnprocessableEntityException(
-              'Este orçamento não está elegível para aprovação.',
-            );
-          }
-
-          const agora = new Date().toISOString();
-
-          tx.update(ordemRef, {
+        await tx.serviceOrder.update({
+          where: { id: sol.id },
+          data: {
             status: 'aprovado',
             aprovadoEm: agora,
-          });
-
-          for (const doc of outrasSnap.docs) {
-            if (doc.id === ordemId) continue;
-            const data = doc.data() as Record<string, unknown>;
-            if (ordemElegivelParaRecusa(data.status)) {
-              tx.update(doc.ref, {
-                status: 'recusado',
-                recusadoEm: agora,
-              });
-            }
-          }
-
-          tx.update(solRef, {
-            status: 'aprovado',
-            aprovadoEm: agora,
-            ordemServicoAprovadaId: ordemId,
+            ordemServicoAprovadaId: ordemPublicId,
             oficinaVencedoraId: texto(ordem.oficinaId),
-            valorAprovado: numero(ordem.valorTotal),
-          });
+            valorAprovado: ordem.valorTotal,
+          },
+        });
 
-          return {
-            solicitacaoId: solId,
-            approvedOrdemId: ordemId,
-            status: 'aprovado',
-          };
-        },
-      );
+        return {
+          solicitacaoId: publicId(sol),
+          approvedOrdemId: ordemPublicId,
+          status: 'aprovado',
+        };
+      });
     } catch (error) {
       if (
         error instanceof BadRequestException ||
@@ -409,27 +369,33 @@ export class SolicitacoesService {
         query,
       );
 
-      const ordensSnap = await this.ordensCollection
-        .where('prefeituraId', '==', prefeituraId)
-        .get();
+      const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+      if (!companyId) {
+        throw new BadRequestException('prefeituraId inválido.');
+      }
+
+      const ordens = await this.prisma.orcamento.findMany({
+        where: { companyId },
+        include: {
+          serviceOrder: { select: { id: true, legacyId: true } },
+        },
+      });
 
       const ordensPorSolicitacao = new Map<string, OrdemOrcamentoListItem[]>();
 
-      for (const doc of ordensSnap.docs) {
-        const ordem = mapOrdemServicoListItem(
-          doc.id,
-          doc.data() as Record<string, unknown>,
-        );
-        if (!ordem.solicitacaoOsId) continue;
+      for (const row of ordens) {
+        const ordem = mapOrcamentoToListItem(row);
+        const solPublicId = ordem.solicitacaoOsId;
+        if (!solPublicId) continue;
 
-        const lista = ordensPorSolicitacao.get(ordem.solicitacaoOsId) ?? [];
+        const lista = ordensPorSolicitacao.get(solPublicId) ?? [];
         lista.push(ordem);
-        ordensPorSolicitacao.set(ordem.solicitacaoOsId, lista);
+        ordensPorSolicitacao.set(solPublicId, lista);
       }
 
-      for (const [solId, ordens] of ordensPorSolicitacao) {
-        ordens.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-        ordensPorSolicitacao.set(solId, ordens);
+      for (const [solId, lista] of ordensPorSolicitacao) {
+        lista.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        ordensPorSolicitacao.set(solId, lista);
       }
 
       const data = solicitacoes.map((sol) => {
@@ -460,24 +426,25 @@ export class SolicitacoesService {
     prefeituraId: string,
     query: ListSolicitacoesQueryDto,
   ): Promise<{ data: SolicitacaoOsListItem[]; message: string }> {
-    try {
-      const snap = await this.solicitacoesCollection
-        .where('prefeituraId', '==', prefeituraId)
-        .get();
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) {
+      throw new BadRequestException('prefeituraId inválido.');
+    }
 
-      let items = snap.docs.map((doc) =>
-        this.mapToListItem(doc.id, doc.data() as SolicitacaoOsFirestore),
-      );
+    try {
+      const rows = await this.prisma.serviceOrder.findMany({
+        where: { companyId },
+        include: serviceOrderInclude,
+      });
+
+      let items = rows.map((row) => mapServiceOrderToListItem(row));
 
       if (query.status && query.status !== 'todos') {
         items = items.filter((item) => item.status === query.status);
       }
 
       if (query.startDate) {
-        const startMs = parseDateStart(
-          query.startDate,
-          'startDate',
-        ).getTime();
+        const startMs = parseDateStart(query.startDate, 'startDate').getTime();
         items = items.filter((item) => {
           const ms = new Date(item.createdAt).getTime();
           return !Number.isNaN(ms) && ms >= startMs;
@@ -493,7 +460,6 @@ export class SolicitacoesService {
       }
 
       items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-
       items = await this.enrichWithEquipamentoChassis(items);
 
       return {
@@ -509,78 +475,6 @@ export class SolicitacoesService {
     }
   }
 
-  private mapToListItem(
-    id: string,
-    raw: SolicitacaoOsFirestore,
-    oficinaIdContext?: string,
-  ): SolicitacaoOsListItem {
-    const createdAt = timestampToIso(raw.criadoEm);
-    const status = texto(raw.status) || 'aguardando_orcamento';
-    const protocolo = texto(raw.protocolo);
-    const serviceType = osServiceTypeFromFirestore(raw);
-    const lances = parseLances(raw.lances);
-    const oficinasResponderam = parseOficinasResponderam(raw.oficinasResponderam);
-    const valorOrcado = oficinaIdContext
-      ? valorOrcadoForOficina(lances, oficinaIdContext)
-      : null;
-    const rawRecord = raw as unknown as Record<string, unknown>;
-    const ordemServicoAprovadaId = texto(rawRecord.ordemServicoAprovadaId);
-    const oficinaVencedoraId = resolveOficinaVencedoraId(rawRecord, lances);
-    const valorAprovado = resolveValorAprovado(
-      rawRecord,
-      lances,
-      oficinaVencedoraId,
-    );
-    const aprovadoEm = timestampToIso(
-      rawRecord.aprovadoEm as SolicitacaoOsFirestore['criadoEm'],
-    );
-    const equipmentId = texto(raw.equipamentoId);
-    const horimetro = texto(raw.horimetro);
-    const medicaoSnapshot = parseHorimetroMedicaoFields(horimetro);
-
-    return {
-      id,
-      protocol: protocolo,
-      equipment: texto(raw.equipamento),
-      equipmentId,
-      chassis: '',
-      horimetro,
-      hourMeter: medicaoSnapshot.hourMeter,
-      currentKm: medicaoSnapshot.currentKm,
-      km: medicaoSnapshot.km,
-      medicaoAtual: null,
-      unidadeRevisao: medicaoSnapshot.unidadeRevisao,
-      line: texto(raw.linha),
-      operator: texto(raw.operador),
-      report: texto(raw.relato),
-      workshops: Array.isArray(raw.oficinas) ? raw.oficinas : [],
-      workshopIds: Array.isArray(raw.oficinasIds) ? raw.oficinasIds : [],
-      status,
-      statusLabel: solicitacaoStatusLabel(status),
-      serviceType,
-      serviceTypeLabel: osServiceTypeLabel(serviceType),
-      dateLabel: formatDateBrFromIso(createdAt),
-      createdAt,
-      protocolo,
-      equipamento: texto(raw.equipamento),
-      equipamentoId: equipmentId,
-      chassi: '',
-      linha: texto(raw.linha),
-      operador: texto(raw.operador),
-      relato: texto(raw.relato),
-      oficinas: Array.isArray(raw.oficinas) ? raw.oficinas : [],
-      oficinasIds: Array.isArray(raw.oficinasIds) ? raw.oficinasIds : [],
-      oficinasResponderam,
-      lances,
-      valorOrcado,
-      ordemServicoAprovadaId: ordemServicoAprovadaId || undefined,
-      oficinaVencedoraId: oficinaVencedoraId || undefined,
-      valorAprovado,
-      aprovadoEm: aprovadoEm || null,
-      criadoEm: timestampToSeconds(raw.criadoEm),
-    };
-  }
-
   private async enrichWithEquipamentoChassis(
     items: SolicitacaoOsListItem[],
   ): Promise<SolicitacaoOsListItem[]> {
@@ -590,69 +484,7 @@ export class SolicitacoesService {
 
     if (!equipmentIds.length) return items;
 
-    const equipmentMap = await fetchEquipmentMap(
-      this.equipamentosCollection,
-      equipmentIds,
-    );
-
+    const equipmentMap = await fetchEquipmentMapPg(this.prisma, equipmentIds);
     return enrichSolicitacoesWithEquipamento(items, equipmentMap);
-  }
-
-  private async findEquipamento(
-    prefeituraId: string,
-    equipmentId: string,
-  ): Promise<Record<string, unknown>> {
-    const byField = await this.equipamentosCollection
-      .where('id', '==', equipmentId)
-      .get();
-
-    if (!byField.empty) {
-      const doc = byField.docs[0];
-      return this.assertEquipamentoPrefeitura(
-        prefeituraId,
-        doc.data() as Record<string, unknown>,
-        doc.id,
-      );
-    }
-
-    const byDocId = await this.equipamentosCollection.doc(equipmentId).get();
-    if (byDocId.exists) {
-      return this.assertEquipamentoPrefeitura(
-        prefeituraId,
-        byDocId.data() as Record<string, unknown>,
-        byDocId.id,
-      );
-    }
-
-    throw new NotFoundException('Equipment not found for the given id.');
-  }
-
-  private assertEquipamentoPrefeitura(
-    prefeituraId: string,
-    data: Record<string, unknown>,
-    docId: string,
-  ): Record<string, unknown> {
-    const equipPrefeitura = texto(data.prefeituraId);
-    if (equipPrefeitura && equipPrefeitura !== prefeituraId) {
-      throw new BadRequestException(
-        'Equipment does not belong to the given prefeituraId.',
-      );
-    }
-
-    return { ...data, id: texto(data.id) || docId };
-  }
-
-  private async listarOficinasAtivas(
-    prefeituraId: string,
-  ): Promise<OficinaAtiva[]> {
-    const snap = await this.oficinasCollection
-      .where('prefeituraId', '==', prefeituraId)
-      .get();
-
-    return snap.docs
-      .map((doc) =>
-        mapOficinaCredenciadaDoc(doc.id, doc.data() as Record<string, unknown>),
-      )
-      .filter((o): o is OficinaAtiva => o !== null);
   }
 }
