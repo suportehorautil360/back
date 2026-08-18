@@ -28,6 +28,22 @@ export function extrairItensOrcamentoDoc(
   return linhas;
 }
 
+/** Extrai itens do campo JSON `itens` de um orçamento Postgres. */
+export function extrairItensOrcamentoPrisma(
+  itens: unknown,
+): Record<string, unknown>[] {
+  if (Array.isArray(itens)) {
+    return itens.filter(
+      (item): item is Record<string, unknown> =>
+        !!item && typeof item === 'object' && !Array.isArray(item),
+    );
+  }
+  if (itens && typeof itens === 'object') {
+    return extrairItensOrcamentoDoc(itens as Record<string, unknown>);
+  }
+  return [];
+}
+
 export function selecionarOrdensParaInsumos(
   ordens: FirebaseFirestore.QueryDocumentSnapshot[],
   solicitacao: Record<string, unknown>,
@@ -42,6 +58,31 @@ export function selecionarOrdensParaInsumos(
     const status = texto((doc.data() as Record<string, unknown>).status);
     return status === 'aprovado';
   });
+  if (aprovadas.length) return aprovadas;
+
+  return ordens;
+}
+
+type OrcamentoInsumoRow = {
+  id: string;
+  legacyId: string | null;
+  status: string;
+  itens: unknown;
+};
+
+export function selecionarOrdensParaInsumosPg(
+  ordens: OrcamentoInsumoRow[],
+  solicitacao: { ordemServicoAprovadaId?: string | null },
+): OrcamentoInsumoRow[] {
+  const aprovadaId = texto(solicitacao.ordemServicoAprovadaId);
+  if (aprovadaId) {
+    const aprovada = ordens.filter(
+      (o) => o.id === aprovadaId || o.legacyId === aprovadaId,
+    );
+    if (aprovada.length) return aprovada;
+  }
+
+  const aprovadas = ordens.filter((o) => texto(o.status) === 'aprovado');
   if (aprovadas.length) return aprovadas;
 
   return ordens;

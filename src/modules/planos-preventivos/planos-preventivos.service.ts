@@ -4,7 +4,12 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { FirebaseService } from '../../config/firebase.service';
+import type { Prisma } from '../../prisma/generated/client';
+import { PrismaService } from '../../prisma/prisma.service';
+import {
+  resolverCompanyId,
+  resolverEmpresa,
+} from '../../common/prisma/company-resolver';
 import { clonarMatrizPadrao } from './data/matriz-padrao.seed';
 import { validarMatrizPreventiva } from './helpers/validar-matriz.helper';
 import type {
@@ -15,24 +20,32 @@ import type {
   SalvarPlanoPreventivoInput,
 } from './planos-preventivos.types';
 
+function toInputJson(value: unknown): Prisma.InputJsonValue {
+  return value as Prisma.InputJsonValue;
+}
+
 @Injectable()
 export class PlanosPreventivosService {
-  constructor(private readonly firebaseService: FirebaseService) {}
-
-  private get collection() {
-    return this.firebaseService.getFirestore().collection('planosPreventivos');
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async obter(prefeituraId: string): Promise<{ data: PlanoPreventivoDoc; message: string }> {
-    await this.assertClienteExiste(prefeituraId);
+    const id = prefeituraId.trim();
+    await this.assertClienteExiste(id);
 
-    const snap = await this.collection.doc(prefeituraId.trim()).get();
-    if (!snap.exists) {
+    const companyId = await resolverCompanyId(this.prisma, id);
+    if (!companyId) {
+      throw new NotFoundException('Preventive plan not found for this municipality.');
+    }
+
+    const row = await this.prisma.planoPreventivo.findUnique({
+      where: { companyId },
+    });
+    if (!row) {
       throw new NotFoundException('Preventive plan not found for this municipality.');
     }
 
     return {
-      data: this.mapDoc(prefeituraId.trim(), snap.data() as Record<string, unknown>),
+      data: this.mapRow(id, row.categorias, row.updatedAt),
       message: 'Preventive plan loaded.',
     };
   }
@@ -74,28 +87,38 @@ export class PlanosPreventivosService {
     prefeituraId: string,
     matriz: SalvarPlanoPreventivoInput,
   ): Promise<PlanoPreventivoDoc> {
-    const atualizadoEm = new Date().toISOString();
-    const payload: PlanoPreventivoDoc = {
-      prefeituraId,
-      categorias: matriz.categorias,
-      atualizadoEm,
-    };
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) {
+      throw new NotFoundException('Cliente (prefeitura) não encontrado.');
+    }
 
-    await this.collection.doc(prefeituraId).set(payload);
-    return payload;
+    const row = await this.prisma.planoPreventivo.upsert({
+      where: { companyId },
+      update: { categorias: toInputJson(matriz.categorias) },
+      create: {
+        companyId,
+        categorias: toInputJson(matriz.categorias),
+      },
+    });
+
+    return this.mapRow(prefeituraId, row.categorias, row.updatedAt);
   }
 
-  private mapDoc(
+  private mapRow(
     prefeituraId: string,
-    raw: Record<string, unknown>,
+    categoriasRaw: unknown,
+    updatedAt: Date,
   ): PlanoPreventivoDoc {
+    const raw: Record<string, unknown> = Array.isArray(categoriasRaw)
+      ? { categorias: categoriasRaw }
+      : categoriasRaw && typeof categoriasRaw === 'object'
+        ? (categoriasRaw as Record<string, unknown>)
+        : { categorias: [] };
+
     return {
       prefeituraId,
       categorias: this.normalizarCategorias(raw),
-      atualizadoEm:
-        typeof raw.atualizadoEm === 'string'
-          ? raw.atualizadoEm
-          : new Date().toISOString(),
+      atualizadoEm: updatedAt.toISOString(),
     };
   }
 
@@ -229,12 +252,8 @@ export class PlanosPreventivosService {
     const id = prefeituraId.trim();
     if (!id) throw new BadRequestException('prefeituraId inválido.');
 
-    const snap = await this.firebaseService
-      .getFirestore()
-      .collection('clientes')
-      .doc(id)
-      .get();
-    if (!snap.exists) {
+    const company = await resolverEmpresa(this.prisma, id, { id: true });
+    if (!company) {
       throw new NotFoundException('Cliente (prefeitura) não encontrado.');
     }
   }
