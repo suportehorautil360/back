@@ -5,61 +5,90 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import * as admin from 'firebase-admin';
 import { randomUUID } from 'node:crypto';
-import { FirebaseService } from '../../config/firebase.service';
+import { mapPartnerToOficinaListItem } from '../../common/prisma/partner-prisma.mapper';
+import { PrismaService } from '../../prisma/prisma.service';
+import {
+  portalPartnerLegacyId,
+  portalPrefeituraLegacyId,
+  portalUserPublicId,
+} from '../auth/helpers/partner-portal-user.helper';
+import { BCRYPT_ROUNDS } from '../auth/helpers/partner-portal-password.helper';
 import { CreateUserDto } from './dto/create-user.dto';
-import { resolveMustChangePassword } from '../auth/helpers/user-password.helper';
 
-const BCRYPT_ROUNDS = 12;
+const portalUserInclude = {
+  partner: {
+    include: {
+      company: { select: { legacyId: true } },
+    },
+  },
+} as const;
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly firebase: FirebaseService) {}
-
-  private get usersCollection() {
-    return this.firebase.getFirestore().collection('users');
-  }
-
-  private get oficinasCollection() {
-    return this.firebase.getFirestore().collection('oficinas');
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async registerUser(dto: CreateUserDto) {
     try {
-      const existing = await this.usersCollection
-        .where('email', '==', dto.email)
-        .limit(1)
-        .get();
+      const email = dto.email.trim().toLowerCase();
+      const existing = await this.prisma.partnerPortalUser.findFirst({
+        where: {
+          OR: [{ email }, { usuario: email }],
+        },
+        select: { id: true },
+      });
 
-      if (!existing.empty) {
+      if (existing) {
         throw new ConflictException('Email já cadastrado.');
+      }
+
+      const company = await this.prisma.company.findFirst({
+        where: { legacyId: dto.prefeituraId },
+        select: { id: true },
+      });
+      if (!company) {
+        throw new ConflictException('Cliente (prefeituraId) não encontrado.');
+      }
+
+      const partner = await this.prisma.partner.findFirst({
+        where: {
+          type: 'OFICINA',
+          OR: [{ legacyId: dto.oficinaId }, { id: dto.oficinaId }],
+          companyId: company.id,
+        },
+        select: { id: true, legacyId: true },
+      });
+      if (!partner) {
+        throw new ConflictException('Oficina não encontrada.');
       }
 
       const id = randomUUID();
       const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
 
-      await this.usersCollection.doc(id).set({
-        id,
-        name: dto.name,
-        email: dto.email,
-        passwordHash,
-        oficinaId: dto.oficinaId,
-        prefeituraId: dto.prefeituraId,
-        status: 'ACTIVE',
-        mustChangePassword: true,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      await this.prisma.partnerPortalUser.create({
+        data: {
+          legacyId: id,
+          companyId: company.id,
+          partnerId: partner.id,
+          partnerLegacyId: partner.legacyId ?? dto.oficinaId,
+          nome: dto.name,
+          usuario: email,
+          email,
+          senhaHash: passwordHash,
+          perfil: 'gestor',
+          vinculo: 'oficina',
+          status: 'ativo',
+        },
       });
 
       return {
         data: {
           id,
           name: dto.name,
-          email: dto.email,
-          oficinaId: dto.oficinaId,
+          email,
+          oficinaId: partner.legacyId ?? dto.oficinaId,
           prefeituraId: dto.prefeituraId,
-          status: 'ACTIVE',
+          status: 'ativo',
         },
         message: 'Usuário criado com sucesso.',
       };
@@ -74,45 +103,37 @@ export class UsersService {
 
   async me(userId: string, credLevel?: string) {
     try {
-      let userDoc = await this.usersCollection.doc(userId).get();
+      const row = await this.prisma.partnerPortalUser.findFirst({
+        where: {
+          OR: [{ id: userId }, { legacyId: userId }],
+        },
+        include: portalUserInclude,
+      });
 
-      if (!userDoc.exists) {
-        const snap = await this.usersCollection
-          .where('id', '==', userId)
-          .limit(1)
-          .get();
-        userDoc = snap.empty ? userDoc : snap.docs[0];
-      }
-
-      if (!userDoc.exists) {
+      if (!row) {
         throw new NotFoundException('Usuário não encontrado.');
       }
 
-      const raw = userDoc.data() as Record<string, unknown>;
-      const toStr = (v: unknown) => (typeof v === 'string' ? v : '');
-
-      const oficinaId =
-        toStr(raw.oficinaId) ||
-        toStr(raw.officinaId);
+      const partnerLegacyId = portalPartnerLegacyId(row);
+      const prefeituraId = portalPrefeituraLegacyId(row);
 
       const user = {
-        id: userDoc.id,
-        name: toStr(raw.name) || toStr(raw.nome),
-        email: toStr(raw.email),
-        usuario: toStr(raw.usuario),
-        oficinaId,
-        prefeituraId: toStr(raw.prefeituraId),
-        status: toStr(raw.status) || 'ACTIVE',
-        mustChangePassword: resolveMustChangePassword(raw),
+        id: portalUserPublicId(row),
+        name: row.nome,
+        email: row.email ?? '',
+        usuario: row.usuario,
+        oficinaId: row.vinculo === 'oficina' ? partnerLegacyId : '',
+        postoId: row.vinculo === 'posto' ? partnerLegacyId : '',
+        prefeituraId,
+        status: row.status,
+        mustChangePassword: false,
         credLevel,
       };
 
-      const oficinasDoc = await this.oficinasCollection
-        .doc(oficinaId)
-        .get();
-      const oficina = oficinasDoc.exists
-        ? { id: oficinasDoc.id, ...oficinasDoc.data() }
-        : null;
+      const oficina =
+        row.partner && row.vinculo === 'oficina'
+          ? mapPartnerToOficinaListItem(row.partner, prefeituraId)
+          : null;
 
       return {
         data: { user, oficina },

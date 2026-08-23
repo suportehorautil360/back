@@ -8,7 +8,7 @@ export function htmlResetSenhaOficina(opts: {
   const text = [
     `Olá, ${nome}.`,
     '',
-    'Recebemos um pedido para redefinir a senha do app da oficina (Hora Útil 360).',
+    'Recebemos um pedido para redefinir a senha do portal parceiro (posto/oficina) do Hora Útil 360.',
     '',
     `Acesse o link abaixo (válido por ${expiraHoras} hora(s)) para criar uma nova senha:`,
     link,
@@ -20,7 +20,7 @@ export function htmlResetSenhaOficina(opts: {
 <html lang="pt-BR">
 <body style="font-family:system-ui,sans-serif;line-height:1.5;color:#0f172a;max-width:520px;margin:0 auto;padding:24px">
   <p>Olá, <strong>${escapeHtml(nome)}</strong>.</p>
-  <p>Recebemos um pedido para redefinir a senha do <strong>app da oficina</strong> (Hora Útil 360).</p>
+  <p>Recebemos um pedido para redefinir a senha do <strong>portal parceiro</strong> (posto/oficina) do Hora Útil 360.</p>
   <p style="margin:24px 0">
     <a href="${escapeHtml(link)}" style="display:inline-block;background:#f97316;color:#000;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600">Redefinir senha</a>
   </p>

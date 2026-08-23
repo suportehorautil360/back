@@ -9,9 +9,10 @@ import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 
 export interface JwtPayload {
-  /** Doc id do usuário em `users` — o mesmo id de `work-fronts.responsibleId`. */
+  /** `partner_portal_users.legacy_id` ou UUID do Postgres. */
   sub: string;
-  oficinaId: string;
+  oficinaId?: string;
+  postoId?: string;
   prefeituraId: string;
   perfil?: string;
   vinculo?: string;
