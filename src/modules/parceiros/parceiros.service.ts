@@ -16,7 +16,6 @@ import {
   mapPartnerToPostoOverview,
 } from '../../common/prisma/partner-prisma.mapper';
 import { publicLegacyId } from '../../common/prisma/service-order-resolver';
-import { FirebaseService } from '../../config/firebase.service';
 import {
   OficinaParceiro,
   ParceiroDetalhe,
@@ -32,7 +31,7 @@ import {
 } from './dto/create-parceiro-login.dto';
 import {
   hashSenhaOperacional,
-  mapParceiroLoginDoc,
+  mapPartnerPortalUserToParceiroLoginRow,
   type ParceiroLoginRow,
 } from './helpers/parceiro-login.helper';
 import {
@@ -76,10 +75,7 @@ function toInputJson(value: unknown): Prisma.InputJsonValue {
 
 @Injectable()
 export class ParceirosService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly firebaseService: FirebaseService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async overview(prefeituraId?: string): Promise<{ data: ParceirosOverview }> {
     const filtroPref = (prefeituraId ?? '').trim();
@@ -470,15 +466,13 @@ export class ParceirosService {
     return { prefeituraId, legacyId: publicLegacyId(row) };
   }
 
-  /** Logins operacionais ainda no Firestore — migrar na onda auth. */
+  /** Logins operacionais em `partner_portal_users`. */
   private async usuarioLoginDisponivel(usuario: string): Promise<boolean> {
-    const snap = await this.firebaseService
-      .getFirestore()
-      .collection('users')
-      .where('usuario', '==', usuario)
-      .limit(1)
-      .get();
-    return snap.empty;
+    const row = await this.prisma.partnerPortalUser.findFirst({
+      where: { usuario },
+      select: { id: true },
+    });
+    return !row;
   }
 
   private async persistirLoginOperacional(
@@ -505,32 +499,43 @@ export class ParceirosService {
       throw new ConflictException('Já existe um usuário com esse login.');
     }
 
-    const perfil = input.perfil === 'admin' ? 'admin' : 'gestor';
-    const id = randomUUID();
-    const payload: Record<string, unknown> = {
-      id,
-      nome,
-      usuario,
-      senha: hashSenhaOperacional(senha),
-      perfil,
-      type: tipo,
-      vinculo: tipo,
-      prefeituraId,
-      createdAt: new Date().toISOString(),
-      ...(tipo === 'posto'
-        ? { postoId: parceiroId.trim() }
-        : { officinaId: parceiroId.trim() }),
-    };
-
-    const ref = await this.firebaseService
-      .getFirestore()
-      .collection('users')
-      .add(payload);
-    const data = mapParceiroLoginDoc(ref.id, payload);
-    if (!data) {
-      throw new InternalServerErrorException('Falha ao mapear login criado.');
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) {
+      throw new BadRequestException('prefeituraId inválido.');
     }
-    return data;
+
+    const partner = await this.prisma.partner.findFirst({
+      where: {
+        type: apiTypeToPartnerType(tipo),
+        OR: [{ legacyId: parceiroId }, { id: parceiroId }],
+        companyId,
+      },
+      select: { id: true, legacyId: true },
+    });
+    if (!partner) {
+      throw new NotFoundException('Parceiro não encontrado.');
+    }
+
+    const perfil = input.perfil === 'admin' ? 'admin' : 'gestor';
+    const legacyId = randomUUID();
+
+    const created = await this.prisma.partnerPortalUser.create({
+      data: {
+        legacyId,
+        companyId,
+        partnerId: partner.id,
+        partnerLegacyId: partner.legacyId ?? parceiroId.trim(),
+        nome,
+        usuario,
+        email: usuario.includes('@') ? usuario.toLowerCase() : null,
+        senhaHash: hashSenhaOperacional(senha),
+        perfil,
+        vinculo: tipo,
+        status: 'ativo',
+      },
+    });
+
+    return mapPartnerPortalUserToParceiroLoginRow(created, prefeituraId);
   }
 
   private async provisionarLoginAutomatico(
@@ -564,21 +569,23 @@ export class ParceirosService {
     parceiroId: string,
   ): Promise<{ data: ParceiroLoginRow[]; message: string }> {
     const t: TipoParceiro = tipo === 'oficina' ? 'oficina' : 'posto';
-    const { legacyId } = await this.carregarParceiro(t, parceiroId);
+    const { prefeituraId, legacyId } = await this.carregarParceiro(t, parceiroId);
 
-    const campo = t === 'posto' ? 'postoId' : 'officinaId';
     try {
-      const snap = await this.firebaseService
-        .getFirestore()
-        .collection('users')
-        .where(campo, '==', legacyId)
-        .get();
+      const rows = await this.prisma.partnerPortalUser.findMany({
+        where: {
+          vinculo: t,
+          OR: [
+            { partnerLegacyId: legacyId },
+            { partner: { legacyId } },
+            { partnerId: parceiroId },
+          ],
+        },
+        orderBy: { usuario: 'asc' },
+      });
 
-      const data = snap.docs
-        .map((doc) =>
-          mapParceiroLoginDoc(doc.id, doc.data() as Record<string, unknown>),
-        )
-        .filter((row): row is ParceiroLoginRow => row !== null)
+      const data = rows
+        .map((row) => mapPartnerPortalUserToParceiroLoginRow(row, prefeituraId))
         .sort((a, b) => a.usuario.localeCompare(b.usuario, 'pt-BR'));
 
       return { data, message: 'Logins carregados com sucesso.' };
@@ -634,14 +641,21 @@ export class ParceirosService {
       throw new BadRequestException('A senha deve ter no mínimo 4 caracteres.');
     }
 
-    const ref = this.firebaseService.getFirestore().collection('users').doc(id);
-    const snap = await ref.get();
-    if (!snap.exists) {
+    const row = await this.prisma.partnerPortalUser.findFirst({
+      where: {
+        OR: [{ id }, { legacyId: id }],
+      },
+      select: { id: true },
+    });
+    if (!row) {
       throw new NotFoundException('Login não encontrado.');
     }
 
     try {
-      await ref.update({ senha: hashSenhaOperacional(senha) });
+      await this.prisma.partnerPortalUser.update({
+        where: { id: row.id },
+        data: { senhaHash: hashSenhaOperacional(senha) },
+      });
       return { message: 'Senha redefinida.' };
     } catch (error) {
       console.error('Erro ao resetar senha do login:', error);
@@ -655,14 +669,18 @@ export class ParceirosService {
     const id = acessoId.trim();
     if (!id) throw new BadRequestException('ID inválido.');
 
-    const ref = this.firebaseService.getFirestore().collection('users').doc(id);
-    const snap = await ref.get();
-    if (!snap.exists) {
+    const row = await this.prisma.partnerPortalUser.findFirst({
+      where: {
+        OR: [{ id }, { legacyId: id }],
+      },
+      select: { id: true },
+    });
+    if (!row) {
       throw new NotFoundException('Login não encontrado.');
     }
 
     try {
-      await ref.delete();
+      await this.prisma.partnerPortalUser.delete({ where: { id: row.id } });
       return { message: 'Login removido.' };
     } catch (error) {
       console.error('Erro ao remover login:', error);

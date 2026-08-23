@@ -525,6 +525,7 @@ model ServiceOrder {
   sintomas    ServiceOrderSintoma[]
   ocorrencias ServiceOrderOcorrencia[]
   orcamentos  Orcamento[]
+  emergencies Emergency[]
 
   @@unique([companyId, protocolo])
   @@index([companyId, status])
@@ -1480,6 +1481,10 @@ model Emergency {
   checklistLegacyId String? @map("checklist_legacy_id")
   questionId        String? @map("question_id")
   questionLabel     String? @map("question_label")
+
+  /// O.S. aberta a partir desta emergência (1:1 opcional).
+  serviceOrderId String?       @unique @map("service_order_id") @db.Uuid
+  serviceOrder   ServiceOrder? @relation(fields: [serviceOrderId], references: [id], onDelete: SetNull)
 
   /// Momento da ocorrência (do `dataHoraIso` do legado).
   dataHora  DateTime @map("data_hora")

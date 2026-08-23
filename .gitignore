@@ -62,3 +62,10 @@ firebase-credentials.ts
 
 # pnpm é a fonte de verdade — sem npm lockfile
 package-lock.json
+
+# Sobra de build antiga (18/ago): o outDir atual é /dist, já ignorado acima.
+/lib
+/prisma.config.js
+/prisma.config.d.ts
+/prisma.config.js.map
+*.tsbuildinfo

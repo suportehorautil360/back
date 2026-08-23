@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import type { PartnerPortalUser } from '../../../prisma/generated/client';
 
 /** SHA-256 sem salt — mesmo algoritmo do login operacional no front. */
 export function hashSenhaOperacional(senha: string): string {
@@ -46,5 +47,29 @@ export function mapParceiroLoginDoc(
       typeof data.createdAt === 'string'
         ? data.createdAt
         : new Date().toISOString(),
+  };
+}
+
+export function mapPartnerPortalUserToParceiroLoginRow(
+  row: PartnerPortalUser,
+  prefeituraLegacyId: string,
+): ParceiroLoginRow {
+  const vinculo = row.vinculo === 'posto' ? 'posto' : 'oficina';
+  const partnerLegacyId = row.partnerLegacyId?.trim() ?? '';
+
+  return {
+    id: row.legacyId?.trim() || row.id,
+    nome: row.nome,
+    usuario: row.usuario,
+    perfil: row.perfil,
+    vinculo,
+    prefeituraId: prefeituraLegacyId,
+    ...(vinculo === 'posto' && partnerLegacyId
+      ? { postoId: partnerLegacyId }
+      : {}),
+    ...(vinculo === 'oficina' && partnerLegacyId
+      ? { officinaId: partnerLegacyId }
+      : {}),
+    createdAt: row.createdAt.toISOString(),
   };
 }
