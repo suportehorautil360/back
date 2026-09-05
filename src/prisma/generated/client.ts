@@ -376,15 +376,14 @@ export type ComboioReabastecimento = Prisma.ComboioReabastecimentoModel
 export type NotaFiscal = Prisma.NotaFiscalModel
 /**
  * Model SyncTombstone
- * Chaves de idempotência do outbox offline (header `Idempotency-Key`).
- * Substitui a coleção Firestore `idempotencyKeys/{key}`.
  * Lápides de remoção para o /sync/pull do app do operador. Espelha o modelo
  * do horautil, que é quem versiona a migration.
  */
 export type SyncTombstone = Prisma.SyncTombstoneModel
 /**
  * Model IdempotencyKey
- * 
+ * Chaves de idempotência do outbox offline (header `Idempotency-Key`).
+ * Substitui a coleção Firestore `idempotencyKeys/{key}`.
  */
 export type IdempotencyKey = Prisma.IdempotencyKeyModel
 /**

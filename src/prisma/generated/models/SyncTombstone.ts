@@ -14,8 +14,6 @@ import type * as Prisma from "../internal/prismaNamespace.js"
 
 /**
  * Model SyncTombstone
- * Chaves de idempotência do outbox offline (header `Idempotency-Key`).
- * Substitui a coleção Firestore `idempotencyKeys/{key}`.
  * Lápides de remoção para o /sync/pull do app do operador. Espelha o modelo
  * do horautil, que é quem versiona a migration.
  */

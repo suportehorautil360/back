@@ -1665,8 +1665,6 @@ model NotaFiscal {
   @@map("notas_fiscais")
 }
 
-/// Chaves de idempotência do outbox offline (header `Idempotency-Key`).
-/// Substitui a coleção Firestore `idempotencyKeys/{key}`.
 /// Lápides de remoção para o /sync/pull do app do operador. Espelha o modelo
 /// do horautil, que é quem versiona a migration.
 model SyncTombstone {
@@ -1680,6 +1678,8 @@ model SyncTombstone {
   @@map("sync_tombstones")
 }
 
+/// Chaves de idempotência do outbox offline (header `Idempotency-Key`).
+/// Substitui a coleção Firestore `idempotencyKeys/{key}`.
 model IdempotencyKey {
   key       String    @id @db.VarChar(128)
   /// "processando" | "concluido"
