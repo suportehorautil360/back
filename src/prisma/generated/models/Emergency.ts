@@ -53,6 +53,7 @@ export type EmergencyMinAggregateOutputType = {
   checklistLegacyId: string | null
   questionId: string | null
   questionLabel: string | null
+  serviceOrderId: string | null
   dataHora: Date | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -78,6 +79,7 @@ export type EmergencyMaxAggregateOutputType = {
   checklistLegacyId: string | null
   questionId: string | null
   questionLabel: string | null
+  serviceOrderId: string | null
   dataHora: Date | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -104,6 +106,7 @@ export type EmergencyCountAggregateOutputType = {
   checklistLegacyId: number
   questionId: number
   questionLabel: number
+  serviceOrderId: number
   dataHora: number
   createdAt: number
   updatedAt: number
@@ -131,6 +134,7 @@ export type EmergencyMinAggregateInputType = {
   checklistLegacyId?: true
   questionId?: true
   questionLabel?: true
+  serviceOrderId?: true
   dataHora?: true
   createdAt?: true
   updatedAt?: true
@@ -156,6 +160,7 @@ export type EmergencyMaxAggregateInputType = {
   checklistLegacyId?: true
   questionId?: true
   questionLabel?: true
+  serviceOrderId?: true
   dataHora?: true
   createdAt?: true
   updatedAt?: true
@@ -182,6 +187,7 @@ export type EmergencyCountAggregateInputType = {
   checklistLegacyId?: true
   questionId?: true
   questionLabel?: true
+  serviceOrderId?: true
   dataHora?: true
   createdAt?: true
   updatedAt?: true
@@ -281,6 +287,7 @@ export type EmergencyGroupByOutputType = {
   checklistLegacyId: string | null
   questionId: string | null
   questionLabel: string | null
+  serviceOrderId: string | null
   dataHora: Date
   createdAt: Date
   updatedAt: Date
@@ -328,9 +335,11 @@ export type EmergencyWhereInput = {
   checklistLegacyId?: Prisma.StringNullableFilter<"Emergency"> | string | null
   questionId?: Prisma.StringNullableFilter<"Emergency"> | string | null
   questionLabel?: Prisma.StringNullableFilter<"Emergency"> | string | null
+  serviceOrderId?: Prisma.UuidNullableFilter<"Emergency"> | string | null
   dataHora?: Prisma.DateTimeFilter<"Emergency"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"Emergency"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Emergency"> | Date | string
+  serviceOrder?: Prisma.XOR<Prisma.ServiceOrderNullableScalarRelationFilter, Prisma.ServiceOrderWhereInput> | null
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
 }
 
@@ -355,15 +364,18 @@ export type EmergencyOrderByWithRelationInput = {
   checklistLegacyId?: Prisma.SortOrderInput | Prisma.SortOrder
   questionId?: Prisma.SortOrderInput | Prisma.SortOrder
   questionLabel?: Prisma.SortOrderInput | Prisma.SortOrder
+  serviceOrderId?: Prisma.SortOrderInput | Prisma.SortOrder
   dataHora?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  serviceOrder?: Prisma.ServiceOrderOrderByWithRelationInput
   company?: Prisma.CompanyOrderByWithRelationInput
 }
 
 export type EmergencyWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   legacyId?: string
+  serviceOrderId?: string
   AND?: Prisma.EmergencyWhereInput | Prisma.EmergencyWhereInput[]
   OR?: Prisma.EmergencyWhereInput[]
   NOT?: Prisma.EmergencyWhereInput | Prisma.EmergencyWhereInput[]
@@ -388,8 +400,9 @@ export type EmergencyWhereUniqueInput = Prisma.AtLeast<{
   dataHora?: Prisma.DateTimeFilter<"Emergency"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"Emergency"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Emergency"> | Date | string
+  serviceOrder?: Prisma.XOR<Prisma.ServiceOrderNullableScalarRelationFilter, Prisma.ServiceOrderWhereInput> | null
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
-}, "id" | "legacyId">
+}, "id" | "legacyId" | "serviceOrderId">
 
 export type EmergencyOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -412,6 +425,7 @@ export type EmergencyOrderByWithAggregationInput = {
   checklistLegacyId?: Prisma.SortOrderInput | Prisma.SortOrder
   questionId?: Prisma.SortOrderInput | Prisma.SortOrder
   questionLabel?: Prisma.SortOrderInput | Prisma.SortOrder
+  serviceOrderId?: Prisma.SortOrderInput | Prisma.SortOrder
   dataHora?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -444,6 +458,7 @@ export type EmergencyScalarWhereWithAggregatesInput = {
   checklistLegacyId?: Prisma.StringNullableWithAggregatesFilter<"Emergency"> | string | null
   questionId?: Prisma.StringNullableWithAggregatesFilter<"Emergency"> | string | null
   questionLabel?: Prisma.StringNullableWithAggregatesFilter<"Emergency"> | string | null
+  serviceOrderId?: Prisma.UuidNullableWithAggregatesFilter<"Emergency"> | string | null
   dataHora?: Prisma.DateTimeWithAggregatesFilter<"Emergency"> | Date | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Emergency"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Emergency"> | Date | string
@@ -472,6 +487,7 @@ export type EmergencyCreateInput = {
   dataHora: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
+  serviceOrder?: Prisma.ServiceOrderCreateNestedOneWithoutEmergenciesInput
   company: Prisma.CompanyCreateNestedOneWithoutEmergenciesInput
 }
 
@@ -496,6 +512,7 @@ export type EmergencyUncheckedCreateInput = {
   checklistLegacyId?: string | null
   questionId?: string | null
   questionLabel?: string | null
+  serviceOrderId?: string | null
   dataHora: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -524,6 +541,7 @@ export type EmergencyUpdateInput = {
   dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  serviceOrder?: Prisma.ServiceOrderUpdateOneWithoutEmergenciesNestedInput
   company?: Prisma.CompanyUpdateOneRequiredWithoutEmergenciesNestedInput
 }
 
@@ -548,6 +566,7 @@ export type EmergencyUncheckedUpdateInput = {
   checklistLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   questionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   questionLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -574,6 +593,7 @@ export type EmergencyCreateManyInput = {
   checklistLegacyId?: string | null
   questionId?: string | null
   questionLabel?: string | null
+  serviceOrderId?: string | null
   dataHora: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -625,6 +645,7 @@ export type EmergencyUncheckedUpdateManyInput = {
   checklistLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   questionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   questionLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -661,6 +682,7 @@ export type EmergencyCountOrderByAggregateInput = {
   checklistLegacyId?: Prisma.SortOrder
   questionId?: Prisma.SortOrder
   questionLabel?: Prisma.SortOrder
+  serviceOrderId?: Prisma.SortOrder
   dataHora?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -686,6 +708,7 @@ export type EmergencyMaxOrderByAggregateInput = {
   checklistLegacyId?: Prisma.SortOrder
   questionId?: Prisma.SortOrder
   questionLabel?: Prisma.SortOrder
+  serviceOrderId?: Prisma.SortOrder
   dataHora?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -711,6 +734,7 @@ export type EmergencyMinOrderByAggregateInput = {
   checklistLegacyId?: Prisma.SortOrder
   questionId?: Prisma.SortOrder
   questionLabel?: Prisma.SortOrder
+  serviceOrderId?: Prisma.SortOrder
   dataHora?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -758,6 +782,48 @@ export type EmergencyUncheckedUpdateManyWithoutCompanyNestedInput = {
   deleteMany?: Prisma.EmergencyScalarWhereInput | Prisma.EmergencyScalarWhereInput[]
 }
 
+export type EmergencyCreateNestedManyWithoutServiceOrderInput = {
+  create?: Prisma.XOR<Prisma.EmergencyCreateWithoutServiceOrderInput, Prisma.EmergencyUncheckedCreateWithoutServiceOrderInput> | Prisma.EmergencyCreateWithoutServiceOrderInput[] | Prisma.EmergencyUncheckedCreateWithoutServiceOrderInput[]
+  connectOrCreate?: Prisma.EmergencyCreateOrConnectWithoutServiceOrderInput | Prisma.EmergencyCreateOrConnectWithoutServiceOrderInput[]
+  createMany?: Prisma.EmergencyCreateManyServiceOrderInputEnvelope
+  connect?: Prisma.EmergencyWhereUniqueInput | Prisma.EmergencyWhereUniqueInput[]
+}
+
+export type EmergencyUncheckedCreateNestedManyWithoutServiceOrderInput = {
+  create?: Prisma.XOR<Prisma.EmergencyCreateWithoutServiceOrderInput, Prisma.EmergencyUncheckedCreateWithoutServiceOrderInput> | Prisma.EmergencyCreateWithoutServiceOrderInput[] | Prisma.EmergencyUncheckedCreateWithoutServiceOrderInput[]
+  connectOrCreate?: Prisma.EmergencyCreateOrConnectWithoutServiceOrderInput | Prisma.EmergencyCreateOrConnectWithoutServiceOrderInput[]
+  createMany?: Prisma.EmergencyCreateManyServiceOrderInputEnvelope
+  connect?: Prisma.EmergencyWhereUniqueInput | Prisma.EmergencyWhereUniqueInput[]
+}
+
+export type EmergencyUpdateManyWithoutServiceOrderNestedInput = {
+  create?: Prisma.XOR<Prisma.EmergencyCreateWithoutServiceOrderInput, Prisma.EmergencyUncheckedCreateWithoutServiceOrderInput> | Prisma.EmergencyCreateWithoutServiceOrderInput[] | Prisma.EmergencyUncheckedCreateWithoutServiceOrderInput[]
+  connectOrCreate?: Prisma.EmergencyCreateOrConnectWithoutServiceOrderInput | Prisma.EmergencyCreateOrConnectWithoutServiceOrderInput[]
+  upsert?: Prisma.EmergencyUpsertWithWhereUniqueWithoutServiceOrderInput | Prisma.EmergencyUpsertWithWhereUniqueWithoutServiceOrderInput[]
+  createMany?: Prisma.EmergencyCreateManyServiceOrderInputEnvelope
+  set?: Prisma.EmergencyWhereUniqueInput | Prisma.EmergencyWhereUniqueInput[]
+  disconnect?: Prisma.EmergencyWhereUniqueInput | Prisma.EmergencyWhereUniqueInput[]
+  delete?: Prisma.EmergencyWhereUniqueInput | Prisma.EmergencyWhereUniqueInput[]
+  connect?: Prisma.EmergencyWhereUniqueInput | Prisma.EmergencyWhereUniqueInput[]
+  update?: Prisma.EmergencyUpdateWithWhereUniqueWithoutServiceOrderInput | Prisma.EmergencyUpdateWithWhereUniqueWithoutServiceOrderInput[]
+  updateMany?: Prisma.EmergencyUpdateManyWithWhereWithoutServiceOrderInput | Prisma.EmergencyUpdateManyWithWhereWithoutServiceOrderInput[]
+  deleteMany?: Prisma.EmergencyScalarWhereInput | Prisma.EmergencyScalarWhereInput[]
+}
+
+export type EmergencyUncheckedUpdateManyWithoutServiceOrderNestedInput = {
+  create?: Prisma.XOR<Prisma.EmergencyCreateWithoutServiceOrderInput, Prisma.EmergencyUncheckedCreateWithoutServiceOrderInput> | Prisma.EmergencyCreateWithoutServiceOrderInput[] | Prisma.EmergencyUncheckedCreateWithoutServiceOrderInput[]
+  connectOrCreate?: Prisma.EmergencyCreateOrConnectWithoutServiceOrderInput | Prisma.EmergencyCreateOrConnectWithoutServiceOrderInput[]
+  upsert?: Prisma.EmergencyUpsertWithWhereUniqueWithoutServiceOrderInput | Prisma.EmergencyUpsertWithWhereUniqueWithoutServiceOrderInput[]
+  createMany?: Prisma.EmergencyCreateManyServiceOrderInputEnvelope
+  set?: Prisma.EmergencyWhereUniqueInput | Prisma.EmergencyWhereUniqueInput[]
+  disconnect?: Prisma.EmergencyWhereUniqueInput | Prisma.EmergencyWhereUniqueInput[]
+  delete?: Prisma.EmergencyWhereUniqueInput | Prisma.EmergencyWhereUniqueInput[]
+  connect?: Prisma.EmergencyWhereUniqueInput | Prisma.EmergencyWhereUniqueInput[]
+  update?: Prisma.EmergencyUpdateWithWhereUniqueWithoutServiceOrderInput | Prisma.EmergencyUpdateWithWhereUniqueWithoutServiceOrderInput[]
+  updateMany?: Prisma.EmergencyUpdateManyWithWhereWithoutServiceOrderInput | Prisma.EmergencyUpdateManyWithWhereWithoutServiceOrderInput[]
+  deleteMany?: Prisma.EmergencyScalarWhereInput | Prisma.EmergencyScalarWhereInput[]
+}
+
 export type EmergencyCreateWithoutCompanyInput = {
   id?: string
   legacyId?: string | null
@@ -781,6 +847,7 @@ export type EmergencyCreateWithoutCompanyInput = {
   dataHora: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
+  serviceOrder?: Prisma.ServiceOrderCreateNestedOneWithoutEmergenciesInput
 }
 
 export type EmergencyUncheckedCreateWithoutCompanyInput = {
@@ -803,6 +870,7 @@ export type EmergencyUncheckedCreateWithoutCompanyInput = {
   checklistLegacyId?: string | null
   questionId?: string | null
   questionLabel?: string | null
+  serviceOrderId?: string | null
   dataHora: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -858,9 +926,88 @@ export type EmergencyScalarWhereInput = {
   checklistLegacyId?: Prisma.StringNullableFilter<"Emergency"> | string | null
   questionId?: Prisma.StringNullableFilter<"Emergency"> | string | null
   questionLabel?: Prisma.StringNullableFilter<"Emergency"> | string | null
+  serviceOrderId?: Prisma.UuidNullableFilter<"Emergency"> | string | null
   dataHora?: Prisma.DateTimeFilter<"Emergency"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"Emergency"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Emergency"> | Date | string
+}
+
+export type EmergencyCreateWithoutServiceOrderInput = {
+  id?: string
+  legacyId?: string | null
+  source: string
+  severity: string
+  statusAtendimento?: string
+  chassi?: string | null
+  equipmentLegacyId?: string | null
+  idMaquina?: string | null
+  modelo?: string | null
+  operadorNome?: string | null
+  operadorLegacyId?: string | null
+  operadorCpf?: string | null
+  tipoFalha: string
+  descricao: string
+  localizacaoGps?: string | null
+  fotos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  checklistLegacyId?: string | null
+  questionId?: string | null
+  questionLabel?: string | null
+  dataHora: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutEmergenciesInput
+}
+
+export type EmergencyUncheckedCreateWithoutServiceOrderInput = {
+  id?: string
+  legacyId?: string | null
+  companyId: string
+  source: string
+  severity: string
+  statusAtendimento?: string
+  chassi?: string | null
+  equipmentLegacyId?: string | null
+  idMaquina?: string | null
+  modelo?: string | null
+  operadorNome?: string | null
+  operadorLegacyId?: string | null
+  operadorCpf?: string | null
+  tipoFalha: string
+  descricao: string
+  localizacaoGps?: string | null
+  fotos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  checklistLegacyId?: string | null
+  questionId?: string | null
+  questionLabel?: string | null
+  dataHora: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type EmergencyCreateOrConnectWithoutServiceOrderInput = {
+  where: Prisma.EmergencyWhereUniqueInput
+  create: Prisma.XOR<Prisma.EmergencyCreateWithoutServiceOrderInput, Prisma.EmergencyUncheckedCreateWithoutServiceOrderInput>
+}
+
+export type EmergencyCreateManyServiceOrderInputEnvelope = {
+  data: Prisma.EmergencyCreateManyServiceOrderInput | Prisma.EmergencyCreateManyServiceOrderInput[]
+  skipDuplicates?: boolean
+}
+
+export type EmergencyUpsertWithWhereUniqueWithoutServiceOrderInput = {
+  where: Prisma.EmergencyWhereUniqueInput
+  update: Prisma.XOR<Prisma.EmergencyUpdateWithoutServiceOrderInput, Prisma.EmergencyUncheckedUpdateWithoutServiceOrderInput>
+  create: Prisma.XOR<Prisma.EmergencyCreateWithoutServiceOrderInput, Prisma.EmergencyUncheckedCreateWithoutServiceOrderInput>
+}
+
+export type EmergencyUpdateWithWhereUniqueWithoutServiceOrderInput = {
+  where: Prisma.EmergencyWhereUniqueInput
+  data: Prisma.XOR<Prisma.EmergencyUpdateWithoutServiceOrderInput, Prisma.EmergencyUncheckedUpdateWithoutServiceOrderInput>
+}
+
+export type EmergencyUpdateManyWithWhereWithoutServiceOrderInput = {
+  where: Prisma.EmergencyScalarWhereInput
+  data: Prisma.XOR<Prisma.EmergencyUpdateManyMutationInput, Prisma.EmergencyUncheckedUpdateManyWithoutServiceOrderInput>
 }
 
 export type EmergencyCreateManyCompanyInput = {
@@ -883,6 +1030,7 @@ export type EmergencyCreateManyCompanyInput = {
   checklistLegacyId?: string | null
   questionId?: string | null
   questionLabel?: string | null
+  serviceOrderId?: string | null
   dataHora: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -911,6 +1059,7 @@ export type EmergencyUpdateWithoutCompanyInput = {
   dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  serviceOrder?: Prisma.ServiceOrderUpdateOneWithoutEmergenciesNestedInput
 }
 
 export type EmergencyUncheckedUpdateWithoutCompanyInput = {
@@ -933,6 +1082,7 @@ export type EmergencyUncheckedUpdateWithoutCompanyInput = {
   checklistLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   questionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   questionLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -941,6 +1091,111 @@ export type EmergencyUncheckedUpdateWithoutCompanyInput = {
 export type EmergencyUncheckedUpdateManyWithoutCompanyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.StringFieldUpdateOperationsInput | string
+  statusAtendimento?: Prisma.StringFieldUpdateOperationsInput | string
+  chassi?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idMaquina?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  modelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorCpf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipoFalha?: Prisma.StringFieldUpdateOperationsInput | string
+  descricao?: Prisma.StringFieldUpdateOperationsInput | string
+  localizacaoGps?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  checklistLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  questionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  questionLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type EmergencyCreateManyServiceOrderInput = {
+  id?: string
+  legacyId?: string | null
+  companyId: string
+  source: string
+  severity: string
+  statusAtendimento?: string
+  chassi?: string | null
+  equipmentLegacyId?: string | null
+  idMaquina?: string | null
+  modelo?: string | null
+  operadorNome?: string | null
+  operadorLegacyId?: string | null
+  operadorCpf?: string | null
+  tipoFalha: string
+  descricao: string
+  localizacaoGps?: string | null
+  fotos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  checklistLegacyId?: string | null
+  questionId?: string | null
+  questionLabel?: string | null
+  dataHora: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type EmergencyUpdateWithoutServiceOrderInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.StringFieldUpdateOperationsInput | string
+  statusAtendimento?: Prisma.StringFieldUpdateOperationsInput | string
+  chassi?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idMaquina?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  modelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorCpf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipoFalha?: Prisma.StringFieldUpdateOperationsInput | string
+  descricao?: Prisma.StringFieldUpdateOperationsInput | string
+  localizacaoGps?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  checklistLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  questionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  questionLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutEmergenciesNestedInput
+}
+
+export type EmergencyUncheckedUpdateWithoutServiceOrderInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.StringFieldUpdateOperationsInput | string
+  statusAtendimento?: Prisma.StringFieldUpdateOperationsInput | string
+  chassi?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idMaquina?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  modelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorCpf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipoFalha?: Prisma.StringFieldUpdateOperationsInput | string
+  descricao?: Prisma.StringFieldUpdateOperationsInput | string
+  localizacaoGps?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fotos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  checklistLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  questionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  questionLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type EmergencyUncheckedUpdateManyWithoutServiceOrderInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   severity?: Prisma.StringFieldUpdateOperationsInput | string
   statusAtendimento?: Prisma.StringFieldUpdateOperationsInput | string
@@ -986,9 +1241,11 @@ export type EmergencySelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   checklistLegacyId?: boolean
   questionId?: boolean
   questionLabel?: boolean
+  serviceOrderId?: boolean
   dataHora?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  serviceOrder?: boolean | Prisma.Emergency$serviceOrderArgs<ExtArgs>
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["emergency"]>
 
@@ -1013,9 +1270,11 @@ export type EmergencySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   checklistLegacyId?: boolean
   questionId?: boolean
   questionLabel?: boolean
+  serviceOrderId?: boolean
   dataHora?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  serviceOrder?: boolean | Prisma.Emergency$serviceOrderArgs<ExtArgs>
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["emergency"]>
 
@@ -1040,9 +1299,11 @@ export type EmergencySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   checklistLegacyId?: boolean
   questionId?: boolean
   questionLabel?: boolean
+  serviceOrderId?: boolean
   dataHora?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  serviceOrder?: boolean | Prisma.Emergency$serviceOrderArgs<ExtArgs>
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["emergency"]>
 
@@ -1067,25 +1328,30 @@ export type EmergencySelectScalar = {
   checklistLegacyId?: boolean
   questionId?: boolean
   questionLabel?: boolean
+  serviceOrderId?: boolean
   dataHora?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type EmergencyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "source" | "severity" | "statusAtendimento" | "chassi" | "equipmentLegacyId" | "idMaquina" | "modelo" | "operadorNome" | "operadorLegacyId" | "operadorCpf" | "tipoFalha" | "descricao" | "localizacaoGps" | "fotos" | "checklistLegacyId" | "questionId" | "questionLabel" | "dataHora" | "createdAt" | "updatedAt", ExtArgs["result"]["emergency"]>
+export type EmergencyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "source" | "severity" | "statusAtendimento" | "chassi" | "equipmentLegacyId" | "idMaquina" | "modelo" | "operadorNome" | "operadorLegacyId" | "operadorCpf" | "tipoFalha" | "descricao" | "localizacaoGps" | "fotos" | "checklistLegacyId" | "questionId" | "questionLabel" | "serviceOrderId" | "dataHora" | "createdAt" | "updatedAt", ExtArgs["result"]["emergency"]>
 export type EmergencyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  serviceOrder?: boolean | Prisma.Emergency$serviceOrderArgs<ExtArgs>
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
 }
 export type EmergencyIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  serviceOrder?: boolean | Prisma.Emergency$serviceOrderArgs<ExtArgs>
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
 }
 export type EmergencyIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  serviceOrder?: boolean | Prisma.Emergency$serviceOrderArgs<ExtArgs>
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
 }
 
 export type $EmergencyPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Emergency"
   objects: {
+    serviceOrder: Prisma.$ServiceOrderPayload<ExtArgs> | null
     company: Prisma.$CompanyPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1137,6 +1403,10 @@ export type $EmergencyPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     checklistLegacyId: string | null
     questionId: string | null
     questionLabel: string | null
+    /**
+     * O.S. aberta a partir desta emergência (1:1 opcional).
+     */
+    serviceOrderId: string | null
     /**
      * Momento da ocorrência (do `dataHoraIso` do legado).
      */
@@ -1537,6 +1807,7 @@ readonly fields: EmergencyFieldRefs;
  */
 export interface Prisma__EmergencyClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  serviceOrder<T extends Prisma.Emergency$serviceOrderArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Emergency$serviceOrderArgs<ExtArgs>>): Prisma.Prisma__ServiceOrderClient<runtime.Types.Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   company<T extends Prisma.CompanyDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CompanyDefaultArgs<ExtArgs>>): Prisma.Prisma__CompanyClient<runtime.Types.Result.GetResult<Prisma.$CompanyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1587,6 +1858,7 @@ export interface EmergencyFieldRefs {
   readonly checklistLegacyId: Prisma.FieldRef<"Emergency", 'String'>
   readonly questionId: Prisma.FieldRef<"Emergency", 'String'>
   readonly questionLabel: Prisma.FieldRef<"Emergency", 'String'>
+  readonly serviceOrderId: Prisma.FieldRef<"Emergency", 'String'>
   readonly dataHora: Prisma.FieldRef<"Emergency", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Emergency", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Emergency", 'DateTime'>
@@ -1988,6 +2260,25 @@ export type EmergencyDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Limit how many Emergencies to delete.
    */
   limit?: number
+}
+
+/**
+ * Emergency.serviceOrder
+ */
+export type Emergency$serviceOrderArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ServiceOrder
+   */
+  select?: Prisma.ServiceOrderSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ServiceOrder
+   */
+  omit?: Prisma.ServiceOrderOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ServiceOrderInclude<ExtArgs> | null
+  where?: Prisma.ServiceOrderWhereInput
 }
 
 /**

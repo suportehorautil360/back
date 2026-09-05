@@ -442,6 +442,7 @@ export const ModelName = {
   Lubrificacao: 'Lubrificacao',
   ComboioReabastecimento: 'ComboioReabastecimento',
   NotaFiscal: 'NotaFiscal',
+  SyncTombstone: 'SyncTombstone',
   IdempotencyKey: 'IdempotencyKey',
   Notificacao: 'Notificacao'
 } as const
@@ -459,7 +460,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "idempotencyKey" | "notificacao"
+    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -3793,6 +3794,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    SyncTombstone: {
+      payload: Prisma.$SyncTombstonePayload<ExtArgs>
+      fields: Prisma.SyncTombstoneFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SyncTombstoneFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SyncTombstonePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SyncTombstoneFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SyncTombstonePayload>
+        }
+        findFirst: {
+          args: Prisma.SyncTombstoneFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SyncTombstonePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SyncTombstoneFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SyncTombstonePayload>
+        }
+        findMany: {
+          args: Prisma.SyncTombstoneFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SyncTombstonePayload>[]
+        }
+        create: {
+          args: Prisma.SyncTombstoneCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SyncTombstonePayload>
+        }
+        createMany: {
+          args: Prisma.SyncTombstoneCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SyncTombstoneCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SyncTombstonePayload>[]
+        }
+        delete: {
+          args: Prisma.SyncTombstoneDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SyncTombstonePayload>
+        }
+        update: {
+          args: Prisma.SyncTombstoneUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SyncTombstonePayload>
+        }
+        deleteMany: {
+          args: Prisma.SyncTombstoneDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SyncTombstoneUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SyncTombstoneUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SyncTombstonePayload>[]
+        }
+        upsert: {
+          args: Prisma.SyncTombstoneUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SyncTombstonePayload>
+        }
+        aggregate: {
+          args: Prisma.SyncTombstoneAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSyncTombstone>
+        }
+        groupBy: {
+          args: Prisma.SyncTombstoneGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SyncTombstoneGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SyncTombstoneCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SyncTombstoneCountAggregateOutputType> | number
+        }
+      }
+    }
     IdempotencyKey: {
       payload: Prisma.$IdempotencyKeyPayload<ExtArgs>
       fields: Prisma.IdempotencyKeyFieldRefs
@@ -4793,6 +4868,7 @@ export const EmergencyScalarFieldEnum = {
   checklistLegacyId: 'checklistLegacyId',
   questionId: 'questionId',
   questionLabel: 'questionLabel',
+  serviceOrderId: 'serviceOrderId',
   dataHora: 'dataHora',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -4882,6 +4958,17 @@ export const NotaFiscalScalarFieldEnum = {
 } as const
 
 export type NotaFiscalScalarFieldEnum = (typeof NotaFiscalScalarFieldEnum)[keyof typeof NotaFiscalScalarFieldEnum]
+
+
+export const SyncTombstoneScalarFieldEnum = {
+  id: 'id',
+  colecao: 'colecao',
+  registroId: 'registroId',
+  companyId: 'companyId',
+  deletadoEm: 'deletadoEm'
+} as const
+
+export type SyncTombstoneScalarFieldEnum = (typeof SyncTombstoneScalarFieldEnum)[keyof typeof SyncTombstoneScalarFieldEnum]
 
 
 export const IdempotencyKeyScalarFieldEnum = {
@@ -5368,6 +5455,7 @@ export type GlobalOmitConfig = {
   lubrificacao?: Prisma.LubrificacaoOmit
   comboioReabastecimento?: Prisma.ComboioReabastecimentoOmit
   notaFiscal?: Prisma.NotaFiscalOmit
+  syncTombstone?: Prisma.SyncTombstoneOmit
   idempotencyKey?: Prisma.IdempotencyKeyOmit
   notificacao?: Prisma.NotificacaoOmit
 }

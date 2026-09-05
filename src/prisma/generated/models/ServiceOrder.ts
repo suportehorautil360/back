@@ -413,6 +413,7 @@ export type ServiceOrderWhereInput = {
   sintomas?: Prisma.ServiceOrderSintomaListRelationFilter
   ocorrencias?: Prisma.ServiceOrderOcorrenciaListRelationFilter
   orcamentos?: Prisma.OrcamentoListRelationFilter
+  emergencies?: Prisma.EmergencyListRelationFilter
 }
 
 export type ServiceOrderOrderByWithRelationInput = {
@@ -453,6 +454,7 @@ export type ServiceOrderOrderByWithRelationInput = {
   sintomas?: Prisma.ServiceOrderSintomaOrderByRelationAggregateInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaOrderByRelationAggregateInput
   orcamentos?: Prisma.OrcamentoOrderByRelationAggregateInput
+  emergencies?: Prisma.EmergencyOrderByRelationAggregateInput
 }
 
 export type ServiceOrderWhereUniqueInput = Prisma.AtLeast<{
@@ -497,6 +499,7 @@ export type ServiceOrderWhereUniqueInput = Prisma.AtLeast<{
   sintomas?: Prisma.ServiceOrderSintomaListRelationFilter
   ocorrencias?: Prisma.ServiceOrderOcorrenciaListRelationFilter
   orcamentos?: Prisma.OrcamentoListRelationFilter
+  emergencies?: Prisma.EmergencyListRelationFilter
 }, "id" | "legacyId" | "companyId_protocolo">
 
 export type ServiceOrderOrderByWithAggregationInput = {
@@ -609,6 +612,7 @@ export type ServiceOrderCreateInput = {
   sintomas?: Prisma.ServiceOrderSintomaCreateNestedManyWithoutServiceOrderInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaCreateNestedManyWithoutServiceOrderInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateInput = {
@@ -647,6 +651,7 @@ export type ServiceOrderUncheckedCreateInput = {
   sintomas?: Prisma.ServiceOrderSintomaUncheckedCreateNestedManyWithoutServiceOrderInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedCreateNestedManyWithoutServiceOrderInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUpdateInput = {
@@ -685,6 +690,7 @@ export type ServiceOrderUpdateInput = {
   sintomas?: Prisma.ServiceOrderSintomaUpdateManyWithoutServiceOrderNestedInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUpdateManyWithoutServiceOrderNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateInput = {
@@ -723,6 +729,7 @@ export type ServiceOrderUncheckedUpdateInput = {
   sintomas?: Prisma.ServiceOrderSintomaUncheckedUpdateManyWithoutServiceOrderNestedInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedUpdateManyWithoutServiceOrderNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateManyInput = {
@@ -941,6 +948,11 @@ export type ServiceOrderScalarRelationFilter = {
   isNot?: Prisma.ServiceOrderWhereInput
 }
 
+export type ServiceOrderNullableScalarRelationFilter = {
+  is?: Prisma.ServiceOrderWhereInput | null
+  isNot?: Prisma.ServiceOrderWhereInput | null
+}
+
 export type ServiceOrderCreateNestedManyWithoutCompanyInput = {
   create?: Prisma.XOR<Prisma.ServiceOrderCreateWithoutCompanyInput, Prisma.ServiceOrderUncheckedCreateWithoutCompanyInput> | Prisma.ServiceOrderCreateWithoutCompanyInput[] | Prisma.ServiceOrderUncheckedCreateWithoutCompanyInput[]
   connectOrCreate?: Prisma.ServiceOrderCreateOrConnectWithoutCompanyInput | Prisma.ServiceOrderCreateOrConnectWithoutCompanyInput[]
@@ -1095,6 +1107,22 @@ export type ServiceOrderUpdateOneRequiredWithoutOrcamentosNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ServiceOrderUpdateToOneWithWhereWithoutOrcamentosInput, Prisma.ServiceOrderUpdateWithoutOrcamentosInput>, Prisma.ServiceOrderUncheckedUpdateWithoutOrcamentosInput>
 }
 
+export type ServiceOrderCreateNestedOneWithoutEmergenciesInput = {
+  create?: Prisma.XOR<Prisma.ServiceOrderCreateWithoutEmergenciesInput, Prisma.ServiceOrderUncheckedCreateWithoutEmergenciesInput>
+  connectOrCreate?: Prisma.ServiceOrderCreateOrConnectWithoutEmergenciesInput
+  connect?: Prisma.ServiceOrderWhereUniqueInput
+}
+
+export type ServiceOrderUpdateOneWithoutEmergenciesNestedInput = {
+  create?: Prisma.XOR<Prisma.ServiceOrderCreateWithoutEmergenciesInput, Prisma.ServiceOrderUncheckedCreateWithoutEmergenciesInput>
+  connectOrCreate?: Prisma.ServiceOrderCreateOrConnectWithoutEmergenciesInput
+  upsert?: Prisma.ServiceOrderUpsertWithoutEmergenciesInput
+  disconnect?: Prisma.ServiceOrderWhereInput | boolean
+  delete?: Prisma.ServiceOrderWhereInput | boolean
+  connect?: Prisma.ServiceOrderWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ServiceOrderUpdateToOneWithWhereWithoutEmergenciesInput, Prisma.ServiceOrderUpdateWithoutEmergenciesInput>, Prisma.ServiceOrderUncheckedUpdateWithoutEmergenciesInput>
+}
+
 export type ServiceOrderCreateWithoutCompanyInput = {
   id?: string
   legacyId?: string | null
@@ -1130,6 +1158,7 @@ export type ServiceOrderCreateWithoutCompanyInput = {
   sintomas?: Prisma.ServiceOrderSintomaCreateNestedManyWithoutServiceOrderInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaCreateNestedManyWithoutServiceOrderInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutCompanyInput = {
@@ -1167,6 +1196,7 @@ export type ServiceOrderUncheckedCreateWithoutCompanyInput = {
   sintomas?: Prisma.ServiceOrderSintomaUncheckedCreateNestedManyWithoutServiceOrderInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedCreateNestedManyWithoutServiceOrderInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutCompanyInput = {
@@ -1266,6 +1296,7 @@ export type ServiceOrderCreateWithoutEquipmentInput = {
   sintomas?: Prisma.ServiceOrderSintomaCreateNestedManyWithoutServiceOrderInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaCreateNestedManyWithoutServiceOrderInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutEquipmentInput = {
@@ -1303,6 +1334,7 @@ export type ServiceOrderUncheckedCreateWithoutEquipmentInput = {
   sintomas?: Prisma.ServiceOrderSintomaUncheckedCreateNestedManyWithoutServiceOrderInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedCreateNestedManyWithoutServiceOrderInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutEquipmentInput = {
@@ -1366,6 +1398,7 @@ export type ServiceOrderCreateWithoutInsumosInput = {
   sintomas?: Prisma.ServiceOrderSintomaCreateNestedManyWithoutServiceOrderInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaCreateNestedManyWithoutServiceOrderInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutInsumosInput = {
@@ -1403,6 +1436,7 @@ export type ServiceOrderUncheckedCreateWithoutInsumosInput = {
   sintomas?: Prisma.ServiceOrderSintomaUncheckedCreateNestedManyWithoutServiceOrderInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedCreateNestedManyWithoutServiceOrderInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutInsumosInput = {
@@ -1456,6 +1490,7 @@ export type ServiceOrderUpdateWithoutInsumosInput = {
   sintomas?: Prisma.ServiceOrderSintomaUpdateManyWithoutServiceOrderNestedInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUpdateManyWithoutServiceOrderNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutInsumosInput = {
@@ -1493,6 +1528,7 @@ export type ServiceOrderUncheckedUpdateWithoutInsumosInput = {
   sintomas?: Prisma.ServiceOrderSintomaUncheckedUpdateManyWithoutServiceOrderNestedInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedUpdateManyWithoutServiceOrderNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutEtapasInput = {
@@ -1530,6 +1566,7 @@ export type ServiceOrderCreateWithoutEtapasInput = {
   sintomas?: Prisma.ServiceOrderSintomaCreateNestedManyWithoutServiceOrderInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaCreateNestedManyWithoutServiceOrderInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutEtapasInput = {
@@ -1567,6 +1604,7 @@ export type ServiceOrderUncheckedCreateWithoutEtapasInput = {
   sintomas?: Prisma.ServiceOrderSintomaUncheckedCreateNestedManyWithoutServiceOrderInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedCreateNestedManyWithoutServiceOrderInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutEtapasInput = {
@@ -1620,6 +1658,7 @@ export type ServiceOrderUpdateWithoutEtapasInput = {
   sintomas?: Prisma.ServiceOrderSintomaUpdateManyWithoutServiceOrderNestedInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUpdateManyWithoutServiceOrderNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutEtapasInput = {
@@ -1657,6 +1696,7 @@ export type ServiceOrderUncheckedUpdateWithoutEtapasInput = {
   sintomas?: Prisma.ServiceOrderSintomaUncheckedUpdateManyWithoutServiceOrderNestedInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedUpdateManyWithoutServiceOrderNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutSintomasInput = {
@@ -1694,6 +1734,7 @@ export type ServiceOrderCreateWithoutSintomasInput = {
   etapas?: Prisma.ServiceOrderEtapaCreateNestedManyWithoutServiceOrderInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaCreateNestedManyWithoutServiceOrderInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutSintomasInput = {
@@ -1731,6 +1772,7 @@ export type ServiceOrderUncheckedCreateWithoutSintomasInput = {
   etapas?: Prisma.ServiceOrderEtapaUncheckedCreateNestedManyWithoutServiceOrderInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedCreateNestedManyWithoutServiceOrderInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutSintomasInput = {
@@ -1784,6 +1826,7 @@ export type ServiceOrderUpdateWithoutSintomasInput = {
   etapas?: Prisma.ServiceOrderEtapaUpdateManyWithoutServiceOrderNestedInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUpdateManyWithoutServiceOrderNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutSintomasInput = {
@@ -1821,6 +1864,7 @@ export type ServiceOrderUncheckedUpdateWithoutSintomasInput = {
   etapas?: Prisma.ServiceOrderEtapaUncheckedUpdateManyWithoutServiceOrderNestedInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedUpdateManyWithoutServiceOrderNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutOcorrenciasInput = {
@@ -1858,6 +1902,7 @@ export type ServiceOrderCreateWithoutOcorrenciasInput = {
   etapas?: Prisma.ServiceOrderEtapaCreateNestedManyWithoutServiceOrderInput
   sintomas?: Prisma.ServiceOrderSintomaCreateNestedManyWithoutServiceOrderInput
   orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutOcorrenciasInput = {
@@ -1895,6 +1940,7 @@ export type ServiceOrderUncheckedCreateWithoutOcorrenciasInput = {
   etapas?: Prisma.ServiceOrderEtapaUncheckedCreateNestedManyWithoutServiceOrderInput
   sintomas?: Prisma.ServiceOrderSintomaUncheckedCreateNestedManyWithoutServiceOrderInput
   orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutOcorrenciasInput = {
@@ -1948,6 +1994,7 @@ export type ServiceOrderUpdateWithoutOcorrenciasInput = {
   etapas?: Prisma.ServiceOrderEtapaUpdateManyWithoutServiceOrderNestedInput
   sintomas?: Prisma.ServiceOrderSintomaUpdateManyWithoutServiceOrderNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutOcorrenciasInput = {
@@ -1985,6 +2032,7 @@ export type ServiceOrderUncheckedUpdateWithoutOcorrenciasInput = {
   etapas?: Prisma.ServiceOrderEtapaUncheckedUpdateManyWithoutServiceOrderNestedInput
   sintomas?: Prisma.ServiceOrderSintomaUncheckedUpdateManyWithoutServiceOrderNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutOrcamentosInput = {
@@ -2022,6 +2070,7 @@ export type ServiceOrderCreateWithoutOrcamentosInput = {
   etapas?: Prisma.ServiceOrderEtapaCreateNestedManyWithoutServiceOrderInput
   sintomas?: Prisma.ServiceOrderSintomaCreateNestedManyWithoutServiceOrderInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutOrcamentosInput = {
@@ -2059,6 +2108,7 @@ export type ServiceOrderUncheckedCreateWithoutOrcamentosInput = {
   etapas?: Prisma.ServiceOrderEtapaUncheckedCreateNestedManyWithoutServiceOrderInput
   sintomas?: Prisma.ServiceOrderSintomaUncheckedCreateNestedManyWithoutServiceOrderInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutOrcamentosInput = {
@@ -2112,6 +2162,7 @@ export type ServiceOrderUpdateWithoutOrcamentosInput = {
   etapas?: Prisma.ServiceOrderEtapaUpdateManyWithoutServiceOrderNestedInput
   sintomas?: Prisma.ServiceOrderSintomaUpdateManyWithoutServiceOrderNestedInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutOrcamentosInput = {
@@ -2149,6 +2200,175 @@ export type ServiceOrderUncheckedUpdateWithoutOrcamentosInput = {
   etapas?: Prisma.ServiceOrderEtapaUncheckedUpdateManyWithoutServiceOrderNestedInput
   sintomas?: Prisma.ServiceOrderSintomaUncheckedUpdateManyWithoutServiceOrderNestedInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUncheckedUpdateManyWithoutServiceOrderNestedInput
+}
+
+export type ServiceOrderCreateWithoutEmergenciesInput = {
+  id?: string
+  legacyId?: string | null
+  protocolo: string
+  tipoOs: string
+  serviceType?: string | null
+  equipmentNome?: string | null
+  equipmentPlaca?: string | null
+  linha?: string | null
+  segmento?: string | null
+  horimetro?: string | null
+  operadorLegacyId?: string | null
+  operadorNome?: string | null
+  relato: string
+  dataAgendamento?: Date | string | null
+  situacao?: string
+  status?: string
+  categoriaPlanoId?: string | null
+  cicloId?: string | null
+  oficinasIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasNomes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasResponderam?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lances?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  aprovadoEm?: Date | string | null
+  valorAprovado?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  oficinaVencedoraId?: string | null
+  ordemServicoAprovadaId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutServiceOrdersInput
+  equipment?: Prisma.EquipmentCreateNestedOneWithoutServiceOrdersInput
+  insumos?: Prisma.ServiceOrderInsumoCreateNestedManyWithoutServiceOrderInput
+  etapas?: Prisma.ServiceOrderEtapaCreateNestedManyWithoutServiceOrderInput
+  sintomas?: Prisma.ServiceOrderSintomaCreateNestedManyWithoutServiceOrderInput
+  ocorrencias?: Prisma.ServiceOrderOcorrenciaCreateNestedManyWithoutServiceOrderInput
+  orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutServiceOrderInput
+}
+
+export type ServiceOrderUncheckedCreateWithoutEmergenciesInput = {
+  id?: string
+  legacyId?: string | null
+  companyId: string
+  protocolo: string
+  tipoOs: string
+  serviceType?: string | null
+  equipmentId?: string | null
+  equipmentNome?: string | null
+  equipmentPlaca?: string | null
+  linha?: string | null
+  segmento?: string | null
+  horimetro?: string | null
+  operadorLegacyId?: string | null
+  operadorNome?: string | null
+  relato: string
+  dataAgendamento?: Date | string | null
+  situacao?: string
+  status?: string
+  categoriaPlanoId?: string | null
+  cicloId?: string | null
+  oficinasIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasNomes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasResponderam?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lances?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  aprovadoEm?: Date | string | null
+  valorAprovado?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  oficinaVencedoraId?: string | null
+  ordemServicoAprovadaId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  insumos?: Prisma.ServiceOrderInsumoUncheckedCreateNestedManyWithoutServiceOrderInput
+  etapas?: Prisma.ServiceOrderEtapaUncheckedCreateNestedManyWithoutServiceOrderInput
+  sintomas?: Prisma.ServiceOrderSintomaUncheckedCreateNestedManyWithoutServiceOrderInput
+  ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedCreateNestedManyWithoutServiceOrderInput
+  orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutServiceOrderInput
+}
+
+export type ServiceOrderCreateOrConnectWithoutEmergenciesInput = {
+  where: Prisma.ServiceOrderWhereUniqueInput
+  create: Prisma.XOR<Prisma.ServiceOrderCreateWithoutEmergenciesInput, Prisma.ServiceOrderUncheckedCreateWithoutEmergenciesInput>
+}
+
+export type ServiceOrderUpsertWithoutEmergenciesInput = {
+  update: Prisma.XOR<Prisma.ServiceOrderUpdateWithoutEmergenciesInput, Prisma.ServiceOrderUncheckedUpdateWithoutEmergenciesInput>
+  create: Prisma.XOR<Prisma.ServiceOrderCreateWithoutEmergenciesInput, Prisma.ServiceOrderUncheckedCreateWithoutEmergenciesInput>
+  where?: Prisma.ServiceOrderWhereInput
+}
+
+export type ServiceOrderUpdateToOneWithWhereWithoutEmergenciesInput = {
+  where?: Prisma.ServiceOrderWhereInput
+  data: Prisma.XOR<Prisma.ServiceOrderUpdateWithoutEmergenciesInput, Prisma.ServiceOrderUncheckedUpdateWithoutEmergenciesInput>
+}
+
+export type ServiceOrderUpdateWithoutEmergenciesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  protocolo?: Prisma.StringFieldUpdateOperationsInput | string
+  tipoOs?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentPlaca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linha?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  segmento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  horimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  relato?: Prisma.StringFieldUpdateOperationsInput | string
+  dataAgendamento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  situacao?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  categoriaPlanoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cicloId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  oficinasIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasNomes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasResponderam?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lances?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  aprovadoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  valorAprovado?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutServiceOrdersNestedInput
+  equipment?: Prisma.EquipmentUpdateOneWithoutServiceOrdersNestedInput
+  insumos?: Prisma.ServiceOrderInsumoUpdateManyWithoutServiceOrderNestedInput
+  etapas?: Prisma.ServiceOrderEtapaUpdateManyWithoutServiceOrderNestedInput
+  sintomas?: Prisma.ServiceOrderSintomaUpdateManyWithoutServiceOrderNestedInput
+  ocorrencias?: Prisma.ServiceOrderOcorrenciaUpdateManyWithoutServiceOrderNestedInput
+  orcamentos?: Prisma.OrcamentoUpdateManyWithoutServiceOrderNestedInput
+}
+
+export type ServiceOrderUncheckedUpdateWithoutEmergenciesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  protocolo?: Prisma.StringFieldUpdateOperationsInput | string
+  tipoOs?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentPlaca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linha?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  segmento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  horimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  relato?: Prisma.StringFieldUpdateOperationsInput | string
+  dataAgendamento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  situacao?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  categoriaPlanoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cicloId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  oficinasIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasNomes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasResponderam?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lances?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  aprovadoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  valorAprovado?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  insumos?: Prisma.ServiceOrderInsumoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  etapas?: Prisma.ServiceOrderEtapaUncheckedUpdateManyWithoutServiceOrderNestedInput
+  sintomas?: Prisma.ServiceOrderSintomaUncheckedUpdateManyWithoutServiceOrderNestedInput
+  ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedUpdateManyWithoutServiceOrderNestedInput
+  orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateManyCompanyInput = {
@@ -2218,6 +2438,7 @@ export type ServiceOrderUpdateWithoutCompanyInput = {
   sintomas?: Prisma.ServiceOrderSintomaUpdateManyWithoutServiceOrderNestedInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUpdateManyWithoutServiceOrderNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutCompanyInput = {
@@ -2255,6 +2476,7 @@ export type ServiceOrderUncheckedUpdateWithoutCompanyInput = {
   sintomas?: Prisma.ServiceOrderSintomaUncheckedUpdateManyWithoutServiceOrderNestedInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedUpdateManyWithoutServiceOrderNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateManyWithoutCompanyInput = {
@@ -2356,6 +2578,7 @@ export type ServiceOrderUpdateWithoutEquipmentInput = {
   sintomas?: Prisma.ServiceOrderSintomaUpdateManyWithoutServiceOrderNestedInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUpdateManyWithoutServiceOrderNestedInput
   orcamentos?: Prisma.OrcamentoUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutEquipmentInput = {
@@ -2393,6 +2616,7 @@ export type ServiceOrderUncheckedUpdateWithoutEquipmentInput = {
   sintomas?: Prisma.ServiceOrderSintomaUncheckedUpdateManyWithoutServiceOrderNestedInput
   ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedUpdateManyWithoutServiceOrderNestedInput
   orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateManyWithoutEquipmentInput = {
@@ -2438,6 +2662,7 @@ export type ServiceOrderCountOutputType = {
   sintomas: number
   ocorrencias: number
   orcamentos: number
+  emergencies: number
 }
 
 export type ServiceOrderCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2446,6 +2671,7 @@ export type ServiceOrderCountOutputTypeSelect<ExtArgs extends runtime.Types.Exte
   sintomas?: boolean | ServiceOrderCountOutputTypeCountSintomasArgs
   ocorrencias?: boolean | ServiceOrderCountOutputTypeCountOcorrenciasArgs
   orcamentos?: boolean | ServiceOrderCountOutputTypeCountOrcamentosArgs
+  emergencies?: boolean | ServiceOrderCountOutputTypeCountEmergenciesArgs
 }
 
 /**
@@ -2493,6 +2719,13 @@ export type ServiceOrderCountOutputTypeCountOrcamentosArgs<ExtArgs extends runti
   where?: Prisma.OrcamentoWhereInput
 }
 
+/**
+ * ServiceOrderCountOutputType without action
+ */
+export type ServiceOrderCountOutputTypeCountEmergenciesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.EmergencyWhereInput
+}
+
 
 export type ServiceOrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2532,6 +2765,7 @@ export type ServiceOrderSelect<ExtArgs extends runtime.Types.Extensions.Internal
   sintomas?: boolean | Prisma.ServiceOrder$sintomasArgs<ExtArgs>
   ocorrencias?: boolean | Prisma.ServiceOrder$ocorrenciasArgs<ExtArgs>
   orcamentos?: boolean | Prisma.ServiceOrder$orcamentosArgs<ExtArgs>
+  emergencies?: boolean | Prisma.ServiceOrder$emergenciesArgs<ExtArgs>
   _count?: boolean | Prisma.ServiceOrderCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["serviceOrder"]>
 
@@ -2647,6 +2881,7 @@ export type ServiceOrderInclude<ExtArgs extends runtime.Types.Extensions.Interna
   sintomas?: boolean | Prisma.ServiceOrder$sintomasArgs<ExtArgs>
   ocorrencias?: boolean | Prisma.ServiceOrder$ocorrenciasArgs<ExtArgs>
   orcamentos?: boolean | Prisma.ServiceOrder$orcamentosArgs<ExtArgs>
+  emergencies?: boolean | Prisma.ServiceOrder$emergenciesArgs<ExtArgs>
   _count?: boolean | Prisma.ServiceOrderCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ServiceOrderIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2668,6 +2903,7 @@ export type $ServiceOrderPayload<ExtArgs extends runtime.Types.Extensions.Intern
     sintomas: Prisma.$ServiceOrderSintomaPayload<ExtArgs>[]
     ocorrencias: Prisma.$ServiceOrderOcorrenciaPayload<ExtArgs>[]
     orcamentos: Prisma.$OrcamentoPayload<ExtArgs>[]
+    emergencies: Prisma.$EmergencyPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -3146,6 +3382,7 @@ export interface Prisma__ServiceOrderClient<T, Null = never, ExtArgs extends run
   sintomas<T extends Prisma.ServiceOrder$sintomasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ServiceOrder$sintomasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ServiceOrderSintomaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   ocorrencias<T extends Prisma.ServiceOrder$ocorrenciasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ServiceOrder$ocorrenciasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ServiceOrderOcorrenciaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   orcamentos<T extends Prisma.ServiceOrder$orcamentosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ServiceOrder$orcamentosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrcamentoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  emergencies<T extends Prisma.ServiceOrder$emergenciesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ServiceOrder$emergenciesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EmergencyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3742,6 +3979,30 @@ export type ServiceOrder$orcamentosArgs<ExtArgs extends runtime.Types.Extensions
   take?: number
   skip?: number
   distinct?: Prisma.OrcamentoScalarFieldEnum | Prisma.OrcamentoScalarFieldEnum[]
+}
+
+/**
+ * ServiceOrder.emergencies
+ */
+export type ServiceOrder$emergenciesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Emergency
+   */
+  select?: Prisma.EmergencySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Emergency
+   */
+  omit?: Prisma.EmergencyOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EmergencyInclude<ExtArgs> | null
+  where?: Prisma.EmergencyWhereInput
+  orderBy?: Prisma.EmergencyOrderByWithRelationInput | Prisma.EmergencyOrderByWithRelationInput[]
+  cursor?: Prisma.EmergencyWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.EmergencyScalarFieldEnum | Prisma.EmergencyScalarFieldEnum[]
 }
 
 /**

@@ -17,6 +17,11 @@ import {
   ehCondutorDoEquipamentoRow,
   parseCondutoresIds,
 } from '../../common/prisma/equipment-api.mapper';
+import {
+  equipamentoNoEscopo,
+  escopoDoApp,
+  type EscopoCondutor,
+} from '../../common/prisma/escopo-condutor';
 import { mapOperatorToApi } from '../../common/prisma/operator-api.mapper';
 import { companyWhere, resolverCompanyId } from '../../common/prisma/company-resolver';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -47,17 +52,17 @@ export class FuncionariosService {
   private async ehCondutorDeEquipamentoPg(
     companyId: string,
     operadorLegacyId: string,
-    apenasComboio: boolean,
+    escopo: EscopoCondutor,
   ): Promise<boolean> {
     const rows = await this.prisma.equipment.findMany({
       where: { companyId },
       select: { tipo: true, condutoresIds: true },
     });
-    return rows.some((e) => {
-      const isComboio = ehComboioTipo(e.tipo);
-      if (apenasComboio ? !isComboio : isComboio) return false;
-      return ehCondutorDoEquipamentoRow(e, operadorLegacyId);
-    });
+    return rows.some(
+      (e) =>
+        equipamentoNoEscopo(e.tipo, escopo) &&
+        ehCondutorDoEquipamentoRow(e, operadorLegacyId),
+    );
   }
 
   private getJwtSecret(): string {
@@ -199,7 +204,7 @@ export class FuncionariosService {
 
     let temSenha = false;
     let matched: (typeof rows)[number] | null = null;
-    const appMotorista = dto.app === 'motorista';
+    const escopo = escopoDoApp(dto.app);
 
     for (const row of rows) {
       if (!row.senhaHash) continue;
@@ -239,7 +244,7 @@ export class FuncionariosService {
     const ehCondutor = await this.ehCondutorDeEquipamentoPg(
       matched.companyId,
       funcionario.id,
-      !appMotorista,
+      escopo,
     );
     if (!ehCondutor) return null;
 

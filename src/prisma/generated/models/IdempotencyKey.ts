@@ -14,8 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace.js"
 
 /**
  * Model IdempotencyKey
- * Chaves de idempotência do outbox offline (header `Idempotency-Key`).
- * Substitui a coleção Firestore `idempotencyKeys/{key}`.
+ * 
  */
 export type IdempotencyKeyModel = runtime.Types.Result.DefaultSelection<Prisma.$IdempotencyKeyPayload>
 

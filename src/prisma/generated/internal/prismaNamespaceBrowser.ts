@@ -96,6 +96,7 @@ export const ModelName = {
   Lubrificacao: 'Lubrificacao',
   ComboioReabastecimento: 'ComboioReabastecimento',
   NotaFiscal: 'NotaFiscal',
+  SyncTombstone: 'SyncTombstone',
   IdempotencyKey: 'IdempotencyKey',
   Notificacao: 'Notificacao'
 } as const
@@ -929,6 +930,7 @@ export const EmergencyScalarFieldEnum = {
   checklistLegacyId: 'checklistLegacyId',
   questionId: 'questionId',
   questionLabel: 'questionLabel',
+  serviceOrderId: 'serviceOrderId',
   dataHora: 'dataHora',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1018,6 +1020,17 @@ export const NotaFiscalScalarFieldEnum = {
 } as const
 
 export type NotaFiscalScalarFieldEnum = (typeof NotaFiscalScalarFieldEnum)[keyof typeof NotaFiscalScalarFieldEnum]
+
+
+export const SyncTombstoneScalarFieldEnum = {
+  id: 'id',
+  colecao: 'colecao',
+  registroId: 'registroId',
+  companyId: 'companyId',
+  deletadoEm: 'deletadoEm'
+} as const
+
+export type SyncTombstoneScalarFieldEnum = (typeof SyncTombstoneScalarFieldEnum)[keyof typeof SyncTombstoneScalarFieldEnum]
 
 
 export const IdempotencyKeyScalarFieldEnum = {

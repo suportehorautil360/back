@@ -12,10 +12,12 @@ export class AuthFuncionarioDto {
 
   @ApiProperty({
     required: false,
-    enum: ['motorista', 'comboio'],
+    enum: ['motorista', 'comboio', 'checklist'],
     description:
-      'App de origem: motorista (FleetFuel — qualquer equipamento) ou comboio ' +
-      '(PWA comboista — só comboios). Padrão: comboio.',
+      'App de origem, que define quais equipamentos liberam o login: ' +
+      'motorista (FleetFuel — equipamentos que NÃO são comboio), ' +
+      'comboio (PWA comboista — só comboios), ' +
+      'checklist (app do operador — qualquer equipamento). Padrão: comboio.',
   })
-  app?: 'motorista' | 'comboio';
+  app?: 'motorista' | 'comboio' | 'checklist';
 }

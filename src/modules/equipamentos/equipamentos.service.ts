@@ -405,7 +405,20 @@ export class EquipamentosService {
           'Equipamento não encontrado para o ID fornecido.',
         );
       }
-      await this.prisma.equipment.delete({ where: { id: row.id } });
+      // Lápide e remoção na mesma transação. Apagar sem registrar deixaria o
+      // equipamento para sempre no tablet do operador: o cursor do /sync/pull
+      // enxerga criação e edição, nunca o que sumiu.
+      await this.prisma.$transaction([
+        this.prisma.syncTombstone.create({
+          data: {
+            colecao: 'equipamentos',
+            // Mesmo id que o app recebeu no pull.
+            registroId: row.legacyId ?? row.id,
+            companyId: row.companyId,
+          },
+        }),
+        this.prisma.equipment.delete({ where: { id: row.id } }),
+      ]);
       return { data: {}, message: 'Equipamento removido com sucesso!' };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
