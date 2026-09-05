@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
+import { resolverCompanyId } from '../../common/prisma/company-resolver';
 import { mapEquipmentToApi } from '../../common/prisma/equipment-api.mapper';
 import {
   codificarCursor,
@@ -54,6 +55,17 @@ export class SyncService {
     if (!ehColecaoConhecida(colecao)) {
       throw new NotFoundException(`Coleção desconhecida: ${colecao}`);
     }
+
+    // O app manda o legacyId (é o que o resolver-chassi devolve), mas
+    // `equipments.company_id` guarda o UUID do Postgres. Os dois se parecem —
+    // ambos são UUID — então consultar sem resolver não estoura: devolve zero
+    // equipamento, e o operador fica sem frota sem nenhum erro na tela.
+    const companyIdReal = await resolverCompanyId(this.prisma, companyId);
+    if (!companyIdReal) {
+      // Lista vazia faria o app apagar o espelho inteiro achando que a frota
+      // acabou. Falhar alto preserva o que já está no aparelho.
+      throw new NotFoundException(`Empresa não encontrada: ${companyId}`);
+    }
     const limite = Math.min(
       Math.max(Number(limiteBruto) || LIMITE_PADRAO, 1),
       LIMITE_MAXIMO,
@@ -61,7 +73,7 @@ export class SyncService {
     const desde = decodificarCursor(cursorBruto);
 
     const rows = await this.prisma.equipment.findMany({
-      where: { companyId, ...this.apartirDe(desde) },
+      where: { companyId: companyIdReal, ...this.apartirDe(desde) },
       orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
       // Uma a mais para saber se há próxima página sem um COUNT separado.
       take: limite + 1,
@@ -73,7 +85,7 @@ export class SyncService {
 
     return {
       mudancas: pagina.map((r) => mapEquipmentToApi(r, companyId)),
-      remocoes: await this.remocoes(companyId, colecao, desde),
+      remocoes: await this.remocoes(companyIdReal, colecao, desde),
       proximoCursor: ultimo
         ? codificarCursor({ atualizadoEm: ultimo.updatedAt, id: ultimo.id })
         : (cursorBruto ?? null),
