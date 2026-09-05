@@ -12,12 +12,12 @@ describe('SyncService', () => {
   function prismaFalso(idResolvido: string | null) {
     return {
       company: {
-        findUnique: jest.fn(async () =>
-          idResolvido ? { id: idResolvido } : null,
+        findUnique: jest.fn(() =>
+          Promise.resolve(idResolvido ? { id: idResolvido } : null),
         ),
       },
-      equipment: { findMany: jest.fn(async () => []) },
-      syncTombstone: { findMany: jest.fn(async () => []) },
+      equipment: { findMany: jest.fn(() => Promise.resolve([])) },
+      syncTombstone: { findMany: jest.fn(() => Promise.resolve([])) },
     };
   }
 
@@ -27,8 +27,10 @@ describe('SyncService', () => {
 
     await service.puxar('6efff67a-legacy-do-app', 'equipamentos');
 
-    const where = prisma.equipment.findMany.mock.calls[0][0].where;
-    expect(where.companyId).toBe('4c2f78c1-uuid-real');
+    const [argumentos] = prisma.equipment.findMany.mock.calls[0] as [
+      { where: { companyId: string } },
+    ];
+    expect(argumentos.where.companyId).toBe('4c2f78c1-uuid-real');
   });
 
   it('empresa inexistente é 404, não lista vazia', async () => {
