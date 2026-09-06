@@ -96,4 +96,81 @@ describe('UploadsService', () => {
       ]),
     ).rejects.toBeInstanceOf(InternalServerErrorException);
   });
+
+  /**
+   * Monta um UploadsService novo sobre os mesmos mocks do client Supabase
+   * usados acima, expondo os três métodos de storage que os testes de
+   * uploadSelfiePonto precisam inspecionar.
+   */
+  function servicoComStorageMockado() {
+    const service = new UploadsService();
+    const storage = {
+      createBucket: createBucketMock,
+      upload: uploadMock,
+      listBuckets: listBucketsMock,
+    };
+    return { service, storage, upload: uploadMock };
+  }
+
+  describe('uploadSelfiePonto', () => {
+    it('cria o bucket de selfies como PRIVADO', async () => {
+      // O rosto de uma pessoa amarrado ao CPF dela não pode ficar num bucket
+      // que devolve URL pública, como o de fotos de checklist.
+      const { service, storage } = servicoComStorageMockado();
+      await service.uploadSelfiePonto('ponto-1', {
+        buffer: Buffer.from('x'),
+        mimetype: 'image/jpeg',
+      });
+      expect(storage.createBucket).toHaveBeenCalledWith(
+        'ponto-selfies',
+        expect.objectContaining({ public: false }),
+      );
+    });
+
+    it('devolve a CHAVE, não uma URL', async () => {
+      const { service } = servicoComStorageMockado();
+      const chave = await service.uploadSelfiePonto('ponto-1', {
+        buffer: Buffer.from('x'),
+        mimetype: 'image/jpeg',
+      });
+      expect(chave).toBe('ponto-1/selfie.jpg');
+      expect(chave).not.toMatch(/^https?:/);
+    });
+
+    it('sobrescreve o mesmo objeto no reenvio', async () => {
+      // Caminho determinístico é o que torna o upload idempotente sem chave
+      // de idempotência — mesmo truque do checklist.
+      const { service, upload } = servicoComStorageMockado();
+      await service.uploadSelfiePonto('ponto-1', {
+        buffer: Buffer.from('a'),
+        mimetype: 'image/jpeg',
+      });
+      await service.uploadSelfiePonto('ponto-1', {
+        buffer: Buffer.from('b'),
+        mimetype: 'image/jpeg',
+      });
+      expect(upload).toHaveBeenNthCalledWith(
+        1,
+        'ponto-1/selfie.jpg',
+        expect.anything(),
+        expect.objectContaining({ upsert: true }),
+      );
+      expect(upload).toHaveBeenNthCalledWith(
+        2,
+        'ponto-1/selfie.jpg',
+        expect.anything(),
+        expect.objectContaining({ upsert: true }),
+      );
+    });
+
+    it('não deixa o pontoId escapar da pasta', async () => {
+      const { service, upload } = servicoComStorageMockado();
+      await service.uploadSelfiePonto('../../etc/passwd', {
+        buffer: Buffer.from('x'),
+        mimetype: 'image/jpeg',
+      });
+      const path = (upload.mock.calls[0] as string[])[0];
+      expect(path).not.toContain('..');
+    });
+  });
 });

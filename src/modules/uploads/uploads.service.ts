@@ -21,6 +21,9 @@ const EXTENSOES: Record<string, string> = {
 
 const DEFAULT_NOTA_FISCAL_BUCKET = 'notas-fiscais';
 
+/** Privado por exigência da Portaria 671 — ver o comentário de `photoUrl` no schema. */
+const BUCKET_SELFIES_PONTO = 'ponto-selfies';
+
 function storageErrorMessage(error: unknown): string {
   if (error && typeof error === 'object' && 'message' in error) {
     return String((error as { message: unknown }).message);
@@ -85,7 +88,10 @@ export class UploadsService {
     );
   }
 
-  private async ensureBucket(bucketName: string): Promise<void> {
+  private async ensureBucket(
+    bucketName: string,
+    publico = true,
+  ): Promise<void> {
     if (this.ensuredBuckets.has(bucketName)) return;
 
     const client = this.getCliente();
@@ -100,7 +106,7 @@ export class UploadsService {
     const { error: createError } = await client.storage.createBucket(
       bucketName,
       {
-        public: true,
+        public: publico,
         fileSizeLimit: 10 * 1024 * 1024,
       },
     );
@@ -245,5 +251,37 @@ export class UploadsService {
         ? `Não foi possível enviar o PDF da nota fiscal: ${detail}`
         : 'Não foi possível enviar o PDF da nota fiscal.',
     );
+  }
+
+  /**
+   * Sobe a selfie da batida e devolve a CHAVE no bucket privado.
+   *
+   * Não reaproveita `uploadChecklistFotos`: aquele grava em bucket
+   * `public: true` e devolve `getPublicUrl` — URL que qualquer um abre. Para a
+   * foto do horímetro passa; para o rosto de uma pessoa amarrado ao CPF, não.
+   *
+   * O caminho é determinístico (`{pontoId}/selfie.jpg`) e o upload é `upsert`:
+   * reenviar sobrescreve o mesmo objeto em vez de acumular cópias, que é o que
+   * torna este upload idempotente sem chave nenhuma.
+   */
+  async uploadSelfiePonto(
+    pontoId: string,
+    file: { buffer: Buffer; mimetype: string },
+  ): Promise<string> {
+    await this.ensureBucket(BUCKET_SELFIES_PONTO, false);
+    const ext = EXTENSOES[file.mimetype] ?? 'jpg';
+    const path = `${sanitizar(pontoId)}/selfie.${ext}`;
+    const storage = this.getCliente().storage.from(BUCKET_SELFIES_PONTO);
+    const { error } = await storage.upload(path, file.buffer, {
+      contentType: file.mimetype,
+      upsert: true,
+    });
+    if (error) {
+      console.error('Erro no upload da selfie de ponto:', error);
+      throw new InternalServerErrorException(
+        `Não foi possível enviar a selfie: ${storageErrorMessage(error)}`,
+      );
+    }
+    return path;
   }
 }

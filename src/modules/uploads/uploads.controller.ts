@@ -230,4 +230,45 @@ export class UploadsController {
     ]);
     return { data: { url }, message: 'ok' };
   }
+
+  @Post('ponto-selfie')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: MAX_BYTES_POR_FOTO } }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Subir a selfie de uma batida de ponto (bucket privado)',
+    description: 'Devolve a CHAVE no bucket, não uma URL — o objeto é privado.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file', 'pontoId'],
+      properties: {
+        pontoId: {
+          type: 'string',
+          description: 'UUID gerado no app antes de bater',
+        },
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  async uploadSelfiePonto(
+    @Body('pontoId') pontoId: string | undefined,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!pontoId?.trim()) {
+      throw new BadRequestException('pontoId é obrigatório.');
+    }
+    if (!file) {
+      throw new BadRequestException('Envie a selfie no campo "file".');
+    }
+    assertImagens([file]);
+    const chave = await this.service.uploadSelfiePonto(pontoId.trim(), {
+      buffer: file.buffer,
+      mimetype: file.mimetype,
+    });
+    return { data: { chave }, message: 'ok' };
+  }
 }
