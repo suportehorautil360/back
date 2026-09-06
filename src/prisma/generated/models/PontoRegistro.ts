@@ -36,11 +36,17 @@ export type AggregatePontoRegistro = {
 }
 
 export type PontoRegistroAvgAggregateOutputType = {
+  latitude: number | null
+  longitude: number | null
+  precisaoMetros: number | null
   nsr: number | null
   refNsr: number | null
 }
 
 export type PontoRegistroSumAggregateOutputType = {
+  latitude: number | null
+  longitude: number | null
+  precisaoMetros: number | null
   nsr: number | null
   refNsr: number | null
 }
@@ -55,6 +61,9 @@ export type PontoRegistroMinAggregateOutputType = {
   timestampOriginal: Date | null
   tipo: string | null
   photoUrl: string | null
+  latitude: number | null
+  longitude: number | null
+  precisaoMetros: number | null
   registro: string | null
   nsr: number | null
   hash: string | null
@@ -78,6 +87,9 @@ export type PontoRegistroMaxAggregateOutputType = {
   timestampOriginal: Date | null
   tipo: string | null
   photoUrl: string | null
+  latitude: number | null
+  longitude: number | null
+  precisaoMetros: number | null
   registro: string | null
   nsr: number | null
   hash: string | null
@@ -101,6 +113,9 @@ export type PontoRegistroCountAggregateOutputType = {
   timestampOriginal: number
   tipo: number
   photoUrl: number
+  latitude: number
+  longitude: number
+  precisaoMetros: number
   registro: number
   nsr: number
   hash: number
@@ -117,11 +132,17 @@ export type PontoRegistroCountAggregateOutputType = {
 
 
 export type PontoRegistroAvgAggregateInputType = {
+  latitude?: true
+  longitude?: true
+  precisaoMetros?: true
   nsr?: true
   refNsr?: true
 }
 
 export type PontoRegistroSumAggregateInputType = {
+  latitude?: true
+  longitude?: true
+  precisaoMetros?: true
   nsr?: true
   refNsr?: true
 }
@@ -136,6 +157,9 @@ export type PontoRegistroMinAggregateInputType = {
   timestampOriginal?: true
   tipo?: true
   photoUrl?: true
+  latitude?: true
+  longitude?: true
+  precisaoMetros?: true
   registro?: true
   nsr?: true
   hash?: true
@@ -159,6 +183,9 @@ export type PontoRegistroMaxAggregateInputType = {
   timestampOriginal?: true
   tipo?: true
   photoUrl?: true
+  latitude?: true
+  longitude?: true
+  precisaoMetros?: true
   registro?: true
   nsr?: true
   hash?: true
@@ -182,6 +209,9 @@ export type PontoRegistroCountAggregateInputType = {
   timestampOriginal?: true
   tipo?: true
   photoUrl?: true
+  latitude?: true
+  longitude?: true
+  precisaoMetros?: true
   registro?: true
   nsr?: true
   hash?: true
@@ -292,6 +322,9 @@ export type PontoRegistroGroupByOutputType = {
   timestampOriginal: Date
   tipo: string
   photoUrl: string | null
+  latitude: number | null
+  longitude: number | null
+  precisaoMetros: number | null
   registro: string
   nsr: number
   hash: string
@@ -338,6 +371,9 @@ export type PontoRegistroWhereInput = {
   timestampOriginal?: Prisma.DateTimeFilter<"PontoRegistro"> | Date | string
   tipo?: Prisma.StringFilter<"PontoRegistro"> | string
   photoUrl?: Prisma.StringNullableFilter<"PontoRegistro"> | string | null
+  latitude?: Prisma.FloatNullableFilter<"PontoRegistro"> | number | null
+  longitude?: Prisma.FloatNullableFilter<"PontoRegistro"> | number | null
+  precisaoMetros?: Prisma.IntNullableFilter<"PontoRegistro"> | number | null
   registro?: Prisma.StringFilter<"PontoRegistro"> | string
   nsr?: Prisma.IntFilter<"PontoRegistro"> | number
   hash?: Prisma.StringFilter<"PontoRegistro"> | string
@@ -363,6 +399,9 @@ export type PontoRegistroOrderByWithRelationInput = {
   timestampOriginal?: Prisma.SortOrder
   tipo?: Prisma.SortOrder
   photoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  latitude?: Prisma.SortOrderInput | Prisma.SortOrder
+  longitude?: Prisma.SortOrderInput | Prisma.SortOrder
+  precisaoMetros?: Prisma.SortOrderInput | Prisma.SortOrder
   registro?: Prisma.SortOrder
   nsr?: Prisma.SortOrder
   hash?: Prisma.SortOrder
@@ -392,6 +431,9 @@ export type PontoRegistroWhereUniqueInput = Prisma.AtLeast<{
   timestampOriginal?: Prisma.DateTimeFilter<"PontoRegistro"> | Date | string
   tipo?: Prisma.StringFilter<"PontoRegistro"> | string
   photoUrl?: Prisma.StringNullableFilter<"PontoRegistro"> | string | null
+  latitude?: Prisma.FloatNullableFilter<"PontoRegistro"> | number | null
+  longitude?: Prisma.FloatNullableFilter<"PontoRegistro"> | number | null
+  precisaoMetros?: Prisma.IntNullableFilter<"PontoRegistro"> | number | null
   registro?: Prisma.StringFilter<"PontoRegistro"> | string
   nsr?: Prisma.IntFilter<"PontoRegistro"> | number
   hash?: Prisma.StringFilter<"PontoRegistro"> | string
@@ -417,6 +459,9 @@ export type PontoRegistroOrderByWithAggregationInput = {
   timestampOriginal?: Prisma.SortOrder
   tipo?: Prisma.SortOrder
   photoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  latitude?: Prisma.SortOrderInput | Prisma.SortOrder
+  longitude?: Prisma.SortOrderInput | Prisma.SortOrder
+  precisaoMetros?: Prisma.SortOrderInput | Prisma.SortOrder
   registro?: Prisma.SortOrder
   nsr?: Prisma.SortOrder
   hash?: Prisma.SortOrder
@@ -448,6 +493,9 @@ export type PontoRegistroScalarWhereWithAggregatesInput = {
   timestampOriginal?: Prisma.DateTimeWithAggregatesFilter<"PontoRegistro"> | Date | string
   tipo?: Prisma.StringWithAggregatesFilter<"PontoRegistro"> | string
   photoUrl?: Prisma.StringNullableWithAggregatesFilter<"PontoRegistro"> | string | null
+  latitude?: Prisma.FloatNullableWithAggregatesFilter<"PontoRegistro"> | number | null
+  longitude?: Prisma.FloatNullableWithAggregatesFilter<"PontoRegistro"> | number | null
+  precisaoMetros?: Prisma.IntNullableWithAggregatesFilter<"PontoRegistro"> | number | null
   registro?: Prisma.StringWithAggregatesFilter<"PontoRegistro"> | string
   nsr?: Prisma.IntWithAggregatesFilter<"PontoRegistro"> | number
   hash?: Prisma.StringWithAggregatesFilter<"PontoRegistro"> | string
@@ -469,6 +517,9 @@ export type PontoRegistroCreateInput = {
   timestampOriginal: Date | string
   tipo: string
   photoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  precisaoMetros?: number | null
   registro?: string
   nsr: number
   hash: string
@@ -494,6 +545,9 @@ export type PontoRegistroUncheckedCreateInput = {
   timestampOriginal: Date | string
   tipo: string
   photoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  precisaoMetros?: number | null
   registro?: string
   nsr: number
   hash: string
@@ -515,6 +569,9 @@ export type PontoRegistroUpdateInput = {
   timestampOriginal?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  precisaoMetros?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   registro?: Prisma.StringFieldUpdateOperationsInput | string
   nsr?: Prisma.IntFieldUpdateOperationsInput | number
   hash?: Prisma.StringFieldUpdateOperationsInput | string
@@ -540,6 +597,9 @@ export type PontoRegistroUncheckedUpdateInput = {
   timestampOriginal?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  precisaoMetros?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   registro?: Prisma.StringFieldUpdateOperationsInput | string
   nsr?: Prisma.IntFieldUpdateOperationsInput | number
   hash?: Prisma.StringFieldUpdateOperationsInput | string
@@ -563,6 +623,9 @@ export type PontoRegistroCreateManyInput = {
   timestampOriginal: Date | string
   tipo: string
   photoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  precisaoMetros?: number | null
   registro?: string
   nsr: number
   hash: string
@@ -584,6 +647,9 @@ export type PontoRegistroUpdateManyMutationInput = {
   timestampOriginal?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  precisaoMetros?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   registro?: Prisma.StringFieldUpdateOperationsInput | string
   nsr?: Prisma.IntFieldUpdateOperationsInput | number
   hash?: Prisma.StringFieldUpdateOperationsInput | string
@@ -607,6 +673,9 @@ export type PontoRegistroUncheckedUpdateManyInput = {
   timestampOriginal?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  precisaoMetros?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   registro?: Prisma.StringFieldUpdateOperationsInput | string
   nsr?: Prisma.IntFieldUpdateOperationsInput | number
   hash?: Prisma.StringFieldUpdateOperationsInput | string
@@ -645,6 +714,9 @@ export type PontoRegistroCountOrderByAggregateInput = {
   timestampOriginal?: Prisma.SortOrder
   tipo?: Prisma.SortOrder
   photoUrl?: Prisma.SortOrder
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
+  precisaoMetros?: Prisma.SortOrder
   registro?: Prisma.SortOrder
   nsr?: Prisma.SortOrder
   hash?: Prisma.SortOrder
@@ -659,6 +731,9 @@ export type PontoRegistroCountOrderByAggregateInput = {
 }
 
 export type PontoRegistroAvgOrderByAggregateInput = {
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
+  precisaoMetros?: Prisma.SortOrder
   nsr?: Prisma.SortOrder
   refNsr?: Prisma.SortOrder
 }
@@ -673,6 +748,9 @@ export type PontoRegistroMaxOrderByAggregateInput = {
   timestampOriginal?: Prisma.SortOrder
   tipo?: Prisma.SortOrder
   photoUrl?: Prisma.SortOrder
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
+  precisaoMetros?: Prisma.SortOrder
   registro?: Prisma.SortOrder
   nsr?: Prisma.SortOrder
   hash?: Prisma.SortOrder
@@ -696,6 +774,9 @@ export type PontoRegistroMinOrderByAggregateInput = {
   timestampOriginal?: Prisma.SortOrder
   tipo?: Prisma.SortOrder
   photoUrl?: Prisma.SortOrder
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
+  precisaoMetros?: Prisma.SortOrder
   registro?: Prisma.SortOrder
   nsr?: Prisma.SortOrder
   hash?: Prisma.SortOrder
@@ -710,6 +791,9 @@ export type PontoRegistroMinOrderByAggregateInput = {
 }
 
 export type PontoRegistroSumOrderByAggregateInput = {
+  latitude?: Prisma.SortOrder
+  longitude?: Prisma.SortOrder
+  precisaoMetros?: Prisma.SortOrder
   nsr?: Prisma.SortOrder
   refNsr?: Prisma.SortOrder
 }
@@ -806,6 +890,9 @@ export type PontoRegistroCreateWithoutCompanyInput = {
   timestampOriginal: Date | string
   tipo: string
   photoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  precisaoMetros?: number | null
   registro?: string
   nsr: number
   hash: string
@@ -829,6 +916,9 @@ export type PontoRegistroUncheckedCreateWithoutCompanyInput = {
   timestampOriginal: Date | string
   tipo: string
   photoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  precisaoMetros?: number | null
   registro?: string
   nsr: number
   hash: string
@@ -881,6 +971,9 @@ export type PontoRegistroScalarWhereInput = {
   timestampOriginal?: Prisma.DateTimeFilter<"PontoRegistro"> | Date | string
   tipo?: Prisma.StringFilter<"PontoRegistro"> | string
   photoUrl?: Prisma.StringNullableFilter<"PontoRegistro"> | string | null
+  latitude?: Prisma.FloatNullableFilter<"PontoRegistro"> | number | null
+  longitude?: Prisma.FloatNullableFilter<"PontoRegistro"> | number | null
+  precisaoMetros?: Prisma.IntNullableFilter<"PontoRegistro"> | number | null
   registro?: Prisma.StringFilter<"PontoRegistro"> | string
   nsr?: Prisma.IntFilter<"PontoRegistro"> | number
   hash?: Prisma.StringFilter<"PontoRegistro"> | string
@@ -902,6 +995,9 @@ export type PontoRegistroCreateWithoutOperatorInput = {
   timestampOriginal: Date | string
   tipo: string
   photoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  precisaoMetros?: number | null
   registro?: string
   nsr: number
   hash: string
@@ -925,6 +1021,9 @@ export type PontoRegistroUncheckedCreateWithoutOperatorInput = {
   timestampOriginal: Date | string
   tipo: string
   photoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  precisaoMetros?: number | null
   registro?: string
   nsr: number
   hash: string
@@ -973,6 +1072,9 @@ export type PontoRegistroCreateManyCompanyInput = {
   timestampOriginal: Date | string
   tipo: string
   photoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  precisaoMetros?: number | null
   registro?: string
   nsr: number
   hash: string
@@ -994,6 +1096,9 @@ export type PontoRegistroUpdateWithoutCompanyInput = {
   timestampOriginal?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  precisaoMetros?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   registro?: Prisma.StringFieldUpdateOperationsInput | string
   nsr?: Prisma.IntFieldUpdateOperationsInput | number
   hash?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1017,6 +1122,9 @@ export type PontoRegistroUncheckedUpdateWithoutCompanyInput = {
   timestampOriginal?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  precisaoMetros?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   registro?: Prisma.StringFieldUpdateOperationsInput | string
   nsr?: Prisma.IntFieldUpdateOperationsInput | number
   hash?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1039,6 +1147,9 @@ export type PontoRegistroUncheckedUpdateManyWithoutCompanyInput = {
   timestampOriginal?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  precisaoMetros?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   registro?: Prisma.StringFieldUpdateOperationsInput | string
   nsr?: Prisma.IntFieldUpdateOperationsInput | number
   hash?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1061,6 +1172,9 @@ export type PontoRegistroCreateManyOperatorInput = {
   timestampOriginal: Date | string
   tipo: string
   photoUrl?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  precisaoMetros?: number | null
   registro?: string
   nsr: number
   hash: string
@@ -1082,6 +1196,9 @@ export type PontoRegistroUpdateWithoutOperatorInput = {
   timestampOriginal?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  precisaoMetros?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   registro?: Prisma.StringFieldUpdateOperationsInput | string
   nsr?: Prisma.IntFieldUpdateOperationsInput | number
   hash?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1105,6 +1222,9 @@ export type PontoRegistroUncheckedUpdateWithoutOperatorInput = {
   timestampOriginal?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  precisaoMetros?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   registro?: Prisma.StringFieldUpdateOperationsInput | string
   nsr?: Prisma.IntFieldUpdateOperationsInput | number
   hash?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1127,6 +1247,9 @@ export type PontoRegistroUncheckedUpdateManyWithoutOperatorInput = {
   timestampOriginal?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  precisaoMetros?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   registro?: Prisma.StringFieldUpdateOperationsInput | string
   nsr?: Prisma.IntFieldUpdateOperationsInput | number
   hash?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1152,6 +1275,9 @@ export type PontoRegistroSelect<ExtArgs extends runtime.Types.Extensions.Interna
   timestampOriginal?: boolean
   tipo?: boolean
   photoUrl?: boolean
+  latitude?: boolean
+  longitude?: boolean
+  precisaoMetros?: boolean
   registro?: boolean
   nsr?: boolean
   hash?: boolean
@@ -1177,6 +1303,9 @@ export type PontoRegistroSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   timestampOriginal?: boolean
   tipo?: boolean
   photoUrl?: boolean
+  latitude?: boolean
+  longitude?: boolean
+  precisaoMetros?: boolean
   registro?: boolean
   nsr?: boolean
   hash?: boolean
@@ -1202,6 +1331,9 @@ export type PontoRegistroSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   timestampOriginal?: boolean
   tipo?: boolean
   photoUrl?: boolean
+  latitude?: boolean
+  longitude?: boolean
+  precisaoMetros?: boolean
   registro?: boolean
   nsr?: boolean
   hash?: boolean
@@ -1227,6 +1359,9 @@ export type PontoRegistroSelectScalar = {
   timestampOriginal?: boolean
   tipo?: boolean
   photoUrl?: boolean
+  latitude?: boolean
+  longitude?: boolean
+  precisaoMetros?: boolean
   registro?: boolean
   nsr?: boolean
   hash?: boolean
@@ -1240,7 +1375,7 @@ export type PontoRegistroSelectScalar = {
   createdAt?: boolean
 }
 
-export type PontoRegistroOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "operatorId" | "operatorNome" | "operatorCpf" | "timestampOriginal" | "tipo" | "photoUrl" | "registro" | "nsr" | "hash" | "hashAnterior" | "refNsr" | "refId" | "aplicado" | "motivo" | "motivoReprovacao" | "avaliadoEm" | "createdAt", ExtArgs["result"]["pontoRegistro"]>
+export type PontoRegistroOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "operatorId" | "operatorNome" | "operatorCpf" | "timestampOriginal" | "tipo" | "photoUrl" | "latitude" | "longitude" | "precisaoMetros" | "registro" | "nsr" | "hash" | "hashAnterior" | "refNsr" | "refId" | "aplicado" | "motivo" | "motivoReprovacao" | "avaliadoEm" | "createdAt", ExtArgs["result"]["pontoRegistro"]>
 export type PontoRegistroInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   operator?: boolean | Prisma.PontoRegistro$operatorArgs<ExtArgs>
@@ -1288,6 +1423,23 @@ export type $PontoRegistroPayload<ExtArgs extends runtime.Types.Extensions.Inter
      * grande — mantém como TEXT.
      */
     photoUrl: string | null
+    /**
+     * Coordenada da marcação. Nulas quando a empresa não coleta ou o
+     * dispositivo não informou — nunca impede a batida. Fora da cadeia de hash
+     * de propósito (ver `lib/company/ponto/ledger.ts`).
+     * 
+     * `Float` e não o `Decimal(10,7)` da spec: é a forma numérica que
+     * `abastecimentos`, `lubrificacoes` e `comboio_reabastecimentos` já usam, e
+     * `Prisma.Decimal` não atravessa a fronteira server→client component. A
+     * resolução do double sobra para um dado cujo erro de medição é de dezenas
+     * de metros. Ver o comentário da migration `20260821270000`.
+     */
+    latitude: number | null
+    longitude: number | null
+    /**
+     * Precisão informada pelo navegador, em metros.
+     */
+    precisaoMetros: number | null
     /**
      * Natureza do registro no ledger. Default `original` pra compat legado.
      * "original" | "ajuste" | "cancelamento".
@@ -1759,6 +1911,9 @@ export interface PontoRegistroFieldRefs {
   readonly timestampOriginal: Prisma.FieldRef<"PontoRegistro", 'DateTime'>
   readonly tipo: Prisma.FieldRef<"PontoRegistro", 'String'>
   readonly photoUrl: Prisma.FieldRef<"PontoRegistro", 'String'>
+  readonly latitude: Prisma.FieldRef<"PontoRegistro", 'Float'>
+  readonly longitude: Prisma.FieldRef<"PontoRegistro", 'Float'>
+  readonly precisaoMetros: Prisma.FieldRef<"PontoRegistro", 'Int'>
   readonly registro: Prisma.FieldRef<"PontoRegistro", 'String'>
   readonly nsr: Prisma.FieldRef<"PontoRegistro", 'Int'>
   readonly hash: Prisma.FieldRef<"PontoRegistro", 'String'>

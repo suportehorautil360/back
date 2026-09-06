@@ -1054,6 +1054,20 @@ model PontoRegistro {
   /// grande — mantém como TEXT.
   photoUrl          String?  @map("photo_url") @db.Text
 
+  /// Coordenada da marcação. Nulas quando a empresa não coleta ou o
+  /// dispositivo não informou — nunca impede a batida. Fora da cadeia de hash
+  /// de propósito (ver `lib/company/ponto/ledger.ts`).
+  ///
+  /// `Float` e não o `Decimal(10,7)` da spec: é a forma numérica que
+  /// `abastecimentos`, `lubrificacoes` e `comboio_reabastecimentos` já usam, e
+  /// `Prisma.Decimal` não atravessa a fronteira server→client component. A
+  /// resolução do double sobra para um dado cujo erro de medição é de dezenas
+  /// de metros. Ver o comentário da migration `20260821270000`.
+  latitude       Float?
+  longitude      Float?
+  /// Precisão informada pelo navegador, em metros.
+  precisaoMetros Int?   @map("precisao_metros")
+
   /// Natureza do registro no ledger. Default `original` pra compat legado.
   /// "original" | "ajuste" | "cancelamento".
   registro     String  @default("original")
