@@ -75,4 +75,24 @@ describe('ChecklistChassiService.baterPonto — coordenada', () => {
     );
     expect(criados[0]).toMatchObject({ latitude: null, longitude: null, precisaoMetros: null });
   });
+
+  it('aceita precisão fracionária do navegador e grava arredondada — coluna é Int', async () => {
+    // navigator.geolocation informa accuracy como float (ex.: 12.3). A
+    // validação do DTO precisa aceitar fração; quem arredonda é o service.
+    const { service, criados } = servicoComPontoMockado();
+    await service.baterPonto(
+      {
+        name: 'Ana',
+        photo: 'p3/selfie.jpg',
+        prefeituraId: 'pref-1',
+        timestampOriginal: '2026-09-06T10:00:00.000Z',
+        tipo: 'entrada',
+        latitude: -22.4149,
+        longitude: -47.5651,
+        precisaoMetros: 12.3,
+      },
+      'chave-3',
+    );
+    expect(criados[0]).toMatchObject({ precisaoMetros: 12 });
+  });
 });

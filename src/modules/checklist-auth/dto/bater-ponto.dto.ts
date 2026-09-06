@@ -6,7 +6,6 @@ import {
   IsString,
   IsLatitude,
   IsLongitude,
-  IsInt,
   Min,
   IsNumber,
 } from 'class-validator';
@@ -56,9 +55,12 @@ export class BaterPontoDto {
   @IsLongitude()
   longitude?: number;
 
-  @ApiPropertyOptional({ description: 'Precisão informada pelo dispositivo, em metros.' })
+  @ApiPropertyOptional({
+    description:
+      'Precisão informada pelo dispositivo, em metros. APIs de geolocalização retornam float (ex.: 12.3); arredondamos ao gravar, mas a validação aceita fração — GPS nunca impede a batida.',
+  })
   @IsOptional()
-  @IsInt()
+  @IsNumber()
   @Min(0)
   precisaoMetros?: number;
 }

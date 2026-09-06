@@ -434,7 +434,9 @@ export class ChecklistChassiService {
           aplicado: true,
           latitude: dto.latitude ?? null,
           longitude: dto.longitude ?? null,
-          precisaoMetros: dto.precisaoMetros ?? null,
+          // Coluna é Int; a API de geolocalização informa float (ex.: 12.3).
+          precisaoMetros:
+            dto.precisaoMetros != null ? Math.round(dto.precisaoMetros) : null,
         },
       });
     });
