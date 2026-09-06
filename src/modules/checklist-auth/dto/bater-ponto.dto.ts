@@ -1,5 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsLatitude,
+  IsLongitude,
+  IsInt,
+  Min,
+  IsNumber,
+} from 'class-validator';
 
 const TIPOS = ['entrada', 'almoco', 'volta', 'saida'] as const;
 
@@ -33,4 +43,22 @@ export class BaterPontoDto {
   @IsOptional()
   @IsString()
   cpf?: string;
+
+  @ApiPropertyOptional({
+    description: 'Latitude da marcação. Fora da cadeia de hash; nunca impede a batida.',
+  })
+  @IsOptional()
+  @IsLatitude()
+  latitude?: number;
+
+  @ApiPropertyOptional({ description: 'Longitude da marcação.' })
+  @IsOptional()
+  @IsLongitude()
+  longitude?: number;
+
+  @ApiPropertyOptional({ description: 'Precisão informada pelo dispositivo, em metros.' })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  precisaoMetros?: number;
 }

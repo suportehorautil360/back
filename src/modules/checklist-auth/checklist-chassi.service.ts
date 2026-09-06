@@ -432,6 +432,9 @@ export class ChecklistChassiService {
           hash,
           hashAnterior: hashAnterior || null,
           aplicado: true,
+          latitude: dto.latitude ?? null,
+          longitude: dto.longitude ?? null,
+          precisaoMetros: dto.precisaoMetros ?? null,
         },
       });
     });
