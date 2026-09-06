@@ -42,6 +42,7 @@ import { UsersModule } from './modules/users/users.module';
 import { FleetfuelModule } from './modules/fleetfuel/fleetfuel.module';
 import { ChecklistAuthModule } from './modules/checklist-auth/checklist-auth.module';
 import { SyncModule } from './modules/sync/sync.module';
+import { PontoModule } from './modules/ponto/ponto.module';
 
 @Module({
   imports: [
@@ -96,6 +97,7 @@ import { SyncModule } from './modules/sync/sync.module';
     FleetfuelModule,
     ChecklistAuthModule,
     SyncModule,
+    PontoModule,
     // ... outros módulos
   ],
   controllers: [],
