@@ -4,7 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { resolverCompanyId } from '../../common/prisma/company-resolver';
+import {
+  isUuid,
+  resolverCompanyId,
+} from '../../common/prisma/company-resolver';
 import {
   resolverLedger,
   type BatidaEfetiva,
@@ -42,8 +45,19 @@ export class PontoService {
 
     // O funcionário do token é um Operator; o ledger aponta para ele por
     // operatorId quando o cadastro casou, e por CPF quando não casou.
+    //
+    // `funcionarioId` vem de `FuncionariosService.autenticar` como
+    // `legacyId ?? id` — pode ser o UUID da PK ou um legacyId do Firestore
+    // (string qualquer). Um legacyId não-UUID não pode ir para a coluna `id`,
+    // que é `@db.Uuid`: o Postgres rejeita com P2007 antes mesmo de avaliar o
+    // OR. Só inclui a busca por `id` quando o valor tem cara de UUID.
     const operador = await this.prisma.operator.findFirst({
-      where: { id: funcionarioId, companyId },
+      where: {
+        companyId,
+        ...(isUuid(funcionarioId)
+          ? { OR: [{ id: funcionarioId }, { legacyId: funcionarioId }] }
+          : { legacyId: funcionarioId }),
+      },
       select: { id: true, cpf: true },
     });
     if (!operador)
