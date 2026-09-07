@@ -74,21 +74,42 @@ function mapSolicitacaoRow(
  *
  * CPF ganha do nome porque é identidade de verdade: homônimo é comum em
  * frota grande, e o nome é digitado à mão a cada solicitação.
+ *
+ * O controller sempre repassa `{ cpf, nome }`, então dá para distinguir
+ * "não pediu recorte" (os dois `undefined`, caminho do PWA legado, que não
+ * manda nem `cpf` nem `nome` na query) de "pediu recorte e não deu uma
+ * identidade aproveitável" (`?cpf=`, `?cpf=abc` sem dígito, `?nome=` vazio
+ * ou só espaço). Só o primeiro caso pode cair para "empresa inteira" — o
+ * segundo tem que devolver vazio, senão o app do operador (aparelho de UMA
+ * pessoa) recebe o atestado médico de todos os colegas assim que alguém
+ * pede recorte sem preencher identidade nenhuma. É exatamente o vazamento
+ * que esta função existe para fechar.
+ *
+ * Retorno: `{}` quando não há recorte pedido (comportamento antigo);
+ * `null` quando o recorte foi pedido mas não sobrou identidade nenhuma
+ * depois de normalizar (o chamador deve devolver lista vazia sem consultar
+ * o banco); um filtro de fato nos demais casos.
  */
 export type FiltroSolicitante = { cpf?: string; nome?: string };
 
 function recorteDoSolicitante(
   f: FiltroSolicitante | undefined,
-): Record<string, unknown> {
-  const cpf = (f?.cpf ?? '').replace(/\D/g, '');
+): Record<string, unknown> | null {
+  if (f === undefined || (f.cpf === undefined && f.nome === undefined)) {
+    return {};
+  }
+
+  const cpf = (f.cpf ?? '').replace(/\D/g, '');
   if (cpf) return { operatorCpf: cpf };
 
-  const nome = (f?.nome ?? '').trim();
+  const nome = (f.nome ?? '').trim();
   if (nome) return { operatorNome: { equals: nome, mode: 'insensitive' } };
 
-  // Sem identidade o comportamento antigo fica de pé: quebrar quem já chama
-  // a rota sem parâmetro seria trocar um vazamento por uma tela vazia.
-  return {};
+  // Recorte foi pedido (cpf e/ou nome vieram na query) mas nenhum tinha
+  // conteúdo aproveitável depois de normalizar. Aqui NUNCA cai para o
+  // filtro vazio de "sem recorte" — isso devolveria a empresa inteira para
+  // quem só não preencheu identidade nenhuma.
+  return null;
 }
 
 @Injectable()
@@ -183,8 +204,16 @@ export class SolicitacoesPontoService {
         return { data: [] as SolicitacaoDoc[], message: 'Solicitações carregadas.' };
       }
 
+      const recorte = recorteDoSolicitante(filtro);
+      if (recorte === null) {
+        // Pediu recorte (cpf e/ou nome na query) e não sobrou identidade
+        // nenhuma depois de normalizar: devolve vazio sem consultar o
+        // banco, nunca a empresa inteira.
+        return { data: [] as SolicitacaoDoc[], message: 'Solicitações carregadas.' };
+      }
+
       const rows = await this.prisma.pontoSolicitacao.findMany({
-        where: { companyId, ...recorteDoSolicitante(filtro) },
+        where: { companyId, ...recorte },
         orderBy: { createdAt: 'desc' },
       });
       const data = rows.map((row) => mapSolicitacaoRow(row, prefeituraId));

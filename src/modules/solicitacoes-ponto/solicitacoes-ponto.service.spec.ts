@@ -99,4 +99,48 @@ describe('SolicitacoesPontoService.listar', () => {
       expect.objectContaining({ where: { companyId: 'uuid-1' } }),
     );
   });
+
+  // Achado da revisão: `?cpf=` presente e vazio caía no mesmo ramo de "sem
+  // filtro" e devolvia a empresa inteira. Quem PEDIU recorte (cpf e/ou nome
+  // presentes na query, ainda que vazios) e não deu identidade aproveitável
+  // tem que receber vazio, nunca a lista inteira — é o vazamento que esta
+  // tarefa existe para fechar.
+  it('cpf vazio na query devolve vazio e não consulta o banco', async () => {
+    const { prisma, findMany } = makePrisma();
+    const service = new SolicitacoesPontoService(prisma, notificacoes, abonos);
+
+    const resultado = await service.listar('pref-1', { cpf: '' });
+
+    expect(resultado).toEqual({
+      data: [],
+      message: 'Solicitações carregadas.',
+    });
+    expect(findMany).not.toHaveBeenCalled();
+  });
+
+  it('nome vazio ou só espaços na query devolve vazio e não consulta o banco', async () => {
+    const { prisma, findMany } = makePrisma();
+    const service = new SolicitacoesPontoService(prisma, notificacoes, abonos);
+
+    const resultado = await service.listar('pref-1', { nome: '   ' });
+
+    expect(resultado).toEqual({
+      data: [],
+      message: 'Solicitações carregadas.',
+    });
+    expect(findMany).not.toHaveBeenCalled();
+  });
+
+  it('cpf sem nenhum dígito devolve vazio e não consulta o banco', async () => {
+    const { prisma, findMany } = makePrisma();
+    const service = new SolicitacoesPontoService(prisma, notificacoes, abonos);
+
+    const resultado = await service.listar('pref-1', { cpf: 'abc' });
+
+    expect(resultado).toEqual({
+      data: [],
+      message: 'Solicitações carregadas.',
+    });
+    expect(findMany).not.toHaveBeenCalled();
+  });
 });
