@@ -20,7 +20,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { UploadsService } from './uploads.service';
+import { LIMITE_BYTES_SELFIE_PONTO, UploadsService } from './uploads.service';
 import { resolveUploadFolder } from './helpers/upload-path.helper';
 
 const MAX_FOTOS = 12;
@@ -234,21 +234,29 @@ export class UploadsController {
   @Post('ponto-selfie')
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(
-    FileInterceptor('file', { limits: { fileSize: MAX_BYTES_POR_FOTO } }),
+    FileInterceptor('file', {
+      limits: { fileSize: LIMITE_BYTES_SELFIE_PONTO },
+    }),
   )
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Subir a selfie de uma batida de ponto (bucket privado)',
-    description: 'Devolve a CHAVE no bucket, não uma URL — o objeto é privado.',
+    description:
+      'Devolve a CHAVE no bucket, não uma URL — o objeto é privado. ' +
+      'Limite de 2MB por arquivo, igual ao do bucket.',
   })
   @ApiBody({
     schema: {
       type: 'object',
-      required: ['file', 'pontoId'],
+      required: ['file', 'pontoId', 'prefeituraId'],
       properties: {
         pontoId: {
           type: 'string',
           description: 'UUID gerado no app antes de bater',
+        },
+        prefeituraId: {
+          type: 'string',
+          description: 'legacyId Firestore ou UUID Postgres da empresa',
         },
         file: { type: 'string', format: 'binary' },
       },
@@ -256,19 +264,27 @@ export class UploadsController {
   })
   async uploadSelfiePonto(
     @Body('pontoId') pontoId: string | undefined,
+    @Body('prefeituraId') prefeituraId: string | undefined,
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!pontoId?.trim()) {
       throw new BadRequestException('pontoId é obrigatório.');
     }
+    if (!prefeituraId?.trim()) {
+      throw new BadRequestException('prefeituraId é obrigatório.');
+    }
     if (!file) {
       throw new BadRequestException('Envie a selfie no campo "file".');
     }
     assertImagens([file]);
-    const chave = await this.service.uploadSelfiePonto(pontoId.trim(), {
-      buffer: file.buffer,
-      mimetype: file.mimetype,
-    });
+    const chave = await this.service.uploadSelfiePonto(
+      prefeituraId.trim(),
+      pontoId.trim(),
+      {
+        buffer: file.buffer,
+        mimetype: file.mimetype,
+      },
+    );
     return { data: { chave }, message: 'ok' };
   }
 }

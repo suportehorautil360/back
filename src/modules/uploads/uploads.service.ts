@@ -1,10 +1,14 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import WebSocket from 'ws';
+import { PrismaService } from '../../prisma/prisma.service';
+import { resolverCompanyId } from '../../common/prisma/company-resolver';
 
 export type FotoUpload = {
   /** Identificador da foto dentro do checklist (ex.: "horimetro", "item-3"). */
@@ -23,6 +27,14 @@ const DEFAULT_NOTA_FISCAL_BUCKET = 'notas-fiscais';
 
 /** Privado por exigência da Portaria 671 — ver o comentário de `photoUrl` no schema. */
 const BUCKET_SELFIES_PONTO = 'ponto-selfies';
+
+/**
+ * Teto real do bucket `ponto-selfies` (`file_size_limit` na migration do
+ * horautil, `20260821090000_storage_buckets_rh`). Exportado para o
+ * controller usar no `FileInterceptor` — um arquivo que passa no Nest e é
+ * recusado pelo Storage vira 500 e pendência presa na fila do app.
+ */
+export const LIMITE_BYTES_SELFIE_PONTO = 2 * 1024 * 1024;
 
 function storageErrorMessage(error: unknown): string {
   if (error && typeof error === 'object' && 'message' in error) {
@@ -43,6 +55,8 @@ function sanitizar(parte: string): string {
  */
 @Injectable()
 export class UploadsService {
+  constructor(private readonly prisma: PrismaService) {}
+
   private cliente: SupabaseClient | null = null;
   private readonly ensuredBuckets = new Set<string>();
 
@@ -260,17 +274,39 @@ export class UploadsService {
    * `public: true` e devolve `getPublicUrl` — URL que qualquer um abre. Para a
    * foto do horímetro passa; para o rosto de uma pessoa amarrado ao CPF, não.
    *
-   * O caminho é determinístico (`{pontoId}/selfie.jpg`) e o upload é `upsert`:
-   * reenviar sobrescreve o mesmo objeto em vez de acumular cópias, que é o que
-   * torna este upload idempotente sem chave nenhuma.
+   * A chave segue o MESMO formato que o horautil usa para este bucket
+   * (`lib/storage/chaves.ts#montarChave`): `{companyId}/{ano}/{mes}/{id}.ext`,
+   * ano/mês em UTC. O primeiro segmento tem de ser o `companyId` porque é
+   * exatamente o que a policy de RLS do bucket confere
+   * (`(storage.foldername(name))[1] = auth_company_id()`) — qualquer outro
+   * valor ali e a foto fica gravada mas ilegível para o painel e o app do
+   * trabalhador. Por isso `companyId` é resolvido aqui, no servidor, a partir
+   * do `prefeituraId` recebido — nunca aceito pronto do corpo da requisição.
+   *
+   * O upload é `upsert`: reenviar sobrescreve o mesmo objeto em vez de
+   * acumular cópias, que é o que torna este upload idempotente sem chave de
+   * idempotência nenhuma.
    */
   async uploadSelfiePonto(
+    prefeituraId: string,
     pontoId: string,
     file: { buffer: Buffer; mimetype: string },
   ): Promise<string> {
+    if (!pontoId?.trim()) {
+      throw new BadRequestException('pontoId é obrigatório.');
+    }
+
+    const companyId = await resolverCompanyId(this.prisma, prefeituraId);
+    if (!companyId) {
+      throw new NotFoundException('Empresa não encontrada.');
+    }
+
     await this.ensureBucket(BUCKET_SELFIES_PONTO, false);
     const ext = EXTENSOES[file.mimetype] ?? 'jpg';
-    const path = `${sanitizar(pontoId)}/selfie.${ext}`;
+    const agora = new Date();
+    const ano = agora.getUTCFullYear();
+    const mes = String(agora.getUTCMonth() + 1).padStart(2, '0');
+    const path = `${sanitizar(companyId)}/${ano}/${mes}/${sanitizar(pontoId)}.${ext}`;
     const storage = this.getCliente().storage.from(BUCKET_SELFIES_PONTO);
     const { error } = await storage.upload(path, file.buffer, {
       contentType: file.mimetype,
