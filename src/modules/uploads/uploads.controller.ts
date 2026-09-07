@@ -7,6 +7,7 @@ import {
   Post,
   UploadedFile,
   UploadedFiles,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -20,6 +21,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { LIMITE_BYTES_SELFIE_PONTO, UploadsService } from './uploads.service';
 import { resolveUploadFolder } from './helpers/upload-path.helper';
 
@@ -232,6 +234,8 @@ export class UploadsController {
   }
 
   @Post('ponto-selfie')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(
     FileInterceptor('file', {
@@ -240,9 +244,12 @@ export class UploadsController {
   )
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
-    summary: 'Subir a selfie de uma batida de ponto (bucket privado)',
+    summary:
+      'Subir a selfie de uma batida de ponto (bucket privado, com limite de taxa)',
     description:
       'Devolve a CHAVE no bucket, não uma URL — o objeto é privado. ' +
+      'Rota sem sessão (o app bate ponto offline-first), por isso com ' +
+      'rate limit próprio, igual ao de POST /checklist/bater-ponto. ' +
       'Limite de 2MB por arquivo, igual ao do bucket.',
   })
   @ApiBody({
