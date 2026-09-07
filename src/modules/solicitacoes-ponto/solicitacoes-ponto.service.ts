@@ -64,6 +64,33 @@ function mapSolicitacaoRow(
   };
 }
 
+/**
+ * Recorte da listagem: quem pergunta só pode receber o que é seu.
+ *
+ * Sem isto a rota devolve a empresa inteira — nome, CPF e anexo de todos —
+ * e o app, que roda no aparelho de UMA pessoa, guardaria em disco o atestado
+ * médico dos colegas. O caminho Supabase do PWA já recorta na consulta
+ * (`listarSolicitacoesSupabase`); este é o equivalente para o Nest.
+ *
+ * CPF ganha do nome porque é identidade de verdade: homônimo é comum em
+ * frota grande, e o nome é digitado à mão a cada solicitação.
+ */
+export type FiltroSolicitante = { cpf?: string; nome?: string };
+
+function recorteDoSolicitante(
+  f: FiltroSolicitante | undefined,
+): Record<string, unknown> {
+  const cpf = (f?.cpf ?? '').replace(/\D/g, '');
+  if (cpf) return { operatorCpf: cpf };
+
+  const nome = (f?.nome ?? '').trim();
+  if (nome) return { operatorNome: { equals: nome, mode: 'insensitive' } };
+
+  // Sem identidade o comportamento antigo fica de pé: quebrar quem já chama
+  // a rota sem parâmetro seria trocar um vazamento por uma tela vazia.
+  return {};
+}
+
 @Injectable()
 export class SolicitacoesPontoService {
   constructor(
@@ -149,7 +176,7 @@ export class SolicitacoesPontoService {
     }
   }
 
-  async listar(prefeituraId: string) {
+  async listar(prefeituraId: string, filtro?: FiltroSolicitante) {
     try {
       const companyId = await resolverCompanyId(this.prisma, prefeituraId);
       if (!companyId) {
@@ -157,7 +184,7 @@ export class SolicitacoesPontoService {
       }
 
       const rows = await this.prisma.pontoSolicitacao.findMany({
-        where: { companyId },
+        where: { companyId, ...recorteDoSolicitante(filtro) },
         orderBy: { createdAt: 'desc' },
       });
       const data = rows.map((row) => mapSolicitacaoRow(row, prefeituraId));

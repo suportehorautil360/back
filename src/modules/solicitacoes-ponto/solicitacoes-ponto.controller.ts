@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Query,
   UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -13,6 +14,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { SolicitacoesPontoService } from './solicitacoes-ponto.service';
@@ -43,9 +45,23 @@ export class SolicitacoesPontoController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Listar solicitações de ajuste por prefeitura' })
   @ApiParam({ name: 'prefeituraId', description: 'ID da prefeitura (tenant)' })
+  @ApiQuery({
+    name: 'cpf',
+    required: false,
+    description: 'Recorta pelo CPF do solicitante (só dígitos).',
+  })
+  @ApiQuery({
+    name: 'nome',
+    required: false,
+    description: 'Recorta pelo nome; usado quando não há CPF.',
+  })
   @ApiOkResponse({ description: 'Lista de solicitações.' })
-  async listar(@Param('prefeituraId') prefeituraId: string) {
-    return this.service.listar(prefeituraId);
+  async listar(
+    @Param('prefeituraId') prefeituraId: string,
+    @Query('cpf') cpf?: string,
+    @Query('nome') nome?: string,
+  ) {
+    return this.service.listar(prefeituraId, { cpf, nome });
   }
 
   @Post(':id/aprovar')
