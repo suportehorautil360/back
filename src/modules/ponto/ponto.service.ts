@@ -77,6 +77,10 @@ export class PontoService {
       select: {
         id: true,
         nsr: true,
+        // O CRPT (Portaria 671) exige NSR **e** hash. A rota recorta pela
+        // pessoa do token — sem parâmetro de CPF —, então expor o hash aqui
+        // dá a cada trabalhador só o próprio, que é o que a norma garante.
+        hash: true,
         tipo: true,
         timestampOriginal: true,
         operatorNome: true,

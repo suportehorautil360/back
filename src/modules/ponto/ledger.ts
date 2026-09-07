@@ -17,6 +17,9 @@
 export type RegistroPonto = {
   id: string;
   nsr: number;
+  // Portaria 671 exige NSR e hash no CRPT. Sem declarar aqui, o campo viria
+  // do Prisma em runtime e sumiria na tipagem — pior do que não ter.
+  hash: string | null;
   tipo: string;
   timestampOriginal: string;
   operatorNome: string;

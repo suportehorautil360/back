@@ -4,6 +4,7 @@ function reg(
   p: Partial<RegistroPonto> & { id: string; nsr: number },
 ): RegistroPonto {
   return {
+    hash: null,
     tipo: 'entrada',
     timestampOriginal: '2026-09-06T10:00:00.000Z',
     operatorNome: 'Ana',

@@ -104,4 +104,23 @@ describe('PontoService.registrosDoPeriodo', () => {
       service.registrosDoPeriodo('qualquer-id', 'prefeitura-1', DE, ATE),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
+
+  it('devolve o hash de cada registro — o CRPT precisa dele', async () => {
+    // Sem o hash o app só emite comprovante de batida feita naquele
+    // aparelho. A rota já recorta pela pessoa do token (sem parâmetro de
+    // CPF), então expor o hash aqui dá a cada um só o próprio.
+    const { prisma, pontoRegistroFindMany } = makePrisma({
+      id: 'operator-pk-1',
+      cpf: '12345678901',
+    });
+    const service = new PontoService(prisma);
+
+    await service.registrosDoPeriodo('op-1', 'prefeitura-1', DE, ATE);
+
+    expect(pontoRegistroFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.objectContaining({ hash: true }),
+      }),
+    );
+  });
 });
