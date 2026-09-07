@@ -123,4 +123,45 @@ describe('PontoService.registrosDoPeriodo', () => {
       }),
     );
   });
+
+  it('garante que o hash atravessa o .map() e resolverLedger até a resposta', async () => {
+    // O teste anterior valida que hash está no select, mas não que o valor
+    // realmente sai na resposta. Um refatoro que trocasse o spread `...l` por
+    // uma reconstrução manual sem hash deixaria aquele teste verde. Este testa
+    // a travessia completa: Prisma -> .map() -> resolverLedger -> resposta.
+    const hashEsperado = 'hash-abc123';
+    const registroComHash = {
+      id: 'reg-1',
+      nsr: 100,
+      hash: hashEsperado,
+      tipo: 'entrada',
+      timestampOriginal: DE,
+      operatorNome: 'Operador Um',
+      operatorCpf: '12345678901',
+      registro: 'batida', // Um valor que não é "cancelamento" nem "ajuste"
+      refNsr: null,
+      refId: null,
+      aplicado: true,
+      motivo: null,
+      motivoReprovacao: null,
+      createdAt: DE,
+    };
+
+    const { prisma, pontoRegistroFindMany } = makePrisma({
+      id: 'operator-pk-1',
+      cpf: '12345678901',
+    });
+    pontoRegistroFindMany.mockResolvedValue([registroComHash]);
+
+    const service = new PontoService(prisma);
+    const resultado = await service.registrosDoPeriodo(
+      'op-1',
+      'prefeitura-1',
+      DE,
+      ATE,
+    );
+
+    expect(resultado).toHaveLength(1);
+    expect(resultado[0].hash).toBe(hashEsperado);
+  });
 });
