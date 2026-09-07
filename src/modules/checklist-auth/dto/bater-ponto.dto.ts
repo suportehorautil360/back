@@ -19,12 +19,20 @@ export class BaterPontoDto {
   @IsNotEmpty()
   name!: string;
 
-  @ApiProperty({ description: 'Selfie em data URL base64' })
+  @ApiProperty({
+    description:
+      'Selfie da batida: a CHAVE no bucket privado "ponto-selfies" ' +
+      '(devolvida por POST /uploads/ponto-selfie), formato preferido pelo ' +
+      'app do operador. O PWA legado ainda manda data URL base64 — aceito ' +
+      'por compatibilidade.',
+  })
   @IsString()
   @IsNotEmpty()
   photo!: string;
 
-  @ApiProperty({ description: 'legacyId Firestore ou UUID Postgres da empresa' })
+  @ApiProperty({
+    description: 'legacyId Firestore ou UUID Postgres da empresa',
+  })
   @IsString()
   @IsNotEmpty()
   prefeituraId!: string;
@@ -44,7 +52,8 @@ export class BaterPontoDto {
   cpf?: string;
 
   @ApiPropertyOptional({
-    description: 'Latitude da marcação. Fora da cadeia de hash; nunca impede a batida.',
+    description:
+      'Latitude da marcação. Fora da cadeia de hash; nunca impede a batida.',
   })
   @IsOptional()
   @IsLatitude()
