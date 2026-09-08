@@ -1,74 +1,137 @@
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { ChecklistChassiService } from './checklist-chassi.service';
-import type { FirebaseService } from '../../config/firebase.service';
 
 // ---------------------------------------------------------------
-// Helpers para montar o mock do Firestore
+// Stub do Prisma
+//
+// Este arquivo testava o Firestore até a migração para Postgres
+// (2026-08-16). O serviço passou a receber `PrismaService` no lugar do
+// `FirebaseService` e os testes ficaram passando um Firestore para o
+// parâmetro do Prisma — compilando por causa do cast, e falhando os oito em
+// `this.prisma.equipment is undefined`. Reescritos aqui para o formato real.
+//
+// O stub FILTRA de verdade em vez de devolver uma lista fixa: as duas
+// consultas de `resolverChassi` (exata e case-insensitive) só se distinguem
+// pelo `where`, e um stub que ignora o `where` não saberia dizer qual das
+// duas achou o equipamento.
 // ---------------------------------------------------------------
 
-type EqDoc = { id: string; prefeituraId: string; chassis: string };
-type CliDoc = { id: string; nome: string; checklistLoginChassi?: boolean };
+/**
+ * PKs são UUID de verdade porque o serviço passa o `empresaId` por `tryUuid`
+ * antes de consultar — string que não seja UUID vira o UUID-zero (o Postgres
+ * recusa qualquer outra coisa numa coluna `uuid`). Com uma PK falsa do tipo
+ * "company-uuid-1", o teste da busca pela PK falharia sem que houvesse bug.
+ */
+const COMPANY_PK = '11111111-1111-1111-1111-111111111111';
+const EQ_PK = '22222222-2222-2222-2222-222222222222';
 
-function makeDoc(id: string, data: Record<string, unknown>, exists = true) {
+type EmpresaStub = {
+  id: string;
+  name: string;
+  legacyId: string | null;
+  /** `{ chassi: true }` habilita o login por chassi. */
+  checklistLogin: { chassi?: boolean } | null;
+};
+
+type EquipamentoStub = {
+  id: string;
+  legacyId: string | null;
+  chassi: string | null;
+  companyId: string;
+  company: EmpresaStub | null;
+};
+
+type WhereChassi =
+  | string
+  | { equals?: string; mode?: string; not?: null }
+  | undefined;
+
+type WhereFindMany = {
+  chassi?: WhereChassi;
+  companyId?: string;
+  OR?: { companyId?: string; company?: { legacyId?: string } }[];
+};
+
+function equipamento(over: Partial<EquipamentoStub> = {}): EquipamentoStub {
   return {
-    id,
-    exists,
-    get: (field: string) => data[field],
-    data: () => data,
+    id: EQ_PK,
+    legacyId: 'eq-legacy-1',
+    chassi: '9BD196341A0000123',
+    companyId: COMPANY_PK,
+    company: empresa(),
+    ...over,
   };
 }
 
-function makeFirestore(equipamentos: EqDoc[], clientes: CliDoc[]) {
-  const eqDocs = equipamentos.map((e) =>
-    makeDoc(e.id, { prefeituraId: e.prefeituraId, chassis: e.chassis }),
-  );
-
-  const cliMap = new Map(
-    clientes
-      .map((c) =>
-        makeDoc(c.id, {
-          nome: c.nome,
-          checklistLogin:
-            c.checklistLoginChassi !== undefined
-              ? { chassi: c.checklistLoginChassi }
-              : undefined,
-        }),
-      )
-      .map((d) => [d.id, d]),
-  );
-
+function empresa(over: Partial<EmpresaStub> = {}): EmpresaStub {
   return {
-    getFirestore: () => ({
-      collection: (name: string) => {
-        if (name === 'equipamentos') {
-          return {
-            where: jest.fn(() => ({
-              limit: jest.fn(() => ({
-                get: jest.fn().mockResolvedValue({
-                  empty: eqDocs.length === 0,
-                  docs: eqDocs,
-                }),
-              })),
-            })),
-          };
-        }
-        if (name === 'clientes') {
-          return {
-            doc: jest.fn((id: string) => ({
-              get: jest
-                .fn()
-                .mockResolvedValue(cliMap.get(id) ?? makeDoc(id, {}, false)),
-            })),
-          };
-        }
-        return {};
-      },
-    }),
-  } as unknown as FirebaseService;
+    id: COMPANY_PK,
+    name: 'Prefeitura X',
+    legacyId: 'company-legacy-1',
+    checklistLogin: { chassi: true },
+    ...over,
+  };
 }
 
-function makeService(equipamentos: EqDoc[], clientes: CliDoc[]) {
-  return new ChecklistChassiService(makeFirestore(equipamentos, clientes));
+function makePrisma(equipamentos: EquipamentoStub[]) {
+  const findMany = jest.fn(
+    (args: { where?: WhereFindMany; take?: number }) => {
+      const where = args.where ?? {};
+      let linhas = equipamentos;
+
+      if (typeof where.chassi === 'string') {
+        // Consulta exata.
+        const alvo = where.chassi;
+        linhas = linhas.filter((e) => e.chassi === alvo);
+      } else if (where.chassi && typeof where.chassi === 'object') {
+        if (typeof where.chassi.equals === 'string') {
+          // Consulta case-insensitive (o fallback).
+          const alvo = where.chassi.equals.toUpperCase();
+          linhas = linhas.filter((e) => (e.chassi ?? '').toUpperCase() === alvo);
+        }
+        if (where.chassi.not === null) {
+          linhas = linhas.filter((e) => e.chassi !== null);
+        }
+      }
+
+      // `companyId` solto precisa ser respeitado, e não só o `OR`: sem isto o
+      // stub devolve tudo para uma consulta recortada, e um `where` que
+      // perdesse o ramo do legacyId passaria despercebido.
+      if (where.companyId !== undefined) {
+        const alvo = where.companyId;
+        linhas = linhas.filter((e) => e.companyId === alvo);
+      }
+
+      if (where.OR) {
+        const clausulas = where.OR;
+        linhas = linhas.filter((e) =>
+          clausulas.some((c) =>
+            c.companyId !== undefined
+              ? c.companyId === e.companyId
+              : c.company?.legacyId !== undefined
+                ? c.company.legacyId === e.company?.legacyId
+                : false,
+          ),
+        );
+      }
+
+      return Promise.resolve(
+        args.take ? linhas.slice(0, args.take) : linhas,
+      );
+    },
+  );
+
+  const prisma = { equipment: { findMany } };
+  return {
+    prisma: prisma as unknown as ConstructorParameters<
+      typeof ChecklistChassiService
+    >[0],
+    findMany,
+  };
+}
+
+function makeService(equipamentos: EquipamentoStub[]) {
+  return new ChecklistChassiService(makePrisma(equipamentos).prisma);
 }
 
 // ---------------------------------------------------------------
@@ -76,183 +139,162 @@ function makeService(equipamentos: EqDoc[], clientes: CliDoc[]) {
 // ---------------------------------------------------------------
 
 describe('ChecklistChassiService.resolverChassi', () => {
-  it('[GUARD DEFENSIVO] equipamento não encontrado no find apesar de habilitadas.length > 0 → NotFoundException', async () => {
-    // Cenário praticamente impossível mas o guard evita crash 500:
-    // habilitadas=[cli_consistent], mas eqSnap.docs não contém equipamento com prefeituraId='cli_consistent'.
-    // Construímos mock manual pra forçar essa inconsistência.
-    const firebase = {
-      getFirestore: () => ({
-        collection: (name: string) => {
-          if (name === 'equipamentos') {
-            return {
-              where: jest.fn(() => ({
-                limit: jest.fn(() => ({
-                  get: jest.fn().mockResolvedValue({
-                    empty: false,
-                    docs: [
-                      makeDoc('eq_x', {
-                        prefeituraId: 'cli_wrong',
-                        chassis: 'INCONSISTENT',
-                      }),
-                    ],
-                  }),
-                })),
-              })),
-            };
-          }
-          if (name === 'clientes') {
-            const cliMap = new Map([
-              [
-                'cli_wrong',
-                makeDoc('cli_wrong', {
-                  nome: 'Empresa Wrong',
-                  checklistLogin: { chassi: false },
-                }),
-              ],
-              [
-                'cli_consistent',
-                makeDoc('cli_consistent', {
-                  nome: 'Empresa Consistent',
-                  checklistLogin: { chassi: true },
-                }),
-              ],
-            ]);
-            return {
-              doc: jest.fn((id: string) => ({
-                get: jest
-                  .fn()
-                  .mockResolvedValue(cliMap.get(id) ?? makeDoc(id, {}, false)),
-              })),
-            };
-          }
-          return {};
-        },
-      }),
-    } as unknown as FirebaseService;
+  it('acha o equipamento e devolve empresa, máquina e chassi normalizado', async () => {
+    const service = makeService([equipamento()]);
 
-    const service = new ChecklistChassiService(firebase);
-
-    // Query: 'INCONSISTENT' encontra eq_x com prefeituraId='cli_wrong'.
-    // cli_wrong: checklistLogin.chassi=false → descartado.
-    // Esperamos habilitadas=[], mas se por qualquer razão houver lógica invertida
-    // ou outro cliente habilitado no mix, vamos testar o guard do find().
-    // Aqui o teste demonstra o cenário onde o guard é crucial.
-    await expect(service.resolverChassi('INCONSISTENT')).rejects.toThrow(
-      NotFoundException,
-    );
-  });
-
-  it('encontrou 1 equipamento, empresa habilita chassi → retorna dados', async () => {
-    const service = makeService(
-      [{ id: 'eq_1', prefeituraId: 'cli_1', chassis: '9BD196341A0000123' }],
-      [{ id: 'cli_1', nome: 'Prefeitura X', checklistLoginChassi: true }],
-    );
-
+    // Minúsculo de propósito: o operador digita como quiser.
     const out = await service.resolverChassi('9bd196341a0000123');
+
     expect(out).toEqual({
-      empresaId: 'cli_1',
+      empresaId: 'company-legacy-1',
       empresaNome: 'Prefeitura X',
-      idMaquina: 'eq_1',
+      idMaquina: 'eq-legacy-1',
       chassi: '9BD196341A0000123',
     });
   });
 
-  it('nenhum equipamento → NotFoundException', async () => {
-    const service = makeService([], []);
+  it('sem legacyId, cai na PK do Postgres', async () => {
+    // Empresa e equipamento criados já no Postgres, sem passado no Firestore.
+    // O app guarda o que vier aqui e usa nas rotas seguintes — se este ramo
+    // devolvesse vazio, o login funcionaria e tudo depois falharia.
+    const service = makeService([
+      equipamento({ legacyId: null, company: empresa({ legacyId: null }) }),
+    ]);
+
+    const out = await service.resolverChassi('9BD196341A0000123');
+
+    expect(out.empresaId).toBe(COMPANY_PK);
+    expect(out.idMaquina).toBe(EQ_PK);
+  });
+
+  it('chassi gravado em case diferente é achado pela consulta de reserva', async () => {
+    // Equipamento migrado do Firestore com o chassi em minúsculo. A consulta
+    // exata não acha e existe uma segunda, case-insensitive, só para isto —
+    // sem teste, alguém a removeria por parecer redundante.
+    const { prisma, findMany } = makePrisma([
+      equipamento({ chassi: '9bd196341a0000123' }),
+    ]);
+    const service = new ChecklistChassiService(prisma);
+
+    const out = await service.resolverChassi('9BD196341A0000123');
+
+    expect(out.idMaquina).toBe('eq-legacy-1');
+    // Duas consultas: a exata volta vazia, a de reserva acha.
+    expect(findMany).toHaveBeenCalledTimes(2);
+  });
+
+  it('chassi vazio nem consulta o banco', async () => {
+    const { prisma, findMany } = makePrisma([equipamento()]);
+    const service = new ChecklistChassiService(prisma);
+
+    await expect(service.resolverChassi('   ')).rejects.toThrow(
+      NotFoundException,
+    );
+    expect(findMany).not.toHaveBeenCalled();
+  });
+
+  it('nenhum equipamento com esse chassi → NotFoundException', async () => {
+    const service = makeService([]);
     await expect(service.resolverChassi('XXX')).rejects.toThrow(
       NotFoundException,
     );
   });
 
-  it('empresa NÃO habilita chassi → NotFoundException (mensagem específica)', async () => {
-    const service = makeService(
-      [{ id: 'eq_2', prefeituraId: 'cli_2', chassis: 'YYY' }],
-      [{ id: 'cli_2', nome: 'Empresa Y', checklistLoginChassi: false }],
+  it('empresa que NÃO habilita chassi é recusada com mensagem própria', async () => {
+    // A distinção importa para o operador: "chassi não encontrado" o faz
+    // conferir o número na máquina; "a empresa não habilita" o manda falar
+    // com o gestor.
+    const service = makeService([
+      equipamento({ company: empresa({ checklistLogin: { chassi: false } }) }),
+    ]);
+    await expect(service.resolverChassi('9BD196341A0000123')).rejects.toThrow(
+      /não habilita/,
     );
-    await expect(service.resolverChassi('YYY')).rejects.toThrow(/não habilita/);
   });
 
-  it('campo checklistLogin ausente → NotFoundException (mensagem específica)', async () => {
-    const service = makeService(
-      [{ id: 'eq_3', prefeituraId: 'cli_3', chassis: 'ZZZ' }],
-      [{ id: 'cli_3', nome: 'Empresa Z' }],
+  it('checklistLogin ausente conta como NÃO habilitado', async () => {
+    // Empresa que nunca configurou o login. O default é fechado: habilitar
+    // por omissão abriria o app de uma empresa para quem souber um chassi.
+    const service = makeService([
+      equipamento({ company: empresa({ checklistLogin: null }) }),
+    ]);
+    await expect(service.resolverChassi('9BD196341A0000123')).rejects.toThrow(
+      /não habilita/,
     );
-    await expect(service.resolverChassi('ZZZ')).rejects.toThrow(/não habilita/);
   });
 
-  it('2+ equipamentos em empresas distintas com chassi habilitado → ConflictException', async () => {
-    const service = makeService(
-      [
-        { id: 'eq_a', prefeituraId: 'cli_a', chassis: 'DUP' },
-        { id: 'eq_b', prefeituraId: 'cli_b', chassis: 'DUP' },
-      ],
-      [
-        { id: 'cli_a', nome: 'Empresa A', checklistLoginChassi: true },
-        { id: 'cli_b', nome: 'Empresa B', checklistLoginChassi: true },
-      ],
+  it('equipamento sem empresa não derruba a rota', async () => {
+    // O serviço escreve `e.company?.checklistLogin` de propósito. Sem a
+    // guarda seria TypeError, e o operador veria erro 500 em vez de uma
+    // mensagem — este teste é o que segura o `?.`.
+    const service = makeService([equipamento({ company: null })]);
+    await expect(service.resolverChassi('9BD196341A0000123')).rejects.toThrow(
+      /não habilita/,
     );
-    await expect(service.resolverChassi('DUP')).rejects.toThrow(
+  });
+
+  it('mesmo chassi em duas empresas habilitadas → ConflictException', async () => {
+    // Não dá para escolher por conta própria de quem é a máquina: entrar na
+    // empresa errada mandaria o checklist e o ponto para o cliente errado.
+    const service = makeService([
+      equipamento({ id: 'eq-a', legacyId: 'a', companyId: 'c-a', company: empresa({ id: 'c-a', legacyId: 'ca' }) }),
+      equipamento({ id: 'eq-b', legacyId: 'b', companyId: 'c-b', company: empresa({ id: 'c-b', legacyId: 'cb' }) }),
+    ]);
+    await expect(service.resolverChassi('9BD196341A0000123')).rejects.toThrow(
       ConflictException,
     );
   });
 
+  it('mesmo chassi duplicado na MESMA empresa não é conflito', async () => {
+    // Cadastro duplicado acontece. O conflito é sobre não saber de QUEM é a
+    // máquina; com uma empresa só, a resposta é a mesma pelos dois registros.
+    const service = makeService([
+      equipamento({ id: 'eq-a', legacyId: 'a' }),
+      equipamento({ id: 'eq-b', legacyId: 'b' }),
+    ]);
+
+    const out = await service.resolverChassi('9BD196341A0000123');
+    expect(out.empresaId).toBe('company-legacy-1');
+  });
 });
 
 describe('ChecklistChassiService.listarChassisDaEmpresa', () => {
-  it('retorna lista deduplicada + normalizada', async () => {
-    // Mock equipamentos where prefeituraId == 'cli_1' →
-    // [ {chassis:'aaa'}, {chassis:'BBB'}, {chassis:'aaa'}, {chassis:''} ]
-    const firebase = {
-      getFirestore: () => ({
-        collection: (name: string) => {
-          if (name === 'equipamentos') {
-            return {
-              where: jest.fn(() => ({
-                get: jest.fn().mockResolvedValue({
-                  empty: false,
-                  docs: [
-                    makeDoc('eq_1', { prefeituraId: 'cli_1', chassis: 'aaa' }),
-                    makeDoc('eq_2', { prefeituraId: 'cli_1', chassis: 'BBB' }),
-                    makeDoc('eq_3', { prefeituraId: 'cli_1', chassis: 'aaa' }),
-                    makeDoc('eq_4', { prefeituraId: 'cli_1', chassis: '' }),
-                  ],
-                }),
-              })),
-            };
-          }
-          return {};
-        },
-      }),
-    } as unknown as FirebaseService;
+  it('devolve os chassis normalizados, sem repetir', async () => {
+    // A lista vai para o cache do aparelho e é o que permite o login por
+    // chassi offline. Duplicata viraria opção repetida; case misturado faria
+    // o mesmo chassi não casar com o que o operador digita.
+    const service = makeService([
+      equipamento({ id: '1', chassi: 'aaa' }),
+      equipamento({ id: '2', chassi: 'BBB' }),
+      equipamento({ id: '3', chassi: 'aaa' }),
+      equipamento({ id: '4', chassi: '   ' }),
+    ]);
 
-    const service = new ChecklistChassiService(firebase);
-    const out = await service.listarChassisDaEmpresa('cli_1');
+    const out = await service.listarChassisDaEmpresa('company-legacy-1');
 
     expect(out.chassis.sort()).toEqual(['AAA', 'BBB']);
     expect(new Date(out.expiraEm).getTime()).toBeGreaterThan(Date.now());
   });
 
-  it('retorna lista vazia se sem equipamentos', async () => {
-    const firebase = {
-      getFirestore: () => ({
-        collection: (name: string) => {
-          if (name === 'equipamentos') {
-            return {
-              where: jest.fn(() => ({
-                get: jest.fn().mockResolvedValue({
-                  empty: true,
-                  docs: [],
-                }),
-              })),
-            };
-          }
-          return {};
-        },
-      }),
-    } as unknown as FirebaseService;
+  it('acha a empresa pelo legacyId E pela PK', async () => {
+    // O aparelho guarda `empresaId` como veio de `resolverChassi`, que é o
+    // legacyId quando existe. Procurar só pela PK deixaria o cache de chassis
+    // vazio para toda empresa migrada do legado.
+    const service = makeService([equipamento({ chassi: 'AAA' })]);
 
-    const service = new ChecklistChassiService(firebase);
-    const out = await service.listarChassisDaEmpresa('cli_vazio');
+    expect(
+      (await service.listarChassisDaEmpresa('company-legacy-1')).chassis,
+    ).toEqual(['AAA']);
+    expect(
+      (await service.listarChassisDaEmpresa(COMPANY_PK)).chassis,
+    ).toEqual(['AAA']);
+  });
+
+  it('empresa sem equipamento devolve lista vazia, não erro', async () => {
+    // Empresa nova, ainda sem frota cadastrada. A tela de login trata lista
+    // vazia; erro aqui a deixaria sem saída.
+    const service = makeService([]);
+    const out = await service.listarChassisDaEmpresa('company-legacy-1');
 
     expect(out.chassis).toEqual([]);
     expect(new Date(out.expiraEm).getTime()).toBeGreaterThan(Date.now());
@@ -263,11 +305,6 @@ describe('ChecklistChassiService.empregadorDaEmpresa', () => {
   function servicoCom(company: Record<string, unknown> | null) {
     const findFirst = jest.fn().mockResolvedValue(company);
     const prisma = { company: { findFirst } };
-    // O construtor recebe SÓ o Prisma — o serviço largou o Firebase na
-    // migração para Postgres. É por isso que o `makeService` no topo deste
-    // arquivo, que ainda passa um Firestore, deixa os 8 testes de
-    // `resolverChassi`/`listarChassisDaEmpresa` vermelhos (dívida anterior a
-    // esta mudança, registrada para conserto à parte).
     const s = new ChecklistChassiService(prisma as never);
     return { s, findFirst };
   }
