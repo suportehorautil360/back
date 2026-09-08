@@ -1,6 +1,12 @@
-import { NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { MecanicaService } from './mecanica.service';
 import type { PainelPayload } from '../../common/painel.guard';
+import { Prisma } from '../../prisma/generated/client';
 
 const PAINEL: PainelPayload = {
   companyUserId: 'user-1',
@@ -80,5 +86,192 @@ describe('MecanicaService.detalhe', () => {
     await expect(s.detalhe(PAINEL, 'os-interna')).resolves.toMatchObject({
       id: 'os-interna',
     });
+  });
+});
+
+const d = (hhmm: string) => new Date(`2026-09-08T${hhmm}:00-03:00`);
+
+function prismaComApontamentos(
+  os: Record<string, unknown>[],
+  apontamentos: Record<string, unknown>[],
+) {
+  const casa = (l: Record<string, unknown>, w: Record<string, unknown>) =>
+    Object.entries(w).every(([k, v]) => (v === undefined ? true : l[k] === v));
+  return {
+    serviceOrder: {
+      findFirst: jest.fn(({ where }) =>
+        Promise.resolve(os.find((l) => casa(l, where)) ?? null),
+      ),
+      update: jest.fn(({ data }) => Promise.resolve({ ...os[0], ...data })),
+      updateMany: jest.fn(() => Promise.resolve({ count: 1 })),
+    },
+    serviceOrderApontamento: {
+      findMany: jest.fn(({ where }) =>
+        Promise.resolve(apontamentos.filter((l) => casa(l, where))),
+      ),
+      findFirst: jest.fn(({ where }) =>
+        Promise.resolve(apontamentos.find((l) => casa(l, where)) ?? null),
+      ),
+      create: jest.fn(({ data }) => Promise.resolve({ id: 'novo', ...data })),
+      update: jest.fn(({ data }) => Promise.resolve({ id: 'ap-1', ...data })),
+      delete: jest.fn(() => Promise.resolve({ id: 'ap-1' })),
+    },
+  } as never;
+}
+
+const OS_INTERNA = {
+  id: 'os-1',
+  companyId: 'empresa-1',
+  execucao: 'interna',
+  situacao: 'Aberta',
+  responsavelOperatorId: null,
+};
+
+describe('MecanicaService — apontamento', () => {
+  it('recusa iniciar quando o usuário não é funcionário', async () => {
+    const s = new MecanicaService(prismaComApontamentos([OS_INTERNA], []));
+    await expect(
+      s.iniciarApontamento({ ...PAINEL, operatorId: null }, 'os-1', d('08:00')),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('recusa iniciar com outro apontamento aberto', async () => {
+    const s = new MecanicaService(
+      prismaComApontamentos(
+        [OS_INTERNA],
+        [{ id: 'ap-0', operatorId: 'op-1', inicio: d('07:00'), fim: null }],
+      ),
+    );
+    await expect(
+      s.iniciarApontamento(PAINEL, 'os-1', d('08:00')),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('inicia gravando apontamento aberto', async () => {
+    const s = new MecanicaService(prismaComApontamentos([OS_INTERNA], []));
+    await expect(
+      s.iniciarApontamento(PAINEL, 'os-1', d('08:00')),
+    ).resolves.toMatchObject({ fim: null, operatorId: 'op-1' });
+  });
+
+  // Exigido pela spec §10. A regra é "um aberto por MECÂNICO", não "um por
+  // empresa": com um mecânico só na fixture, as duas regras dão o mesmo
+  // resultado e o teste passa mesmo com a implementação errada.
+  it('deixa iniciar quando quem tem apontamento aberto é OUTRO mecânico', async () => {
+    const s = new MecanicaService(
+      prismaComApontamentos(
+        [OS_INTERNA],
+        [{ id: 'ap-de-outro', operatorId: 'op-2', inicio: d('07:00'), fim: null }],
+      ),
+    );
+    await expect(
+      s.iniciarApontamento(PAINEL, 'os-1', d('08:00')),
+    ).resolves.toMatchObject({ fim: null, operatorId: 'op-1' });
+  });
+
+  it('recusa lançar intervalo com fim antes do início', async () => {
+    const s = new MecanicaService(prismaComApontamentos([OS_INTERNA], []));
+    await expect(
+      s.lancarApontamento(PAINEL, 'os-1', d('11:00'), d('08:00'), null),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('recusa lançar intervalo sobreposto ao que já existe', async () => {
+    const s = new MecanicaService(
+      prismaComApontamentos(
+        [OS_INTERNA],
+        [{ id: 'ap-0', operatorId: 'op-1', inicio: d('08:00'), fim: d('10:00') }],
+      ),
+    );
+    await expect(
+      s.lancarApontamento(PAINEL, 'os-1', d('09:00'), d('11:00'), null),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('lança intervalo que não colide', async () => {
+    const s = new MecanicaService(
+      prismaComApontamentos(
+        [OS_INTERNA],
+        [{ id: 'ap-0', operatorId: 'op-1', inicio: d('08:00'), fim: d('10:00') }],
+      ),
+    );
+    await expect(
+      s.lancarApontamento(PAINEL, 'os-1', d('10:30'), d('12:00'), null),
+    ).resolves.toMatchObject({ operatorId: 'op-1' });
+  });
+});
+
+describe('MecanicaService.assumir', () => {
+  it('recusa quem não é funcionário', async () => {
+    const s = new MecanicaService(prismaComApontamentos([OS_INTERNA], []));
+    await expect(
+      s.assumir({ ...PAINEL, operatorId: null }, 'os-1'),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('grava o responsável', async () => {
+    const s = new MecanicaService(prismaComApontamentos([OS_INTERNA], []));
+    await expect(s.assumir(PAINEL, 'os-1')).resolves.toMatchObject({
+      responsavelOperatorId: 'op-1',
+    });
+  });
+});
+
+/**
+ * Achado da revisão da Task 1: o índice único parcial
+ * (`UNIQUE (operator_id) WHERE fim IS NULL`) não é representável na DSL do
+ * Prisma, então o Client não o conhece — e a violação NÃO chega como um
+ * P2002 com `meta.target` resolvido em campo (como um `@@unique` normal),
+ * chega identificando o constraint pelo NOME. É a corrida de duas abas do
+ * mesmo mecânico que passam juntas pela checagem prévia (`findFirst`) e só
+ * colidem no INSERT — o teste simula exatamente esse erro bruto do banco.
+ */
+describe('MecanicaService.iniciarApontamento — corrida no índice único parcial', () => {
+  const erroDoIndiceParcial = () =>
+    new Prisma.PrismaClientKnownRequestError(
+      'Unique constraint failed on the constraint: `service_order_apontamentos_operator_aberto_key`',
+      {
+        code: 'P2002',
+        clientVersion: 'test',
+        meta: { target: 'service_order_apontamentos_operator_aberto_key' },
+      },
+    );
+
+  /** Acesso tipado ao mock de `create`, sem enfraquecer o tipo do fake em si. */
+  const mockCreateDe = (prisma: unknown): jest.Mock =>
+    (prisma as { serviceOrderApontamento: { create: jest.Mock } })
+      .serviceOrderApontamento.create;
+
+  it('converte a violação do índice (que passou pela checagem prévia) em ConflictException', async () => {
+    const prisma = prismaComApontamentos([OS_INTERNA], []);
+    mockCreateDe(prisma).mockRejectedValueOnce(erroDoIndiceParcial());
+    const s = new MecanicaService(prisma);
+    await expect(
+      s.iniciarApontamento(PAINEL, 'os-1', d('08:00')),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('usa a mesma mensagem amigável da checagem prévia', async () => {
+    const prisma = prismaComApontamentos([OS_INTERNA], []);
+    mockCreateDe(prisma).mockRejectedValueOnce(erroDoIndiceParcial());
+    const s = new MecanicaService(prisma);
+    await expect(
+      s.iniciarApontamento(PAINEL, 'os-1', d('08:00')),
+    ).rejects.toThrow(
+      'Já existe um apontamento em andamento. Pare o atual antes de começar outro.',
+    );
+  });
+
+  it('não mexe em erro do Prisma que não é essa violação específica', async () => {
+    const prisma = prismaComApontamentos([OS_INTERNA], []);
+    const outroErro = new Prisma.PrismaClientKnownRequestError(
+      'Foreign key constraint failed',
+      { code: 'P2003', clientVersion: 'test' },
+    );
+    mockCreateDe(prisma).mockRejectedValueOnce(outroErro);
+    const s = new MecanicaService(prisma);
+    await expect(s.iniciarApontamento(PAINEL, 'os-1', d('08:00'))).rejects.toBe(
+      outroErro,
+    );
   });
 });
