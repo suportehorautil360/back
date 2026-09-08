@@ -515,23 +515,35 @@ model ServiceOrder {
   oficinaVencedoraId     String?   @map("oficina_vencedora_id")
   ordemServicoAprovadaId String?   @map("ordem_servico_aprovada_id")
 
+  /// "interna" = a oficina própria executa; nunca entra em pregão.
+  /// "parceira" = fluxo atual, com convite a Partner tipo OFICINA.
+  execucao String @default("parceira")
+
+  /// Mecânico responsável, definido quando ele ASSUME a OS na Bancada.
+  responsavelOperatorId String? @map("responsavel_operator_id") @db.Uuid
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  company     Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  equipment   Equipment?               @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
-  insumos     ServiceOrderInsumo[]
-  etapas      ServiceOrderEtapa[]
-  sintomas    ServiceOrderSintoma[]
-  ocorrencias ServiceOrderOcorrencia[]
-  orcamentos  Orcamento[]
-  emergencies Emergency[]
+  company      Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  equipment    Equipment?                @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  insumos      ServiceOrderInsumo[]
+  etapas       ServiceOrderEtapa[]
+  sintomas     ServiceOrderSintoma[]
+  ocorrencias  ServiceOrderOcorrencia[]
+  orcamentos   Orcamento[]
+  emergencies  Emergency[]
+  responsavel  Operator?                 @relation("ServiceOrderResponsavel", fields: [responsavelOperatorId], references: [id], onDelete: SetNull)
+  apontamentos ServiceOrderApontamento[]
+  fotos        ServiceOrderFoto[]
+  laudo        ServiceOrderLaudo?
 
   @@unique([companyId, protocolo])
   @@index([companyId, status])
   @@index([companyId, createdAt])
   @@index([companyId, tipoOs])
   @@index([equipmentId])
+  @@index([companyId, execucao, situacao])
   @@map("service_orders")
 }
 
@@ -600,6 +612,63 @@ model ServiceOrderOcorrencia {
 
   @@index([serviceOrderId, createdAt])
   @@map("service_order_ocorrencias")
+}
+
+/// Tempo trabalhado na OS. INTERVALO, não evento: somar eventos não audita.
+/// `fim` NULL é o apontamento ABERTO — o cronômetro rodando, no servidor.
+model ServiceOrderApontamento {
+  id             String    @id @default(uuid()) @db.Uuid
+  serviceOrderId String    @map("service_order_id") @db.Uuid
+  /// Quem executou (funcionário).
+  operatorId     String    @map("operator_id") @db.Uuid
+  /// Quem registrou — `CompanyUser.id`. Igual ao executor quando o próprio
+  /// mecânico aponta; diferente quando um encarregado lança por ele.
+  lancadoPorId   String    @map("lancado_por_id") @db.Uuid
+  inicio         DateTime
+  fim            DateTime?
+  observacao     String?   @db.Text
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  serviceOrder ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+  operator     Operator     @relation(fields: [operatorId], references: [id], onDelete: Restrict)
+
+  @@index([serviceOrderId, inicio])
+  @@index([operatorId, inicio])
+  @@map("service_order_apontamentos")
+}
+
+/// Foto anexada à OS. Guarda URL do Storage — o legado embute data-URI em
+/// Json (`Emergency.fotos`) e paga em tamanho de linha.
+model ServiceOrderFoto {
+  id             String   @id @default(uuid()) @db.Uuid
+  serviceOrderId String   @map("service_order_id") @db.Uuid
+  url            String   @db.Text
+  legenda        String?
+  enviadaPorId   String   @map("enviada_por_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  serviceOrder ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+
+  @@index([serviceOrderId, createdAt])
+  @@map("service_order_fotos")
+}
+
+/// Laudo técnico. Um por OS; `fechadoEm` preenchido torna imutável.
+model ServiceOrderLaudo {
+  id             String    @id @default(uuid()) @db.Uuid
+  serviceOrderId String    @unique @map("service_order_id") @db.Uuid
+  causa          String    @db.Text
+  servicoFeito   String    @map("servico_feito") @db.Text
+  pendencias     String?   @db.Text
+  autorId        String    @map("autor_id") @db.Uuid
+  fechadoEm      DateTime? @map("fechado_em")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  serviceOrder ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+
+  @@map("service_order_laudos")
 }
 
 /// Plano preventivo da empresa — 1:1 com Company. Backfill do Firestore
@@ -674,13 +743,19 @@ model Operator {
 
   observacoes String? @db.Text
 
+  /// Vínculo com usuário do painel web (`CompanyUser` / Supabase Auth).
+  companyUserId String? @unique @map("company_user_id") @db.Uuid
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  company           Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  pontoRegistros    PontoRegistro[]
-  pontoSolicitacoes PontoSolicitacao[]
-  pontoAbonos       PontoAbono[]
+  company             Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyUser         CompanyUser?        @relation(fields: [companyUserId], references: [id], onDelete: SetNull)
+  pontoRegistros      PontoRegistro[]
+  pontoSolicitacoes   PontoSolicitacao[]
+  pontoAbonos         PontoAbono[]
+  osComoResponsavel   ServiceOrder[]      @relation("ServiceOrderResponsavel")
+  apontamentos        ServiceOrderApontamento[]
 
   @@unique([companyId, cpf])
   @@index([companyId])
@@ -1442,7 +1517,8 @@ model CompanyUser {
   createdAt DateTime        @default(now()) @map("created_at")
   updatedAt DateTime        @updatedAt @map("updated_at")
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  operator Operator?
 
   @@unique([companyId, email])
   @@index([companyId])
