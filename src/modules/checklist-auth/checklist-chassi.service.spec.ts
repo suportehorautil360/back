@@ -258,3 +258,75 @@ describe('ChecklistChassiService.listarChassisDaEmpresa', () => {
     expect(new Date(out.expiraEm).getTime()).toBeGreaterThan(Date.now());
   });
 });
+
+describe('ChecklistChassiService.empregadorDaEmpresa', () => {
+  function servicoCom(company: Record<string, unknown> | null) {
+    const findFirst = jest.fn().mockResolvedValue(company);
+    const prisma = { company: { findFirst } };
+    // O construtor recebe SÓ o Prisma — o serviço largou o Firebase na
+    // migração para Postgres. É por isso que o `makeService` no topo deste
+    // arquivo, que ainda passa um Firestore, deixa os 8 testes de
+    // `resolverChassi`/`listarChassisDaEmpresa` vermelhos (dívida anterior a
+    // esta mudança, registrada para conserto à parte).
+    const s = new ChecklistChassiService(prisma as never);
+    return { s, findFirst };
+  }
+
+  it('acha a empresa pelo legacyId do Firestore, não só pela PK', async () => {
+    // O aparelho guarda `empresaId` como o docId do Firestore (é o que o
+    // login por chassi devolve). Procurar só por `id` faria o comprovante
+    // sair sem empregador para toda empresa migrada do legado.
+    const { s, findFirst } = servicoCom({
+      razaoSocial: 'VRENTAL LOCACOES LTDA',
+      name: 'VRENTAL LTDA',
+      cnpj: '12345678000199',
+      caepf: null,
+      cidade: 'Rio Claro',
+      uf: 'SP',
+    });
+
+    await s.empregadorDaEmpresa('docId-do-firestore');
+
+    expect(findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: [
+            // `tryUuid` devolve o UUID-zero quando o id não é UUID: o Postgres
+            // recusa string qualquer numa coluna uuid.
+            { id: '00000000-0000-0000-0000-000000000000' },
+            { legacyId: 'docId-do-firestore' },
+          ],
+        }),
+      }),
+    );
+  });
+
+  it('devolve os seis campos que o comprovante da Portaria 671 exige', async () => {
+    const { s } = servicoCom({
+      razaoSocial: 'VRENTAL LOCACOES LTDA',
+      name: 'VRENTAL LTDA',
+      cnpj: '12345678000199',
+      caepf: null,
+      cidade: 'Rio Claro',
+      uf: 'SP',
+    });
+
+    expect(await s.empregadorDaEmpresa('x')).toEqual({
+      razaoSocial: 'VRENTAL LOCACOES LTDA',
+      name: 'VRENTAL LTDA',
+      cnpj: '12345678000199',
+      caepf: null,
+      cidade: 'Rio Claro',
+      uf: 'SP',
+    });
+  });
+
+  it('empresa inexistente é 404, não objeto vazio', async () => {
+    // Vazio silencioso viraria um comprovante com "Não informado" em tudo, e
+    // o operador não teria como saber que o problema é o id, não o cadastro.
+    const { s } = servicoCom(null);
+    await expect(s.empregadorDaEmpresa('nao-existe')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+});

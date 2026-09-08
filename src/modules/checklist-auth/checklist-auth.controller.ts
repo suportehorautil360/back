@@ -27,6 +27,19 @@ export class ChecklistAuthController {
     return this.service.listarChassisDaEmpresa(empresaId);
   }
 
+  @Get('empregador/:empresaId')
+  @ApiOperation({
+    summary:
+      'Identificação do empregador para o CRPT (Portaria 671) — público, rate-limited.',
+    description:
+      'Razão social, CNPJ/CAEPF e município/UF. São dados de registro público ' +
+      'que já saem impressos em qualquer documento da empresa; o comprovante ' +
+      'do trabalhador não fecha os campos da norma sem eles.',
+  })
+  async empregador(@Param('empresaId') empresaId: string) {
+    return this.service.empregadorDaEmpresa(empresaId);
+  }
+
   @Post('salvar-run')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

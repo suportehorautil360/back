@@ -545,6 +545,42 @@ export class ChecklistChassiService {
     };
   }
 
+  /**
+   * Identificação do EMPREGADOR para os papéis de ponto — o CRPT da Portaria
+   * 671 exige razão social e CNPJ/CAEPF do empregador, além do município.
+   *
+   * Devolve os campos CRUS, sem formatar: quem monta o cabeçalho é o
+   * aparelho, e as regras de fallback ("razão social, senão nome comercial")
+   * são de apresentação. Assim as duas pontas não divergem em qual campo
+   * mostrar — existe uma implementação só, testável sem banco.
+   *
+   * Procura pelos dois ids porque o aparelho guarda `empresaId` como o docId
+   * do Firestore (é o que o login por chassi devolve); só por `id`, toda
+   * empresa migrada do legado sairia sem empregador no comprovante.
+   */
+  async empregadorDaEmpresa(empresaId: string) {
+    const company = await this.prisma.company.findFirst({
+      where: {
+        OR: [{ id: this.tryUuid(empresaId) }, { legacyId: empresaId }],
+      },
+      select: {
+        razaoSocial: true,
+        name: true,
+        cnpj: true,
+        caepf: true,
+        cidade: true,
+        uf: true,
+      },
+    });
+    // 404 e não objeto vazio: vazio viraria um comprovante com "Não
+    // informado" em tudo, e ninguém saberia que o problema é o id, não o
+    // cadastro.
+    if (!company) {
+      throw new NotFoundException('Empresa não encontrada.');
+    }
+    return company;
+  }
+
   private async resolveCompany(prefeituraId: string) {
     const company = await this.prisma.company.findFirst({
       where: {
