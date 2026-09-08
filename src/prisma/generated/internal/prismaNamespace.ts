@@ -412,6 +412,9 @@ export const ModelName = {
   ServiceOrderEtapa: 'ServiceOrderEtapa',
   ServiceOrderSintoma: 'ServiceOrderSintoma',
   ServiceOrderOcorrencia: 'ServiceOrderOcorrencia',
+  ServiceOrderApontamento: 'ServiceOrderApontamento',
+  ServiceOrderFoto: 'ServiceOrderFoto',
+  ServiceOrderLaudo: 'ServiceOrderLaudo',
   PlanoPreventivo: 'PlanoPreventivo',
   Operator: 'Operator',
   Abastecimento: 'Abastecimento',
@@ -460,7 +463,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao"
+    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1571,6 +1574,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ServiceOrderOcorrenciaCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ServiceOrderOcorrenciaCountAggregateOutputType> | number
+        }
+      }
+    }
+    ServiceOrderApontamento: {
+      payload: Prisma.$ServiceOrderApontamentoPayload<ExtArgs>
+      fields: Prisma.ServiceOrderApontamentoFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ServiceOrderApontamentoFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderApontamentoPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ServiceOrderApontamentoFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderApontamentoPayload>
+        }
+        findFirst: {
+          args: Prisma.ServiceOrderApontamentoFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderApontamentoPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ServiceOrderApontamentoFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderApontamentoPayload>
+        }
+        findMany: {
+          args: Prisma.ServiceOrderApontamentoFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderApontamentoPayload>[]
+        }
+        create: {
+          args: Prisma.ServiceOrderApontamentoCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderApontamentoPayload>
+        }
+        createMany: {
+          args: Prisma.ServiceOrderApontamentoCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ServiceOrderApontamentoCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderApontamentoPayload>[]
+        }
+        delete: {
+          args: Prisma.ServiceOrderApontamentoDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderApontamentoPayload>
+        }
+        update: {
+          args: Prisma.ServiceOrderApontamentoUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderApontamentoPayload>
+        }
+        deleteMany: {
+          args: Prisma.ServiceOrderApontamentoDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ServiceOrderApontamentoUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ServiceOrderApontamentoUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderApontamentoPayload>[]
+        }
+        upsert: {
+          args: Prisma.ServiceOrderApontamentoUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderApontamentoPayload>
+        }
+        aggregate: {
+          args: Prisma.ServiceOrderApontamentoAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateServiceOrderApontamento>
+        }
+        groupBy: {
+          args: Prisma.ServiceOrderApontamentoGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ServiceOrderApontamentoGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ServiceOrderApontamentoCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ServiceOrderApontamentoCountAggregateOutputType> | number
+        }
+      }
+    }
+    ServiceOrderFoto: {
+      payload: Prisma.$ServiceOrderFotoPayload<ExtArgs>
+      fields: Prisma.ServiceOrderFotoFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ServiceOrderFotoFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderFotoPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ServiceOrderFotoFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderFotoPayload>
+        }
+        findFirst: {
+          args: Prisma.ServiceOrderFotoFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderFotoPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ServiceOrderFotoFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderFotoPayload>
+        }
+        findMany: {
+          args: Prisma.ServiceOrderFotoFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderFotoPayload>[]
+        }
+        create: {
+          args: Prisma.ServiceOrderFotoCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderFotoPayload>
+        }
+        createMany: {
+          args: Prisma.ServiceOrderFotoCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ServiceOrderFotoCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderFotoPayload>[]
+        }
+        delete: {
+          args: Prisma.ServiceOrderFotoDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderFotoPayload>
+        }
+        update: {
+          args: Prisma.ServiceOrderFotoUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderFotoPayload>
+        }
+        deleteMany: {
+          args: Prisma.ServiceOrderFotoDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ServiceOrderFotoUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ServiceOrderFotoUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderFotoPayload>[]
+        }
+        upsert: {
+          args: Prisma.ServiceOrderFotoUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderFotoPayload>
+        }
+        aggregate: {
+          args: Prisma.ServiceOrderFotoAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateServiceOrderFoto>
+        }
+        groupBy: {
+          args: Prisma.ServiceOrderFotoGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ServiceOrderFotoGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ServiceOrderFotoCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ServiceOrderFotoCountAggregateOutputType> | number
+        }
+      }
+    }
+    ServiceOrderLaudo: {
+      payload: Prisma.$ServiceOrderLaudoPayload<ExtArgs>
+      fields: Prisma.ServiceOrderLaudoFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ServiceOrderLaudoFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderLaudoPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ServiceOrderLaudoFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderLaudoPayload>
+        }
+        findFirst: {
+          args: Prisma.ServiceOrderLaudoFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderLaudoPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ServiceOrderLaudoFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderLaudoPayload>
+        }
+        findMany: {
+          args: Prisma.ServiceOrderLaudoFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderLaudoPayload>[]
+        }
+        create: {
+          args: Prisma.ServiceOrderLaudoCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderLaudoPayload>
+        }
+        createMany: {
+          args: Prisma.ServiceOrderLaudoCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ServiceOrderLaudoCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderLaudoPayload>[]
+        }
+        delete: {
+          args: Prisma.ServiceOrderLaudoDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderLaudoPayload>
+        }
+        update: {
+          args: Prisma.ServiceOrderLaudoUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderLaudoPayload>
+        }
+        deleteMany: {
+          args: Prisma.ServiceOrderLaudoDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ServiceOrderLaudoUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ServiceOrderLaudoUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderLaudoPayload>[]
+        }
+        upsert: {
+          args: Prisma.ServiceOrderLaudoUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ServiceOrderLaudoPayload>
+        }
+        aggregate: {
+          args: Prisma.ServiceOrderLaudoAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateServiceOrderLaudo>
+        }
+        groupBy: {
+          args: Prisma.ServiceOrderLaudoGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ServiceOrderLaudoGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ServiceOrderLaudoCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ServiceOrderLaudoCountAggregateOutputType> | number
         }
       }
     }
@@ -4307,6 +4532,8 @@ export const ServiceOrderScalarFieldEnum = {
   valorAprovado: 'valorAprovado',
   oficinaVencedoraId: 'oficinaVencedoraId',
   ordemServicoAprovadaId: 'ordemServicoAprovadaId',
+  execucao: 'execucao',
+  responsavelOperatorId: 'responsavelOperatorId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -4367,6 +4594,48 @@ export const ServiceOrderOcorrenciaScalarFieldEnum = {
 export type ServiceOrderOcorrenciaScalarFieldEnum = (typeof ServiceOrderOcorrenciaScalarFieldEnum)[keyof typeof ServiceOrderOcorrenciaScalarFieldEnum]
 
 
+export const ServiceOrderApontamentoScalarFieldEnum = {
+  id: 'id',
+  serviceOrderId: 'serviceOrderId',
+  operatorId: 'operatorId',
+  lancadoPorId: 'lancadoPorId',
+  inicio: 'inicio',
+  fim: 'fim',
+  observacao: 'observacao',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ServiceOrderApontamentoScalarFieldEnum = (typeof ServiceOrderApontamentoScalarFieldEnum)[keyof typeof ServiceOrderApontamentoScalarFieldEnum]
+
+
+export const ServiceOrderFotoScalarFieldEnum = {
+  id: 'id',
+  serviceOrderId: 'serviceOrderId',
+  url: 'url',
+  legenda: 'legenda',
+  enviadaPorId: 'enviadaPorId',
+  createdAt: 'createdAt'
+} as const
+
+export type ServiceOrderFotoScalarFieldEnum = (typeof ServiceOrderFotoScalarFieldEnum)[keyof typeof ServiceOrderFotoScalarFieldEnum]
+
+
+export const ServiceOrderLaudoScalarFieldEnum = {
+  id: 'id',
+  serviceOrderId: 'serviceOrderId',
+  causa: 'causa',
+  servicoFeito: 'servicoFeito',
+  pendencias: 'pendencias',
+  autorId: 'autorId',
+  fechadoEm: 'fechadoEm',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ServiceOrderLaudoScalarFieldEnum = (typeof ServiceOrderLaudoScalarFieldEnum)[keyof typeof ServiceOrderLaudoScalarFieldEnum]
+
+
 export const PlanoPreventivoScalarFieldEnum = {
   companyId: 'companyId',
   categorias: 'categorias',
@@ -4400,6 +4669,7 @@ export const OperatorScalarFieldEnum = {
   loginGerado: 'loginGerado',
   senhaHash: 'senhaHash',
   observacoes: 'observacoes',
+  companyUserId: 'companyUserId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -5428,6 +5698,9 @@ export type GlobalOmitConfig = {
   serviceOrderEtapa?: Prisma.ServiceOrderEtapaOmit
   serviceOrderSintoma?: Prisma.ServiceOrderSintomaOmit
   serviceOrderOcorrencia?: Prisma.ServiceOrderOcorrenciaOmit
+  serviceOrderApontamento?: Prisma.ServiceOrderApontamentoOmit
+  serviceOrderFoto?: Prisma.ServiceOrderFotoOmit
+  serviceOrderLaudo?: Prisma.ServiceOrderLaudoOmit
   planoPreventivo?: Prisma.PlanoPreventivoOmit
   operator?: Prisma.OperatorOmit
   abastecimento?: Prisma.AbastecimentoOmit

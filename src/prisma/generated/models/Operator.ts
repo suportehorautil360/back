@@ -58,6 +58,7 @@ export type OperatorMinAggregateOutputType = {
   loginGerado: string | null
   senhaHash: string | null
   observacoes: string | null
+  companyUserId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -86,6 +87,7 @@ export type OperatorMaxAggregateOutputType = {
   loginGerado: string | null
   senhaHash: string | null
   observacoes: string | null
+  companyUserId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -114,6 +116,7 @@ export type OperatorCountAggregateOutputType = {
   loginGerado: number
   senhaHash: number
   observacoes: number
+  companyUserId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -144,6 +147,7 @@ export type OperatorMinAggregateInputType = {
   loginGerado?: true
   senhaHash?: true
   observacoes?: true
+  companyUserId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -172,6 +176,7 @@ export type OperatorMaxAggregateInputType = {
   loginGerado?: true
   senhaHash?: true
   observacoes?: true
+  companyUserId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -200,6 +205,7 @@ export type OperatorCountAggregateInputType = {
   loginGerado?: true
   senhaHash?: true
   observacoes?: true
+  companyUserId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -301,6 +307,7 @@ export type OperatorGroupByOutputType = {
   loginGerado: string | null
   senhaHash: string | null
   observacoes: string | null
+  companyUserId: string | null
   createdAt: Date
   updatedAt: Date
   _count: OperatorCountAggregateOutputType | null
@@ -350,12 +357,16 @@ export type OperatorWhereInput = {
   loginGerado?: Prisma.StringNullableFilter<"Operator"> | string | null
   senhaHash?: Prisma.StringNullableFilter<"Operator"> | string | null
   observacoes?: Prisma.StringNullableFilter<"Operator"> | string | null
+  companyUserId?: Prisma.UuidNullableFilter<"Operator"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Operator"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Operator"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
+  companyUser?: Prisma.XOR<Prisma.CompanyUserNullableScalarRelationFilter, Prisma.CompanyUserWhereInput> | null
   pontoRegistros?: Prisma.PontoRegistroListRelationFilter
   pontoSolicitacoes?: Prisma.PontoSolicitacaoListRelationFilter
   pontoAbonos?: Prisma.PontoAbonoListRelationFilter
+  osComoResponsavel?: Prisma.ServiceOrderListRelationFilter
+  apontamentos?: Prisma.ServiceOrderApontamentoListRelationFilter
 }
 
 export type OperatorOrderByWithRelationInput = {
@@ -382,17 +393,22 @@ export type OperatorOrderByWithRelationInput = {
   loginGerado?: Prisma.SortOrderInput | Prisma.SortOrder
   senhaHash?: Prisma.SortOrderInput | Prisma.SortOrder
   observacoes?: Prisma.SortOrderInput | Prisma.SortOrder
+  companyUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   company?: Prisma.CompanyOrderByWithRelationInput
+  companyUser?: Prisma.CompanyUserOrderByWithRelationInput
   pontoRegistros?: Prisma.PontoRegistroOrderByRelationAggregateInput
   pontoSolicitacoes?: Prisma.PontoSolicitacaoOrderByRelationAggregateInput
   pontoAbonos?: Prisma.PontoAbonoOrderByRelationAggregateInput
+  osComoResponsavel?: Prisma.ServiceOrderOrderByRelationAggregateInput
+  apontamentos?: Prisma.ServiceOrderApontamentoOrderByRelationAggregateInput
 }
 
 export type OperatorWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   legacyId?: string
+  companyUserId?: string
   companyId_cpf?: Prisma.OperatorCompanyIdCpfCompoundUniqueInput
   AND?: Prisma.OperatorWhereInput | Prisma.OperatorWhereInput[]
   OR?: Prisma.OperatorWhereInput[]
@@ -421,10 +437,13 @@ export type OperatorWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Operator"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Operator"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
+  companyUser?: Prisma.XOR<Prisma.CompanyUserNullableScalarRelationFilter, Prisma.CompanyUserWhereInput> | null
   pontoRegistros?: Prisma.PontoRegistroListRelationFilter
   pontoSolicitacoes?: Prisma.PontoSolicitacaoListRelationFilter
   pontoAbonos?: Prisma.PontoAbonoListRelationFilter
-}, "id" | "legacyId" | "companyId_cpf">
+  osComoResponsavel?: Prisma.ServiceOrderListRelationFilter
+  apontamentos?: Prisma.ServiceOrderApontamentoListRelationFilter
+}, "id" | "legacyId" | "companyUserId" | "companyId_cpf">
 
 export type OperatorOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -450,6 +469,7 @@ export type OperatorOrderByWithAggregationInput = {
   loginGerado?: Prisma.SortOrderInput | Prisma.SortOrder
   senhaHash?: Prisma.SortOrderInput | Prisma.SortOrder
   observacoes?: Prisma.SortOrderInput | Prisma.SortOrder
+  companyUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.OperatorCountOrderByAggregateInput
@@ -484,6 +504,7 @@ export type OperatorScalarWhereWithAggregatesInput = {
   loginGerado?: Prisma.StringNullableWithAggregatesFilter<"Operator"> | string | null
   senhaHash?: Prisma.StringNullableWithAggregatesFilter<"Operator"> | string | null
   observacoes?: Prisma.StringNullableWithAggregatesFilter<"Operator"> | string | null
+  companyUserId?: Prisma.UuidNullableWithAggregatesFilter<"Operator"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Operator"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Operator"> | Date | string
 }
@@ -514,9 +535,12 @@ export type OperatorCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutOperatorsInput
+  companyUser?: Prisma.CompanyUserCreateNestedOneWithoutOperatorInput
   pontoRegistros?: Prisma.PontoRegistroCreateNestedManyWithoutOperatorInput
   pontoSolicitacoes?: Prisma.PontoSolicitacaoCreateNestedManyWithoutOperatorInput
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutOperatorInput
+  osComoResponsavel?: Prisma.ServiceOrderCreateNestedManyWithoutResponsavelInput
+  apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutOperatorInput
 }
 
 export type OperatorUncheckedCreateInput = {
@@ -543,11 +567,14 @@ export type OperatorUncheckedCreateInput = {
   loginGerado?: string | null
   senhaHash?: string | null
   observacoes?: string | null
+  companyUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutOperatorInput
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedCreateNestedManyWithoutOperatorInput
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutOperatorInput
+  osComoResponsavel?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutResponsavelInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutOperatorInput
 }
 
 export type OperatorUpdateInput = {
@@ -576,9 +603,12 @@ export type OperatorUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutOperatorsNestedInput
+  companyUser?: Prisma.CompanyUserUpdateOneWithoutOperatorNestedInput
   pontoRegistros?: Prisma.PontoRegistroUpdateManyWithoutOperatorNestedInput
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUpdateManyWithoutOperatorNestedInput
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutOperatorNestedInput
+  osComoResponsavel?: Prisma.ServiceOrderUpdateManyWithoutResponsavelNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutOperatorNestedInput
 }
 
 export type OperatorUncheckedUpdateInput = {
@@ -605,11 +635,14 @@ export type OperatorUncheckedUpdateInput = {
   loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutOperatorNestedInput
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedUpdateManyWithoutOperatorNestedInput
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutOperatorNestedInput
+  osComoResponsavel?: Prisma.ServiceOrderUncheckedUpdateManyWithoutResponsavelNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutOperatorNestedInput
 }
 
 export type OperatorCreateManyInput = {
@@ -636,6 +669,7 @@ export type OperatorCreateManyInput = {
   loginGerado?: string | null
   senhaHash?: string | null
   observacoes?: string | null
+  companyUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -691,6 +725,7 @@ export type OperatorUncheckedUpdateManyInput = {
   loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -703,6 +738,16 @@ export type OperatorListRelationFilter = {
 
 export type OperatorOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type OperatorNullableScalarRelationFilter = {
+  is?: Prisma.OperatorWhereInput | null
+  isNot?: Prisma.OperatorWhereInput | null
+}
+
+export type OperatorScalarRelationFilter = {
+  is?: Prisma.OperatorWhereInput
+  isNot?: Prisma.OperatorWhereInput
 }
 
 export type OperatorCompanyIdCpfCompoundUniqueInput = {
@@ -734,6 +779,7 @@ export type OperatorCountOrderByAggregateInput = {
   loginGerado?: Prisma.SortOrder
   senhaHash?: Prisma.SortOrder
   observacoes?: Prisma.SortOrder
+  companyUserId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -762,6 +808,7 @@ export type OperatorMaxOrderByAggregateInput = {
   loginGerado?: Prisma.SortOrder
   senhaHash?: Prisma.SortOrder
   observacoes?: Prisma.SortOrder
+  companyUserId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -790,13 +837,9 @@ export type OperatorMinOrderByAggregateInput = {
   loginGerado?: Prisma.SortOrder
   senhaHash?: Prisma.SortOrder
   observacoes?: Prisma.SortOrder
+  companyUserId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-}
-
-export type OperatorNullableScalarRelationFilter = {
-  is?: Prisma.OperatorWhereInput | null
-  isNot?: Prisma.OperatorWhereInput | null
 }
 
 export type OperatorCreateNestedManyWithoutCompanyInput = {
@@ -839,6 +882,36 @@ export type OperatorUncheckedUpdateManyWithoutCompanyNestedInput = {
   update?: Prisma.OperatorUpdateWithWhereUniqueWithoutCompanyInput | Prisma.OperatorUpdateWithWhereUniqueWithoutCompanyInput[]
   updateMany?: Prisma.OperatorUpdateManyWithWhereWithoutCompanyInput | Prisma.OperatorUpdateManyWithWhereWithoutCompanyInput[]
   deleteMany?: Prisma.OperatorScalarWhereInput | Prisma.OperatorScalarWhereInput[]
+}
+
+export type OperatorCreateNestedOneWithoutOsComoResponsavelInput = {
+  create?: Prisma.XOR<Prisma.OperatorCreateWithoutOsComoResponsavelInput, Prisma.OperatorUncheckedCreateWithoutOsComoResponsavelInput>
+  connectOrCreate?: Prisma.OperatorCreateOrConnectWithoutOsComoResponsavelInput
+  connect?: Prisma.OperatorWhereUniqueInput
+}
+
+export type OperatorUpdateOneWithoutOsComoResponsavelNestedInput = {
+  create?: Prisma.XOR<Prisma.OperatorCreateWithoutOsComoResponsavelInput, Prisma.OperatorUncheckedCreateWithoutOsComoResponsavelInput>
+  connectOrCreate?: Prisma.OperatorCreateOrConnectWithoutOsComoResponsavelInput
+  upsert?: Prisma.OperatorUpsertWithoutOsComoResponsavelInput
+  disconnect?: Prisma.OperatorWhereInput | boolean
+  delete?: Prisma.OperatorWhereInput | boolean
+  connect?: Prisma.OperatorWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OperatorUpdateToOneWithWhereWithoutOsComoResponsavelInput, Prisma.OperatorUpdateWithoutOsComoResponsavelInput>, Prisma.OperatorUncheckedUpdateWithoutOsComoResponsavelInput>
+}
+
+export type OperatorCreateNestedOneWithoutApontamentosInput = {
+  create?: Prisma.XOR<Prisma.OperatorCreateWithoutApontamentosInput, Prisma.OperatorUncheckedCreateWithoutApontamentosInput>
+  connectOrCreate?: Prisma.OperatorCreateOrConnectWithoutApontamentosInput
+  connect?: Prisma.OperatorWhereUniqueInput
+}
+
+export type OperatorUpdateOneRequiredWithoutApontamentosNestedInput = {
+  create?: Prisma.XOR<Prisma.OperatorCreateWithoutApontamentosInput, Prisma.OperatorUncheckedCreateWithoutApontamentosInput>
+  connectOrCreate?: Prisma.OperatorCreateOrConnectWithoutApontamentosInput
+  upsert?: Prisma.OperatorUpsertWithoutApontamentosInput
+  connect?: Prisma.OperatorWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OperatorUpdateToOneWithWhereWithoutApontamentosInput, Prisma.OperatorUpdateWithoutApontamentosInput>, Prisma.OperatorUncheckedUpdateWithoutApontamentosInput>
 }
 
 export type OperatorCreateNestedOneWithoutPontoRegistrosInput = {
@@ -889,6 +962,38 @@ export type OperatorUpdateOneWithoutPontoAbonosNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.OperatorUpdateToOneWithWhereWithoutPontoAbonosInput, Prisma.OperatorUpdateWithoutPontoAbonosInput>, Prisma.OperatorUncheckedUpdateWithoutPontoAbonosInput>
 }
 
+export type OperatorCreateNestedOneWithoutCompanyUserInput = {
+  create?: Prisma.XOR<Prisma.OperatorCreateWithoutCompanyUserInput, Prisma.OperatorUncheckedCreateWithoutCompanyUserInput>
+  connectOrCreate?: Prisma.OperatorCreateOrConnectWithoutCompanyUserInput
+  connect?: Prisma.OperatorWhereUniqueInput
+}
+
+export type OperatorUncheckedCreateNestedOneWithoutCompanyUserInput = {
+  create?: Prisma.XOR<Prisma.OperatorCreateWithoutCompanyUserInput, Prisma.OperatorUncheckedCreateWithoutCompanyUserInput>
+  connectOrCreate?: Prisma.OperatorCreateOrConnectWithoutCompanyUserInput
+  connect?: Prisma.OperatorWhereUniqueInput
+}
+
+export type OperatorUpdateOneWithoutCompanyUserNestedInput = {
+  create?: Prisma.XOR<Prisma.OperatorCreateWithoutCompanyUserInput, Prisma.OperatorUncheckedCreateWithoutCompanyUserInput>
+  connectOrCreate?: Prisma.OperatorCreateOrConnectWithoutCompanyUserInput
+  upsert?: Prisma.OperatorUpsertWithoutCompanyUserInput
+  disconnect?: Prisma.OperatorWhereInput | boolean
+  delete?: Prisma.OperatorWhereInput | boolean
+  connect?: Prisma.OperatorWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OperatorUpdateToOneWithWhereWithoutCompanyUserInput, Prisma.OperatorUpdateWithoutCompanyUserInput>, Prisma.OperatorUncheckedUpdateWithoutCompanyUserInput>
+}
+
+export type OperatorUncheckedUpdateOneWithoutCompanyUserNestedInput = {
+  create?: Prisma.XOR<Prisma.OperatorCreateWithoutCompanyUserInput, Prisma.OperatorUncheckedCreateWithoutCompanyUserInput>
+  connectOrCreate?: Prisma.OperatorCreateOrConnectWithoutCompanyUserInput
+  upsert?: Prisma.OperatorUpsertWithoutCompanyUserInput
+  disconnect?: Prisma.OperatorWhereInput | boolean
+  delete?: Prisma.OperatorWhereInput | boolean
+  connect?: Prisma.OperatorWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OperatorUpdateToOneWithWhereWithoutCompanyUserInput, Prisma.OperatorUpdateWithoutCompanyUserInput>, Prisma.OperatorUncheckedUpdateWithoutCompanyUserInput>
+}
+
 export type OperatorCreateWithoutCompanyInput = {
   id?: string
   legacyId?: string | null
@@ -914,9 +1019,12 @@ export type OperatorCreateWithoutCompanyInput = {
   observacoes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  companyUser?: Prisma.CompanyUserCreateNestedOneWithoutOperatorInput
   pontoRegistros?: Prisma.PontoRegistroCreateNestedManyWithoutOperatorInput
   pontoSolicitacoes?: Prisma.PontoSolicitacaoCreateNestedManyWithoutOperatorInput
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutOperatorInput
+  osComoResponsavel?: Prisma.ServiceOrderCreateNestedManyWithoutResponsavelInput
+  apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutOperatorInput
 }
 
 export type OperatorUncheckedCreateWithoutCompanyInput = {
@@ -942,11 +1050,14 @@ export type OperatorUncheckedCreateWithoutCompanyInput = {
   loginGerado?: string | null
   senhaHash?: string | null
   observacoes?: string | null
+  companyUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutOperatorInput
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedCreateNestedManyWithoutOperatorInput
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutOperatorInput
+  osComoResponsavel?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutResponsavelInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutOperatorInput
 }
 
 export type OperatorCreateOrConnectWithoutCompanyInput = {
@@ -1002,8 +1113,305 @@ export type OperatorScalarWhereInput = {
   loginGerado?: Prisma.StringNullableFilter<"Operator"> | string | null
   senhaHash?: Prisma.StringNullableFilter<"Operator"> | string | null
   observacoes?: Prisma.StringNullableFilter<"Operator"> | string | null
+  companyUserId?: Prisma.UuidNullableFilter<"Operator"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Operator"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Operator"> | Date | string
+}
+
+export type OperatorCreateWithoutOsComoResponsavelInput = {
+  id?: string
+  legacyId?: string | null
+  nome: string
+  cpf?: string | null
+  matricula?: string | null
+  dataNascimento?: Date | string | null
+  rg?: string | null
+  celular?: string | null
+  cargo?: string | null
+  funcao?: string | null
+  tipo?: string
+  status?: string
+  ativo?: boolean
+  cnh?: string | null
+  cnhCategoria?: string | null
+  cnhValidade?: Date | string | null
+  cnhEmissao?: Date | string | null
+  cnhLocalEmissao?: string | null
+  cnhRestricao?: string | null
+  loginGerado?: string | null
+  senhaHash?: string | null
+  observacoes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutOperatorsInput
+  companyUser?: Prisma.CompanyUserCreateNestedOneWithoutOperatorInput
+  pontoRegistros?: Prisma.PontoRegistroCreateNestedManyWithoutOperatorInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoCreateNestedManyWithoutOperatorInput
+  pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutOperatorInput
+  apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutOperatorInput
+}
+
+export type OperatorUncheckedCreateWithoutOsComoResponsavelInput = {
+  id?: string
+  legacyId?: string | null
+  companyId: string
+  nome: string
+  cpf?: string | null
+  matricula?: string | null
+  dataNascimento?: Date | string | null
+  rg?: string | null
+  celular?: string | null
+  cargo?: string | null
+  funcao?: string | null
+  tipo?: string
+  status?: string
+  ativo?: boolean
+  cnh?: string | null
+  cnhCategoria?: string | null
+  cnhValidade?: Date | string | null
+  cnhEmissao?: Date | string | null
+  cnhLocalEmissao?: string | null
+  cnhRestricao?: string | null
+  loginGerado?: string | null
+  senhaHash?: string | null
+  observacoes?: string | null
+  companyUserId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutOperatorInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedCreateNestedManyWithoutOperatorInput
+  pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutOperatorInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutOperatorInput
+}
+
+export type OperatorCreateOrConnectWithoutOsComoResponsavelInput = {
+  where: Prisma.OperatorWhereUniqueInput
+  create: Prisma.XOR<Prisma.OperatorCreateWithoutOsComoResponsavelInput, Prisma.OperatorUncheckedCreateWithoutOsComoResponsavelInput>
+}
+
+export type OperatorUpsertWithoutOsComoResponsavelInput = {
+  update: Prisma.XOR<Prisma.OperatorUpdateWithoutOsComoResponsavelInput, Prisma.OperatorUncheckedUpdateWithoutOsComoResponsavelInput>
+  create: Prisma.XOR<Prisma.OperatorCreateWithoutOsComoResponsavelInput, Prisma.OperatorUncheckedCreateWithoutOsComoResponsavelInput>
+  where?: Prisma.OperatorWhereInput
+}
+
+export type OperatorUpdateToOneWithWhereWithoutOsComoResponsavelInput = {
+  where?: Prisma.OperatorWhereInput
+  data: Prisma.XOR<Prisma.OperatorUpdateWithoutOsComoResponsavelInput, Prisma.OperatorUncheckedUpdateWithoutOsComoResponsavelInput>
+}
+
+export type OperatorUpdateWithoutOsComoResponsavelInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  cpf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  matricula?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dataNascimento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rg?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  celular?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cargo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  funcao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipo?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  cnh?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhCategoria?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhValidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cnhEmissao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cnhLocalEmissao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhRestricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutOperatorsNestedInput
+  companyUser?: Prisma.CompanyUserUpdateOneWithoutOperatorNestedInput
+  pontoRegistros?: Prisma.PontoRegistroUpdateManyWithoutOperatorNestedInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUpdateManyWithoutOperatorNestedInput
+  pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutOperatorNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutOperatorNestedInput
+}
+
+export type OperatorUncheckedUpdateWithoutOsComoResponsavelInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  cpf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  matricula?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dataNascimento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rg?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  celular?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cargo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  funcao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipo?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  cnh?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhCategoria?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhValidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cnhEmissao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cnhLocalEmissao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhRestricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutOperatorNestedInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedUpdateManyWithoutOperatorNestedInput
+  pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutOperatorNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutOperatorNestedInput
+}
+
+export type OperatorCreateWithoutApontamentosInput = {
+  id?: string
+  legacyId?: string | null
+  nome: string
+  cpf?: string | null
+  matricula?: string | null
+  dataNascimento?: Date | string | null
+  rg?: string | null
+  celular?: string | null
+  cargo?: string | null
+  funcao?: string | null
+  tipo?: string
+  status?: string
+  ativo?: boolean
+  cnh?: string | null
+  cnhCategoria?: string | null
+  cnhValidade?: Date | string | null
+  cnhEmissao?: Date | string | null
+  cnhLocalEmissao?: string | null
+  cnhRestricao?: string | null
+  loginGerado?: string | null
+  senhaHash?: string | null
+  observacoes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutOperatorsInput
+  companyUser?: Prisma.CompanyUserCreateNestedOneWithoutOperatorInput
+  pontoRegistros?: Prisma.PontoRegistroCreateNestedManyWithoutOperatorInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoCreateNestedManyWithoutOperatorInput
+  pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutOperatorInput
+  osComoResponsavel?: Prisma.ServiceOrderCreateNestedManyWithoutResponsavelInput
+}
+
+export type OperatorUncheckedCreateWithoutApontamentosInput = {
+  id?: string
+  legacyId?: string | null
+  companyId: string
+  nome: string
+  cpf?: string | null
+  matricula?: string | null
+  dataNascimento?: Date | string | null
+  rg?: string | null
+  celular?: string | null
+  cargo?: string | null
+  funcao?: string | null
+  tipo?: string
+  status?: string
+  ativo?: boolean
+  cnh?: string | null
+  cnhCategoria?: string | null
+  cnhValidade?: Date | string | null
+  cnhEmissao?: Date | string | null
+  cnhLocalEmissao?: string | null
+  cnhRestricao?: string | null
+  loginGerado?: string | null
+  senhaHash?: string | null
+  observacoes?: string | null
+  companyUserId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutOperatorInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedCreateNestedManyWithoutOperatorInput
+  pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutOperatorInput
+  osComoResponsavel?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutResponsavelInput
+}
+
+export type OperatorCreateOrConnectWithoutApontamentosInput = {
+  where: Prisma.OperatorWhereUniqueInput
+  create: Prisma.XOR<Prisma.OperatorCreateWithoutApontamentosInput, Prisma.OperatorUncheckedCreateWithoutApontamentosInput>
+}
+
+export type OperatorUpsertWithoutApontamentosInput = {
+  update: Prisma.XOR<Prisma.OperatorUpdateWithoutApontamentosInput, Prisma.OperatorUncheckedUpdateWithoutApontamentosInput>
+  create: Prisma.XOR<Prisma.OperatorCreateWithoutApontamentosInput, Prisma.OperatorUncheckedCreateWithoutApontamentosInput>
+  where?: Prisma.OperatorWhereInput
+}
+
+export type OperatorUpdateToOneWithWhereWithoutApontamentosInput = {
+  where?: Prisma.OperatorWhereInput
+  data: Prisma.XOR<Prisma.OperatorUpdateWithoutApontamentosInput, Prisma.OperatorUncheckedUpdateWithoutApontamentosInput>
+}
+
+export type OperatorUpdateWithoutApontamentosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  cpf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  matricula?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dataNascimento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rg?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  celular?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cargo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  funcao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipo?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  cnh?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhCategoria?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhValidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cnhEmissao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cnhLocalEmissao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhRestricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutOperatorsNestedInput
+  companyUser?: Prisma.CompanyUserUpdateOneWithoutOperatorNestedInput
+  pontoRegistros?: Prisma.PontoRegistroUpdateManyWithoutOperatorNestedInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUpdateManyWithoutOperatorNestedInput
+  pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutOperatorNestedInput
+  osComoResponsavel?: Prisma.ServiceOrderUpdateManyWithoutResponsavelNestedInput
+}
+
+export type OperatorUncheckedUpdateWithoutApontamentosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  cpf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  matricula?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dataNascimento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rg?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  celular?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cargo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  funcao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipo?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  cnh?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhCategoria?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhValidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cnhEmissao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cnhLocalEmissao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhRestricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutOperatorNestedInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedUpdateManyWithoutOperatorNestedInput
+  pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutOperatorNestedInput
+  osComoResponsavel?: Prisma.ServiceOrderUncheckedUpdateManyWithoutResponsavelNestedInput
 }
 
 export type OperatorCreateWithoutPontoRegistrosInput = {
@@ -1032,8 +1440,11 @@ export type OperatorCreateWithoutPontoRegistrosInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutOperatorsInput
+  companyUser?: Prisma.CompanyUserCreateNestedOneWithoutOperatorInput
   pontoSolicitacoes?: Prisma.PontoSolicitacaoCreateNestedManyWithoutOperatorInput
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutOperatorInput
+  osComoResponsavel?: Prisma.ServiceOrderCreateNestedManyWithoutResponsavelInput
+  apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutOperatorInput
 }
 
 export type OperatorUncheckedCreateWithoutPontoRegistrosInput = {
@@ -1060,10 +1471,13 @@ export type OperatorUncheckedCreateWithoutPontoRegistrosInput = {
   loginGerado?: string | null
   senhaHash?: string | null
   observacoes?: string | null
+  companyUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedCreateNestedManyWithoutOperatorInput
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutOperatorInput
+  osComoResponsavel?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutResponsavelInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutOperatorInput
 }
 
 export type OperatorCreateOrConnectWithoutPontoRegistrosInput = {
@@ -1108,8 +1522,11 @@ export type OperatorUpdateWithoutPontoRegistrosInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutOperatorsNestedInput
+  companyUser?: Prisma.CompanyUserUpdateOneWithoutOperatorNestedInput
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUpdateManyWithoutOperatorNestedInput
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutOperatorNestedInput
+  osComoResponsavel?: Prisma.ServiceOrderUpdateManyWithoutResponsavelNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutOperatorNestedInput
 }
 
 export type OperatorUncheckedUpdateWithoutPontoRegistrosInput = {
@@ -1136,10 +1553,13 @@ export type OperatorUncheckedUpdateWithoutPontoRegistrosInput = {
   loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedUpdateManyWithoutOperatorNestedInput
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutOperatorNestedInput
+  osComoResponsavel?: Prisma.ServiceOrderUncheckedUpdateManyWithoutResponsavelNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutOperatorNestedInput
 }
 
 export type OperatorCreateWithoutPontoSolicitacoesInput = {
@@ -1168,8 +1588,11 @@ export type OperatorCreateWithoutPontoSolicitacoesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutOperatorsInput
+  companyUser?: Prisma.CompanyUserCreateNestedOneWithoutOperatorInput
   pontoRegistros?: Prisma.PontoRegistroCreateNestedManyWithoutOperatorInput
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutOperatorInput
+  osComoResponsavel?: Prisma.ServiceOrderCreateNestedManyWithoutResponsavelInput
+  apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutOperatorInput
 }
 
 export type OperatorUncheckedCreateWithoutPontoSolicitacoesInput = {
@@ -1196,10 +1619,13 @@ export type OperatorUncheckedCreateWithoutPontoSolicitacoesInput = {
   loginGerado?: string | null
   senhaHash?: string | null
   observacoes?: string | null
+  companyUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutOperatorInput
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutOperatorInput
+  osComoResponsavel?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutResponsavelInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutOperatorInput
 }
 
 export type OperatorCreateOrConnectWithoutPontoSolicitacoesInput = {
@@ -1244,8 +1670,11 @@ export type OperatorUpdateWithoutPontoSolicitacoesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutOperatorsNestedInput
+  companyUser?: Prisma.CompanyUserUpdateOneWithoutOperatorNestedInput
   pontoRegistros?: Prisma.PontoRegistroUpdateManyWithoutOperatorNestedInput
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutOperatorNestedInput
+  osComoResponsavel?: Prisma.ServiceOrderUpdateManyWithoutResponsavelNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutOperatorNestedInput
 }
 
 export type OperatorUncheckedUpdateWithoutPontoSolicitacoesInput = {
@@ -1272,10 +1701,13 @@ export type OperatorUncheckedUpdateWithoutPontoSolicitacoesInput = {
   loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutOperatorNestedInput
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutOperatorNestedInput
+  osComoResponsavel?: Prisma.ServiceOrderUncheckedUpdateManyWithoutResponsavelNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutOperatorNestedInput
 }
 
 export type OperatorCreateWithoutPontoAbonosInput = {
@@ -1304,8 +1736,11 @@ export type OperatorCreateWithoutPontoAbonosInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutOperatorsInput
+  companyUser?: Prisma.CompanyUserCreateNestedOneWithoutOperatorInput
   pontoRegistros?: Prisma.PontoRegistroCreateNestedManyWithoutOperatorInput
   pontoSolicitacoes?: Prisma.PontoSolicitacaoCreateNestedManyWithoutOperatorInput
+  osComoResponsavel?: Prisma.ServiceOrderCreateNestedManyWithoutResponsavelInput
+  apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutOperatorInput
 }
 
 export type OperatorUncheckedCreateWithoutPontoAbonosInput = {
@@ -1332,10 +1767,13 @@ export type OperatorUncheckedCreateWithoutPontoAbonosInput = {
   loginGerado?: string | null
   senhaHash?: string | null
   observacoes?: string | null
+  companyUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutOperatorInput
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedCreateNestedManyWithoutOperatorInput
+  osComoResponsavel?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutResponsavelInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutOperatorInput
 }
 
 export type OperatorCreateOrConnectWithoutPontoAbonosInput = {
@@ -1380,11 +1818,162 @@ export type OperatorUpdateWithoutPontoAbonosInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutOperatorsNestedInput
+  companyUser?: Prisma.CompanyUserUpdateOneWithoutOperatorNestedInput
   pontoRegistros?: Prisma.PontoRegistroUpdateManyWithoutOperatorNestedInput
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUpdateManyWithoutOperatorNestedInput
+  osComoResponsavel?: Prisma.ServiceOrderUpdateManyWithoutResponsavelNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutOperatorNestedInput
 }
 
 export type OperatorUncheckedUpdateWithoutPontoAbonosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  cpf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  matricula?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dataNascimento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rg?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  celular?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cargo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  funcao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipo?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  cnh?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhCategoria?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhValidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cnhEmissao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cnhLocalEmissao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhRestricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutOperatorNestedInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedUpdateManyWithoutOperatorNestedInput
+  osComoResponsavel?: Prisma.ServiceOrderUncheckedUpdateManyWithoutResponsavelNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutOperatorNestedInput
+}
+
+export type OperatorCreateWithoutCompanyUserInput = {
+  id?: string
+  legacyId?: string | null
+  nome: string
+  cpf?: string | null
+  matricula?: string | null
+  dataNascimento?: Date | string | null
+  rg?: string | null
+  celular?: string | null
+  cargo?: string | null
+  funcao?: string | null
+  tipo?: string
+  status?: string
+  ativo?: boolean
+  cnh?: string | null
+  cnhCategoria?: string | null
+  cnhValidade?: Date | string | null
+  cnhEmissao?: Date | string | null
+  cnhLocalEmissao?: string | null
+  cnhRestricao?: string | null
+  loginGerado?: string | null
+  senhaHash?: string | null
+  observacoes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutOperatorsInput
+  pontoRegistros?: Prisma.PontoRegistroCreateNestedManyWithoutOperatorInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoCreateNestedManyWithoutOperatorInput
+  pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutOperatorInput
+  osComoResponsavel?: Prisma.ServiceOrderCreateNestedManyWithoutResponsavelInput
+  apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutOperatorInput
+}
+
+export type OperatorUncheckedCreateWithoutCompanyUserInput = {
+  id?: string
+  legacyId?: string | null
+  companyId: string
+  nome: string
+  cpf?: string | null
+  matricula?: string | null
+  dataNascimento?: Date | string | null
+  rg?: string | null
+  celular?: string | null
+  cargo?: string | null
+  funcao?: string | null
+  tipo?: string
+  status?: string
+  ativo?: boolean
+  cnh?: string | null
+  cnhCategoria?: string | null
+  cnhValidade?: Date | string | null
+  cnhEmissao?: Date | string | null
+  cnhLocalEmissao?: string | null
+  cnhRestricao?: string | null
+  loginGerado?: string | null
+  senhaHash?: string | null
+  observacoes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutOperatorInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedCreateNestedManyWithoutOperatorInput
+  pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutOperatorInput
+  osComoResponsavel?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutResponsavelInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutOperatorInput
+}
+
+export type OperatorCreateOrConnectWithoutCompanyUserInput = {
+  where: Prisma.OperatorWhereUniqueInput
+  create: Prisma.XOR<Prisma.OperatorCreateWithoutCompanyUserInput, Prisma.OperatorUncheckedCreateWithoutCompanyUserInput>
+}
+
+export type OperatorUpsertWithoutCompanyUserInput = {
+  update: Prisma.XOR<Prisma.OperatorUpdateWithoutCompanyUserInput, Prisma.OperatorUncheckedUpdateWithoutCompanyUserInput>
+  create: Prisma.XOR<Prisma.OperatorCreateWithoutCompanyUserInput, Prisma.OperatorUncheckedCreateWithoutCompanyUserInput>
+  where?: Prisma.OperatorWhereInput
+}
+
+export type OperatorUpdateToOneWithWhereWithoutCompanyUserInput = {
+  where?: Prisma.OperatorWhereInput
+  data: Prisma.XOR<Prisma.OperatorUpdateWithoutCompanyUserInput, Prisma.OperatorUncheckedUpdateWithoutCompanyUserInput>
+}
+
+export type OperatorUpdateWithoutCompanyUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  cpf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  matricula?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dataNascimento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rg?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  celular?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cargo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  funcao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipo?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  cnh?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhCategoria?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhValidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cnhEmissao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cnhLocalEmissao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhRestricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutOperatorsNestedInput
+  pontoRegistros?: Prisma.PontoRegistroUpdateManyWithoutOperatorNestedInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUpdateManyWithoutOperatorNestedInput
+  pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutOperatorNestedInput
+  osComoResponsavel?: Prisma.ServiceOrderUpdateManyWithoutResponsavelNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutOperatorNestedInput
+}
+
+export type OperatorUncheckedUpdateWithoutCompanyUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   companyId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1412,6 +2001,9 @@ export type OperatorUncheckedUpdateWithoutPontoAbonosInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutOperatorNestedInput
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedUpdateManyWithoutOperatorNestedInput
+  pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutOperatorNestedInput
+  osComoResponsavel?: Prisma.ServiceOrderUncheckedUpdateManyWithoutResponsavelNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutOperatorNestedInput
 }
 
 export type OperatorCreateManyCompanyInput = {
@@ -1437,6 +2029,7 @@ export type OperatorCreateManyCompanyInput = {
   loginGerado?: string | null
   senhaHash?: string | null
   observacoes?: string | null
+  companyUserId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1466,9 +2059,12 @@ export type OperatorUpdateWithoutCompanyInput = {
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  companyUser?: Prisma.CompanyUserUpdateOneWithoutOperatorNestedInput
   pontoRegistros?: Prisma.PontoRegistroUpdateManyWithoutOperatorNestedInput
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUpdateManyWithoutOperatorNestedInput
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutOperatorNestedInput
+  osComoResponsavel?: Prisma.ServiceOrderUpdateManyWithoutResponsavelNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutOperatorNestedInput
 }
 
 export type OperatorUncheckedUpdateWithoutCompanyInput = {
@@ -1494,11 +2090,14 @@ export type OperatorUncheckedUpdateWithoutCompanyInput = {
   loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutOperatorNestedInput
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedUpdateManyWithoutOperatorNestedInput
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutOperatorNestedInput
+  osComoResponsavel?: Prisma.ServiceOrderUncheckedUpdateManyWithoutResponsavelNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutOperatorNestedInput
 }
 
 export type OperatorUncheckedUpdateManyWithoutCompanyInput = {
@@ -1524,6 +2123,7 @@ export type OperatorUncheckedUpdateManyWithoutCompanyInput = {
   loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1537,12 +2137,16 @@ export type OperatorCountOutputType = {
   pontoRegistros: number
   pontoSolicitacoes: number
   pontoAbonos: number
+  osComoResponsavel: number
+  apontamentos: number
 }
 
 export type OperatorCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   pontoRegistros?: boolean | OperatorCountOutputTypeCountPontoRegistrosArgs
   pontoSolicitacoes?: boolean | OperatorCountOutputTypeCountPontoSolicitacoesArgs
   pontoAbonos?: boolean | OperatorCountOutputTypeCountPontoAbonosArgs
+  osComoResponsavel?: boolean | OperatorCountOutputTypeCountOsComoResponsavelArgs
+  apontamentos?: boolean | OperatorCountOutputTypeCountApontamentosArgs
 }
 
 /**
@@ -1576,6 +2180,20 @@ export type OperatorCountOutputTypeCountPontoAbonosArgs<ExtArgs extends runtime.
   where?: Prisma.PontoAbonoWhereInput
 }
 
+/**
+ * OperatorCountOutputType without action
+ */
+export type OperatorCountOutputTypeCountOsComoResponsavelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ServiceOrderWhereInput
+}
+
+/**
+ * OperatorCountOutputType without action
+ */
+export type OperatorCountOutputTypeCountApontamentosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ServiceOrderApontamentoWhereInput
+}
+
 
 export type OperatorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1601,12 +2219,16 @@ export type OperatorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   loginGerado?: boolean
   senhaHash?: boolean
   observacoes?: boolean
+  companyUserId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
+  companyUser?: boolean | Prisma.Operator$companyUserArgs<ExtArgs>
   pontoRegistros?: boolean | Prisma.Operator$pontoRegistrosArgs<ExtArgs>
   pontoSolicitacoes?: boolean | Prisma.Operator$pontoSolicitacoesArgs<ExtArgs>
   pontoAbonos?: boolean | Prisma.Operator$pontoAbonosArgs<ExtArgs>
+  osComoResponsavel?: boolean | Prisma.Operator$osComoResponsavelArgs<ExtArgs>
+  apontamentos?: boolean | Prisma.Operator$apontamentosArgs<ExtArgs>
   _count?: boolean | Prisma.OperatorCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["operator"]>
 
@@ -1634,9 +2256,11 @@ export type OperatorSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   loginGerado?: boolean
   senhaHash?: boolean
   observacoes?: boolean
+  companyUserId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
+  companyUser?: boolean | Prisma.Operator$companyUserArgs<ExtArgs>
 }, ExtArgs["result"]["operator"]>
 
 export type OperatorSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1663,9 +2287,11 @@ export type OperatorSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   loginGerado?: boolean
   senhaHash?: boolean
   observacoes?: boolean
+  companyUserId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
+  companyUser?: boolean | Prisma.Operator$companyUserArgs<ExtArgs>
 }, ExtArgs["result"]["operator"]>
 
 export type OperatorSelectScalar = {
@@ -1692,32 +2318,41 @@ export type OperatorSelectScalar = {
   loginGerado?: boolean
   senhaHash?: boolean
   observacoes?: boolean
+  companyUserId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type OperatorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "nome" | "cpf" | "matricula" | "dataNascimento" | "rg" | "celular" | "cargo" | "funcao" | "tipo" | "status" | "ativo" | "cnh" | "cnhCategoria" | "cnhValidade" | "cnhEmissao" | "cnhLocalEmissao" | "cnhRestricao" | "loginGerado" | "senhaHash" | "observacoes" | "createdAt" | "updatedAt", ExtArgs["result"]["operator"]>
+export type OperatorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "nome" | "cpf" | "matricula" | "dataNascimento" | "rg" | "celular" | "cargo" | "funcao" | "tipo" | "status" | "ativo" | "cnh" | "cnhCategoria" | "cnhValidade" | "cnhEmissao" | "cnhLocalEmissao" | "cnhRestricao" | "loginGerado" | "senhaHash" | "observacoes" | "companyUserId" | "createdAt" | "updatedAt", ExtArgs["result"]["operator"]>
 export type OperatorInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
+  companyUser?: boolean | Prisma.Operator$companyUserArgs<ExtArgs>
   pontoRegistros?: boolean | Prisma.Operator$pontoRegistrosArgs<ExtArgs>
   pontoSolicitacoes?: boolean | Prisma.Operator$pontoSolicitacoesArgs<ExtArgs>
   pontoAbonos?: boolean | Prisma.Operator$pontoAbonosArgs<ExtArgs>
+  osComoResponsavel?: boolean | Prisma.Operator$osComoResponsavelArgs<ExtArgs>
+  apontamentos?: boolean | Prisma.Operator$apontamentosArgs<ExtArgs>
   _count?: boolean | Prisma.OperatorCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OperatorIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
+  companyUser?: boolean | Prisma.Operator$companyUserArgs<ExtArgs>
 }
 export type OperatorIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
+  companyUser?: boolean | Prisma.Operator$companyUserArgs<ExtArgs>
 }
 
 export type $OperatorPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Operator"
   objects: {
     company: Prisma.$CompanyPayload<ExtArgs>
+    companyUser: Prisma.$CompanyUserPayload<ExtArgs> | null
     pontoRegistros: Prisma.$PontoRegistroPayload<ExtArgs>[]
     pontoSolicitacoes: Prisma.$PontoSolicitacaoPayload<ExtArgs>[]
     pontoAbonos: Prisma.$PontoAbonoPayload<ExtArgs>[]
+    osComoResponsavel: Prisma.$ServiceOrderPayload<ExtArgs>[]
+    apontamentos: Prisma.$ServiceOrderApontamentoPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1773,6 +2408,10 @@ export type $OperatorPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     loginGerado: string | null
     senhaHash: string | null
     observacoes: string | null
+    /**
+     * Vínculo com usuário do painel web (`CompanyUser` / Supabase Auth).
+     */
+    companyUserId: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["operator"]>
@@ -2170,9 +2809,12 @@ readonly fields: OperatorFieldRefs;
 export interface Prisma__OperatorClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   company<T extends Prisma.CompanyDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CompanyDefaultArgs<ExtArgs>>): Prisma.Prisma__CompanyClient<runtime.Types.Result.GetResult<Prisma.$CompanyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  companyUser<T extends Prisma.Operator$companyUserArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Operator$companyUserArgs<ExtArgs>>): Prisma.Prisma__CompanyUserClient<runtime.Types.Result.GetResult<Prisma.$CompanyUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   pontoRegistros<T extends Prisma.Operator$pontoRegistrosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Operator$pontoRegistrosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PontoRegistroPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   pontoSolicitacoes<T extends Prisma.Operator$pontoSolicitacoesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Operator$pontoSolicitacoesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PontoSolicitacaoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   pontoAbonos<T extends Prisma.Operator$pontoAbonosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Operator$pontoAbonosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PontoAbonoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  osComoResponsavel<T extends Prisma.Operator$osComoResponsavelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Operator$osComoResponsavelArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  apontamentos<T extends Prisma.Operator$apontamentosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Operator$apontamentosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ServiceOrderApontamentoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2225,6 +2867,7 @@ export interface OperatorFieldRefs {
   readonly loginGerado: Prisma.FieldRef<"Operator", 'String'>
   readonly senhaHash: Prisma.FieldRef<"Operator", 'String'>
   readonly observacoes: Prisma.FieldRef<"Operator", 'String'>
+  readonly companyUserId: Prisma.FieldRef<"Operator", 'String'>
   readonly createdAt: Prisma.FieldRef<"Operator", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Operator", 'DateTime'>
 }
@@ -2628,6 +3271,25 @@ export type OperatorDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
 }
 
 /**
+ * Operator.companyUser
+ */
+export type Operator$companyUserArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CompanyUser
+   */
+  select?: Prisma.CompanyUserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CompanyUser
+   */
+  omit?: Prisma.CompanyUserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CompanyUserInclude<ExtArgs> | null
+  where?: Prisma.CompanyUserWhereInput
+}
+
+/**
  * Operator.pontoRegistros
  */
 export type Operator$pontoRegistrosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2697,6 +3359,54 @@ export type Operator$pontoAbonosArgs<ExtArgs extends runtime.Types.Extensions.In
   take?: number
   skip?: number
   distinct?: Prisma.PontoAbonoScalarFieldEnum | Prisma.PontoAbonoScalarFieldEnum[]
+}
+
+/**
+ * Operator.osComoResponsavel
+ */
+export type Operator$osComoResponsavelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ServiceOrder
+   */
+  select?: Prisma.ServiceOrderSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ServiceOrder
+   */
+  omit?: Prisma.ServiceOrderOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ServiceOrderInclude<ExtArgs> | null
+  where?: Prisma.ServiceOrderWhereInput
+  orderBy?: Prisma.ServiceOrderOrderByWithRelationInput | Prisma.ServiceOrderOrderByWithRelationInput[]
+  cursor?: Prisma.ServiceOrderWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ServiceOrderScalarFieldEnum | Prisma.ServiceOrderScalarFieldEnum[]
+}
+
+/**
+ * Operator.apontamentos
+ */
+export type Operator$apontamentosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ServiceOrderApontamento
+   */
+  select?: Prisma.ServiceOrderApontamentoSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ServiceOrderApontamento
+   */
+  omit?: Prisma.ServiceOrderApontamentoOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ServiceOrderApontamentoInclude<ExtArgs> | null
+  where?: Prisma.ServiceOrderApontamentoWhereInput
+  orderBy?: Prisma.ServiceOrderApontamentoOrderByWithRelationInput | Prisma.ServiceOrderApontamentoOrderByWithRelationInput[]
+  cursor?: Prisma.ServiceOrderApontamentoWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ServiceOrderApontamentoScalarFieldEnum | Prisma.ServiceOrderApontamentoScalarFieldEnum[]
 }
 
 /**

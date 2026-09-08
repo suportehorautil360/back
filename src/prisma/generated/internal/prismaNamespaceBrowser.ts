@@ -66,6 +66,9 @@ export const ModelName = {
   ServiceOrderEtapa: 'ServiceOrderEtapa',
   ServiceOrderSintoma: 'ServiceOrderSintoma',
   ServiceOrderOcorrencia: 'ServiceOrderOcorrencia',
+  ServiceOrderApontamento: 'ServiceOrderApontamento',
+  ServiceOrderFoto: 'ServiceOrderFoto',
+  ServiceOrderLaudo: 'ServiceOrderLaudo',
   PlanoPreventivo: 'PlanoPreventivo',
   Operator: 'Operator',
   Abastecimento: 'Abastecimento',
@@ -369,6 +372,8 @@ export const ServiceOrderScalarFieldEnum = {
   valorAprovado: 'valorAprovado',
   oficinaVencedoraId: 'oficinaVencedoraId',
   ordemServicoAprovadaId: 'ordemServicoAprovadaId',
+  execucao: 'execucao',
+  responsavelOperatorId: 'responsavelOperatorId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -429,6 +434,48 @@ export const ServiceOrderOcorrenciaScalarFieldEnum = {
 export type ServiceOrderOcorrenciaScalarFieldEnum = (typeof ServiceOrderOcorrenciaScalarFieldEnum)[keyof typeof ServiceOrderOcorrenciaScalarFieldEnum]
 
 
+export const ServiceOrderApontamentoScalarFieldEnum = {
+  id: 'id',
+  serviceOrderId: 'serviceOrderId',
+  operatorId: 'operatorId',
+  lancadoPorId: 'lancadoPorId',
+  inicio: 'inicio',
+  fim: 'fim',
+  observacao: 'observacao',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ServiceOrderApontamentoScalarFieldEnum = (typeof ServiceOrderApontamentoScalarFieldEnum)[keyof typeof ServiceOrderApontamentoScalarFieldEnum]
+
+
+export const ServiceOrderFotoScalarFieldEnum = {
+  id: 'id',
+  serviceOrderId: 'serviceOrderId',
+  url: 'url',
+  legenda: 'legenda',
+  enviadaPorId: 'enviadaPorId',
+  createdAt: 'createdAt'
+} as const
+
+export type ServiceOrderFotoScalarFieldEnum = (typeof ServiceOrderFotoScalarFieldEnum)[keyof typeof ServiceOrderFotoScalarFieldEnum]
+
+
+export const ServiceOrderLaudoScalarFieldEnum = {
+  id: 'id',
+  serviceOrderId: 'serviceOrderId',
+  causa: 'causa',
+  servicoFeito: 'servicoFeito',
+  pendencias: 'pendencias',
+  autorId: 'autorId',
+  fechadoEm: 'fechadoEm',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ServiceOrderLaudoScalarFieldEnum = (typeof ServiceOrderLaudoScalarFieldEnum)[keyof typeof ServiceOrderLaudoScalarFieldEnum]
+
+
 export const PlanoPreventivoScalarFieldEnum = {
   companyId: 'companyId',
   categorias: 'categorias',
@@ -462,6 +509,7 @@ export const OperatorScalarFieldEnum = {
   loginGerado: 'loginGerado',
   senhaHash: 'senhaHash',
   observacoes: 'observacoes',
+  companyUserId: 'companyUserId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

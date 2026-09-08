@@ -141,6 +141,23 @@ export type ServiceOrderSintoma = Prisma.ServiceOrderSintomaModel
  */
 export type ServiceOrderOcorrencia = Prisma.ServiceOrderOcorrenciaModel
 /**
+ * Model ServiceOrderApontamento
+ * Tempo trabalhado na OS. INTERVALO, não evento: somar eventos não audita.
+ * `fim` NULL é o apontamento ABERTO — o cronômetro rodando, no servidor.
+ */
+export type ServiceOrderApontamento = Prisma.ServiceOrderApontamentoModel
+/**
+ * Model ServiceOrderFoto
+ * Foto anexada à OS. Guarda URL do Storage — o legado embute data-URI em
+ * Json (`Emergency.fotos`) e paga em tamanho de linha.
+ */
+export type ServiceOrderFoto = Prisma.ServiceOrderFotoModel
+/**
+ * Model ServiceOrderLaudo
+ * Laudo técnico. Um por OS; `fechadoEm` preenchido torna imutável.
+ */
+export type ServiceOrderLaudo = Prisma.ServiceOrderLaudoModel
+/**
  * Model PlanoPreventivo
  * Plano preventivo da empresa — 1:1 com Company. Backfill do Firestore
  * `planosPreventivos/{prefeituraId}`. `categorias` é Json com o shape do
