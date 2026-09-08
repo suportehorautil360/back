@@ -745,6 +745,13 @@ model Operator {
 
   /// Vínculo com usuário do painel web (`CompanyUser` / Supabase Auth).
   companyUserId String? @unique @map("company_user_id") @db.Uuid
+  /// Cargo da empresa com permissões (`CompanyRole.key` → matriz global). A
+  /// coluna já existe no Postgres (migration `20260819160000_operator_rh_profile`
+  /// do horautil); só faltava este espelho, sem o qual o `PainelGuard` não
+  /// compila. Sem o objeto de relação pra `CompanyRole` de propósito — o
+  /// mirror desse modelo aqui está incompleto e fica pra quando algo além do
+  /// scalar precisar dele.
+  companyRoleId String? @map("company_role_id") @db.Uuid
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

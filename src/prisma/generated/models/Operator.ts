@@ -59,6 +59,7 @@ export type OperatorMinAggregateOutputType = {
   senhaHash: string | null
   observacoes: string | null
   companyUserId: string | null
+  companyRoleId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -88,6 +89,7 @@ export type OperatorMaxAggregateOutputType = {
   senhaHash: string | null
   observacoes: string | null
   companyUserId: string | null
+  companyRoleId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -117,6 +119,7 @@ export type OperatorCountAggregateOutputType = {
   senhaHash: number
   observacoes: number
   companyUserId: number
+  companyRoleId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -148,6 +151,7 @@ export type OperatorMinAggregateInputType = {
   senhaHash?: true
   observacoes?: true
   companyUserId?: true
+  companyRoleId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -177,6 +181,7 @@ export type OperatorMaxAggregateInputType = {
   senhaHash?: true
   observacoes?: true
   companyUserId?: true
+  companyRoleId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -206,6 +211,7 @@ export type OperatorCountAggregateInputType = {
   senhaHash?: true
   observacoes?: true
   companyUserId?: true
+  companyRoleId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -308,6 +314,7 @@ export type OperatorGroupByOutputType = {
   senhaHash: string | null
   observacoes: string | null
   companyUserId: string | null
+  companyRoleId: string | null
   createdAt: Date
   updatedAt: Date
   _count: OperatorCountAggregateOutputType | null
@@ -358,6 +365,7 @@ export type OperatorWhereInput = {
   senhaHash?: Prisma.StringNullableFilter<"Operator"> | string | null
   observacoes?: Prisma.StringNullableFilter<"Operator"> | string | null
   companyUserId?: Prisma.UuidNullableFilter<"Operator"> | string | null
+  companyRoleId?: Prisma.UuidNullableFilter<"Operator"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Operator"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Operator"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
@@ -394,6 +402,7 @@ export type OperatorOrderByWithRelationInput = {
   senhaHash?: Prisma.SortOrderInput | Prisma.SortOrder
   observacoes?: Prisma.SortOrderInput | Prisma.SortOrder
   companyUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  companyRoleId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   company?: Prisma.CompanyOrderByWithRelationInput
@@ -434,6 +443,7 @@ export type OperatorWhereUniqueInput = Prisma.AtLeast<{
   loginGerado?: Prisma.StringNullableFilter<"Operator"> | string | null
   senhaHash?: Prisma.StringNullableFilter<"Operator"> | string | null
   observacoes?: Prisma.StringNullableFilter<"Operator"> | string | null
+  companyRoleId?: Prisma.UuidNullableFilter<"Operator"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Operator"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Operator"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
@@ -470,6 +480,7 @@ export type OperatorOrderByWithAggregationInput = {
   senhaHash?: Prisma.SortOrderInput | Prisma.SortOrder
   observacoes?: Prisma.SortOrderInput | Prisma.SortOrder
   companyUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  companyRoleId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.OperatorCountOrderByAggregateInput
@@ -505,6 +516,7 @@ export type OperatorScalarWhereWithAggregatesInput = {
   senhaHash?: Prisma.StringNullableWithAggregatesFilter<"Operator"> | string | null
   observacoes?: Prisma.StringNullableWithAggregatesFilter<"Operator"> | string | null
   companyUserId?: Prisma.UuidNullableWithAggregatesFilter<"Operator"> | string | null
+  companyRoleId?: Prisma.UuidNullableWithAggregatesFilter<"Operator"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Operator"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Operator"> | Date | string
 }
@@ -532,6 +544,7 @@ export type OperatorCreateInput = {
   loginGerado?: string | null
   senhaHash?: string | null
   observacoes?: string | null
+  companyRoleId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutOperatorsInput
@@ -568,6 +581,7 @@ export type OperatorUncheckedCreateInput = {
   senhaHash?: string | null
   observacoes?: string | null
   companyUserId?: string | null
+  companyRoleId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutOperatorInput
@@ -600,6 +614,7 @@ export type OperatorUpdateInput = {
   loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutOperatorsNestedInput
@@ -636,6 +651,7 @@ export type OperatorUncheckedUpdateInput = {
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutOperatorNestedInput
@@ -670,6 +686,7 @@ export type OperatorCreateManyInput = {
   senhaHash?: string | null
   observacoes?: string | null
   companyUserId?: string | null
+  companyRoleId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -697,6 +714,7 @@ export type OperatorUpdateManyMutationInput = {
   loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -726,6 +744,7 @@ export type OperatorUncheckedUpdateManyInput = {
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -780,6 +799,7 @@ export type OperatorCountOrderByAggregateInput = {
   senhaHash?: Prisma.SortOrder
   observacoes?: Prisma.SortOrder
   companyUserId?: Prisma.SortOrder
+  companyRoleId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -809,6 +829,7 @@ export type OperatorMaxOrderByAggregateInput = {
   senhaHash?: Prisma.SortOrder
   observacoes?: Prisma.SortOrder
   companyUserId?: Prisma.SortOrder
+  companyRoleId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -838,6 +859,7 @@ export type OperatorMinOrderByAggregateInput = {
   senhaHash?: Prisma.SortOrder
   observacoes?: Prisma.SortOrder
   companyUserId?: Prisma.SortOrder
+  companyRoleId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -1017,6 +1039,7 @@ export type OperatorCreateWithoutCompanyInput = {
   loginGerado?: string | null
   senhaHash?: string | null
   observacoes?: string | null
+  companyRoleId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   companyUser?: Prisma.CompanyUserCreateNestedOneWithoutOperatorInput
@@ -1051,6 +1074,7 @@ export type OperatorUncheckedCreateWithoutCompanyInput = {
   senhaHash?: string | null
   observacoes?: string | null
   companyUserId?: string | null
+  companyRoleId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutOperatorInput
@@ -1114,6 +1138,7 @@ export type OperatorScalarWhereInput = {
   senhaHash?: Prisma.StringNullableFilter<"Operator"> | string | null
   observacoes?: Prisma.StringNullableFilter<"Operator"> | string | null
   companyUserId?: Prisma.UuidNullableFilter<"Operator"> | string | null
+  companyRoleId?: Prisma.UuidNullableFilter<"Operator"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Operator"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Operator"> | Date | string
 }
@@ -1141,6 +1166,7 @@ export type OperatorCreateWithoutOsComoResponsavelInput = {
   loginGerado?: string | null
   senhaHash?: string | null
   observacoes?: string | null
+  companyRoleId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutOperatorsInput
@@ -1176,6 +1202,7 @@ export type OperatorUncheckedCreateWithoutOsComoResponsavelInput = {
   senhaHash?: string | null
   observacoes?: string | null
   companyUserId?: string | null
+  companyRoleId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutOperatorInput
@@ -1223,6 +1250,7 @@ export type OperatorUpdateWithoutOsComoResponsavelInput = {
   loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutOperatorsNestedInput
@@ -1258,6 +1286,7 @@ export type OperatorUncheckedUpdateWithoutOsComoResponsavelInput = {
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutOperatorNestedInput
@@ -1289,6 +1318,7 @@ export type OperatorCreateWithoutApontamentosInput = {
   loginGerado?: string | null
   senhaHash?: string | null
   observacoes?: string | null
+  companyRoleId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutOperatorsInput
@@ -1324,6 +1354,7 @@ export type OperatorUncheckedCreateWithoutApontamentosInput = {
   senhaHash?: string | null
   observacoes?: string | null
   companyUserId?: string | null
+  companyRoleId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutOperatorInput
@@ -1371,6 +1402,7 @@ export type OperatorUpdateWithoutApontamentosInput = {
   loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutOperatorsNestedInput
@@ -1406,6 +1438,7 @@ export type OperatorUncheckedUpdateWithoutApontamentosInput = {
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutOperatorNestedInput
@@ -1437,6 +1470,7 @@ export type OperatorCreateWithoutPontoRegistrosInput = {
   loginGerado?: string | null
   senhaHash?: string | null
   observacoes?: string | null
+  companyRoleId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutOperatorsInput
@@ -1472,6 +1506,7 @@ export type OperatorUncheckedCreateWithoutPontoRegistrosInput = {
   senhaHash?: string | null
   observacoes?: string | null
   companyUserId?: string | null
+  companyRoleId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedCreateNestedManyWithoutOperatorInput
@@ -1519,6 +1554,7 @@ export type OperatorUpdateWithoutPontoRegistrosInput = {
   loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutOperatorsNestedInput
@@ -1554,6 +1590,7 @@ export type OperatorUncheckedUpdateWithoutPontoRegistrosInput = {
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedUpdateManyWithoutOperatorNestedInput
@@ -1585,6 +1622,7 @@ export type OperatorCreateWithoutPontoSolicitacoesInput = {
   loginGerado?: string | null
   senhaHash?: string | null
   observacoes?: string | null
+  companyRoleId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutOperatorsInput
@@ -1620,6 +1658,7 @@ export type OperatorUncheckedCreateWithoutPontoSolicitacoesInput = {
   senhaHash?: string | null
   observacoes?: string | null
   companyUserId?: string | null
+  companyRoleId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutOperatorInput
@@ -1667,6 +1706,7 @@ export type OperatorUpdateWithoutPontoSolicitacoesInput = {
   loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutOperatorsNestedInput
@@ -1702,6 +1742,7 @@ export type OperatorUncheckedUpdateWithoutPontoSolicitacoesInput = {
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutOperatorNestedInput
@@ -1733,6 +1774,7 @@ export type OperatorCreateWithoutPontoAbonosInput = {
   loginGerado?: string | null
   senhaHash?: string | null
   observacoes?: string | null
+  companyRoleId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutOperatorsInput
@@ -1768,6 +1810,7 @@ export type OperatorUncheckedCreateWithoutPontoAbonosInput = {
   senhaHash?: string | null
   observacoes?: string | null
   companyUserId?: string | null
+  companyRoleId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutOperatorInput
@@ -1815,6 +1858,7 @@ export type OperatorUpdateWithoutPontoAbonosInput = {
   loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutOperatorsNestedInput
@@ -1850,6 +1894,7 @@ export type OperatorUncheckedUpdateWithoutPontoAbonosInput = {
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutOperatorNestedInput
@@ -1881,6 +1926,7 @@ export type OperatorCreateWithoutCompanyUserInput = {
   loginGerado?: string | null
   senhaHash?: string | null
   observacoes?: string | null
+  companyRoleId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutOperatorsInput
@@ -1915,6 +1961,7 @@ export type OperatorUncheckedCreateWithoutCompanyUserInput = {
   loginGerado?: string | null
   senhaHash?: string | null
   observacoes?: string | null
+  companyRoleId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutOperatorInput
@@ -1963,6 +2010,7 @@ export type OperatorUpdateWithoutCompanyUserInput = {
   loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutOperatorsNestedInput
@@ -1997,6 +2045,7 @@ export type OperatorUncheckedUpdateWithoutCompanyUserInput = {
   loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutOperatorNestedInput
@@ -2030,6 +2079,7 @@ export type OperatorCreateManyCompanyInput = {
   senhaHash?: string | null
   observacoes?: string | null
   companyUserId?: string | null
+  companyRoleId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2057,6 +2107,7 @@ export type OperatorUpdateWithoutCompanyInput = {
   loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   companyUser?: Prisma.CompanyUserUpdateOneWithoutOperatorNestedInput
@@ -2091,6 +2142,7 @@ export type OperatorUncheckedUpdateWithoutCompanyInput = {
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutOperatorNestedInput
@@ -2124,6 +2176,7 @@ export type OperatorUncheckedUpdateManyWithoutCompanyInput = {
   senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2220,6 +2273,7 @@ export type OperatorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   senhaHash?: boolean
   observacoes?: boolean
   companyUserId?: boolean
+  companyRoleId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
@@ -2257,6 +2311,7 @@ export type OperatorSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   senhaHash?: boolean
   observacoes?: boolean
   companyUserId?: boolean
+  companyRoleId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
@@ -2288,6 +2343,7 @@ export type OperatorSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   senhaHash?: boolean
   observacoes?: boolean
   companyUserId?: boolean
+  companyRoleId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
@@ -2319,11 +2375,12 @@ export type OperatorSelectScalar = {
   senhaHash?: boolean
   observacoes?: boolean
   companyUserId?: boolean
+  companyRoleId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type OperatorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "nome" | "cpf" | "matricula" | "dataNascimento" | "rg" | "celular" | "cargo" | "funcao" | "tipo" | "status" | "ativo" | "cnh" | "cnhCategoria" | "cnhValidade" | "cnhEmissao" | "cnhLocalEmissao" | "cnhRestricao" | "loginGerado" | "senhaHash" | "observacoes" | "companyUserId" | "createdAt" | "updatedAt", ExtArgs["result"]["operator"]>
+export type OperatorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "nome" | "cpf" | "matricula" | "dataNascimento" | "rg" | "celular" | "cargo" | "funcao" | "tipo" | "status" | "ativo" | "cnh" | "cnhCategoria" | "cnhValidade" | "cnhEmissao" | "cnhLocalEmissao" | "cnhRestricao" | "loginGerado" | "senhaHash" | "observacoes" | "companyUserId" | "companyRoleId" | "createdAt" | "updatedAt", ExtArgs["result"]["operator"]>
 export type OperatorInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   companyUser?: boolean | Prisma.Operator$companyUserArgs<ExtArgs>
@@ -2412,6 +2469,15 @@ export type $OperatorPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
      * Vínculo com usuário do painel web (`CompanyUser` / Supabase Auth).
      */
     companyUserId: string | null
+    /**
+     * Cargo da empresa com permissões (`CompanyRole.key` → matriz global). A
+     * coluna já existe no Postgres (migration `20260819160000_operator_rh_profile`
+     * do horautil); só faltava este espelho, sem o qual o `PainelGuard` não
+     * compila. Sem o objeto de relação pra `CompanyRole` de propósito — o
+     * mirror desse modelo aqui está incompleto e fica pra quando algo além do
+     * scalar precisar dele.
+     */
+    companyRoleId: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["operator"]>
@@ -2868,6 +2934,7 @@ export interface OperatorFieldRefs {
   readonly senhaHash: Prisma.FieldRef<"Operator", 'String'>
   readonly observacoes: Prisma.FieldRef<"Operator", 'String'>
   readonly companyUserId: Prisma.FieldRef<"Operator", 'String'>
+  readonly companyRoleId: Prisma.FieldRef<"Operator", 'String'>
   readonly createdAt: Prisma.FieldRef<"Operator", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Operator", 'DateTime'>
 }

@@ -4670,6 +4670,7 @@ export const OperatorScalarFieldEnum = {
   senhaHash: 'senhaHash',
   observacoes: 'observacoes',
   companyUserId: 'companyUserId',
+  companyRoleId: 'companyRoleId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
