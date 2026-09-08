@@ -103,7 +103,11 @@ function prismaComApontamentos(
         Promise.resolve(os.find((l) => casa(l, where)) ?? null),
       ),
       update: jest.fn(({ data }) => Promise.resolve({ ...os[0], ...data })),
-      updateMany: jest.fn(() => Promise.resolve({ count: 1 })),
+      updateMany: jest.fn(({ where, data }) => {
+        const alvos = os.filter((l) => casa(l, where));
+        alvos.forEach((l) => Object.assign(l, data));
+        return Promise.resolve({ count: alvos.length });
+      }),
     },
     serviceOrderApontamento: {
       findMany: jest.fn(({ where }) =>
@@ -114,7 +118,11 @@ function prismaComApontamentos(
       ),
       create: jest.fn(({ data }) => Promise.resolve({ id: 'novo', ...data })),
       update: jest.fn(({ data }) => Promise.resolve({ id: 'ap-1', ...data })),
-      delete: jest.fn(() => Promise.resolve({ id: 'ap-1' })),
+      delete: jest.fn(({ where }) => {
+        const indice = apontamentos.findIndex((l) => casa(l, where));
+        const [removido] = apontamentos.splice(indice, 1);
+        return Promise.resolve(removido ?? null);
+      }),
     },
   } as never;
 }
@@ -273,5 +281,229 @@ describe('MecanicaService.iniciarApontamento — corrida no índice único parci
     await expect(s.iniciarApontamento(PAINEL, 'os-1', d('08:00'))).rejects.toBe(
       outroErro,
     );
+  });
+});
+
+/**
+ * Achado da revisão da Task 6: `lancarApontamento` chama `detalhe` antes de
+ * tudo, mas nenhum teste provava isso — removê-la deixaria a suíte inteira
+ * verde. `detalhe` é quem garante que a OS é da empresa do token e que é
+ * `execucao: 'interna'`.
+ */
+describe('MecanicaService.lancarApontamento — posse/empresa', () => {
+  const OS_OUTRA_EMPRESA = {
+    id: 'os-outra-empresa',
+    companyId: 'empresa-2',
+    execucao: 'interna',
+    situacao: 'Aberta',
+  };
+  const OS_PARCEIRA = {
+    id: 'os-parceira',
+    companyId: 'empresa-1',
+    execucao: 'parceira',
+    situacao: 'Aberta',
+  };
+
+  it('404 ao lançar apontamento em OS de outra empresa', async () => {
+    const s = new MecanicaService(
+      prismaComApontamentos([OS_OUTRA_EMPRESA], []),
+    );
+    await expect(
+      s.lancarApontamento(
+        PAINEL,
+        'os-outra-empresa',
+        d('08:00'),
+        d('09:00'),
+        null,
+      ),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('404 ao lançar apontamento em OS parceira — não existe para este módulo', async () => {
+    const s = new MecanicaService(prismaComApontamentos([OS_PARCEIRA], []));
+    await expect(
+      s.lancarApontamento(PAINEL, 'os-parceira', d('08:00'), d('09:00'), null),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+});
+
+/**
+ * Achado da revisão da Task 6: `pararApontamento` não tinha NENHUM teste. O
+ * código restringe por `operatorId` do token (`where: { id, operatorId }`) —
+ * o teste de "não é dono" prova essa restrição de verdade, porque o fake
+ * aplica o `where` recebido sobre a tabela em memória.
+ */
+describe('MecanicaService.pararApontamento', () => {
+  it('encerra o apontamento aberto do próprio mecânico', async () => {
+    const s = new MecanicaService(
+      prismaComApontamentos(
+        [OS_INTERNA],
+        [{ id: 'ap-1', operatorId: 'op-1', inicio: d('08:00'), fim: null }],
+      ),
+    );
+    await expect(
+      s.pararApontamento(PAINEL, 'ap-1', d('10:00')),
+    ).resolves.toMatchObject({ fim: d('10:00') });
+  });
+
+  it('404 ao tentar parar apontamento aberto de OUTRO mecânico', async () => {
+    const s = new MecanicaService(
+      prismaComApontamentos(
+        [OS_INTERNA],
+        [{ id: 'ap-1', operatorId: 'op-2', inicio: d('08:00'), fim: null }],
+      ),
+    );
+    await expect(
+      s.pararApontamento(PAINEL, 'ap-1', d('10:00')),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+});
+
+/**
+ * Achado da revisão da Task 6: `editarApontamento` não tinha NENHUM teste.
+ * Além de posse, prova que a edição não colide com a PRÓPRIA versão anterior
+ * do apontamento — sem excluir `apontamentoId` de `haSobreposicao`, o
+ * terceiro teste abaixo falharia com `ConflictException`, porque o intervalo
+ * novo está contido no antigo.
+ */
+describe('MecanicaService.editarApontamento', () => {
+  it('edita horário e observação do próprio apontamento', async () => {
+    const s = new MecanicaService(
+      prismaComApontamentos(
+        [OS_INTERNA],
+        [
+          {
+            id: 'ap-1',
+            operatorId: 'op-1',
+            inicio: d('08:00'),
+            fim: d('10:00'),
+            observacao: null,
+          },
+          {
+            id: 'ap-2',
+            operatorId: 'op-1',
+            inicio: d('14:00'),
+            fim: d('16:00'),
+            observacao: null,
+          },
+        ],
+      ),
+    );
+    await expect(
+      s.editarApontamento(PAINEL, 'ap-1', d('11:00'), d('12:00'), 'ajustado'),
+    ).resolves.toMatchObject({
+      inicio: d('11:00'),
+      fim: d('12:00'),
+      observacao: 'ajustado',
+    });
+  });
+
+  it('404 ao tentar editar apontamento de OUTRO mecânico', async () => {
+    const s = new MecanicaService(
+      prismaComApontamentos(
+        [OS_INTERNA],
+        [
+          {
+            id: 'ap-1',
+            operatorId: 'op-2',
+            inicio: d('08:00'),
+            fim: d('10:00'),
+            observacao: null,
+          },
+        ],
+      ),
+    );
+    await expect(
+      s.editarApontamento(PAINEL, 'ap-1', d('11:00'), d('12:00'), null),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('não colide com a própria versão anterior ao só ajustar o intervalo', async () => {
+    const s = new MecanicaService(
+      prismaComApontamentos(
+        [OS_INTERNA],
+        [
+          {
+            id: 'ap-1',
+            operatorId: 'op-1',
+            inicio: d('08:00'),
+            fim: d('10:00'),
+            observacao: null,
+          },
+        ],
+      ),
+    );
+    await expect(
+      s.editarApontamento(PAINEL, 'ap-1', d('08:30'), d('09:30'), null),
+    ).resolves.toMatchObject({ inicio: d('08:30'), fim: d('09:30') });
+  });
+});
+
+/**
+ * Achado da revisão da Task 6: `removerApontamento` não tinha NENHUM teste.
+ */
+describe('MecanicaService.removerApontamento', () => {
+  it('remove o próprio apontamento', async () => {
+    const s = new MecanicaService(
+      prismaComApontamentos(
+        [OS_INTERNA],
+        [
+          {
+            id: 'ap-1',
+            operatorId: 'op-1',
+            inicio: d('08:00'),
+            fim: d('10:00'),
+          },
+        ],
+      ),
+    );
+    await expect(s.removerApontamento(PAINEL, 'ap-1')).resolves.toEqual({
+      ok: true,
+    });
+  });
+
+  it('404 ao tentar remover apontamento de OUTRO mecânico', async () => {
+    const s = new MecanicaService(
+      prismaComApontamentos(
+        [OS_INTERNA],
+        [
+          {
+            id: 'ap-1',
+            operatorId: 'op-2',
+            inicio: d('08:00'),
+            fim: d('10:00'),
+          },
+        ],
+      ),
+    );
+    await expect(s.removerApontamento(PAINEL, 'ap-1')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+});
+
+/**
+ * Achado da revisão da Task 6: com `updateMany` e `delete` como stub fixo no
+ * fake, trocar este `updateMany` condicionado por um `update` incondicional
+ * não quebrava teste nenhum. Cada teste usa sua PRÓPRIA cópia da OS (não a
+ * `OS_INTERNA` compartilhada) para não herdar mutação de outro teste.
+ */
+describe('MecanicaService — a situação anda sozinha (marcarEmAndamento)', () => {
+  it('primeiro apontamento leva a OS de Aberta para EmAndamento', async () => {
+    const osAberta = { ...OS_INTERNA, situacao: 'Aberta' };
+    const s = new MecanicaService(prismaComApontamentos([osAberta], []));
+    await s.iniciarApontamento(PAINEL, 'os-1', d('08:00'));
+    await expect(s.detalhe(PAINEL, 'os-1')).resolves.toMatchObject({
+      situacao: 'EmAndamento',
+    });
+  });
+
+  it('OS já Concluída não regride para EmAndamento', async () => {
+    const osConcluida = { ...OS_INTERNA, situacao: 'Concluida' };
+    const s = new MecanicaService(prismaComApontamentos([osConcluida], []));
+    await s.iniciarApontamento(PAINEL, 'os-1', d('08:00'));
+    await expect(s.detalhe(PAINEL, 'os-1')).resolves.toMatchObject({
+      situacao: 'Concluida',
+    });
   });
 });
