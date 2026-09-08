@@ -10,6 +10,7 @@ import {
 export const TIPOS_SOLICITACAO = [
   'incluir',
   'cancelar',
+  'corrigir',
   'abono',
   'mensagem',
 ] as const;
@@ -19,9 +20,14 @@ export const TIPOS_BATIDA = ['entrada', 'almoco', 'volta', 'saida'] as const;
 export type TipoBatida = (typeof TIPOS_BATIDA)[number];
 
 /**
- * Solicitação de ajuste de ponto. Um único recurso atende quatro fluxos
- * que o operador dispara da folha do dia (Incluir batida, Cancelar batida,
- * Solicitar abono, Enviar mensagem). O `tipo` discrimina o caso.
+ * Solicitação de ajuste de ponto. Um único recurso atende cinco fluxos que o
+ * operador dispara da folha do dia (Incluir batida, Cancelar batida, Corrigir
+ * horário, Solicitar abono, Enviar mensagem). O `tipo` discrimina o caso.
+ *
+ * "corrigir" reusa `batidaId` (qual batida) e `timestampOriginal` (o horário
+ * novo) de propósito: são os mesmos dois fatos que "cancelar" e "incluir" já
+ * carregam, e inventar campos próprios só daria duas formas de dizer a mesma
+ * coisa.
  */
 export class CreateSolicitacaoPontoDto {
   @ApiProperty({ enum: TIPOS_SOLICITACAO })
@@ -48,7 +54,8 @@ export class CreateSolicitacaoPontoDto {
 
   @ApiProperty({
     description:
-      'Para tipo "cancelar": id da batida (timeRecord) que se quer cancelar.',
+      'Para tipo "cancelar" / "corrigir": id da batida alvo. Aceita o id do ' +
+      'aparelho (legacyId) ou a PK — a aprovação resolve pelos dois.',
     required: false,
   })
   @IsOptional()
@@ -66,7 +73,9 @@ export class CreateSolicitacaoPontoDto {
   data?: string;
 
   @ApiProperty({
-    description: 'Para tipo "incluir": horário alvo (ISO 8601).',
+    description:
+      'Para tipo "incluir": horário da batida a criar (ISO 8601). ' +
+      'Para tipo "corrigir": o horário NOVO da batida alvo.',
     required: false,
   })
   @IsOptional()

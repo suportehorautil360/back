@@ -124,6 +124,7 @@ export class SolicitacoesPontoService {
     return {
       incluir: 'Incluir batida',
       cancelar: 'Cancelar batida',
+      corrigir: 'Corrigir horário',
       abono: 'Solicitar abono',
       mensagem: 'Mensagem',
     }[tipo];
@@ -316,6 +317,60 @@ export class SolicitacoesPontoService {
                 registro: 'cancelamento',
                 refNsr: alvo.nsr,
                 refId: alvo.legacyId ?? alvo.id,
+                nsr: selo.nsr,
+                hash: selo.hash,
+                hashAnterior: selo.hashAnterior || null,
+                aplicado: true,
+              },
+            });
+          });
+        }
+      } else if (doc.tipo === 'corrigir' && doc.batidaId && doc.timestampOriginal) {
+        // Procura pelos DOIS ids: o aparelho conhece o próprio (que virou
+        // `legacyId` ao selar) e nunca viu a PK. Só por `id`, toda correção
+        // pedida pelo app cairia no vazio e a aprovação passaria em silêncio.
+        const alvo = await this.prisma.pontoRegistro.findFirst({
+          where: {
+            companyId: row.companyId,
+            OR: [{ id: doc.batidaId }, { legacyId: doc.batidaId }],
+          },
+        });
+
+        if (alvo) {
+          const ajusteId = randomUUID();
+          const ts = doc.timestampOriginal;
+          const identificador =
+            alvo.operatorCpf?.replace(/\D/g, '') || alvo.operatorNome;
+
+          await this.prisma.$transaction(async (tx) => {
+            const selo = await selarRegistroPostgres(tx, row.companyId, {
+              identificador,
+              tipo: alvo.tipo,
+              timestampOriginal: ts,
+              registro: 'ajuste',
+              refNsr: alvo.nsr,
+            });
+
+            // A original NÃO é alterada — a Portaria 671 proíbe. O ajuste é um
+            // registro NOVO que mira o NSR dela, e `resolverLedger` é quem
+            // resolve a visão efetiva: horário novo em cima, `horarioAnterior`
+            // preservado embaixo. Os dados da pessoa vêm da ORIGINAL, não da
+            // solicitação: o nome no registro é imutável depois de gravado, e
+            // o operador digita o nome dele na tela do pedido.
+            await tx.pontoRegistro.create({
+              data: {
+                id: ajusteId,
+                legacyId: ajusteId,
+                companyId: row.companyId,
+                operatorId: alvo.operatorId,
+                operatorNome: alvo.operatorNome,
+                operatorCpf: alvo.operatorCpf,
+                timestampOriginal: new Date(ts),
+                tipo: alvo.tipo,
+                registro: 'ajuste',
+                refNsr: alvo.nsr,
+                refId: alvo.legacyId ?? alvo.id,
+                motivo: doc.observacao ?? null,
                 nsr: selo.nsr,
                 hash: selo.hash,
                 hashAnterior: selo.hashAnterior || null,
