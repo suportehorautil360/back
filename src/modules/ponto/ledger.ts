@@ -16,6 +16,14 @@
  */
 export type RegistroPonto = {
   id: string;
+  /**
+   * O id que o APARELHO gerou para a batida (`checklist-chassi.service.ts`
+   * grava `legacyId: clientId` e um `id` novo). É por ele que o app reconhece
+   * a própria batida na lista que volta — o `id` daqui é a PK do Postgres, que
+   * o aparelho nunca viu. Sem isto o espelho mostra cada batida sincronizada
+   * duas vezes, uma selada e outra como se tivesse sido cancelada.
+   */
+  legacyId: string | null;
   nsr: number;
   // Portaria 671 exige NSR e hash no CRPT. Sem declarar aqui, o campo viria
   // do Prisma em runtime e sumiria na tipagem — pior do que não ter.

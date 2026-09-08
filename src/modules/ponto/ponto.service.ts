@@ -76,6 +76,11 @@ export class PontoService {
       take: LIMITE,
       select: {
         id: true,
+        // O id que o aparelho gerou. A PK acima é UUID novo, criado aqui
+        // (`checklist-chassi.service.ts` faz `id: randomUUID()`,
+        // `legacyId: clientId`), e o app nunca a viu — sem o legacyId ele não
+        // reconhece a própria batida de volta e a mostra duplicada no espelho.
+        legacyId: true,
         nsr: true,
         // O CRPT (Portaria 671) exige NSR **e** hash. A rota recorta pela
         // pessoa do token — sem parâmetro de CPF —, então expor o hash aqui

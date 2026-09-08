@@ -164,4 +164,51 @@ describe('PontoService.registrosDoPeriodo', () => {
     expect(resultado).toHaveLength(1);
     expect(resultado[0].hash).toBe(hashEsperado);
   });
+
+  it('devolve o legacyId — é por ele que o aparelho reconhece a própria batida', async () => {
+    // A PK é um UUID criado AQUI (`checklist-chassi.service.ts` faz
+    // `id: randomUUID()`, `legacyId: clientId`); o aparelho nunca a viu. Sem o
+    // legacyId na resposta, o espelho não casa a batida do servidor com a
+    // local e mostra as duas — a segunda com cara de cancelada.
+    const registro = {
+      id: '99999999-9999-9999-9999-999999999999',
+      legacyId: 'batida-do-aparelho-1',
+      nsr: 101,
+      hash: 'h101',
+      tipo: 'entrada',
+      timestampOriginal: DE,
+      operatorNome: 'Operador Um',
+      operatorCpf: '12345678901',
+      registro: 'batida',
+      refNsr: null,
+      refId: null,
+      aplicado: true,
+      motivo: null,
+      motivoReprovacao: null,
+      createdAt: DE,
+    };
+
+    const { prisma, pontoRegistroFindMany } = makePrisma({
+      id: 'operator-pk-1',
+      cpf: '12345678901',
+    });
+    pontoRegistroFindMany.mockResolvedValue([registro]);
+
+    const service = new PontoService(prisma);
+    const resultado = await service.registrosDoPeriodo(
+      'op-1',
+      'prefeitura-1',
+      DE,
+      ATE,
+    );
+
+    expect(pontoRegistroFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.objectContaining({ legacyId: true }),
+      }),
+    );
+    // O valor, não só o select: os dois são o mesmo tipo de furo do hash.
+    expect(resultado[0].legacyId).toBe('batida-do-aparelho-1');
+    expect(resultado[0].id).toBe('99999999-9999-9999-9999-999999999999');
+  });
 });
