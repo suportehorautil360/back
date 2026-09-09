@@ -77,6 +77,8 @@ describe('idempotência das escritas', () => {
     'adicionarFoto',
     'uploadFoto',
     'adicionarOcorrencia',
+    'aprovarOrcamento',
+    'recusarOrcamento',
     'concluir',
   ];
 

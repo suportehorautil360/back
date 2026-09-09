@@ -326,6 +326,31 @@ export class MecanicaController {
     });
   }
 
+  /**
+   * Gestor decide o orçamento interno.
+   *
+   * Fica sob `/mecanica` porque o painel já fala com este módulo usando o
+   * token do Supabase — a rota de aprovação da parceira exige token emitido
+   * pelo back, que o painel não tem. E é aqui que a peça orçada vira insumo.
+   */
+  @Post('os/:id/orcamento/aprovar')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({
+    summary: 'Aprovar o orçamento interno — converte as peças em insumos da OS',
+  })
+  async aprovarOrcamento(@Req() req: RequestComPainel, @Param('id') id: string) {
+    return this.service.decidirOrcamento(req.painel, id, 'aprovar');
+  }
+
+  @Post('os/:id/orcamento/recusar')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({
+    summary: 'Recusar o orçamento interno — o mecânico pode enviar outro',
+  })
+  async recusarOrcamento(@Req() req: RequestComPainel, @Param('id') id: string) {
+    return this.service.decidirOrcamento(req.painel, id, 'recusar');
+  }
+
   @Post('os/:id/concluir')
   @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: 'Concluir a OS — exige laudo e nenhum apontamento aberto' })

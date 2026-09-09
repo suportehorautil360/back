@@ -10,6 +10,7 @@ import { Prisma } from '../../prisma/generated/client';
 import type { PainelPayload } from '../../common/painel.guard';
 import { toInputJson } from '../../common/prisma/os-prisma.mapper';
 import { parseOrcamentoItemsFromDto } from '../os/orcamentos/helpers/orcamento-items.helper';
+import { itensParaInsumos } from '../os/orcamentos/helpers/itens-para-insumos.helper';
 import type { OrcamentoItemDto } from '../os/orcamentos/dto/create-orcamento.dto';
 import { haSobreposicao, intervaloInvalido } from './regras/apontamento';
 
@@ -432,17 +433,26 @@ export class MecanicaService {
     // tem de ser maior que zero. Orçamento de R$ 0 não é pedido de aprovação.
     const { itens, valorTotal } = parseOrcamentoItemsFromDto(dados.itens);
 
-    const atual = await this.prisma.orcamento.findFirst({
-      where: { serviceOrderId: osId, oficinaId: null },
+    // Um orçamento PENDENTE por OS — não um por OS. Recusado fica no lugar
+    // como histórico, e o mecânico manda outro: é o laço normal de quem pede
+    // aprovação. Bloquear depois de uma recusa deixaria a máquina parada
+    // esperando uma conversa que o sistema não tem onde registrar.
+    const aprovado = await this.prisma.orcamento.findFirst({
+      where: { serviceOrderId: osId, oficinaId: null, status: 'aprovado' },
     });
-
-    if (atual && atual.status !== 'aguardando_aprovacao') {
+    if (aprovado) {
       throw new ConflictException(
-        atual.status === 'aprovado'
-          ? 'Este orçamento já foi aprovado e não pode mais ser alterado.'
-          : 'Este orçamento já foi recusado. Fale com o gestor antes de enviar outro.',
+        'Esta OS já tem orçamento aprovado. Para gastar mais, fale com o gestor.',
       );
     }
+
+    const atual = await this.prisma.orcamento.findFirst({
+      where: {
+        serviceOrderId: osId,
+        oficinaId: null,
+        status: 'aguardando_aprovacao',
+      },
+    });
 
     const comum = {
       itens: toInputJson(itens),
@@ -473,6 +483,90 @@ export class MecanicaService {
         status: 'aguardando_aprovacao',
         ...comum,
       },
+    });
+  }
+
+  /**
+   * Decide o orçamento interno.
+   *
+   * Existe aqui, e não na rota de aprovação da parceira, por dois motivos: o
+   * painel já fala com `/mecanica/*` usando o token do Supabase (a rota da
+   * parceira exige token do back, que o painel não tem), e é aqui que mora a
+   * conversão de peça em insumo — a regra D5.
+   *
+   * Quem executa não aprova o próprio serviço. Sem essa trava, o mecânico
+   * autorizaria o próprio gasto, e a aprovação viraria carimbo.
+   */
+  async decidirOrcamento(
+    painel: PainelPayload,
+    osId: string,
+    decisao: 'aprovar' | 'recusar',
+    agora: Date = new Date(),
+  ) {
+    const os = await this.detalhe(painel, osId);
+
+    if (painel.operatorId && os.responsavelOperatorId === painel.operatorId) {
+      throw new ForbiddenException(
+        'Quem executa a OS não aprova o próprio orçamento. Peça ao gestor.',
+      );
+    }
+
+    const orcamento = await this.prisma.orcamento.findFirst({
+      where: {
+        serviceOrderId: osId,
+        oficinaId: null,
+        status: 'aguardando_aprovacao',
+      },
+    });
+    if (!orcamento) {
+      throw new NotFoundException('Não há orçamento aguardando aprovação nesta OS.');
+    }
+
+    if (decisao === 'recusar') {
+      return this.prisma.orcamento.update({
+        where: { id: orcamento.id },
+        data: { status: 'recusado' },
+      });
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const aprovado = await tx.orcamento.update({
+        where: { id: orcamento.id },
+        data: { status: 'aprovado' },
+      });
+
+      /**
+       * D5: peça orçada vira peça consumida, e o orçamento deixa de ser custo.
+       * Sem isto, orçar um filtro e depois lançá-lo contaria duas vezes — e
+       * ninguém perceberia, porque cada número está certo no seu lugar.
+       */
+      const jaExistem = await tx.serviceOrderInsumo.count({
+        where: { serviceOrderId: osId },
+      });
+      const insumos = itensParaInsumos(orcamento.itens, osId, jaExistem);
+      if (insumos.length > 0) {
+        await tx.serviceOrderInsumo.createMany({ data: insumos });
+      }
+
+      /**
+       * Carimba o valor autorizado, mas NÃO mexe em `status` nem `situacao`.
+       *
+       * `ServiceOrder.status` é o ciclo do pregão (`aguardando_orcamento`,
+       * `em_pregao`, `aprovado`) e não descreve OS interna; escrever nele faria
+       * a OS aparecer em telas que filtram o fluxo de parceira. A situação da
+       * execução continua sendo `situacao`, e ela não muda por aprovar gasto:
+       * o serviço segue em andamento.
+       */
+      await tx.serviceOrder.update({
+        where: { id: osId },
+        data: {
+          aprovadoEm: agora,
+          valorAprovado: orcamento.valorTotal,
+          ordemServicoAprovadaId: orcamento.id,
+        },
+      });
+
+      return { ...aprovado, insumosCriados: insumos.length };
     });
   }
 

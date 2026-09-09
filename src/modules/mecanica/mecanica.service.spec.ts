@@ -1201,7 +1201,16 @@ function prismaComOrcamento(orcamentoAtual: Record<string, unknown> | null) {
         ),
       },
       orcamento: {
-        findFirst: jest.fn(() => Promise.resolve(orcamentoAtual)),
+        // Respeita o `where.status`: o serviço pergunta duas coisas
+        // diferentes — "existe aprovado?" e "existe pendente?" — e um stub
+        // que devolve a mesma linha para as duas esconderia o bug.
+        findFirst: jest.fn(({ where }: { where: Record<string, unknown> }) =>
+          Promise.resolve(
+            orcamentoAtual && orcamentoAtual.status === where.status
+              ? orcamentoAtual
+              : null,
+          ),
+        ),
         create: jest.fn(({ data }: { data: Record<string, unknown> }) => {
           criados.push(data);
           return Promise.resolve({ id: 'orc-novo', ...data });
@@ -1266,7 +1275,7 @@ describe('MecanicaService.salvarOrcamento', () => {
     expect(atualizados[0]).toMatchObject({ valorTotal: 699.8, prazoDias: 3 });
   });
 
-  it('recusa alterar orçamento já aprovado', async () => {
+  it('recusa orçar OS que já tem orçamento aprovado', async () => {
     const { prisma } = prismaComOrcamento({ id: 'orc-1', status: 'aprovado' });
     const s = new MecanicaService(prisma);
 
@@ -1275,13 +1284,16 @@ describe('MecanicaService.salvarOrcamento', () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
-  it('recusa alterar orçamento recusado, apontando o caminho', async () => {
-    const { prisma } = prismaComOrcamento({ id: 'orc-1', status: 'recusado' });
+  it('depois de recusado, deixa mandar OUTRO — é o laço normal', async () => {
+    // Travar aqui deixaria a máquina parada esperando uma conversa que o
+    // sistema não tem onde registrar. O recusado fica como histórico.
+    const { prisma, criados } = prismaComOrcamento({ id: 'orc-1', status: 'recusado' });
     const s = new MecanicaService(prisma);
 
-    await expect(
-      s.salvarOrcamento(PAINEL, 'os-interna', { itens: ITENS }),
-    ).rejects.toThrow(/Fale com o gestor/);
+    await s.salvarOrcamento(PAINEL, 'os-interna', { itens: ITENS });
+
+    expect(criados).toHaveLength(1);
+    expect(criados[0]).toMatchObject({ status: 'aguardando_aprovacao' });
   });
 
   it('recusa orçamento de valor zero — não é pedido de aprovação', async () => {
@@ -1303,6 +1315,138 @@ describe('MecanicaService.salvarOrcamento', () => {
       s.salvarOrcamento({ ...PAINEL, companyId: 'empresa-2' }, 'os-interna', {
         itens: ITENS,
       }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+});
+
+/**
+ * Decisão do orçamento interno. É aqui que a D5 acontece: peça orçada vira
+ * peça consumida, e o orçamento deixa de ser custo.
+ */
+function prismaComDecisao(
+  orcamento: Record<string, unknown> | null,
+  responsavelOperatorId: string | null = 'op-outro',
+) {
+  const insumosCriados: Record<string, unknown>[] = [];
+  const osAtualizada: Record<string, unknown>[] = [];
+  const tx = {
+    orcamento: {
+      update: jest.fn(({ data }: { data: Record<string, unknown> }) =>
+        Promise.resolve({ id: 'orc-1', ...data }),
+      ),
+    },
+    serviceOrderInsumo: {
+      count: jest.fn(() => Promise.resolve(2)),
+      createMany: jest.fn(({ data }: { data: Record<string, unknown>[] }) => {
+        insumosCriados.push(...data);
+        return Promise.resolve({ count: data.length });
+      }),
+    },
+    serviceOrder: {
+      update: jest.fn(({ data }: { data: Record<string, unknown> }) => {
+        osAtualizada.push(data);
+        return Promise.resolve({});
+      }),
+    },
+  };
+  return {
+    prisma: {
+      serviceOrder: {
+        findFirst: jest.fn(({ where }: { where: Record<string, unknown> }) =>
+          Promise.resolve(
+            where.id === 'os-interna' && where.companyId === 'empresa-1'
+              ? { id: 'os-interna', companyId: 'empresa-1', responsavelOperatorId }
+              : null,
+          ),
+        ),
+      },
+      orcamento: {
+        findFirst: jest.fn(() => Promise.resolve(orcamento)),
+        update: tx.orcamento.update,
+      },
+      $transaction: jest.fn((fn: (t: typeof tx) => unknown) => fn(tx)),
+    } as never,
+    insumosCriados,
+    osAtualizada,
+    tx,
+  };
+}
+
+const ORCAMENTO_PENDENTE = {
+  id: 'orc-1',
+  status: 'aguardando_aprovacao',
+  valorTotal: 699.8,
+  itens: [
+    { category: 'part', descricao: 'Filtro', valor: 299.8, quantidade: 2, valorUnitario: 149.9 },
+    { category: 'service', descricao: 'Mão de obra', valor: 400 },
+  ],
+};
+
+describe('MecanicaService.decidirOrcamento', () => {
+  it('aprovar converte as PEÇAS em insumos — e só elas', async () => {
+    // D5: se orçamento e insumo somassem, a peça orçada e depois lançada
+    // contaria duas vezes. Mão de obra já é medida pelos apontamentos.
+    const { prisma, insumosCriados } = prismaComDecisao(ORCAMENTO_PENDENTE);
+    const s = new MecanicaService(prisma);
+
+    const r = await s.decidirOrcamento(PAINEL, 'os-interna', 'aprovar');
+
+    expect(insumosCriados).toHaveLength(1);
+    expect(insumosCriados[0]).toMatchObject({ descricao: 'Filtro' });
+    expect(r).toMatchObject({ status: 'aprovado', insumosCriados: 1 });
+  });
+
+  it('continua a numeração dos insumos que a OS já tinha', async () => {
+    const { prisma, insumosCriados } = prismaComDecisao(ORCAMENTO_PENDENTE);
+    const s = new MecanicaService(prisma);
+
+    await s.decidirOrcamento(PAINEL, 'os-interna', 'aprovar');
+
+    expect(insumosCriados[0].ordem).toBe(2);
+  });
+
+  it('carimba o valor autorizado sem mexer em status nem situacao', async () => {
+    // `status` é o ciclo do pregão e não descreve OS interna; escrever nele
+    // faria a OS aparecer em telas que filtram o fluxo de parceira.
+    const { prisma, osAtualizada } = prismaComDecisao(ORCAMENTO_PENDENTE);
+    const s = new MecanicaService(prisma);
+
+    await s.decidirOrcamento(PAINEL, 'os-interna', 'aprovar');
+
+    expect(osAtualizada[0]).toMatchObject({ valorAprovado: 699.8 });
+    expect(osAtualizada[0]).not.toHaveProperty('status');
+    expect(osAtualizada[0]).not.toHaveProperty('situacao');
+  });
+
+  it('quem executa a OS não aprova o próprio orçamento', async () => {
+    // Sem esta trava a aprovação vira carimbo: o mecânico autorizaria o
+    // próprio gasto.
+    const { prisma, insumosCriados } = prismaComDecisao(ORCAMENTO_PENDENTE, 'op-1');
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.decidirOrcamento(PAINEL, 'os-interna', 'aprovar'),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(insumosCriados).toHaveLength(0);
+  });
+
+  it('recusar não cria insumo nenhum', async () => {
+    const { prisma, insumosCriados, tx } = prismaComDecisao(ORCAMENTO_PENDENTE);
+    const s = new MecanicaService(prisma);
+
+    const r = await s.decidirOrcamento(PAINEL, 'os-interna', 'recusar');
+
+    expect(r).toMatchObject({ status: 'recusado' });
+    expect(insumosCriados).toHaveLength(0);
+    expect(tx.serviceOrder.update).not.toHaveBeenCalled();
+  });
+
+  it('sem orçamento pendente, avisa em vez de estourar', async () => {
+    const { prisma } = prismaComDecisao(null);
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.decidirOrcamento(PAINEL, 'os-interna', 'aprovar'),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 });
