@@ -749,6 +749,97 @@ describe('MecanicaService — laudo e conclusão', () => {
 });
 
 /**
+ * Achado Important da revisão da Task 8: a suíte só exercitava os três
+ * cenários de rejeição de `salvarLaudo` — o caminho de sucesso não tinha
+ * teste nenhum. Uma mutação que acrescenta `autorId: painel.companyUserId`
+ * ao `update` do `upsert` (fazendo o laudo passar a ter como autor quem
+ * EDITOU por último, em vez de quem ESCREVEU) não derrubava teste algum.
+ */
+describe('MecanicaService.salvarLaudo — caminho de sucesso', () => {
+  it('cria o laudo gravando autorId de quem chamou', async () => {
+    const s = new MecanicaService(prismaComLaudo([OS_INTERNA], null));
+    await expect(
+      s.salvarLaudo(PAINEL, 'os-1', {
+        causa: 'Vazamento no cilindro',
+        servicoFeito: 'Troca do retentor',
+        pendencias: null,
+      }),
+    ).resolves.toMatchObject({
+      serviceOrderId: 'os-1',
+      autorId: 'user-1',
+      causa: 'Vazamento no cilindro',
+      servicoFeito: 'Troca do retentor',
+    });
+  });
+
+  // Este é o teste que dá rede à regra: laudo criado por A, editado por B —
+  // o autor tem que continuar sendo A. Pega a mutação "autorId de quem
+  // editou por último" porque `painelB.companyUserId` ('user-2') é diferente
+  // do autor original ('user-1').
+  it('mantém o autor original quando outro usuário edita o laudo', async () => {
+    const laudoDeA = {
+      id: 'l-1',
+      serviceOrderId: 'os-1',
+      autorId: 'user-1',
+      causa: 'Causa original',
+      servicoFeito: 'Serviço original',
+      pendencias: null,
+      fechadoEm: null,
+    };
+    const painelB: PainelPayload = { ...PAINEL, companyUserId: 'user-2' };
+    const s = new MecanicaService(prismaComLaudo([OS_INTERNA], laudoDeA));
+    await expect(
+      s.salvarLaudo(painelB, 'os-1', {
+        causa: 'Causa atualizada',
+        servicoFeito: 'Serviço atualizado',
+        pendencias: null,
+      }),
+    ).resolves.toMatchObject({
+      autorId: 'user-1',
+      causa: 'Causa atualizada',
+      servicoFeito: 'Serviço atualizado',
+    });
+  });
+});
+
+/**
+ * Achado Important da revisão da Task 8: `concluir` só carimba `fechadoEm`
+ * quando ele ainda está nulo (`if (!laudo.fechadoEm)`) — a data de fechamento
+ * original tem que sobreviver a uma segunda chamada. Sem este teste, a
+ * mutação "carimbar sempre" (remover o `if`) não derrubava teste nenhum.
+ */
+describe('MecanicaService.concluir — chamado duas vezes', () => {
+  it('mantém fechadoEm original: concluir de novo não reescreve a data', async () => {
+    const laudoAberto = {
+      id: 'l-2',
+      serviceOrderId: 'os-1',
+      autorId: 'user-1',
+      causa: 'Vazamento no cilindro',
+      servicoFeito: 'Troca do retentor',
+      pendencias: null,
+      fechadoEm: null,
+    };
+    const prisma = prismaComLaudo([OS_INTERNA], laudoAberto);
+    const s = new MecanicaService(prisma);
+
+    await s.concluir(PAINEL, 'os-1', d('10:00'));
+    await s.concluir(PAINEL, 'os-1', d('15:00'));
+
+    const laudoFinal = await (
+      prisma as {
+        serviceOrderLaudo: {
+          findUnique: (args: {
+            where: { serviceOrderId: string };
+          }) => Promise<{ fechadoEm: Date | null } | null>;
+        };
+      }
+    ).serviceOrderLaudo.findUnique({ where: { serviceOrderId: 'os-1' } });
+
+    expect(laudoFinal?.fechadoEm).toEqual(d('10:00'));
+  });
+});
+
+/**
  * Lição das Tasks 6/7: `salvarLaudo` e `concluir` chamam `detalhe(painel,
  * osId)` logo no início — é isso que impede escrever laudo ou concluir OS de
  * outra empresa ou de pregão. Sem um teste que prove essa chamada, removê-la
