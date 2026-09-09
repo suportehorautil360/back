@@ -423,6 +423,7 @@ export const ModelName = {
   LancamentoFinanceiro: 'LancamentoFinanceiro',
   Role: 'Role',
   AccessGroup: 'AccessGroup',
+  CompanyRoleAccessGroup: 'CompanyRoleAccessGroup',
   RoleAccessGroup: 'RoleAccessGroup',
   Partner: 'Partner',
   PartnerPortalUser: 'PartnerPortalUser',
@@ -463,7 +464,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao"
+    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2388,6 +2389,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.AccessGroupCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.AccessGroupCountAggregateOutputType> | number
+        }
+      }
+    }
+    CompanyRoleAccessGroup: {
+      payload: Prisma.$CompanyRoleAccessGroupPayload<ExtArgs>
+      fields: Prisma.CompanyRoleAccessGroupFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CompanyRoleAccessGroupFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompanyRoleAccessGroupPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CompanyRoleAccessGroupFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompanyRoleAccessGroupPayload>
+        }
+        findFirst: {
+          args: Prisma.CompanyRoleAccessGroupFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompanyRoleAccessGroupPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CompanyRoleAccessGroupFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompanyRoleAccessGroupPayload>
+        }
+        findMany: {
+          args: Prisma.CompanyRoleAccessGroupFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompanyRoleAccessGroupPayload>[]
+        }
+        create: {
+          args: Prisma.CompanyRoleAccessGroupCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompanyRoleAccessGroupPayload>
+        }
+        createMany: {
+          args: Prisma.CompanyRoleAccessGroupCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CompanyRoleAccessGroupCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompanyRoleAccessGroupPayload>[]
+        }
+        delete: {
+          args: Prisma.CompanyRoleAccessGroupDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompanyRoleAccessGroupPayload>
+        }
+        update: {
+          args: Prisma.CompanyRoleAccessGroupUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompanyRoleAccessGroupPayload>
+        }
+        deleteMany: {
+          args: Prisma.CompanyRoleAccessGroupDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CompanyRoleAccessGroupUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CompanyRoleAccessGroupUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompanyRoleAccessGroupPayload>[]
+        }
+        upsert: {
+          args: Prisma.CompanyRoleAccessGroupUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompanyRoleAccessGroupPayload>
+        }
+        aggregate: {
+          args: Prisma.CompanyRoleAccessGroupAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCompanyRoleAccessGroup>
+        }
+        groupBy: {
+          args: Prisma.CompanyRoleAccessGroupGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CompanyRoleAccessGroupGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CompanyRoleAccessGroupCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CompanyRoleAccessGroupCountAggregateOutputType> | number
         }
       }
     }
@@ -4803,6 +4878,16 @@ export const AccessGroupScalarFieldEnum = {
 export type AccessGroupScalarFieldEnum = (typeof AccessGroupScalarFieldEnum)[keyof typeof AccessGroupScalarFieldEnum]
 
 
+export const CompanyRoleAccessGroupScalarFieldEnum = {
+  companyRoleId: 'companyRoleId',
+  groupId: 'groupId',
+  enabled: 'enabled',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CompanyRoleAccessGroupScalarFieldEnum = (typeof CompanyRoleAccessGroupScalarFieldEnum)[keyof typeof CompanyRoleAccessGroupScalarFieldEnum]
+
+
 export const RoleAccessGroupScalarFieldEnum = {
   roleId: 'roleId',
   groupId: 'groupId',
@@ -5710,6 +5795,7 @@ export type GlobalOmitConfig = {
   lancamentoFinanceiro?: Prisma.LancamentoFinanceiroOmit
   role?: Prisma.RoleOmit
   accessGroup?: Prisma.AccessGroupOmit
+  companyRoleAccessGroup?: Prisma.CompanyRoleAccessGroupOmit
   roleAccessGroup?: Prisma.RoleAccessGroupOmit
   partner?: Prisma.PartnerOmit
   partnerPortalUser?: Prisma.PartnerPortalUserOmit

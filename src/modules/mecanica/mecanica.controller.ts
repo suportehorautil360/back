@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PainelGuard, type RequestComPainel } from '../../common/painel.guard';
+import { ModuloComercial } from '../../common/modulo-comercial.decorator';
 import { MecanicaService } from './mecanica.service';
 import type { SituacaoOs } from './mecanica.service';
 import {
@@ -47,6 +48,7 @@ function validarSituacao(situacao?: string): SituacaoOs | undefined {
 @ApiTags('mecanica')
 @Controller('mecanica')
 @UseGuards(PainelGuard)
+@ModuloComercial('mecanica')
 export class MecanicaController {
   constructor(private readonly service: MecanicaService) {}
 

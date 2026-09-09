@@ -235,6 +235,7 @@ export type AccessGroupWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"AccessGroup"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AccessGroup"> | Date | string
   roles?: Prisma.RoleAccessGroupListRelationFilter
+  companyRoles?: Prisma.CompanyRoleAccessGroupListRelationFilter
 }
 
 export type AccessGroupOrderByWithRelationInput = {
@@ -246,6 +247,7 @@ export type AccessGroupOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   roles?: Prisma.RoleAccessGroupOrderByRelationAggregateInput
+  companyRoles?: Prisma.CompanyRoleAccessGroupOrderByRelationAggregateInput
 }
 
 export type AccessGroupWhereUniqueInput = Prisma.AtLeast<{
@@ -260,6 +262,7 @@ export type AccessGroupWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"AccessGroup"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AccessGroup"> | Date | string
   roles?: Prisma.RoleAccessGroupListRelationFilter
+  companyRoles?: Prisma.CompanyRoleAccessGroupListRelationFilter
 }, "id" | "key">
 
 export type AccessGroupOrderByWithAggregationInput = {
@@ -299,6 +302,7 @@ export type AccessGroupCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   roles?: Prisma.RoleAccessGroupCreateNestedManyWithoutGroupInput
+  companyRoles?: Prisma.CompanyRoleAccessGroupCreateNestedManyWithoutGroupInput
 }
 
 export type AccessGroupUncheckedCreateInput = {
@@ -310,6 +314,7 @@ export type AccessGroupUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   roles?: Prisma.RoleAccessGroupUncheckedCreateNestedManyWithoutGroupInput
+  companyRoles?: Prisma.CompanyRoleAccessGroupUncheckedCreateNestedManyWithoutGroupInput
 }
 
 export type AccessGroupUpdateInput = {
@@ -321,6 +326,7 @@ export type AccessGroupUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   roles?: Prisma.RoleAccessGroupUpdateManyWithoutGroupNestedInput
+  companyRoles?: Prisma.CompanyRoleAccessGroupUpdateManyWithoutGroupNestedInput
 }
 
 export type AccessGroupUncheckedUpdateInput = {
@@ -332,6 +338,7 @@ export type AccessGroupUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   roles?: Prisma.RoleAccessGroupUncheckedUpdateManyWithoutGroupNestedInput
+  companyRoles?: Prisma.CompanyRoleAccessGroupUncheckedUpdateManyWithoutGroupNestedInput
 }
 
 export type AccessGroupCreateManyInput = {
@@ -407,6 +414,20 @@ export type AccessGroupScalarRelationFilter = {
   isNot?: Prisma.AccessGroupWhereInput
 }
 
+export type AccessGroupCreateNestedOneWithoutCompanyRolesInput = {
+  create?: Prisma.XOR<Prisma.AccessGroupCreateWithoutCompanyRolesInput, Prisma.AccessGroupUncheckedCreateWithoutCompanyRolesInput>
+  connectOrCreate?: Prisma.AccessGroupCreateOrConnectWithoutCompanyRolesInput
+  connect?: Prisma.AccessGroupWhereUniqueInput
+}
+
+export type AccessGroupUpdateOneRequiredWithoutCompanyRolesNestedInput = {
+  create?: Prisma.XOR<Prisma.AccessGroupCreateWithoutCompanyRolesInput, Prisma.AccessGroupUncheckedCreateWithoutCompanyRolesInput>
+  connectOrCreate?: Prisma.AccessGroupCreateOrConnectWithoutCompanyRolesInput
+  upsert?: Prisma.AccessGroupUpsertWithoutCompanyRolesInput
+  connect?: Prisma.AccessGroupWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AccessGroupUpdateToOneWithWhereWithoutCompanyRolesInput, Prisma.AccessGroupUpdateWithoutCompanyRolesInput>, Prisma.AccessGroupUncheckedUpdateWithoutCompanyRolesInput>
+}
+
 export type AccessGroupCreateNestedOneWithoutRolesInput = {
   create?: Prisma.XOR<Prisma.AccessGroupCreateWithoutRolesInput, Prisma.AccessGroupUncheckedCreateWithoutRolesInput>
   connectOrCreate?: Prisma.AccessGroupCreateOrConnectWithoutRolesInput
@@ -421,6 +442,66 @@ export type AccessGroupUpdateOneRequiredWithoutRolesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AccessGroupUpdateToOneWithWhereWithoutRolesInput, Prisma.AccessGroupUpdateWithoutRolesInput>, Prisma.AccessGroupUncheckedUpdateWithoutRolesInput>
 }
 
+export type AccessGroupCreateWithoutCompanyRolesInput = {
+  id?: string
+  key: string
+  label: string
+  ordem?: number
+  ativo?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  roles?: Prisma.RoleAccessGroupCreateNestedManyWithoutGroupInput
+}
+
+export type AccessGroupUncheckedCreateWithoutCompanyRolesInput = {
+  id?: string
+  key: string
+  label: string
+  ordem?: number
+  ativo?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  roles?: Prisma.RoleAccessGroupUncheckedCreateNestedManyWithoutGroupInput
+}
+
+export type AccessGroupCreateOrConnectWithoutCompanyRolesInput = {
+  where: Prisma.AccessGroupWhereUniqueInput
+  create: Prisma.XOR<Prisma.AccessGroupCreateWithoutCompanyRolesInput, Prisma.AccessGroupUncheckedCreateWithoutCompanyRolesInput>
+}
+
+export type AccessGroupUpsertWithoutCompanyRolesInput = {
+  update: Prisma.XOR<Prisma.AccessGroupUpdateWithoutCompanyRolesInput, Prisma.AccessGroupUncheckedUpdateWithoutCompanyRolesInput>
+  create: Prisma.XOR<Prisma.AccessGroupCreateWithoutCompanyRolesInput, Prisma.AccessGroupUncheckedCreateWithoutCompanyRolesInput>
+  where?: Prisma.AccessGroupWhereInput
+}
+
+export type AccessGroupUpdateToOneWithWhereWithoutCompanyRolesInput = {
+  where?: Prisma.AccessGroupWhereInput
+  data: Prisma.XOR<Prisma.AccessGroupUpdateWithoutCompanyRolesInput, Prisma.AccessGroupUncheckedUpdateWithoutCompanyRolesInput>
+}
+
+export type AccessGroupUpdateWithoutCompanyRolesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  key?: Prisma.StringFieldUpdateOperationsInput | string
+  label?: Prisma.StringFieldUpdateOperationsInput | string
+  ordem?: Prisma.IntFieldUpdateOperationsInput | number
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  roles?: Prisma.RoleAccessGroupUpdateManyWithoutGroupNestedInput
+}
+
+export type AccessGroupUncheckedUpdateWithoutCompanyRolesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  key?: Prisma.StringFieldUpdateOperationsInput | string
+  label?: Prisma.StringFieldUpdateOperationsInput | string
+  ordem?: Prisma.IntFieldUpdateOperationsInput | number
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  roles?: Prisma.RoleAccessGroupUncheckedUpdateManyWithoutGroupNestedInput
+}
+
 export type AccessGroupCreateWithoutRolesInput = {
   id?: string
   key: string
@@ -429,6 +510,7 @@ export type AccessGroupCreateWithoutRolesInput = {
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  companyRoles?: Prisma.CompanyRoleAccessGroupCreateNestedManyWithoutGroupInput
 }
 
 export type AccessGroupUncheckedCreateWithoutRolesInput = {
@@ -439,6 +521,7 @@ export type AccessGroupUncheckedCreateWithoutRolesInput = {
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  companyRoles?: Prisma.CompanyRoleAccessGroupUncheckedCreateNestedManyWithoutGroupInput
 }
 
 export type AccessGroupCreateOrConnectWithoutRolesInput = {
@@ -465,6 +548,7 @@ export type AccessGroupUpdateWithoutRolesInput = {
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  companyRoles?: Prisma.CompanyRoleAccessGroupUpdateManyWithoutGroupNestedInput
 }
 
 export type AccessGroupUncheckedUpdateWithoutRolesInput = {
@@ -475,6 +559,7 @@ export type AccessGroupUncheckedUpdateWithoutRolesInput = {
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  companyRoles?: Prisma.CompanyRoleAccessGroupUncheckedUpdateManyWithoutGroupNestedInput
 }
 
 
@@ -484,10 +569,12 @@ export type AccessGroupUncheckedUpdateWithoutRolesInput = {
 
 export type AccessGroupCountOutputType = {
   roles: number
+  companyRoles: number
 }
 
 export type AccessGroupCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   roles?: boolean | AccessGroupCountOutputTypeCountRolesArgs
+  companyRoles?: boolean | AccessGroupCountOutputTypeCountCompanyRolesArgs
 }
 
 /**
@@ -507,6 +594,13 @@ export type AccessGroupCountOutputTypeCountRolesArgs<ExtArgs extends runtime.Typ
   where?: Prisma.RoleAccessGroupWhereInput
 }
 
+/**
+ * AccessGroupCountOutputType without action
+ */
+export type AccessGroupCountOutputTypeCountCompanyRolesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CompanyRoleAccessGroupWhereInput
+}
+
 
 export type AccessGroupSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -517,6 +611,7 @@ export type AccessGroupSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   createdAt?: boolean
   updatedAt?: boolean
   roles?: boolean | Prisma.AccessGroup$rolesArgs<ExtArgs>
+  companyRoles?: boolean | Prisma.AccessGroup$companyRolesArgs<ExtArgs>
   _count?: boolean | Prisma.AccessGroupCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["accessGroup"]>
 
@@ -553,6 +648,7 @@ export type AccessGroupSelectScalar = {
 export type AccessGroupOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "key" | "label" | "ordem" | "ativo" | "createdAt" | "updatedAt", ExtArgs["result"]["accessGroup"]>
 export type AccessGroupInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   roles?: boolean | Prisma.AccessGroup$rolesArgs<ExtArgs>
+  companyRoles?: boolean | Prisma.AccessGroup$companyRolesArgs<ExtArgs>
   _count?: boolean | Prisma.AccessGroupCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type AccessGroupIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -562,6 +658,7 @@ export type $AccessGroupPayload<ExtArgs extends runtime.Types.Extensions.Interna
   name: "AccessGroup"
   objects: {
     roles: Prisma.$RoleAccessGroupPayload<ExtArgs>[]
+    companyRoles: Prisma.$CompanyRoleAccessGroupPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -966,6 +1063,7 @@ readonly fields: AccessGroupFieldRefs;
 export interface Prisma__AccessGroupClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   roles<T extends Prisma.AccessGroup$rolesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AccessGroup$rolesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RoleAccessGroupPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  companyRoles<T extends Prisma.AccessGroup$companyRolesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AccessGroup$companyRolesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CompanyRoleAccessGroupPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1416,6 +1514,30 @@ export type AccessGroup$rolesArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   distinct?: Prisma.RoleAccessGroupScalarFieldEnum | Prisma.RoleAccessGroupScalarFieldEnum[]
+}
+
+/**
+ * AccessGroup.companyRoles
+ */
+export type AccessGroup$companyRolesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CompanyRoleAccessGroup
+   */
+  select?: Prisma.CompanyRoleAccessGroupSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CompanyRoleAccessGroup
+   */
+  omit?: Prisma.CompanyRoleAccessGroupOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CompanyRoleAccessGroupInclude<ExtArgs> | null
+  where?: Prisma.CompanyRoleAccessGroupWhereInput
+  orderBy?: Prisma.CompanyRoleAccessGroupOrderByWithRelationInput | Prisma.CompanyRoleAccessGroupOrderByWithRelationInput[]
+  cursor?: Prisma.CompanyRoleAccessGroupWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CompanyRoleAccessGroupScalarFieldEnum | Prisma.CompanyRoleAccessGroupScalarFieldEnum[]
 }
 
 /**

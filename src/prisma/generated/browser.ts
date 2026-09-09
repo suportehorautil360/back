@@ -201,6 +201,11 @@ export type Role = Prisma.RoleModel
  */
 export type AccessGroup = Prisma.AccessGroupModel
 /**
+ * Model CompanyRoleAccessGroup
+ * Matriz de acesso por empresa — sobrescreve o template global (`RoleAccessGroup`).
+ */
+export type CompanyRoleAccessGroup = Prisma.CompanyRoleAccessGroupModel
+/**
  * Model RoleAccessGroup
  * Matriz padrão: quais grupos cada cargo pode acessar. É a *base* que o
  * sistema entrega — no painel da empresa dá pra sobrescrever por cliente.

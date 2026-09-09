@@ -959,10 +959,26 @@ model AccessGroup {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  roles RoleAccessGroup[]
+  roles        RoleAccessGroup[]
+  companyRoles CompanyRoleAccessGroup[]
 
   @@index([ativo])
   @@map("access_groups")
+}
+
+/// Matriz de acesso por empresa — sobrescreve o template global (`RoleAccessGroup`).
+model CompanyRoleAccessGroup {
+  companyRoleId String   @map("company_role_id") @db.Uuid
+  groupId       String   @map("group_id") @db.Uuid
+  enabled       Boolean  @default(false)
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  companyRole CompanyRole @relation(fields: [companyRoleId], references: [id], onDelete: Cascade)
+  group       AccessGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([companyRoleId, groupId])
+  @@index([groupId])
+  @@map("company_role_access_groups")
 }
 
 /// Matriz padrão: quais grupos cada cargo pode acessar. É a *base* que o
@@ -1470,7 +1486,8 @@ model CompanyRole {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company      Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  accessGroups CompanyRoleAccessGroup[]
 
   @@unique([companyId, key])
   @@index([companyId, ativo, ordem])

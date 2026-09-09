@@ -77,6 +77,7 @@ export const ModelName = {
   LancamentoFinanceiro: 'LancamentoFinanceiro',
   Role: 'Role',
   AccessGroup: 'AccessGroup',
+  CompanyRoleAccessGroup: 'CompanyRoleAccessGroup',
   RoleAccessGroup: 'RoleAccessGroup',
   Partner: 'Partner',
   PartnerPortalUser: 'PartnerPortalUser',
@@ -641,6 +642,16 @@ export const AccessGroupScalarFieldEnum = {
 } as const
 
 export type AccessGroupScalarFieldEnum = (typeof AccessGroupScalarFieldEnum)[keyof typeof AccessGroupScalarFieldEnum]
+
+
+export const CompanyRoleAccessGroupScalarFieldEnum = {
+  companyRoleId: 'companyRoleId',
+  groupId: 'groupId',
+  enabled: 'enabled',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CompanyRoleAccessGroupScalarFieldEnum = (typeof CompanyRoleAccessGroupScalarFieldEnum)[keyof typeof CompanyRoleAccessGroupScalarFieldEnum]
 
 
 export const RoleAccessGroupScalarFieldEnum = {
