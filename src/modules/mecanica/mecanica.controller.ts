@@ -37,6 +37,14 @@ import { LaudoDto } from './dto/laudo.dto';
 import { OrcamentoInternoDto } from './dto/orcamento.dto';
 import { ExecutarPreventivaDto } from './dto/preventiva.dto';
 import { ChecklistModeloDto } from './dto/checklist-modelo.dto';
+import {
+  CancelarChecklistDto,
+  ConcluirChecklistDto,
+  FotoDoItemDto,
+  IniciarChecklistDto,
+  RespostasDoGrupoDto,
+  STATUS_EXECUCAO,
+} from './dto/checklist-execucao.dto';
 
 const SITUACOES_VALIDAS: readonly SituacaoOs[] = [
   'Aberta',
@@ -372,6 +380,150 @@ export class MecanicaController {
   })
   async recusarOrcamento(@Req() req: RequestComPainel, @Param('id') id: string) {
     return this.service.decidirOrcamento(req.painel, id, 'recusar');
+  }
+
+  // ────────────────────── execução de checklist ────────────────────────────
+
+  @Post('checklists/execucoes')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Abrir um checklist para preencher' })
+  async iniciarChecklist(
+    @Req() req: RequestComPainel,
+    @Body() dto: IniciarChecklistDto,
+  ) {
+    return this.service.iniciarChecklist(req.painel, {
+      modeloId: dto.modeloId,
+      equipamentoId: dto.equipamentoId,
+      serviceOrderId: dto.serviceOrderId,
+    });
+  }
+
+  @Get('checklists/execucoes')
+  @ApiOperation({ summary: 'Checklists da empresa — filtra por status, OS ou máquina' })
+  @ApiQuery({ name: 'status', required: false, enum: STATUS_EXECUCAO })
+  @ApiQuery({ name: 'serviceOrderId', required: false })
+  @ApiQuery({ name: 'equipamentoId', required: false })
+  async listarExecucoes(
+    @Req() req: RequestComPainel,
+    @Query('status') status?: string,
+    @Query('serviceOrderId') serviceOrderId?: string,
+    @Query('equipamentoId') equipamentoId?: string,
+  ) {
+    if (status && !STATUS_EXECUCAO.includes(status as (typeof STATUS_EXECUCAO)[number])) {
+      throw new BadRequestException(
+        `status inválido: use ${STATUS_EXECUCAO.join(', ')}.`,
+      );
+    }
+    return this.service.listarExecucoes(req.painel, {
+      status,
+      serviceOrderId,
+      equipamentoId,
+    });
+  }
+
+  /** O documento com o progresso por seção e a lista do que falta. */
+  @Get('checklists/execucoes/:id')
+  @ApiOperation({ summary: 'O checklist preenchido, com progresso e pendências' })
+  async obterExecucao(@Req() req: RequestComPainel, @Param('id') id: string) {
+    return this.service.obterExecucao(req.painel, id);
+  }
+
+  /**
+   * Grava UMA seção.
+   *
+   * `PUT` porque é substituição daquele grupo, idempotente por natureza:
+   * reenviar o mesmo corpo dá o mesmo estado. É a unidade de gravação que faz
+   * o trabalho de terça sobreviver até quinta.
+   */
+  @Put('checklists/execucoes/:id/respostas')
+  @ApiOperation({ summary: 'Gravar as respostas de uma seção' })
+  async salvarRespostasDoGrupo(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: RespostasDoGrupoDto,
+  ) {
+    return this.service.salvarRespostasDoGrupo(
+      req.painel,
+      id,
+      dto.grupoId,
+      dto.respostas,
+    );
+  }
+
+  @Post('checklists/execucoes/:id/fotos')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Anexar foto a um item do checklist' })
+  async anexarFotoAoItem(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: FotoDoItemDto,
+  ) {
+    return this.service.anexarFotoAoItem(req.painel, id, dto.itemId, dto.url);
+  }
+
+  @Post('checklists/execucoes/:id/fotos/upload')
+  @UseInterceptors(
+    IdempotencyInterceptor,
+    FileInterceptor('file', { limits: { fileSize: TETO_MULTER_FOTO_OS } }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Subir a foto do item e anexá-la numa chamada só' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file', 'itemId'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        itemId: { type: 'string' },
+      },
+    },
+  })
+  async uploadFotoDoItem(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('itemId') itemId: string,
+  ) {
+    const foto = validarFotoOs(file);
+    if (!itemId?.trim()) throw new BadRequestException('Informe o item da foto.');
+
+    // Valida posse ANTES de subir: sem isso, um checklist de outra empresa
+    // deixaria arquivo órfão no bucket assim que a gravação fosse recusada.
+    await this.service.obterExecucao(req.painel, id);
+    const url = await this.uploads.uploadOsFoto(`checklist-${id}`, {
+      buffer: foto.buffer,
+      mimetype: foto.mimetype,
+    });
+    return this.service.anexarFotoAoItem(req.painel, id, itemId.trim(), url);
+  }
+
+  @Post('checklists/execucoes/:id/concluir')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({
+    summary: 'Concluir — exige tudo respondido e torna o documento imutável',
+  })
+  async concluirChecklist(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: ConcluirChecklistDto,
+  ) {
+    return this.service.concluirChecklist(req.painel, id, {
+      assinaturaExecutante: dto.assinaturaExecutante,
+      assinaturaRecebedor: dto.assinaturaRecebedor,
+      recebedorNome: dto.recebedorNome,
+      recebedorDocumento: dto.recebedorDocumento,
+    });
+  }
+
+  @Post('checklists/execucoes/:id/cancelar')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Cancelar com motivo — nada fecha sozinho' })
+  async cancelarChecklist(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: CancelarChecklistDto,
+  ) {
+    return this.service.cancelarChecklist(req.painel, id, dto.motivo);
   }
 
   // ──────────────────────────────── manuais ────────────────────────────────

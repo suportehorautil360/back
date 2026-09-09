@@ -290,6 +290,7 @@ export type ChecklistModeloWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"ChecklistModelo"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ChecklistModelo"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
+  execucoes?: Prisma.ChecklistExecucaoListRelationFilter
 }
 
 export type ChecklistModeloOrderByWithRelationInput = {
@@ -308,6 +309,7 @@ export type ChecklistModeloOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   company?: Prisma.CompanyOrderByWithRelationInput
+  execucoes?: Prisma.ChecklistExecucaoOrderByRelationAggregateInput
 }
 
 export type ChecklistModeloWhereUniqueInput = Prisma.AtLeast<{
@@ -330,6 +332,7 @@ export type ChecklistModeloWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"ChecklistModelo"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ChecklistModelo"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
+  execucoes?: Prisma.ChecklistExecucaoListRelationFilter
 }, "id" | "companyId_codigo">
 
 export type ChecklistModeloOrderByWithAggregationInput = {
@@ -389,6 +392,7 @@ export type ChecklistModeloCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutChecklistModelosInput
+  execucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutModeloInput
 }
 
 export type ChecklistModeloUncheckedCreateInput = {
@@ -406,6 +410,7 @@ export type ChecklistModeloUncheckedCreateInput = {
   version?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  execucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutModeloInput
 }
 
 export type ChecklistModeloUpdateInput = {
@@ -423,6 +428,7 @@ export type ChecklistModeloUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutChecklistModelosNestedInput
+  execucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutModeloNestedInput
 }
 
 export type ChecklistModeloUncheckedUpdateInput = {
@@ -440,6 +446,7 @@ export type ChecklistModeloUncheckedUpdateInput = {
   version?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  execucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutModeloNestedInput
 }
 
 export type ChecklistModeloCreateManyInput = {
@@ -564,6 +571,11 @@ export type ChecklistModeloSumOrderByAggregateInput = {
   version?: Prisma.SortOrder
 }
 
+export type ChecklistModeloScalarRelationFilter = {
+  is?: Prisma.ChecklistModeloWhereInput
+  isNot?: Prisma.ChecklistModeloWhereInput
+}
+
 export type ChecklistModeloCreateNestedManyWithoutCompanyInput = {
   create?: Prisma.XOR<Prisma.ChecklistModeloCreateWithoutCompanyInput, Prisma.ChecklistModeloUncheckedCreateWithoutCompanyInput> | Prisma.ChecklistModeloCreateWithoutCompanyInput[] | Prisma.ChecklistModeloUncheckedCreateWithoutCompanyInput[]
   connectOrCreate?: Prisma.ChecklistModeloCreateOrConnectWithoutCompanyInput | Prisma.ChecklistModeloCreateOrConnectWithoutCompanyInput[]
@@ -606,6 +618,20 @@ export type ChecklistModeloUncheckedUpdateManyWithoutCompanyNestedInput = {
   deleteMany?: Prisma.ChecklistModeloScalarWhereInput | Prisma.ChecklistModeloScalarWhereInput[]
 }
 
+export type ChecklistModeloCreateNestedOneWithoutExecucoesInput = {
+  create?: Prisma.XOR<Prisma.ChecklistModeloCreateWithoutExecucoesInput, Prisma.ChecklistModeloUncheckedCreateWithoutExecucoesInput>
+  connectOrCreate?: Prisma.ChecklistModeloCreateOrConnectWithoutExecucoesInput
+  connect?: Prisma.ChecklistModeloWhereUniqueInput
+}
+
+export type ChecklistModeloUpdateOneRequiredWithoutExecucoesNestedInput = {
+  create?: Prisma.XOR<Prisma.ChecklistModeloCreateWithoutExecucoesInput, Prisma.ChecklistModeloUncheckedCreateWithoutExecucoesInput>
+  connectOrCreate?: Prisma.ChecklistModeloCreateOrConnectWithoutExecucoesInput
+  upsert?: Prisma.ChecklistModeloUpsertWithoutExecucoesInput
+  connect?: Prisma.ChecklistModeloWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ChecklistModeloUpdateToOneWithWhereWithoutExecucoesInput, Prisma.ChecklistModeloUpdateWithoutExecucoesInput>, Prisma.ChecklistModeloUncheckedUpdateWithoutExecucoesInput>
+}
+
 export type ChecklistModeloCreateWithoutCompanyInput = {
   id?: string
   codigo: number
@@ -620,6 +646,7 @@ export type ChecklistModeloCreateWithoutCompanyInput = {
   version?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  execucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutModeloInput
 }
 
 export type ChecklistModeloUncheckedCreateWithoutCompanyInput = {
@@ -636,6 +663,7 @@ export type ChecklistModeloUncheckedCreateWithoutCompanyInput = {
   version?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  execucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutModeloInput
 }
 
 export type ChecklistModeloCreateOrConnectWithoutCompanyInput = {
@@ -684,6 +712,90 @@ export type ChecklistModeloScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"ChecklistModelo"> | Date | string
 }
 
+export type ChecklistModeloCreateWithoutExecucoesInput = {
+  id?: string
+  codigo: number
+  nome: string
+  familia?: string | null
+  tipoMaquina?: string | null
+  keywords?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  grupos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  exigeOs?: string
+  exigeAssinaturaRecebedor?: boolean
+  ativo?: boolean
+  version?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutChecklistModelosInput
+}
+
+export type ChecklistModeloUncheckedCreateWithoutExecucoesInput = {
+  id?: string
+  companyId: string
+  codigo: number
+  nome: string
+  familia?: string | null
+  tipoMaquina?: string | null
+  keywords?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  grupos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  exigeOs?: string
+  exigeAssinaturaRecebedor?: boolean
+  ativo?: boolean
+  version?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type ChecklistModeloCreateOrConnectWithoutExecucoesInput = {
+  where: Prisma.ChecklistModeloWhereUniqueInput
+  create: Prisma.XOR<Prisma.ChecklistModeloCreateWithoutExecucoesInput, Prisma.ChecklistModeloUncheckedCreateWithoutExecucoesInput>
+}
+
+export type ChecklistModeloUpsertWithoutExecucoesInput = {
+  update: Prisma.XOR<Prisma.ChecklistModeloUpdateWithoutExecucoesInput, Prisma.ChecklistModeloUncheckedUpdateWithoutExecucoesInput>
+  create: Prisma.XOR<Prisma.ChecklistModeloCreateWithoutExecucoesInput, Prisma.ChecklistModeloUncheckedCreateWithoutExecucoesInput>
+  where?: Prisma.ChecklistModeloWhereInput
+}
+
+export type ChecklistModeloUpdateToOneWithWhereWithoutExecucoesInput = {
+  where?: Prisma.ChecklistModeloWhereInput
+  data: Prisma.XOR<Prisma.ChecklistModeloUpdateWithoutExecucoesInput, Prisma.ChecklistModeloUncheckedUpdateWithoutExecucoesInput>
+}
+
+export type ChecklistModeloUpdateWithoutExecucoesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  codigo?: Prisma.IntFieldUpdateOperationsInput | number
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  familia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipoMaquina?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  keywords?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  grupos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  exigeOs?: Prisma.StringFieldUpdateOperationsInput | string
+  exigeAssinaturaRecebedor?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutChecklistModelosNestedInput
+}
+
+export type ChecklistModeloUncheckedUpdateWithoutExecucoesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  codigo?: Prisma.IntFieldUpdateOperationsInput | number
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  familia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipoMaquina?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  keywords?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  grupos?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  exigeOs?: Prisma.StringFieldUpdateOperationsInput | string
+  exigeAssinaturaRecebedor?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 export type ChecklistModeloCreateManyCompanyInput = {
   id?: string
   codigo: number
@@ -714,6 +826,7 @@ export type ChecklistModeloUpdateWithoutCompanyInput = {
   version?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  execucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutModeloNestedInput
 }
 
 export type ChecklistModeloUncheckedUpdateWithoutCompanyInput = {
@@ -730,6 +843,7 @@ export type ChecklistModeloUncheckedUpdateWithoutCompanyInput = {
   version?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  execucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutModeloNestedInput
 }
 
 export type ChecklistModeloUncheckedUpdateManyWithoutCompanyInput = {
@@ -749,6 +863,35 @@ export type ChecklistModeloUncheckedUpdateManyWithoutCompanyInput = {
 }
 
 
+/**
+ * Count Type ChecklistModeloCountOutputType
+ */
+
+export type ChecklistModeloCountOutputType = {
+  execucoes: number
+}
+
+export type ChecklistModeloCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  execucoes?: boolean | ChecklistModeloCountOutputTypeCountExecucoesArgs
+}
+
+/**
+ * ChecklistModeloCountOutputType without action
+ */
+export type ChecklistModeloCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ChecklistModeloCountOutputType
+   */
+  select?: Prisma.ChecklistModeloCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * ChecklistModeloCountOutputType without action
+ */
+export type ChecklistModeloCountOutputTypeCountExecucoesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ChecklistExecucaoWhereInput
+}
+
 
 export type ChecklistModeloSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -766,6 +909,8 @@ export type ChecklistModeloSelect<ExtArgs extends runtime.Types.Extensions.Inter
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
+  execucoes?: boolean | Prisma.ChecklistModelo$execucoesArgs<ExtArgs>
+  _count?: boolean | Prisma.ChecklistModeloCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["checklistModelo"]>
 
 export type ChecklistModeloSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -824,6 +969,8 @@ export type ChecklistModeloSelectScalar = {
 export type ChecklistModeloOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "companyId" | "codigo" | "nome" | "familia" | "tipoMaquina" | "keywords" | "grupos" | "exigeOs" | "exigeAssinaturaRecebedor" | "ativo" | "version" | "createdAt" | "updatedAt", ExtArgs["result"]["checklistModelo"]>
 export type ChecklistModeloInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
+  execucoes?: boolean | Prisma.ChecklistModelo$execucoesArgs<ExtArgs>
+  _count?: boolean | Prisma.ChecklistModeloCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ChecklistModeloIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
@@ -836,6 +983,7 @@ export type $ChecklistModeloPayload<ExtArgs extends runtime.Types.Extensions.Int
   name: "ChecklistModelo"
   objects: {
     company: Prisma.$CompanyPayload<ExtArgs>
+    execucoes: Prisma.$ChecklistExecucaoPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1268,6 +1416,7 @@ readonly fields: ChecklistModeloFieldRefs;
 export interface Prisma__ChecklistModeloClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   company<T extends Prisma.CompanyDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CompanyDefaultArgs<ExtArgs>>): Prisma.Prisma__CompanyClient<runtime.Types.Result.GetResult<Prisma.$CompanyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  execucoes<T extends Prisma.ChecklistModelo$execucoesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ChecklistModelo$execucoesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChecklistExecucaoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1709,6 +1858,30 @@ export type ChecklistModeloDeleteManyArgs<ExtArgs extends runtime.Types.Extensio
    * Limit how many ChecklistModelos to delete.
    */
   limit?: number
+}
+
+/**
+ * ChecklistModelo.execucoes
+ */
+export type ChecklistModelo$execucoesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ChecklistExecucao
+   */
+  select?: Prisma.ChecklistExecucaoSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ChecklistExecucao
+   */
+  omit?: Prisma.ChecklistExecucaoOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ChecklistExecucaoInclude<ExtArgs> | null
+  where?: Prisma.ChecklistExecucaoWhereInput
+  orderBy?: Prisma.ChecklistExecucaoOrderByWithRelationInput | Prisma.ChecklistExecucaoOrderByWithRelationInput[]
+  cursor?: Prisma.ChecklistExecucaoWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ChecklistExecucaoScalarFieldEnum | Prisma.ChecklistExecucaoScalarFieldEnum[]
 }
 
 /**

@@ -82,6 +82,9 @@ describe('idempotência das escritas', () => {
     'executarPreventiva',
     'criarModeloDeChecklist',
     'uploadManual',
+    'iniciarChecklist',
+    'concluirChecklist',
+    'cancelarChecklist',
     'concluir',
   ];
 

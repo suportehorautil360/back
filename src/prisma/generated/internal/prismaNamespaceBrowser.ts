@@ -105,7 +105,8 @@ export const ModelName = {
   Notificacao: 'Notificacao',
   ApiAcessoSemToken: 'ApiAcessoSemToken',
   ChecklistModelo: 'ChecklistModelo',
-  ManualEquipamento: 'ManualEquipamento'
+  ManualEquipamento: 'ManualEquipamento',
+  ChecklistExecucao: 'ChecklistExecucao'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1184,6 +1185,30 @@ export const ManualEquipamentoScalarFieldEnum = {
 } as const
 
 export type ManualEquipamentoScalarFieldEnum = (typeof ManualEquipamentoScalarFieldEnum)[keyof typeof ManualEquipamentoScalarFieldEnum]
+
+
+export const ChecklistExecucaoScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  modeloId: 'modeloId',
+  equipmentId: 'equipmentId',
+  serviceOrderId: 'serviceOrderId',
+  operatorId: 'operatorId',
+  numeroDoc: 'numeroDoc',
+  status: 'status',
+  motivoCancelamento: 'motivoCancelamento',
+  respostas: 'respostas',
+  assinaturaExecutante: 'assinaturaExecutante',
+  assinaturaRecebedor: 'assinaturaRecebedor',
+  recebedorNome: 'recebedorNome',
+  recebedorDocumento: 'recebedorDocumento',
+  iniciadaEm: 'iniciadaEm',
+  concluidaEm: 'concluidaEm',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ChecklistExecucaoScalarFieldEnum = (typeof ChecklistExecucaoScalarFieldEnum)[keyof typeof ChecklistExecucaoScalarFieldEnum]
 
 
 export const SortOrder = {

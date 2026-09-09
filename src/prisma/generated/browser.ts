@@ -428,3 +428,12 @@ export type ChecklistModelo = Prisma.ChecklistModeloModel
  * fabricante revisa.
  */
 export type ManualEquipamento = Prisma.ManualEquipamentoModel
+/**
+ * Model ChecklistExecucao
+ * Execução de checklist pelo mecânico.
+ * 
+ * Tabela própria, e não `ChecklistRun`: aquela é a inspeção diária do
+ * operador e não conhece ordem de serviço. Esta nasce, quase sempre, dentro
+ * de uma OS — e sobrevive dias, porque corretiva não termina numa sentada.
+ */
+export type ChecklistExecucao = Prisma.ChecklistExecucaoModel

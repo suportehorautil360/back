@@ -1794,3 +1794,206 @@ describe('MecanicaService — manuais', () => {
     expect(criados[0]).toMatchObject({ equipmentId: null, modelo: null, tipo: null });
   });
 });
+
+/** Execução de checklist: abrir, gravar seção, concluir. */
+const MODELO_CHECKLIST = {
+  id: 'mod-57',
+  companyId: 'empresa-1',
+  codigo: 57,
+  nome: 'CORRETIVA - MAQ. ESTEIRA',
+  ativo: true,
+  exigeOs: 'exige_os',
+  exigeAssinaturaRecebedor: false,
+  grupos: [
+    {
+      id: 'g29',
+      codigo: 29,
+      nome: 'VERIFICAÇÕES',
+      itens: [
+        { id: 'g29-i1', numero: 1, descricao: 'Vazamento', obrigatorio: true, foto: 'nao', impeditivo: true },
+        { id: 'g29-i2', numero: 2, descricao: 'Nível de óleo', obrigatorio: true, foto: 'nao', impeditivo: false },
+      ],
+    },
+  ],
+};
+
+function prismaComExecucao(
+  execucao: Record<string, unknown> | null,
+  modelo: Record<string, unknown> | null = MODELO_CHECKLIST,
+) {
+  const criados: Record<string, unknown>[] = [];
+  const atualizados: Record<string, unknown>[] = [];
+  const ocorrencias: Record<string, unknown>[] = [];
+  const tx = {
+    checklistExecucao: {
+      findFirst: jest.fn(() => Promise.resolve({ numeroDoc: 411 })),
+      create: jest.fn(({ data }: { data: Record<string, unknown> }) => {
+        criados.push(data);
+        return Promise.resolve({ id: 'exec-nova', ...data });
+      }),
+    },
+  };
+  return {
+    prisma: {
+      checklistModelo: { findFirst: jest.fn(() => Promise.resolve(modelo)) },
+      equipment: { findFirst: jest.fn(() => Promise.resolve({ id: 'eq-1' })) },
+      serviceOrder: {
+        findFirst: jest.fn(() => Promise.resolve({ id: 'os-interna', companyId: 'empresa-1' })),
+      },
+      checklistExecucao: {
+        findFirst: jest.fn(() => Promise.resolve(execucao)),
+        findMany: jest.fn(() => Promise.resolve([])),
+        update: jest.fn(({ data }: { data: Record<string, unknown> }) => {
+          atualizados.push(data);
+          return Promise.resolve({ id: 'exec-1', ...data });
+        }),
+      },
+      serviceOrderOcorrencia: {
+        createMany: jest.fn(({ data }: { data: Record<string, unknown>[] }) => {
+          ocorrencias.push(...data);
+          return Promise.resolve({ count: data.length });
+        }),
+      },
+      $transaction: jest.fn((fn: (t: typeof tx) => unknown) => fn(tx)),
+    } as never,
+    criados,
+    atualizados,
+    ocorrencias,
+  };
+}
+
+const execucaoAberta = (respostas: Record<string, unknown> = {}, extras: Record<string, unknown> = {}) => ({
+  id: 'exec-1',
+  companyId: 'empresa-1',
+  serviceOrderId: 'os-interna',
+  status: 'aberta',
+  respostas,
+  modelo: MODELO_CHECKLIST,
+  ...extras,
+});
+
+describe('MecanicaService — execução de checklist', () => {
+  it('o número do documento vem do servidor, continuando o último', async () => {
+    // Numeração local não sobrevive a dois mecânicos com checklist aberto, e
+    // o "Doc." é o que eles citam no telefone.
+    const { prisma, criados } = prismaComExecucao(null);
+    const s = new MecanicaService(prisma);
+
+    await s.iniciarChecklist(PAINEL, {
+      modeloId: 'mod-57',
+      equipamentoId: 'eq-1',
+      serviceOrderId: 'os-interna',
+    });
+
+    expect(criados[0]).toMatchObject({ numeroDoc: 412, operatorId: 'op-1' });
+  });
+
+  it('checklist que exige OS não abre solto', async () => {
+    const { prisma } = prismaComExecucao(null);
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.iniciarChecklist(PAINEL, { modeloId: 'mod-57', equipamentoId: 'eq-1' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('gestor sem Operator não abre checklist', async () => {
+    const { prisma } = prismaComExecucao(null);
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.iniciarChecklist({ ...PAINEL, operatorId: null }, {
+        modeloId: 'mod-57',
+        equipamentoId: 'eq-1',
+        serviceOrderId: 'os-interna',
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('gravar uma seção preserva o que está fora dela', async () => {
+    const { prisma, atualizados } = prismaComExecucao(
+      execucaoAberta({ deOutroGrupo: { valor: 'conforme' } }),
+    );
+    const s = new MecanicaService(prisma);
+
+    await s.salvarRespostasDoGrupo(PAINEL, 'exec-1', 'g29', {
+      'g29-i1': { valor: 'conforme' },
+    });
+
+    expect(atualizados[0].respostas).toMatchObject({
+      deOutroGrupo: { valor: 'conforme' },
+      'g29-i1': { valor: 'conforme' },
+    });
+  });
+
+  it('não conclui com pendência, e diz quantas', async () => {
+    const { prisma } = prismaComExecucao(execucaoAberta({ 'g29-i1': { valor: 'conforme' } }));
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.concluirChecklist(PAINEL, 'exec-1', { assinaturaExecutante: 'url' }),
+    ).rejects.toThrow(/Faltam 1 item/);
+  });
+
+  it('conclui completo e devolve os impeditivos reprovados', async () => {
+    // Não travam a conclusão: o registro fiel do que foi encontrado é o
+    // produto. Mas não podem passar despercebidos.
+    const { prisma, atualizados } = prismaComExecucao(
+      execucaoAberta({
+        'g29-i1': { valor: 'nao_conforme', observacao: 'Mangueira furada' },
+        'g29-i2': { valor: 'conforme' },
+      }),
+    );
+    const s = new MecanicaService(prisma);
+
+    const r = await s.concluirChecklist(PAINEL, 'exec-1', { assinaturaExecutante: 'url' });
+
+    expect(atualizados[0]).toMatchObject({ status: 'concluida' });
+    expect(r.impeditivosReprovados.map((p) => p.itemId)).toEqual(['g29-i1']);
+  });
+
+  it('a não conformidade grave vira ocorrência na timeline da OS', async () => {
+    // O laudo passa a ter a inspeção junto, sem ninguém digitar de novo.
+    const { prisma, ocorrencias } = prismaComExecucao(
+      execucaoAberta({
+        'g29-i1': { valor: 'nao_conforme', observacao: 'Mangueira furada' },
+        'g29-i2': { valor: 'conforme' },
+      }),
+    );
+    const s = new MecanicaService(prisma);
+
+    await s.concluirChecklist(PAINEL, 'exec-1', { assinaturaExecutante: 'url' });
+
+    expect(ocorrencias).toHaveLength(1);
+    expect(ocorrencias[0].mensagem).toContain('Checklist 57');
+    expect(ocorrencias[0].mensagem).toContain('Mangueira furada');
+  });
+
+  it('checklist de transferência exige nome de quem recebeu', async () => {
+    // Traço anônimo não prova nada.
+    const modelo = { ...MODELO_CHECKLIST, exigeAssinaturaRecebedor: true };
+    const { prisma } = prismaComExecucao(
+      execucaoAberta({ 'g29-i1': { valor: 'conforme' }, 'g29-i2': { valor: 'conforme' } }, { modelo }),
+      modelo,
+    );
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.concluirChecklist(PAINEL, 'exec-1', {
+        assinaturaExecutante: 'url',
+        assinaturaRecebedor: 'url2',
+      }),
+    ).rejects.toThrow(/nome de quem recebe/);
+  });
+
+  it('checklist concluído não aceita mais resposta', async () => {
+    // Correção depois é checklist novo, não edição — é o que faz o documento
+    // valer alguma coisa.
+    const { prisma } = prismaComExecucao(execucaoAberta({}, { status: 'concluida' }));
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.salvarRespostasDoGrupo(PAINEL, 'exec-1', 'g29', {}),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+});

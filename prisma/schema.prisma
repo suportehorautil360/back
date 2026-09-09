@@ -117,6 +117,8 @@ model Company {
   whatsappRecipients      CompanyWhatsappRecipient[]
   checklistModelos ChecklistModelo[]
   manuais ManualEquipamento[]
+  checklistExecucoes ChecklistExecucao[]
+
 
 
 
@@ -282,6 +284,8 @@ model Equipment {
   serviceOrders      ServiceOrder[]
   fleetfuelIntencoes FleetfuelIntencao[]
   manuais ManualEquipamento[]
+  checklistExecucoes ChecklistExecucao[]
+
 
 
   @@index([companyId, status])
@@ -543,6 +547,8 @@ model ServiceOrder {
   apontamentos ServiceOrderApontamento[]
   fotos        ServiceOrderFoto[]
   laudo        ServiceOrderLaudo?
+  checklistExecucoes ChecklistExecucao[]
+
 
   @@unique([companyId, protocolo])
   @@index([companyId, status])
@@ -769,6 +775,8 @@ model Operator {
   pontoAbonos         PontoAbono[]
   osComoResponsavel   ServiceOrder[]      @relation("ServiceOrderResponsavel")
   apontamentos        ServiceOrderApontamento[]
+  checklistExecucoes ChecklistExecucao[]
+
 
   @@unique([companyId, cpf])
   @@index([companyId])
@@ -1913,6 +1921,8 @@ model ChecklistModelo {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  execucoes ChecklistExecucao[]
+
 
   @@unique([companyId, codigo])
   @@index([companyId, ativo])
@@ -1953,4 +1963,60 @@ model ManualEquipamento {
   @@index([companyId, ativo])
   @@index([equipmentId])
   @@map("manuais_equipamento")
+}
+
+/// Execução de checklist pelo mecânico.
+///
+/// Tabela própria, e não `ChecklistRun`: aquela é a inspeção diária do
+/// operador e não conhece ordem de serviço. Esta nasce, quase sempre, dentro
+/// de uma OS — e sobrevive dias, porque corretiva não termina numa sentada.
+model ChecklistExecucao {
+  id          String @id @default(uuid()) @db.Uuid
+  companyId   String @map("company_id") @db.Uuid
+  modeloId    String @map("modelo_id") @db.Uuid
+  equipmentId String @map("equipment_id") @db.Uuid
+
+  /// Nulo no avulso: avaria de desembarque não abre OS.
+  serviceOrderId String? @map("service_order_id") @db.Uuid
+
+  /// Quem preencheu. Checklist sem executor não serve de registro nem de prova.
+  operatorId String @map("operator_id") @db.Uuid
+
+  /// O "Doc." que o mecânico cita. Atribuído pelo SERVIDOR — numeração local
+  /// não sobrevive a dois aparelhos.
+  numeroDoc Int @map("numero_doc")
+
+  /// "aberta" | "concluida" | "cancelada". Em coluna, não dentro do Json: a
+  /// tela de parados filtra por isto.
+  status              String  @default("aberta")
+  motivoCancelamento  String? @map("motivo_cancelamento")
+
+  /// `itemId → { valor, observacao?, fotos?[] }`. Gravado por GRUPO, com merge
+  /// que preserva os outros — é o que faz o trabalho de terça sobreviver até
+  /// quinta.
+  respostas Json @default("{}")
+
+  /// Registro visual de quem esteve ali. NÃO é assinatura com validade
+  /// jurídica — o produto diz isso em voz alta.
+  assinaturaExecutante String? @map("assinatura_executante") @db.Text
+  assinaturaRecebedor  String? @map("assinatura_recebedor") @db.Text
+  /// Traço anônimo não prova nada: quando há recebedor, ele se identifica.
+  recebedorNome        String? @map("recebedor_nome")
+  recebedorDocumento   String? @map("recebedor_documento")
+
+  iniciadaEm  DateTime  @default(now()) @map("iniciada_em")
+  concluidaEm DateTime? @map("concluida_em")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  company      Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  modelo       ChecklistModelo @relation(fields: [modeloId], references: [id], onDelete: Restrict)
+  equipment    Equipment       @relation(fields: [equipmentId], references: [id], onDelete: Restrict)
+  serviceOrder ServiceOrder?   @relation(fields: [serviceOrderId], references: [id], onDelete: SetNull)
+  operator     Operator        @relation(fields: [operatorId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, numeroDoc])
+  @@index([companyId, status])
+  @@index([serviceOrderId])
+  @@map("checklist_execucoes")
 }

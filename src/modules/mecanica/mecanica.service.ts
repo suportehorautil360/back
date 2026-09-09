@@ -20,6 +20,15 @@ import {
 } from './regras/busca-checklist';
 import type { ChecklistModeloDto } from './dto/checklist-modelo.dto';
 import { ordenarParaMaquina } from './regras/manual';
+import {
+  impeditivosReprovados,
+  lerGrupos,
+  lerRespostas,
+  mesclarRespostasDoGrupo,
+  pendencias,
+  progressoDoGrupo,
+  type RespostaGravada,
+} from './regras/checklist-execucao';
 
 /** Mesma mensagem na checagem prévia e na rede do índice único parcial. */
 const MSG_APONTAMENTO_ABERTO =
@@ -491,6 +500,279 @@ export class MecanicaService {
         ...comum,
       },
     });
+  }
+
+  // ────────────────────── execução de checklist ────────────────────────────
+
+  /**
+   * Abre um checklist para preencher.
+   *
+   * O número do documento vem do SERVIDOR, dentro da transação: numeração
+   * local (`max + 1` no aparelho) não sobrevive a dois mecânicos com o mesmo
+   * checklist aberto, e o "Doc." é o que eles citam no telefone.
+   */
+  async iniciarChecklist(
+    painel: PainelPayload,
+    dados: { modeloId: string; equipamentoId: string; serviceOrderId?: string },
+  ) {
+    const operatorId = this.exigirOperator(painel);
+
+    const modelo = await this.prisma.checklistModelo.findFirst({
+      where: { id: dados.modeloId, companyId: painel.companyId, ativo: true },
+    });
+    if (!modelo) throw new NotFoundException('Checklist não encontrado ou arquivado.');
+
+    const equipamento = await this.prisma.equipment.findFirst({
+      where: { id: dados.equipamentoId, companyId: painel.companyId },
+      select: { id: true },
+    });
+    if (!equipamento) throw new NotFoundException('Equipamento não encontrado.');
+
+    if (modelo.exigeOs === 'exige_os' && !dados.serviceOrderId) {
+      throw new BadRequestException(
+        `O checklist ${modelo.codigo} só é preenchido dentro de uma ordem de serviço.`,
+      );
+    }
+    if (dados.serviceOrderId) {
+      // `detalhe` já garante empresa + execução interna, e responde 404 para
+      // OS de pregão — o mesmo recorte do resto do módulo.
+      await this.detalhe(painel, dados.serviceOrderId);
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const ultimo = await tx.checklistExecucao.findFirst({
+        where: { companyId: painel.companyId },
+        orderBy: { numeroDoc: 'desc' },
+        select: { numeroDoc: true },
+      });
+
+      return tx.checklistExecucao.create({
+        data: {
+          companyId: painel.companyId,
+          modeloId: modelo.id,
+          equipmentId: dados.equipamentoId,
+          serviceOrderId: dados.serviceOrderId ?? null,
+          operatorId,
+          numeroDoc: (ultimo?.numeroDoc ?? 0) + 1,
+        },
+      });
+    });
+  }
+
+  async listarExecucoes(
+    painel: PainelPayload,
+    filtros: { status?: string; serviceOrderId?: string; equipamentoId?: string } = {},
+  ) {
+    return this.prisma.checklistExecucao.findMany({
+      where: {
+        companyId: painel.companyId,
+        ...(filtros.status ? { status: filtros.status } : {}),
+        ...(filtros.serviceOrderId ? { serviceOrderId: filtros.serviceOrderId } : {}),
+        ...(filtros.equipamentoId ? { equipmentId: filtros.equipamentoId } : {}),
+      },
+      include: { modelo: { select: { codigo: true, nome: true } } },
+      orderBy: { iniciadaEm: 'desc' },
+    });
+  }
+
+  /**
+   * O documento inteiro, com o progresso já calculado por grupo.
+   *
+   * O progresso é DERIVADO das respostas, nunca guardado: um contador gravado
+   * junto envelhece à primeira divergência e passa a mentir sobre o que falta.
+   */
+  async obterExecucao(painel: PainelPayload, id: string) {
+    const execucao = await this.prisma.checklistExecucao.findFirst({
+      where: { id, companyId: painel.companyId },
+      include: { modelo: true },
+    });
+    if (!execucao) throw new NotFoundException('Checklist não encontrado.');
+
+    const grupos = lerGrupos(execucao.modelo.grupos);
+    const respostas = lerRespostas(execucao.respostas);
+
+    return {
+      ...execucao,
+      progresso: grupos.map((g) => ({
+        grupoId: g.id,
+        ...progressoDoGrupo(g, respostas),
+      })),
+      pendencias: pendencias(grupos, respostas),
+    };
+  }
+
+  private async execucaoAberta(painel: PainelPayload, id: string) {
+    const execucao = await this.prisma.checklistExecucao.findFirst({
+      where: { id, companyId: painel.companyId },
+      include: { modelo: true },
+    });
+    if (!execucao) throw new NotFoundException('Checklist não encontrado.');
+    if (execucao.status !== 'aberta') {
+      throw new ConflictException(
+        execucao.status === 'concluida'
+          ? 'Este checklist já foi concluído. Para corrigir, abra outro.'
+          : 'Este checklist foi cancelado.',
+      );
+    }
+    return execucao;
+  }
+
+  /**
+   * Grava as respostas de UM grupo.
+   *
+   * O merge preserva os outros grupos — é o que faz o "cancelar" de uma seção
+   * ser seguro e o trabalho de terça sobreviver até quinta. E só entra
+   * resposta de item que pertence ao grupo: bug de tela não escreve em outra
+   * seção.
+   */
+  async salvarRespostasDoGrupo(
+    painel: PainelPayload,
+    id: string,
+    grupoId: string,
+    novas: Record<string, RespostaGravada>,
+  ) {
+    const execucao = await this.execucaoAberta(painel, id);
+
+    const grupo = lerGrupos(execucao.modelo.grupos).find((g) => g.id === grupoId);
+    if (!grupo) throw new NotFoundException('Seção não encontrada neste checklist.');
+
+    const respostas = mesclarRespostasDoGrupo(
+      lerRespostas(execucao.respostas),
+      grupo,
+      novas,
+    );
+
+    await this.prisma.checklistExecucao.update({
+      where: { id },
+      data: { respostas: toInputJson(respostas) },
+    });
+
+    return { grupoId, ...progressoDoGrupo(grupo, respostas) };
+  }
+
+  /**
+   * Conclui, e torna o documento imutável.
+   *
+   * Correção depois é checklist novo, não edição — é o que faz o documento
+   * valer alguma coisa quando alguém pergunta "como a máquina estava".
+   *
+   * Item impeditivo reprovado NÃO impede concluir: o registro fiel do que foi
+   * encontrado é o produto, e um checklist de avarias pode ter quinze não
+   * conformidades legítimas. Ele volta na resposta, para a tela mostrar.
+   */
+  async concluirChecklist(
+    painel: PainelPayload,
+    id: string,
+    dados: {
+      assinaturaExecutante: string;
+      assinaturaRecebedor?: string;
+      recebedorNome?: string;
+      recebedorDocumento?: string;
+    },
+    agora: Date = new Date(),
+  ) {
+    const execucao = await this.execucaoAberta(painel, id);
+
+    const grupos = lerGrupos(execucao.modelo.grupos);
+    const respostas = lerRespostas(execucao.respostas);
+
+    const faltando = pendencias(grupos, respostas);
+    if (faltando.length > 0) {
+      throw new BadRequestException(
+        `Faltam ${faltando.length} ${faltando.length === 1 ? 'item' : 'itens'}: ` +
+          faltando
+            .slice(0, 3)
+            .map((p) => `${p.grupoNome} nº ${p.numero}`)
+            .join(', ') +
+          (faltando.length > 3 ? '…' : '.'),
+      );
+    }
+
+    if (execucao.modelo.exigeAssinaturaRecebedor) {
+      // Traço anônimo não prova nada: quem recebe a máquina se identifica.
+      if (!dados.assinaturaRecebedor || !dados.recebedorNome?.trim()) {
+        throw new BadRequestException(
+          'Este checklist exige a assinatura e o nome de quem recebe a máquina.',
+        );
+      }
+    }
+
+    const concluida = await this.prisma.checklistExecucao.update({
+      where: { id },
+      data: {
+        status: 'concluida',
+        concluidaEm: agora,
+        assinaturaExecutante: dados.assinaturaExecutante,
+        assinaturaRecebedor: dados.assinaturaRecebedor ?? null,
+        recebedorNome: dados.recebedorNome?.trim() || null,
+        recebedorDocumento: dados.recebedorDocumento?.trim() || null,
+      },
+    });
+
+    const graves = impeditivosReprovados(grupos, respostas);
+
+    /**
+     * Não conformidade vira linha na timeline da OS.
+     *
+     * Custo baixo, valor alto: o laudo passa a ter a inspeção junto, sem
+     * ninguém digitar de novo. Só quando há OS — checklist avulso não tem
+     * onde escrever.
+     */
+    if (execucao.serviceOrderId && graves.length > 0) {
+      await this.prisma.serviceOrderOcorrencia.createMany({
+        data: graves.map((g) => ({
+          serviceOrderId: execucao.serviceOrderId as string,
+          usuario: painel.nomeExibicao,
+          mensagem:
+            `Checklist ${execucao.modelo.codigo} · ${g.grupoNome} nº ${g.numero}: ` +
+            `${g.descricao} — ${lerRespostas(execucao.respostas)[g.itemId]?.observacao ?? 'não conforme'}`,
+        })),
+      });
+    }
+
+    return { ...concluida, impeditivosReprovados: graves };
+  }
+
+  /**
+   * Cancela com motivo.
+   *
+   * Nada fecha sozinho: fechar automaticamente um checklist de segurança pela
+   * metade é pior que deixá-lo aberto. Cancelar é ato explícito, e o motivo é
+   * o que o gestor lê depois.
+   */
+  async cancelarChecklist(painel: PainelPayload, id: string, motivo: string) {
+    const execucao = await this.execucaoAberta(painel, id);
+
+    return this.prisma.checklistExecucao.update({
+      where: { id: execucao.id },
+      data: { status: 'cancelada', motivoCancelamento: motivo.trim() },
+    });
+  }
+
+  /** Anexa a foto de um item às respostas, sem mexer no resto. */
+  async anexarFotoAoItem(
+    painel: PainelPayload,
+    id: string,
+    itemId: string,
+    url: string,
+  ) {
+    const execucao = await this.execucaoAberta(painel, id);
+
+    const existe = lerGrupos(execucao.modelo.grupos).some((g) =>
+      g.itens.some((i) => i.id === itemId),
+    );
+    if (!existe) throw new NotFoundException('Item não encontrado neste checklist.');
+
+    const respostas = lerRespostas(execucao.respostas);
+    const atual = respostas[itemId] ?? {};
+    respostas[itemId] = { ...atual, fotos: [...(atual.fotos ?? []), url] };
+
+    await this.prisma.checklistExecucao.update({
+      where: { id },
+      data: { respostas: toInputJson(respostas) },
+    });
+
+    return { itemId, fotos: respostas[itemId].fotos };
   }
 
   // ──────────────────────────────── manuais ────────────────────────────────
