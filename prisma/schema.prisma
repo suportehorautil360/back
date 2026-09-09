@@ -1840,3 +1840,30 @@ model Notificacao {
   @@index([companyId, destinatarioTipo, destinatarioId])
   @@map("notificacoes")
 }
+
+/// Quem chama a API sem token — andaime da fase 2 do fechamento da API.
+///
+/// Agregado por conjunto (controller, handler, método, origem, user-agent),
+/// não uma linha por requisição: uma semana de tráfego viraria milhões de
+/// linhas para responder uma pergunta que cabe em dezenas.
+///
+/// Guarda a CLASSE e o MÉTODO do handler, não o caminho: caminho traz id na
+/// URL, que viraria cardinalidade infinita e dado pessoal dentro do log.
+///
+/// Temporária de propósito — some com um DROP quando a fase 3 fechar a API.
+model ApiAcessoSemToken {
+  id         String   @id @default(uuid()) @db.Uuid
+  /// sha256 do conjunto: unicidade sem índice sobre strings longas.
+  chave      String   @unique
+  controller String
+  handler    String
+  metodo     String
+  origem     String?
+  userAgent  String?  @map("user_agent")
+  total      Int      @default(1)
+  primeiraEm DateTime @default(now()) @map("primeira_em")
+  ultimaEm   DateTime @default(now()) @map("ultima_em")
+
+  @@index([controller])
+  @@map("api_acessos_sem_token")
+}

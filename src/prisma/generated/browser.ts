@@ -394,3 +394,17 @@ export type IdempotencyKey = Prisma.IdempotencyKeyModel
  * - `destinatarioTipo = rh` → `destinatarioId` = legacyId da empresa
  */
 export type Notificacao = Prisma.NotificacaoModel
+/**
+ * Model ApiAcessoSemToken
+ * Quem chama a API sem token — andaime da fase 2 do fechamento da API.
+ * 
+ * Agregado por conjunto (controller, handler, método, origem, user-agent),
+ * não uma linha por requisição: uma semana de tráfego viraria milhões de
+ * linhas para responder uma pergunta que cabe em dezenas.
+ * 
+ * Guarda a CLASSE e o MÉTODO do handler, não o caminho: caminho traz id na
+ * URL, que viraria cardinalidade infinita e dado pessoal dentro do log.
+ * 
+ * Temporária de propósito — some com um DROP quando a fase 3 fechar a API.
+ */
+export type ApiAcessoSemToken = Prisma.ApiAcessoSemTokenModel

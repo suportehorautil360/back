@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ObservadorDeAcesso } from './common/observador-de-acesso.guard';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -103,6 +105,15 @@ import { MecanicaModule } from './modules/mecanica/mecanica.module';
     // ... outros módulos
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    /**
+     * Fase 2 do fechamento da API: OBSERVA, não barra.
+     *
+     * Global porque a pergunta é global — quais rotas recebem chamada sem
+     * credencial, de onde. Ele sempre deixa passar; quem fecha é a fase 3,
+     * trocando este observador por um guard que barra, já com o mapa real.
+     */
+    { provide: APP_GUARD, useClass: ObservadorDeAcesso },
+  ],
 })
 export class AppModule {}

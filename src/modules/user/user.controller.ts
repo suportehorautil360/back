@@ -7,6 +7,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { Publico } from '../../common/publico.decorator';
 import { AdminSecretGuard } from '../whatsapp/admin-secret.guard';
 import { BoasVindasPostoDto } from './dto/boas-vindas-posto.dto';
 import { EsqueciSenhaDto } from './dto/esqueci-senha.dto';
@@ -19,6 +20,7 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Publico()
   @Post('auth/login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

@@ -448,7 +448,8 @@ export const ModelName = {
   NotaFiscal: 'NotaFiscal',
   SyncTombstone: 'SyncTombstone',
   IdempotencyKey: 'IdempotencyKey',
-  Notificacao: 'Notificacao'
+  Notificacao: 'Notificacao',
+  ApiAcessoSemToken: 'ApiAcessoSemToken'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -464,7 +465,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao"
+    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -4316,6 +4317,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ApiAcessoSemToken: {
+      payload: Prisma.$ApiAcessoSemTokenPayload<ExtArgs>
+      fields: Prisma.ApiAcessoSemTokenFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ApiAcessoSemTokenFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiAcessoSemTokenPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ApiAcessoSemTokenFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiAcessoSemTokenPayload>
+        }
+        findFirst: {
+          args: Prisma.ApiAcessoSemTokenFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiAcessoSemTokenPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ApiAcessoSemTokenFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiAcessoSemTokenPayload>
+        }
+        findMany: {
+          args: Prisma.ApiAcessoSemTokenFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiAcessoSemTokenPayload>[]
+        }
+        create: {
+          args: Prisma.ApiAcessoSemTokenCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiAcessoSemTokenPayload>
+        }
+        createMany: {
+          args: Prisma.ApiAcessoSemTokenCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ApiAcessoSemTokenCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiAcessoSemTokenPayload>[]
+        }
+        delete: {
+          args: Prisma.ApiAcessoSemTokenDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiAcessoSemTokenPayload>
+        }
+        update: {
+          args: Prisma.ApiAcessoSemTokenUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiAcessoSemTokenPayload>
+        }
+        deleteMany: {
+          args: Prisma.ApiAcessoSemTokenDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ApiAcessoSemTokenUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ApiAcessoSemTokenUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiAcessoSemTokenPayload>[]
+        }
+        upsert: {
+          args: Prisma.ApiAcessoSemTokenUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiAcessoSemTokenPayload>
+        }
+        aggregate: {
+          args: Prisma.ApiAcessoSemTokenAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateApiAcessoSemToken>
+        }
+        groupBy: {
+          args: Prisma.ApiAcessoSemTokenGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ApiAcessoSemTokenGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ApiAcessoSemTokenCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ApiAcessoSemTokenCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -5362,6 +5437,22 @@ export const NotificacaoScalarFieldEnum = {
 export type NotificacaoScalarFieldEnum = (typeof NotificacaoScalarFieldEnum)[keyof typeof NotificacaoScalarFieldEnum]
 
 
+export const ApiAcessoSemTokenScalarFieldEnum = {
+  id: 'id',
+  chave: 'chave',
+  controller: 'controller',
+  handler: 'handler',
+  metodo: 'metodo',
+  origem: 'origem',
+  userAgent: 'userAgent',
+  total: 'total',
+  primeiraEm: 'primeiraEm',
+  ultimaEm: 'ultimaEm'
+} as const
+
+export type ApiAcessoSemTokenScalarFieldEnum = (typeof ApiAcessoSemTokenScalarFieldEnum)[keyof typeof ApiAcessoSemTokenScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -5821,6 +5912,7 @@ export type GlobalOmitConfig = {
   syncTombstone?: Prisma.SyncTombstoneOmit
   idempotencyKey?: Prisma.IdempotencyKeyOmit
   notificacao?: Prisma.NotificacaoOmit
+  apiAcessoSemToken?: Prisma.ApiAcessoSemTokenOmit
 }
 
 /* Types for Logging */

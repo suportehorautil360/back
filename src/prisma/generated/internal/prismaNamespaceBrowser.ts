@@ -102,7 +102,8 @@ export const ModelName = {
   NotaFiscal: 'NotaFiscal',
   SyncTombstone: 'SyncTombstone',
   IdempotencyKey: 'IdempotencyKey',
-  Notificacao: 'Notificacao'
+  Notificacao: 'Notificacao',
+  ApiAcessoSemToken: 'ApiAcessoSemToken'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1126,6 +1127,22 @@ export const NotificacaoScalarFieldEnum = {
 } as const
 
 export type NotificacaoScalarFieldEnum = (typeof NotificacaoScalarFieldEnum)[keyof typeof NotificacaoScalarFieldEnum]
+
+
+export const ApiAcessoSemTokenScalarFieldEnum = {
+  id: 'id',
+  chave: 'chave',
+  controller: 'controller',
+  handler: 'handler',
+  metodo: 'metodo',
+  origem: 'origem',
+  userAgent: 'userAgent',
+  total: 'total',
+  primeiraEm: 'primeiraEm',
+  ultimaEm: 'ultimaEm'
+} as const
+
+export type ApiAcessoSemTokenScalarFieldEnum = (typeof ApiAcessoSemTokenScalarFieldEnum)[keyof typeof ApiAcessoSemTokenScalarFieldEnum]
 
 
 export const SortOrder = {

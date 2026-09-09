@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Publico } from '../../common/publico.decorator';
 import type { Request } from 'express';
 import { JwtAuthGuard, type JwtPayload } from '../../common/jwt-auth.guard';
 import { AuthService } from './auth.service';
@@ -22,6 +23,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Publico()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login de usuário de oficina e emissão de JWT' })
