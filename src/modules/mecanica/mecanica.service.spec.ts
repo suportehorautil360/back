@@ -13,6 +13,7 @@ const PAINEL: PainelPayload = {
   companyId: 'empresa-1',
   operatorId: 'op-1',
   companyRoleId: 'cargo-1',
+  nomeExibicao: 'Carlos Mecânico',
 };
 
 /**
@@ -63,6 +64,36 @@ describe('MecanicaService.listarBancada', () => {
     const s = new MecanicaService(prismaCom(LINHAS));
     const r = await s.listarBancada(PAINEL, true);
     expect(r).toEqual([]);
+  });
+});
+
+/**
+ * Achado C2 da revisão final: o Histórico (`?situacao=Concluida`) e a
+ * Bancada (sem `?situacao`) batiam na mesma lista porque o filtro nunca
+ * chegava ao `where`. `LINHAS_POR_SITUACAO` tem as três situações na mesma
+ * empresa — sem o filtro de verdade, `situacao=Concluida` devolveria as três.
+ */
+describe('MecanicaService.listarBancada — filtro por situacao', () => {
+  const LINHAS_POR_SITUACAO = [
+    { id: 'os-aberta', companyId: 'empresa-1', execucao: 'interna', situacao: 'Aberta', responsavelOperatorId: null },
+    { id: 'os-em-andamento', companyId: 'empresa-1', execucao: 'interna', situacao: 'EmAndamento', responsavelOperatorId: null },
+    { id: 'os-concluida', companyId: 'empresa-1', execucao: 'interna', situacao: 'Concluida', responsavelOperatorId: null },
+  ];
+
+  it('com situacao=Concluida, só volta OS concluída', async () => {
+    const s = new MecanicaService(prismaCom(LINHAS_POR_SITUACAO));
+    const r = await s.listarBancada(PAINEL, false, 'Concluida');
+    expect(r.map((o) => o.id)).toEqual(['os-concluida']);
+  });
+
+  it('sem o parâmetro, voltam todas', async () => {
+    const s = new MecanicaService(prismaCom(LINHAS_POR_SITUACAO));
+    const r = await s.listarBancada(PAINEL, false);
+    expect(r.map((o) => o.id).sort()).toEqual([
+      'os-aberta',
+      'os-concluida',
+      'os-em-andamento',
+    ]);
   });
 });
 
@@ -397,6 +428,22 @@ describe('MecanicaService — apontamento', () => {
     );
     await expect(
       s.iniciarApontamento(PAINEL, 'os-1', d('08:00')),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  // Achado I6 da revisão final: a checagem de sobreposição valia para
+  // lançar/editar mas não para iniciar. Mecânico lançou 08:00–12:00 e às
+  // 11:00 aperta "Iniciar" — sem `haSobreposicao` aqui, o sistema aceitava um
+  // segundo intervalo sobreposto ao primeiro.
+  it('recusa iniciar quando o horário atual se sobrepõe a um apontamento já lançado', async () => {
+    const s = new MecanicaService(
+      prismaComApontamentos(
+        [OS_INTERNA],
+        [{ id: 'ap-0', operatorId: 'op-1', inicio: d('08:00'), fim: d('12:00') }],
+      ),
+    );
+    await expect(
+      s.iniciarApontamento(PAINEL, 'os-1', d('11:00')),
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
@@ -867,7 +914,10 @@ describe('MecanicaService — anexos', () => {
       const s = new MecanicaService(prismaComApontamentos([OS_INTERNA], []));
       await expect(
         s.adicionarOcorrencia(PAINEL, 'os-1', 'Aguardando peça'),
-      ).resolves.toMatchObject({ mensagem: 'Aguardando peça', usuario: 'user-1' });
+      ).resolves.toMatchObject({
+        mensagem: 'Aguardando peça',
+        usuario: 'Carlos Mecânico',
+      });
     });
   });
 });

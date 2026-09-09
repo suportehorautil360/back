@@ -27,6 +27,9 @@ const MSG_APONTAMENTO_ABERTO =
 const CONSTRAINT_APONTAMENTO_ABERTO =
   'service_order_apontamentos_operator_aberto_key';
 
+/** Espelha a coluna `ServiceOrder.situacao` (`String` no schema, sem enum). */
+export type SituacaoOs = 'Aberta' | 'EmAndamento' | 'Concluida';
+
 /**
  * Execução interna da OS.
  *
@@ -40,7 +43,11 @@ const CONSTRAINT_APONTAMENTO_ABERTO =
 export class MecanicaService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listarBancada(painel: PainelPayload, apenasMinhas: boolean) {
+  async listarBancada(
+    painel: PainelPayload,
+    apenasMinhas: boolean,
+    situacao?: SituacaoOs,
+  ) {
     return this.prisma.serviceOrder.findMany({
       where: {
         companyId: painel.companyId,
@@ -48,6 +55,7 @@ export class MecanicaService {
         ...(apenasMinhas
           ? { responsavelOperatorId: painel.operatorId ?? '' }
           : {}),
+        ...(situacao ? { situacao } : {}),
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -125,6 +133,21 @@ export class MecanicaService {
     });
     if (aberto) {
       throw new ConflictException(MSG_APONTAMENTO_ABERTO);
+    }
+
+    // A checagem acima só pega OUTRO apontamento já aberto. Sem isto, um
+    // mecânico que lançou 08:00–12:00 e às 11:00 aperta "Iniciar" cria um
+    // segundo intervalo (11:00–agora) sobreposto ao primeiro — a mesma regra
+    // que `lancarApontamento`/`editarApontamento` já aplicam.
+    if (
+      haSobreposicao(
+        { inicio: agora, fim: null },
+        await this.intervalosDo(operatorId),
+      )
+    ) {
+      throw new ConflictException(
+        'Este intervalo se sobrepõe a outro apontamento seu.',
+      );
     }
 
     try {
@@ -327,13 +350,19 @@ export class MecanicaService {
     });
   }
 
-  /** Timeline imutável: cada entrada é um registro novo, nunca um update. */
+  /**
+   * Timeline imutável: cada entrada é um registro novo, nunca um update.
+   * `usuario` é NOME de exibição em todo o resto do produto (ex.: o diálogo
+   * de detalhe da OS em Manutenção renderiza `— {o.usuario}` direto) — gravar
+   * o UUID de `companyUserId` aqui vazaria a chave interna para a tela do
+   * gestor.
+   */
   async adicionarOcorrencia(painel: PainelPayload, osId: string, mensagem: string) {
     await this.detalhe(painel, osId);
     return this.prisma.serviceOrderOcorrencia.create({
       data: {
         serviceOrderId: osId,
-        usuario: painel.companyUserId,
+        usuario: painel.nomeExibicao,
         mensagem,
       },
     });

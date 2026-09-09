@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -14,12 +15,34 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PainelGuard, type RequestComPainel } from '../../common/painel.guard';
 import { MecanicaService } from './mecanica.service';
+import type { SituacaoOs } from './mecanica.service';
 import {
   EditarApontamentoDto,
   LancarApontamentoDto,
 } from './dto/apontamento.dto';
 import { FotoDto, OcorrenciaDto, PecaDto } from './dto/anexos.dto';
 import { LaudoDto } from './dto/laudo.dto';
+
+const SITUACOES_VALIDAS: readonly SituacaoOs[] = [
+  'Aberta',
+  'EmAndamento',
+  'Concluida',
+];
+
+/**
+ * `?situacao` é opcional — sem ela, a Bancada devolve tudo. Quando vem, só os
+ * três valores da coluna são aceitos: nem vira filtro silencioso (que faria a
+ * query devolver uma lista vazia sem avisar por quê) nem estoura 500.
+ */
+function validarSituacao(situacao?: string): SituacaoOs | undefined {
+  if (situacao === undefined) return undefined;
+  if (!SITUACOES_VALIDAS.includes(situacao as SituacaoOs)) {
+    throw new BadRequestException(
+      `situacao inválida: use ${SITUACOES_VALIDAS.join(', ')}.`,
+    );
+  }
+  return situacao as SituacaoOs;
+}
 
 @ApiTags('mecanica')
 @Controller('mecanica')
@@ -28,12 +51,20 @@ export class MecanicaController {
   constructor(private readonly service: MecanicaService) {}
 
   @Get('os')
-  @ApiOperation({ summary: 'Bancada: OS internas da empresa do token' })
+  @ApiOperation({
+    summary:
+      'Bancada: OS internas da empresa do token. `situacao` filtra (ex.: Histórico usa Concluida).',
+  })
   async bancada(
     @Req() req: RequestComPainel,
     @Query('minhas') minhas?: string,
+    @Query('situacao') situacao?: string,
   ) {
-    return this.service.listarBancada(req.painel, minhas === 'true');
+    return this.service.listarBancada(
+      req.painel,
+      minhas === 'true',
+      validarSituacao(situacao),
+    );
   }
 
   @Get('os/:id')

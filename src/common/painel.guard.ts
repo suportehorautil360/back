@@ -18,6 +18,12 @@ export interface PainelPayload {
   /** `null` quando o usuário do painel não é funcionário (gestor puro). */
   operatorId: string | null;
   companyRoleId: string | null;
+  /**
+   * Nome para EXIBIÇÃO — nunca o UUID de `companyUserId`. Prioriza
+   * `Operator.nome` (o nome que o resto do produto já mostra para o
+   * funcionário) e cai para `CompanyUser.name` quando ele não é funcionário.
+   */
+  nomeExibicao: string;
 }
 
 export type RequestComPainel = Request & { painel: PainelPayload };
@@ -108,8 +114,11 @@ export class PainelGuard implements CanActivate {
         id: true,
         companyId: true,
         status: true,
+        name: true,
         company: { select: { status: true } },
-        operator: { select: { id: true, status: true, companyRoleId: true } },
+        operator: {
+          select: { id: true, status: true, companyRoleId: true, nome: true },
+        },
       },
     });
 
@@ -128,6 +137,7 @@ export class PainelGuard implements CanActivate {
       companyId: usuario.companyId,
       operatorId: usuario.operator?.id ?? null,
       companyRoleId: usuario.operator?.companyRoleId ?? null,
+      nomeExibicao: usuario.operator?.nome ?? usuario.name,
     };
     return true;
   }
