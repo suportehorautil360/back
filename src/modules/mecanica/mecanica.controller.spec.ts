@@ -80,6 +80,7 @@ describe('idempotência das escritas', () => {
     'aprovarOrcamento',
     'recusarOrcamento',
     'executarPreventiva',
+    'criarModeloDeChecklist',
     'concluir',
   ];
 

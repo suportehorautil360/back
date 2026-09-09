@@ -115,6 +115,8 @@ model Company {
   fleetfuelIntencoes      FleetfuelIntencao[]
   notificacoes            Notificacao[]
   whatsappRecipients      CompanyWhatsappRecipient[]
+  checklistModelos ChecklistModelo[]
+
 
   @@map("clients")
 }
@@ -1866,4 +1868,49 @@ model ApiAcessoSemToken {
 
   @@index([controller])
   @@map("api_acessos_sem_token")
+}
+
+/// Checklist que a EMPRESA cria e mantém — o documento do mecânico.
+///
+/// Tabela própria, e não uma extensão de `ChecklistDefinition`: aquele é o
+/// catálogo GLOBAL do operador, com item em lista plana e regra de parar a
+/// máquina ao reprovar. Este é por empresa, tem grupos, tem código humano, e
+/// não para nada — o mecânico É a resposta ao problema.
+model ChecklistModelo {
+  id        String @id @default(uuid()) @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+
+  /// O número que o mecânico decora e cita ("roda o 57").
+  codigo Int
+  nome   String
+
+  /// "CORRETIVA - MAQ. ESTEIRA" são dois eixos numa string. Separados aqui
+  /// porque guardar só o nome é perder a capacidade de filtrar.
+  familia     String?
+  tipoMaquina String? @map("tipo_maquina")
+
+  /// Casa o modelo com o equipamento. Vazio vale para qualquer um.
+  keywords Json @default("[]")
+
+  /// `[{ id, codigo, nome, itens: [{ id, numero, descricao, obrigatorio,
+  /// foto: "nao"|"se_nao_conforme"|"sempre", impeditivo }] }]`
+  /// Checklist sem seção vira grupo único.
+  grupos Json @default("[]")
+
+  /// "exige_os" | "opcional" | "avulso".
+  exigeOs                  String  @default("opcional") @map("exige_os")
+  exigeAssinaturaRecebedor Boolean @default(false) @map("exige_assinatura_recebedor")
+
+  ativo   Boolean @default(true)
+  /// Invalida o cache local do app quando o modelo muda.
+  version Int     @default(1)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, codigo])
+  @@index([companyId, ativo])
+  @@map("checklist_modelos")
 }

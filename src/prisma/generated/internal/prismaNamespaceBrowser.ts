@@ -103,7 +103,8 @@ export const ModelName = {
   SyncTombstone: 'SyncTombstone',
   IdempotencyKey: 'IdempotencyKey',
   Notificacao: 'Notificacao',
-  ApiAcessoSemToken: 'ApiAcessoSemToken'
+  ApiAcessoSemToken: 'ApiAcessoSemToken',
+  ChecklistModelo: 'ChecklistModelo'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1143,6 +1144,26 @@ export const ApiAcessoSemTokenScalarFieldEnum = {
 } as const
 
 export type ApiAcessoSemTokenScalarFieldEnum = (typeof ApiAcessoSemTokenScalarFieldEnum)[keyof typeof ApiAcessoSemTokenScalarFieldEnum]
+
+
+export const ChecklistModeloScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  codigo: 'codigo',
+  nome: 'nome',
+  familia: 'familia',
+  tipoMaquina: 'tipoMaquina',
+  keywords: 'keywords',
+  grupos: 'grupos',
+  exigeOs: 'exigeOs',
+  exigeAssinaturaRecebedor: 'exigeAssinaturaRecebedor',
+  ativo: 'ativo',
+  version: 'version',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ChecklistModeloScalarFieldEnum = (typeof ChecklistModeloScalarFieldEnum)[keyof typeof ChecklistModeloScalarFieldEnum]
 
 
 export const SortOrder = {

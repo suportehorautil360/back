@@ -408,3 +408,13 @@ export type Notificacao = Prisma.NotificacaoModel
  * Temporária de propósito — some com um DROP quando a fase 3 fechar a API.
  */
 export type ApiAcessoSemToken = Prisma.ApiAcessoSemTokenModel
+/**
+ * Model ChecklistModelo
+ * Checklist que a EMPRESA cria e mantém — o documento do mecânico.
+ * 
+ * Tabela própria, e não uma extensão de `ChecklistDefinition`: aquele é o
+ * catálogo GLOBAL do operador, com item em lista plana e regra de parar a
+ * máquina ao reprovar. Este é por empresa, tem grupos, tem código humano, e
+ * não para nada — o mecânico É a resposta ao problema.
+ */
+export type ChecklistModelo = Prisma.ChecklistModeloModel

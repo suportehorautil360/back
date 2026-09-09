@@ -13,6 +13,12 @@ import { parseOrcamentoItemsFromDto } from '../os/orcamentos/helpers/orcamento-i
 import { itensParaInsumos } from '../os/orcamentos/helpers/itens-para-insumos.helper';
 import type { OrcamentoItemDto } from '../os/orcamentos/dto/create-orcamento.dto';
 import { haSobreposicao, intervaloInvalido } from './regras/apontamento';
+import {
+  casaComEquipamento,
+  interpretarBusca,
+  ordenarResultado,
+} from './regras/busca-checklist';
+import type { ChecklistModeloDto } from './dto/checklist-modelo.dto';
 
 /** Mesma mensagem na checagem prévia e na rede do índice único parcial. */
 const MSG_APONTAMENTO_ABERTO =
@@ -483,6 +489,138 @@ export class MecanicaService {
         status: 'aguardando_aprovacao',
         ...comum,
       },
+    });
+  }
+
+  // ─────────────────────────── checklists da empresa ───────────────────────
+
+  /**
+   * Os checklists que a empresa mantém.
+   *
+   * `busca` é uma caixa só — código ou descrição — porque é assim que o
+   * mecânico procura: ou sabe o número ("roda o 57"), ou lembra do nome. Duas
+   * caixas obrigariam a decidir antes de digitar.
+   *
+   * `equipamentoId` NÃO filtra: ele ordena, trazendo primeiro os que casam com
+   * a máquina. Esconder resultado num app de campo é como o mecânico perde a
+   * confiança e liga para o encarregado — que é o que o produto evita.
+   */
+  async listarModelosDeChecklist(
+    painel: PainelPayload,
+    opcoes: { busca?: string; equipamentoId?: string; incluirArquivados?: boolean } = {},
+  ) {
+    const busca = interpretarBusca(opcoes.busca);
+
+    const modelos = await this.prisma.checklistModelo.findMany({
+      where: {
+        companyId: painel.companyId,
+        ...(opcoes.incluirArquivados ? {} : { ativo: true }),
+        ...(busca.tipo === 'texto'
+          ? { nome: { contains: busca.termo, mode: 'insensitive' } }
+          : {}),
+      },
+      orderBy: { codigo: 'asc' },
+    });
+
+    const porCodigo =
+      busca.tipo === 'codigo'
+        ? modelos.filter((m) => String(m.codigo).startsWith(busca.prefixo))
+        : modelos;
+
+    const ordenados = ordenarResultado(porCodigo, busca);
+    if (!opcoes.equipamentoId) return ordenados;
+
+    const equipamento = await this.prisma.equipment.findFirst({
+      where: { id: opcoes.equipamentoId, companyId: painel.companyId },
+      select: { descricao: true, modelo: true, tipo: true },
+    });
+    if (!equipamento) return ordenados;
+
+    // Sugeridos primeiro, o resto depois — sem tirar ninguém da lista.
+    const sugeridos = ordenados.filter((m) => casaComEquipamento(m.keywords, equipamento));
+    const demais = ordenados.filter((m) => !sugeridos.includes(m));
+    return [...sugeridos, ...demais];
+  }
+
+  async obterModeloDeChecklist(painel: PainelPayload, id: string) {
+    const modelo = await this.prisma.checklistModelo.findFirst({
+      where: { id, companyId: painel.companyId },
+    });
+    if (!modelo) throw new NotFoundException('Checklist não encontrado.');
+    return modelo;
+  }
+
+  /**
+   * Cria ou altera um checklist da empresa.
+   *
+   * `version` sobe a cada alteração para o app saber que o cache dele
+   * envelheceu. Execução já aberta continua na versão em que nasceu — mudar o
+   * documento debaixo de quem está respondendo perderia trabalho.
+   */
+  async salvarModeloDeChecklist(
+    painel: PainelPayload,
+    dados: ChecklistModeloDto,
+    id?: string,
+  ) {
+    const grupos = dados.grupos.map((g, i) => ({
+      id: `g${g.codigo ?? i + 1}`,
+      codigo: g.codigo ?? i + 1,
+      nome: g.nome,
+      itens: g.itens.map((item) => ({
+        id: `g${g.codigo ?? i + 1}-i${item.numero}`,
+        numero: item.numero,
+        descricao: item.descricao,
+        obrigatorio: item.obrigatorio ?? true,
+        foto: item.foto ?? 'nao',
+        impeditivo: item.impeditivo ?? false,
+      })),
+    }));
+
+    const comum = {
+      nome: dados.nome,
+      familia: dados.familia ?? null,
+      tipoMaquina: dados.tipoMaquina ?? null,
+      keywords: toInputJson(dados.keywords ?? []),
+      grupos: toInputJson(grupos),
+      exigeOs: dados.exigeOs ?? 'opcional',
+      exigeAssinaturaRecebedor: dados.exigeAssinaturaRecebedor ?? false,
+      ativo: dados.ativo ?? true,
+    };
+
+    if (id) {
+      await this.obterModeloDeChecklist(painel, id);
+      return this.prisma.checklistModelo.update({
+        where: { id },
+        data: { ...comum, version: { increment: 1 } },
+      });
+    }
+
+    const jaExiste = await this.prisma.checklistModelo.findFirst({
+      where: { companyId: painel.companyId, codigo: dados.codigo },
+      select: { id: true, nome: true },
+    });
+    if (jaExiste) {
+      // Dois "57" na mesma empresa tornariam ambíguo o que o mecânico fala
+      // com o encarregado.
+      throw new ConflictException(
+        `O código ${dados.codigo} já é do checklist "${jaExiste.nome}".`,
+      );
+    }
+
+    return this.prisma.checklistModelo.create({
+      data: { companyId: painel.companyId, codigo: dados.codigo, ...comum },
+    });
+  }
+
+  /**
+   * Arquiva em vez de apagar: execução antiga aponta para o modelo, e apagar
+   * deixaria checklist preenchido sem saber do que ele é.
+   */
+  async arquivarModeloDeChecklist(painel: PainelPayload, id: string) {
+    await this.obterModeloDeChecklist(painel, id);
+    return this.prisma.checklistModelo.update({
+      where: { id },
+      data: { ativo: false },
     });
   }
 

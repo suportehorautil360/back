@@ -1540,3 +1540,174 @@ describe('MecanicaService — preventiva', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 });
+
+/** Catálogo de checklist da empresa — o que ela cria e mantém. */
+function prismaComModelos(modelos: Record<string, unknown>[], equipamento: Record<string, unknown> | null = null) {
+  const criados: Record<string, unknown>[] = [];
+  const atualizados: Record<string, unknown>[] = [];
+  return {
+    prisma: {
+      checklistModelo: {
+        findMany: jest.fn(({ where }: { where: Record<string, unknown> }) =>
+          Promise.resolve(
+            modelos.filter((m) => {
+              if (where.companyId !== m.companyId) return false;
+              if (where.ativo !== undefined && m.ativo !== where.ativo) return false;
+              const nome = where.nome as { contains?: string } | undefined;
+              if (nome?.contains) {
+                return String(m.nome).toLowerCase().includes(nome.contains.toLowerCase());
+              }
+              return true;
+            }),
+          ),
+        ),
+        findFirst: jest.fn(({ where }: { where: Record<string, unknown> }) =>
+          Promise.resolve(
+            modelos.find(
+              (m) =>
+                m.companyId === where.companyId &&
+                (where.id === undefined || m.id === where.id) &&
+                (where.codigo === undefined || m.codigo === where.codigo),
+            ) ?? null,
+          ),
+        ),
+        create: jest.fn(({ data }: { data: Record<string, unknown> }) => {
+          criados.push(data);
+          return Promise.resolve({ id: 'novo', ...data });
+        }),
+        update: jest.fn(({ data }: { data: Record<string, unknown> }) => {
+          atualizados.push(data);
+          return Promise.resolve({ id: 'm-1', ...data });
+        }),
+      },
+      equipment: {
+        findFirst: jest.fn(() => Promise.resolve(equipamento)),
+      },
+    } as never,
+    criados,
+    atualizados,
+  };
+}
+
+const MODELOS = [
+  { id: 'm-57', companyId: 'empresa-1', codigo: 57, nome: 'CORRETIVA - MAQ. ESTEIRA', ativo: true, keywords: ['esteira'] },
+  { id: 'm-58', companyId: 'empresa-1', codigo: 58, nome: 'CORRETIVA - MAQ. PNEUS', ativo: true, keywords: ['pneus'] },
+  { id: 'm-5', companyId: 'empresa-1', codigo: 5, nome: 'AVARIAS', ativo: true, keywords: [] },
+  { id: 'm-x', companyId: 'empresa-2', codigo: 57, nome: 'DE OUTRA EMPRESA', ativo: true, keywords: [] },
+];
+
+const GRUPOS_VALIDOS = [
+  { codigo: 30, nome: 'VERIFICAÇÕES', itens: [{ numero: 1, descricao: 'Nível de óleo' }] },
+];
+
+describe('MecanicaService — catálogo de checklist', () => {
+  it('busca por dígitos filtra por prefixo de código', async () => {
+    const { prisma } = prismaComModelos(MODELOS);
+    const s = new MecanicaService(prisma);
+
+    const r = await s.listarModelosDeChecklist(PAINEL, { busca: '5' });
+
+    expect(r.map((m) => m.codigo)).toEqual([5, 57, 58]);
+  });
+
+  it('código exato vem primeiro', async () => {
+    // Quem digita "57" quer o 57, não a lista toda em ordem.
+    const { prisma } = prismaComModelos(MODELOS);
+    const s = new MecanicaService(prisma);
+
+    const r = await s.listarModelosDeChecklist(PAINEL, { busca: '57' });
+
+    expect(r[0].codigo).toBe(57);
+  });
+
+  it('busca por texto vai no nome', async () => {
+    const { prisma } = prismaComModelos(MODELOS);
+    const s = new MecanicaService(prisma);
+
+    const r = await s.listarModelosDeChecklist(PAINEL, { busca: 'pneus' });
+
+    expect(r.map((m) => m.codigo)).toEqual([58]);
+  });
+
+  it('nunca devolve checklist de outra empresa', async () => {
+    const { prisma } = prismaComModelos(MODELOS);
+    const s = new MecanicaService(prisma);
+
+    const r = await s.listarModelosDeChecklist(PAINEL, {});
+
+    expect(r.some((m) => m.id === 'm-x')).toBe(false);
+  });
+
+  it('equipamento ORDENA, não filtra — o que não casa fica embaixo', async () => {
+    // Esconder resultado é como o mecânico perde a confiança e liga para o
+    // encarregado, que é o que o produto existe para evitar.
+    const { prisma } = prismaComModelos(MODELOS, {
+      descricao: 'ESC-014',
+      modelo: 'Escavadeira de esteira',
+      tipo: null,
+    });
+    const s = new MecanicaService(prisma);
+
+    const r = await s.listarModelosDeChecklist(PAINEL, { equipamentoId: 'eq-1' });
+
+    expect(r).toHaveLength(3);
+    // 57 (esteira) e 5 (sem keyword, vale para qualquer) vêm antes do 58.
+    expect(r[r.length - 1].codigo).toBe(58);
+  });
+
+  it('recusa código repetido na mesma empresa', async () => {
+    const { prisma } = prismaComModelos(MODELOS);
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.salvarModeloDeChecklist(PAINEL, {
+        codigo: 57,
+        nome: 'OUTRO QUALQUER',
+        grupos: GRUPOS_VALIDOS,
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('preenche os padrões do item ao criar', async () => {
+    const { prisma, criados } = prismaComModelos([]);
+    const s = new MecanicaService(prisma);
+
+    await s.salvarModeloDeChecklist(PAINEL, {
+      codigo: 99,
+      nome: 'NOVO',
+      grupos: GRUPOS_VALIDOS,
+    });
+
+    const grupos = criados[0].grupos as { itens: Record<string, unknown>[] }[];
+    expect(grupos[0].itens[0]).toMatchObject({
+      numero: 1,
+      obrigatorio: true,
+      foto: 'nao',
+      impeditivo: false,
+    });
+  });
+
+  it('alterar sobe a versão — é o que invalida o cache do app', async () => {
+    const { prisma, atualizados } = prismaComModelos(MODELOS);
+    const s = new MecanicaService(prisma);
+
+    await s.salvarModeloDeChecklist(
+      PAINEL,
+      { codigo: 57, nome: 'CORRETIVA - MAQ. ESTEIRA', grupos: GRUPOS_VALIDOS },
+      'm-57',
+    );
+
+    expect(atualizados[0].version).toEqual({ increment: 1 });
+  });
+
+  it('arquivar não apaga', async () => {
+    // Execução antiga aponta para o modelo; apagar deixaria checklist
+    // preenchido sem saber do que ele é.
+    const { prisma, atualizados } = prismaComModelos(MODELOS);
+    const s = new MecanicaService(prisma);
+
+    await s.arquivarModeloDeChecklist(PAINEL, 'm-57');
+
+    expect(atualizados[0]).toEqual({ ativo: false });
+  });
+});

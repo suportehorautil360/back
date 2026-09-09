@@ -15,7 +15,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { IdempotencyInterceptor } from '../../common/idempotency.interceptor';
 import { PainelGuard, type RequestComPainel } from '../../common/painel.guard';
 import { ModuloComercial } from '../../common/modulo-comercial.decorator';
@@ -34,6 +34,7 @@ import { FotoDto, OcorrenciaDto, PecaDto } from './dto/anexos.dto';
 import { LaudoDto } from './dto/laudo.dto';
 import { OrcamentoInternoDto } from './dto/orcamento.dto';
 import { ExecutarPreventivaDto } from './dto/preventiva.dto';
+import { ChecklistModeloDto } from './dto/checklist-modelo.dto';
 
 const SITUACOES_VALIDAS: readonly SituacaoOs[] = [
   'Aberta',
@@ -350,6 +351,72 @@ export class MecanicaController {
   })
   async recusarOrcamento(@Req() req: RequestComPainel, @Param('id') id: string) {
     return this.service.decidirOrcamento(req.painel, id, 'recusar');
+  }
+
+  // ───────────────────────── checklists da empresa ─────────────────────────
+
+  /**
+   * Busca de checklist — uma caixa só, código ou descrição.
+   *
+   * `equipamentoId` não filtra, ordena: traz primeiro os que casam com a
+   * máquina e mantém o resto abaixo. Ver `regras/busca-checklist.ts`.
+   */
+  @Get('checklists/modelos')
+  @ApiOperation({ summary: 'Checklists da empresa — busca por código ou descrição' })
+  @ApiQuery({ name: 'busca', required: false, description: 'Código ou parte do nome.' })
+  @ApiQuery({ name: 'equipamentoId', required: false })
+  @ApiQuery({ name: 'arquivados', required: false, description: '"true" inclui inativos.' })
+  async listarModelosDeChecklist(
+    @Req() req: RequestComPainel,
+    @Query('busca') busca?: string,
+    @Query('equipamentoId') equipamentoId?: string,
+    @Query('arquivados') arquivados?: string,
+  ) {
+    return this.service.listarModelosDeChecklist(req.painel, {
+      busca,
+      equipamentoId,
+      incluirArquivados: arquivados === 'true',
+    });
+  }
+
+  @Get('checklists/modelos/:id')
+  @ApiOperation({ summary: 'Um checklist da empresa, com os grupos e itens' })
+  async obterModeloDeChecklist(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+  ) {
+    return this.service.obterModeloDeChecklist(req.painel, id);
+  }
+
+  @Post('checklists/modelos')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Criar um checklist da empresa' })
+  async criarModeloDeChecklist(
+    @Req() req: RequestComPainel,
+    @Body() dto: ChecklistModeloDto,
+  ) {
+    return this.service.salvarModeloDeChecklist(req.painel, dto);
+  }
+
+  @Put('checklists/modelos/:id')
+  @ApiOperation({ summary: 'Alterar um checklist da empresa — sobe a versão' })
+  async alterarModeloDeChecklist(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: ChecklistModeloDto,
+  ) {
+    return this.service.salvarModeloDeChecklist(req.painel, dto, id);
+  }
+
+  @Delete('checklists/modelos/:id')
+  @ApiOperation({
+    summary: 'Arquivar — não apaga, porque execução antiga aponta para o modelo',
+  })
+  async arquivarModeloDeChecklist(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+  ) {
+    return this.service.arquivarModeloDeChecklist(req.painel, id);
   }
 
   @Get('preventivas')

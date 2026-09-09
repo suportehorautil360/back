@@ -449,7 +449,8 @@ export const ModelName = {
   SyncTombstone: 'SyncTombstone',
   IdempotencyKey: 'IdempotencyKey',
   Notificacao: 'Notificacao',
-  ApiAcessoSemToken: 'ApiAcessoSemToken'
+  ApiAcessoSemToken: 'ApiAcessoSemToken',
+  ChecklistModelo: 'ChecklistModelo'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -465,7 +466,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken"
+    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken" | "checklistModelo"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -4391,6 +4392,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ChecklistModelo: {
+      payload: Prisma.$ChecklistModeloPayload<ExtArgs>
+      fields: Prisma.ChecklistModeloFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ChecklistModeloFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistModeloPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ChecklistModeloFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistModeloPayload>
+        }
+        findFirst: {
+          args: Prisma.ChecklistModeloFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistModeloPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ChecklistModeloFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistModeloPayload>
+        }
+        findMany: {
+          args: Prisma.ChecklistModeloFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistModeloPayload>[]
+        }
+        create: {
+          args: Prisma.ChecklistModeloCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistModeloPayload>
+        }
+        createMany: {
+          args: Prisma.ChecklistModeloCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ChecklistModeloCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistModeloPayload>[]
+        }
+        delete: {
+          args: Prisma.ChecklistModeloDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistModeloPayload>
+        }
+        update: {
+          args: Prisma.ChecklistModeloUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistModeloPayload>
+        }
+        deleteMany: {
+          args: Prisma.ChecklistModeloDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ChecklistModeloUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ChecklistModeloUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistModeloPayload>[]
+        }
+        upsert: {
+          args: Prisma.ChecklistModeloUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChecklistModeloPayload>
+        }
+        aggregate: {
+          args: Prisma.ChecklistModeloAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateChecklistModelo>
+        }
+        groupBy: {
+          args: Prisma.ChecklistModeloGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ChecklistModeloGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ChecklistModeloCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ChecklistModeloCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -5453,6 +5528,26 @@ export const ApiAcessoSemTokenScalarFieldEnum = {
 export type ApiAcessoSemTokenScalarFieldEnum = (typeof ApiAcessoSemTokenScalarFieldEnum)[keyof typeof ApiAcessoSemTokenScalarFieldEnum]
 
 
+export const ChecklistModeloScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  codigo: 'codigo',
+  nome: 'nome',
+  familia: 'familia',
+  tipoMaquina: 'tipoMaquina',
+  keywords: 'keywords',
+  grupos: 'grupos',
+  exigeOs: 'exigeOs',
+  exigeAssinaturaRecebedor: 'exigeAssinaturaRecebedor',
+  ativo: 'ativo',
+  version: 'version',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ChecklistModeloScalarFieldEnum = (typeof ChecklistModeloScalarFieldEnum)[keyof typeof ChecklistModeloScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -5913,6 +6008,7 @@ export type GlobalOmitConfig = {
   idempotencyKey?: Prisma.IdempotencyKeyOmit
   notificacao?: Prisma.NotificacaoOmit
   apiAcessoSemToken?: Prisma.ApiAcessoSemTokenOmit
+  checklistModelo?: Prisma.ChecklistModeloOmit
 }
 
 /* Types for Logging */
