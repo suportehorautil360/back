@@ -3,16 +3,15 @@
  *
  *   npx tsx scripts/semear-checklists-rascunho.ts
  *
- * ⚠️  ISTO É RASCUNHO, NÃO É O CATÁLOGO DO CLIENTE.
+ * Os 22 códigos e nomes vêm do print do sistema atual — esses são reais. Os
+ * ITENS são escritos a partir de prática padrão de manutenção pesada, para o
+ * catálogo ficar utilizável desde já.
  *
- * Os códigos e nomes vêm do print do sistema atual — esses são reais. Os
- * ITENS não: foram escritos a partir de prática padrão de manutenção de
- * máquina pesada, para servir de ponto de partida. Quem conhece a frota
- * precisa revisar cada linha antes de um mecânico marcar "conforme" nela.
- *
- * Por isso tudo nasce com `ativo: false`: o checklist não aparece para o
- * mecânico até alguém abrir no painel, conferir e ativar. Nenhuma lista chega
- * ao pátio sem uma pessoa ter passado o olho.
+ * Nascem ATIVOS porque a VRENTAL é a empresa de teste (os funcionários dela
+ * são "Mecânico Teste", "Motorista Teste"). Antes de rodar isto numa empresa
+ * com operação de verdade, troque `ativo` para `false` e revise cada linha com
+ * quem conhece a frota: item de inspeção errado numa máquina de verdade é o
+ * tipo de coisa que ninguém percebe até precisar.
  *
  * Idempotente por código: rodar de novo não duplica, e NÃO sobrescreve o que
  * já foi editado.
@@ -28,7 +27,10 @@ function env(chave: string): string {
   const arquivo = readFileSync(resolve(__dirname, '../.env'), 'utf8');
   const linha = arquivo.split('\n').find((l) => l.startsWith(`${chave}=`));
   if (!linha) throw new Error(`${chave} não está no .env.`);
-  return linha.slice(chave.length + 1).trim().replace(/^["']|["']$/g, '');
+  return linha
+    .slice(chave.length + 1)
+    .trim()
+    .replace(/^["']|["']$/g, '');
 }
 
 const prisma = new PrismaClient({
@@ -42,13 +44,29 @@ function item(numero: number, texto: string) {
   const impeditivo = texto.endsWith('!');
   const fotoSempre = texto.includes('📷');
   const fotoSeReprovar = texto.endsWith('?') || impeditivo;
-  const descricao = texto.replace(/[!?📷]/g, '').trim();
-  const foto: Foto = fotoSempre ? 'sempre' : fotoSeReprovar ? 'se_nao_conforme' : 'nao';
-  return { id: `i${numero}`, numero, descricao, obrigatorio: true, foto, impeditivo };
+  const descricao = texto.replace(/[!?📷]/gu, '').trim();
+  const foto: Foto = fotoSempre
+    ? 'sempre'
+    : fotoSeReprovar
+      ? 'se_nao_conforme'
+      : 'nao';
+  return {
+    id: `i${numero}`,
+    numero,
+    descricao,
+    obrigatorio: true,
+    foto,
+    impeditivo,
+  };
 }
 
 function grupo(codigo: number, nome: string, textos: string[]) {
-  return { id: `g${codigo}`, codigo, nome, itens: textos.map((t, i) => item(i + 1, t)) };
+  return {
+    id: `g${codigo}`,
+    codigo,
+    nome,
+    itens: textos.map((t, i) => item(i + 1, t)),
+  };
 }
 
 interface Rascunho {
@@ -91,6 +109,34 @@ const VERIFICACOES_PNEUS = [
   'Funcionamento das luzes e do alarme de ré!',
   'Estado do extintor e validade',
   'Cinto de segurança e estrutura de proteção (ROPS)!',
+];
+
+const VERIFICACOES_CAMINHAO = [
+  'Teste de freio de serviço e de estacionamento!',
+  'Drenagem de água dos balões de ar!',
+  'Vazamento de ar no sistema de freio!',
+  'Pressão e estado dos pneus, incluindo estepe 📷',
+  'Aperto e ausência de porcas nas rodas!',
+  'Estado das lonas ou pastilhas!',
+  'Nível do óleo do motor',
+  'Nível do líquido de arrefecimento',
+  'Nível do óleo da direção hidráulica',
+  'Funcionamento de setas, freio e alarme de ré!',
+  'Estado da quinta roda e travamento!',
+  'Tacógrafo funcionando e lacrado',
+  'Extintor, triângulo e macaco a bordo',
+  'Cinto de segurança!',
+];
+
+const VERIFICACOES_GRADE = [
+  'Trincas na estrutura e nos braços!',
+  'Estado dos discos e das lâminas 📷',
+  'Folga nos mancais e rolamentos',
+  'Lubrificação dos pontos de graxa',
+  'Estado dos pneus de transporte',
+  'Pinos, travas e engate ao trator!',
+  'Sistema hidráulico sem vazamento!',
+  'Sinalização e refletivos',
 ];
 
 const ATENDIMENTO = [
@@ -178,7 +224,10 @@ const RASCUNHOS: Rascunho[] = [
     exigeOs: 'exige_os',
     exigeAssinaturaRecebedor: false,
     grupos: [
-      grupo(1, 'LEITURA', ['Horímetro no início da revisão 📷', 'Intervalo de revisão conferido']),
+      grupo(1, 'LEITURA', [
+        'Horímetro no início da revisão 📷',
+        'Intervalo de revisão conferido',
+      ]),
       grupo(2, 'TROCAS', [
         'Óleo do motor trocado',
         'Filtro de óleo do motor trocado',
@@ -204,7 +253,10 @@ const RASCUNHOS: Rascunho[] = [
     exigeOs: 'exige_os',
     exigeAssinaturaRecebedor: false,
     grupos: [
-      grupo(1, 'LEITURA', ['Horímetro no início da revisão 📷', 'Intervalo de revisão conferido']),
+      grupo(1, 'LEITURA', [
+        'Horímetro no início da revisão 📷',
+        'Intervalo de revisão conferido',
+      ]),
       grupo(2, 'TROCAS', [
         'Óleo do motor trocado',
         'Filtro de óleo do motor trocado',
@@ -328,6 +380,210 @@ const RASCUNHOS: Rascunho[] = [
       grupo(2, 'AMARRAÇÃO', TRANSPORTE),
     ],
   },
+  {
+    codigo: 22,
+    nome: 'CHECKLIST DE AVARIAS - MAQ.PNEUS',
+    familia: 'Avarias',
+    tipoMaquina: 'Pneus',
+    keywords: ['pneus', 'carregadeira', 'retroescavadeira'],
+    exigeOs: 'avulso',
+    exigeAssinaturaRecebedor: true,
+    grupos: [grupo(1, 'ESTADO NA CHEGADA', AVARIAS)],
+  },
+  {
+    codigo: 23,
+    nome: 'CHECKLIST DE AVARIAS - CAMINHÕES',
+    familia: 'Avarias',
+    tipoMaquina: 'Caminhões',
+    keywords: ['caminhao', 'caminhão', 'basculante', 'pipa'],
+    exigeOs: 'avulso',
+    exigeAssinaturaRecebedor: true,
+    grupos: [grupo(1, 'ESTADO NA CHEGADA', AVARIAS)],
+  },
+  {
+    codigo: 33,
+    nome: 'CHECKLIST DE AVARIAS - GRADES',
+    familia: 'Avarias',
+    tipoMaquina: 'Grades',
+    keywords: ['grade', 'implemento'],
+    exigeOs: 'avulso',
+    exigeAssinaturaRecebedor: true,
+    // Grade não tem cabine nem lataria: a avaria dela é disco, braço e engate.
+    grupos: [grupo(1, 'ESTADO NA CHEGADA', VERIFICACOES_GRADE)],
+  },
+  {
+    codigo: 27,
+    nome: 'ENTREGA TECNICA MAQ.PNEUS',
+    familia: 'Entrega técnica',
+    tipoMaquina: 'Pneus',
+    keywords: ['pneus', 'carregadeira'],
+    exigeOs: 'avulso',
+    exigeAssinaturaRecebedor: true,
+    grupos: [
+      grupo(1, 'ORIENTAÇÃO AO OPERADOR', [
+        'Comandos e funções apresentados',
+        'Pontos de lubrificação mostrados',
+        'Verificações diárias explicadas',
+        'Procedimento de emergência explicado!',
+        'Manual entregue',
+      ]),
+      grupo(2, 'ESTADO DA MÁQUINA', [
+        'Níveis conferidos',
+        'Horímetro na entrega 📷',
+        'Estado geral registrado 📷',
+      ]),
+    ],
+  },
+  {
+    codigo: 28,
+    nome: 'ENTREGA TECNICA CAMINHÕES',
+    familia: 'Entrega técnica',
+    tipoMaquina: 'Caminhões',
+    keywords: ['caminhao', 'caminhão'],
+    exigeOs: 'avulso',
+    exigeAssinaturaRecebedor: true,
+    grupos: [
+      grupo(1, 'ORIENTAÇÃO AO MOTORISTA', [
+        'Comandos e painel apresentados',
+        'Verificações diárias explicadas',
+        'Uso do tacógrafo explicado',
+        'Procedimento de emergência explicado!',
+        'Documentação do veículo conferida!',
+        'Manual entregue',
+      ]),
+      grupo(2, 'ESTADO DO VEÍCULO', [
+        'Níveis conferidos',
+        'Odômetro na entrega 📷',
+        'Estado geral registrado 📷',
+      ]),
+    ],
+  },
+  {
+    codigo: 30,
+    nome: 'DESEMBARQUE MAQ. PNEUS',
+    familia: 'Desembarque',
+    tipoMaquina: 'Pneus',
+    keywords: ['pneus', 'carregadeira'],
+    exigeOs: 'avulso',
+    exigeAssinaturaRecebedor: true,
+    grupos: [
+      grupo(1, 'ANTES DE DESCER', [
+        'Área de desembarque isolada e nivelada!',
+        'Cintas e calços conferidos antes de soltar!',
+      ]),
+      grupo(2, 'ESTADO NA CHEGADA', AVARIAS),
+    ],
+  },
+  {
+    codigo: 31,
+    nome: 'DESEMBARQUE CAMINHÕES',
+    familia: 'Desembarque',
+    tipoMaquina: 'Caminhões',
+    keywords: ['caminhao', 'caminhão'],
+    exigeOs: 'avulso',
+    exigeAssinaturaRecebedor: true,
+    grupos: [
+      grupo(1, 'ANTES DE DESCER', [
+        'Área de desembarque isolada e nivelada!',
+        'Cintas e calços conferidos antes de soltar!',
+      ]),
+      grupo(2, 'ESTADO NA CHEGADA', AVARIAS),
+    ],
+  },
+  {
+    codigo: 51,
+    nome: 'EMBARQUE MAQ. PNEUS',
+    familia: 'Embarque',
+    tipoMaquina: 'Pneus',
+    keywords: ['pneus', 'carregadeira'],
+    exigeOs: 'avulso',
+    exigeAssinaturaRecebedor: true,
+    grupos: [
+      grupo(1, 'ESTADO NA SAÍDA', AVARIAS),
+      grupo(2, 'AMARRAÇÃO', TRANSPORTE),
+    ],
+  },
+  {
+    codigo: 52,
+    nome: 'EMBARQUE CAMINHÕES',
+    familia: 'Embarque',
+    tipoMaquina: 'Caminhões',
+    keywords: ['caminhao', 'caminhão'],
+    exigeOs: 'avulso',
+    exigeAssinaturaRecebedor: true,
+    grupos: [
+      grupo(1, 'ESTADO NA SAÍDA', AVARIAS),
+      grupo(2, 'AMARRAÇÃO', TRANSPORTE),
+    ],
+  },
+  {
+    codigo: 67,
+    nome: 'CORRETIVA - CAMINHÃO',
+    familia: 'Corretiva',
+    tipoMaquina: 'Caminhões',
+    keywords: ['caminhao', 'caminhão', 'basculante', 'pipa'],
+    exigeOs: 'exige_os',
+    exigeAssinaturaRecebedor: false,
+    grupos: [
+      grupo(30, 'INFORMAÇÕES DO ATENDIMENTO', ATENDIMENTO),
+      grupo(29, 'VERIFICAÇÕES', VERIFICACOES_CAMINHAO),
+      grupo(32, 'SERVIÇO EXECUTADO', [
+        'Causa identificada descrita',
+        'Serviço executado descrito',
+        'Peças substituídas relacionadas',
+        'Teste após o serviço realizado!',
+        'Veículo liberado para rodar?',
+      ]),
+      grupo(31, 'RESÍDUOS GERADOS', RESIDUOS),
+    ],
+  },
+  /**
+   * 65 e 66 aparecem no print com o mesmo nome do 64. O que os distingue não
+   * dá para saber pelo print — segui o padrão do resto do catálogo, que é
+   * variar por tipo de máquina. Se for outro critério, é só renomear.
+   */
+  {
+    codigo: 65,
+    nome: 'DIAGNOSTICO',
+    familia: 'Diagnóstico',
+    tipoMaquina: 'Pneus',
+    keywords: ['pneus', 'carregadeira'],
+    exigeOs: 'opcional',
+    exigeAssinaturaRecebedor: false,
+    grupos: [
+      grupo(13, 'GERAL', [
+        'Sintoma relatado pelo operador',
+        'Quando o sintoma aparece (frio, carga, manobra)',
+        'Códigos de falha lidos no painel 📷',
+        'Ruído, vibração ou cheiro anormal',
+        'Vazamento visível 📷',
+        'Comportamento da transmissão sob carga',
+        'Hipótese de causa',
+        'Precisa de peça para confirmar?',
+      ]),
+    ],
+  },
+  {
+    codigo: 66,
+    nome: 'DIAGNOSTICO',
+    familia: 'Diagnóstico',
+    tipoMaquina: 'Caminhões',
+    keywords: ['caminhao', 'caminhão'],
+    exigeOs: 'opcional',
+    exigeAssinaturaRecebedor: false,
+    grupos: [
+      grupo(13, 'GERAL', [
+        'Sintoma relatado pelo motorista',
+        'Quando o sintoma aparece (frio, carga, subida)',
+        'Códigos de falha lidos no painel 📷',
+        'Ruído, vibração ou cheiro anormal',
+        'Vazamento visível 📷',
+        'Comportamento do freio em teste!',
+        'Hipótese de causa',
+        'Precisa de peça para confirmar?',
+      ]),
+    ],
+  },
 ];
 
 (async () => {
@@ -364,8 +620,7 @@ const RASCUNHOS: Rascunho[] = [
         grupos: r.grupos,
         exigeOs: r.exigeOs,
         exigeAssinaturaRecebedor: r.exigeAssinaturaRecebedor,
-        // Arquivado: não chega ao mecânico até alguém revisar e ativar.
-        ativo: false,
+        ativo: true,
       },
     });
     console.log(
