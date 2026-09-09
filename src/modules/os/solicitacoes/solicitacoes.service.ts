@@ -7,6 +7,8 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { Prisma } from '../../../prisma/generated/client';
+import { itensParaInsumos } from '../orcamentos/helpers/itens-para-insumos.helper';
 import { resolverCompanyId } from '../../../common/prisma/company-resolver';
 import { fetchEquipmentMapPg, resolveEquipmentByIdPg } from '../../../common/prisma/equipment-resolver';
 import { nextProtocoloOsPg } from '../../../common/prisma/gerar-protocolo-os-prisma.helper';
@@ -70,6 +72,43 @@ const serviceOrderInclude = {
   company: { select: { legacyId: true } },
   equipment: { select: { id: true, legacyId: true } },
 } as const;
+
+/**
+ * Peças de um orçamento aprovado viram insumos da OS (decisão D5).
+ *
+ * Orçamento é pedido de autorização para gastar; insumo é o que foi consumido.
+ * Se os dois somassem no custo da OS, uma peça orçada e depois lançada
+ * contaria duas vezes — e ninguém perceberia, porque cada número está certo no
+ * seu lugar. Ao aprovar, o item vira insumo e o orçamento para de ser custo:
+ * uma origem, um número.
+ *
+ * **Só orçamento da oficina PRÓPRIA** (`oficinaId` nulo). Numa OS de parceira
+ * as peças são da parceira: gravá-las como insumo diria que a empresa consumiu
+ * do estoque dela algo que nunca saiu de lá.
+ *
+ * Roda dentro da transação da aprovação. Não precisa de trava contra rodar
+ * duas vezes porque aprovar duas vezes já é recusado antes daqui, por
+ * `ordemElegivelParaAprovacao`.
+ */
+async function converterPecasEmInsumos(
+  tx: Prisma.TransactionClient,
+  orcamento: { id: string; oficinaId: string | null; itens: unknown },
+  serviceOrderId: string,
+): Promise<number> {
+  if (orcamento.oficinaId) return 0;
+
+  // Continua a numeração para o lançado pelo mecânico e o vindo do orçamento
+  // não disputarem a mesma posição na lista de insumos.
+  const jaExistem = await tx.serviceOrderInsumo.count({
+    where: { serviceOrderId },
+  });
+
+  const insumos = itensParaInsumos(orcamento.itens, serviceOrderId, jaExistem);
+  if (insumos.length === 0) return 0;
+
+  await tx.serviceOrderInsumo.createMany({ data: insumos });
+  return insumos.length;
+}
 
 @Injectable()
 export class SolicitacoesService {
@@ -309,6 +348,8 @@ export class SolicitacoesService {
           where: { id: ordem.id },
           data: { status: 'aprovado' },
         });
+
+        await converterPecasEmInsumos(tx, ordem, sol.id);
 
         const outras = await tx.orcamento.findMany({
           where: {

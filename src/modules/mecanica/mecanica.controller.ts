@@ -32,6 +32,7 @@ import {
 } from './dto/apontamento.dto';
 import { FotoDto, OcorrenciaDto, PecaDto } from './dto/anexos.dto';
 import { LaudoDto } from './dto/laudo.dto';
+import { OrcamentoInternoDto } from './dto/orcamento.dto';
 
 const SITUACOES_VALIDAS: readonly SituacaoOs[] = [
   'Aberta',
@@ -298,6 +299,30 @@ export class MecanicaController {
       causa: dto.causa,
       servicoFeito: dto.servicoFeito,
       pendencias: dto.pendencias ?? null,
+    });
+  }
+
+  /**
+   * Orçamento da oficina própria.
+   *
+   * `PUT` e não `POST` porque é um por OS interna e substituir é o contrato —
+   * mesmo desenho do laudo. Sem `@UseInterceptors(IdempotencyInterceptor)`
+   * pelo mesmo motivo que o laudo não tem: reenviar o mesmo corpo dá o mesmo
+   * estado, então é idempotente por natureza.
+   */
+  @Put('os/:id/orcamento')
+  @ApiOperation({
+    summary: 'Criar ou substituir o orçamento interno da OS (aguarda aprovação)',
+  })
+  async salvarOrcamento(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: OrcamentoInternoDto,
+  ) {
+    return this.service.salvarOrcamento(req.painel, id, {
+      itens: dto.itens,
+      prazoDias: dto.prazoDias,
+      fotos: dto.fotos,
     });
   }
 

@@ -1174,3 +1174,135 @@ describe('MecanicaService — laudo e conclusão — posse/empresa', () => {
     );
   });
 });
+
+/**
+ * Orçamento da oficina própria (decisão D1): um por OS interna, identificado
+ * por `oficinaId: null`, nascendo em `aguardando_aprovacao` — que é o estado
+ * que a tela do painel já sabe aprovar.
+ */
+function prismaComOrcamento(orcamentoAtual: Record<string, unknown> | null) {
+  const os = {
+    id: 'os-interna',
+    companyId: 'empresa-1',
+    execucao: 'interna',
+    protocolo: 'OS-2026-0042',
+    equipmentNome: 'ESC-014',
+    relato: 'Vazamento no comando hidráulico',
+  };
+  const criados: Record<string, unknown>[] = [];
+  const atualizados: Record<string, unknown>[] = [];
+  return {
+    prisma: {
+      serviceOrder: {
+        findFirst: jest.fn(({ where }: { where: Record<string, unknown> }) =>
+          Promise.resolve(
+            where.id === 'os-interna' && where.companyId === 'empresa-1' ? os : null,
+          ),
+        ),
+      },
+      orcamento: {
+        findFirst: jest.fn(() => Promise.resolve(orcamentoAtual)),
+        create: jest.fn(({ data }: { data: Record<string, unknown> }) => {
+          criados.push(data);
+          return Promise.resolve({ id: 'orc-novo', ...data });
+        }),
+        update: jest.fn(({ data }: { data: Record<string, unknown> }) => {
+          atualizados.push(data);
+          return Promise.resolve({ id: 'orc-1', ...data });
+        }),
+      },
+    } as never,
+    criados,
+    atualizados,
+  };
+}
+
+const ITENS = [
+  { description: 'Filtro de óleo', value: 299.8, category: 'part', quantity: 2, unitValue: 149.9 },
+  { description: 'Mão de obra', value: 400, category: 'service' },
+];
+
+describe('MecanicaService.salvarOrcamento', () => {
+  it('cria sem oficina e aguardando aprovação — não em pregão', async () => {
+    // Não existe pregão de um participante só: a rota da parceira força
+    // `em_pregao` e grava lance, e nada disso tem significado aqui.
+    const { prisma, criados } = prismaComOrcamento(null);
+    const s = new MecanicaService(prisma);
+
+    await s.salvarOrcamento(PAINEL, 'os-interna', { itens: ITENS });
+
+    expect(criados[0]).toMatchObject({
+      companyId: 'empresa-1',
+      serviceOrderId: 'os-interna',
+      oficinaId: null,
+      oficinaNome: null,
+      status: 'aguardando_aprovacao',
+      protocolo: 'OS-2026-0042',
+      valorTotal: 699.8,
+    });
+  });
+
+  it('grava o nome do mecânico como quem enviou', async () => {
+    const { prisma, criados } = prismaComOrcamento(null);
+    const s = new MecanicaService(prisma);
+
+    await s.salvarOrcamento(PAINEL, 'os-interna', { itens: ITENS });
+
+    expect(criados[0].operadorNome).toBe('Carlos Mecânico');
+  });
+
+  it('substitui o pendente em vez de criar um segundo', async () => {
+    // O gestor aprova UM número; três rascunhos na tela dele só criam dúvida
+    // sobre qual vale.
+    const { prisma, criados, atualizados } = prismaComOrcamento({
+      id: 'orc-1',
+      status: 'aguardando_aprovacao',
+    });
+    const s = new MecanicaService(prisma);
+
+    await s.salvarOrcamento(PAINEL, 'os-interna', { itens: ITENS, prazoDias: 3 });
+
+    expect(criados).toHaveLength(0);
+    expect(atualizados[0]).toMatchObject({ valorTotal: 699.8, prazoDias: 3 });
+  });
+
+  it('recusa alterar orçamento já aprovado', async () => {
+    const { prisma } = prismaComOrcamento({ id: 'orc-1', status: 'aprovado' });
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.salvarOrcamento(PAINEL, 'os-interna', { itens: ITENS }),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('recusa alterar orçamento recusado, apontando o caminho', async () => {
+    const { prisma } = prismaComOrcamento({ id: 'orc-1', status: 'recusado' });
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.salvarOrcamento(PAINEL, 'os-interna', { itens: ITENS }),
+    ).rejects.toThrow(/Fale com o gestor/);
+  });
+
+  it('recusa orçamento de valor zero — não é pedido de aprovação', async () => {
+    const { prisma } = prismaComOrcamento(null);
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.salvarOrcamento(PAINEL, 'os-interna', {
+        itens: [{ description: 'Cortesia', value: 0, category: 'part' }],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('não deixa orçar OS de outra empresa', async () => {
+    const { prisma } = prismaComOrcamento(null);
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.salvarOrcamento({ ...PAINEL, companyId: 'empresa-2' }, 'os-interna', {
+        itens: ITENS,
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+});

@@ -8,6 +8,9 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '../../prisma/generated/client';
 import type { PainelPayload } from '../../common/painel.guard';
+import { toInputJson } from '../../common/prisma/os-prisma.mapper';
+import { parseOrcamentoItemsFromDto } from '../os/orcamentos/helpers/orcamento-items.helper';
+import type { OrcamentoItemDto } from '../os/orcamentos/dto/create-orcamento.dto';
 import { haSobreposicao, intervaloInvalido } from './regras/apontamento';
 
 /** Mesma mensagem na checagem prévia e na rede do índice único parcial. */
@@ -82,6 +85,9 @@ export class MecanicaService {
         fotos: { orderBy: { createdAt: 'asc' } },
         ocorrencias: { orderBy: { createdAt: 'asc' } },
         laudo: true,
+        // Vem junto porque a tela do orçamento é a mesma da OS: pedir numa
+        // segunda chamada seria uma viagem a mais por máquina aberta.
+        orcamentos: { orderBy: { createdAt: 'desc' } },
       },
     });
     if (!os) throw new NotFoundException('OS não encontrada.');
@@ -391,6 +397,82 @@ export class MecanicaService {
       where: { serviceOrderId: osId },
       create: { serviceOrderId: osId, autorId: painel.companyUserId, ...dados },
       update: { ...dados },
+    });
+  }
+
+  /**
+   * Orçamento da oficina própria — cria ou substitui.
+   *
+   * Um por OS interna, identificado por `oficinaId: null` (decisão D1). Não
+   * passa pelo `POST /os/orcamentos` da parceira de propósito: aquela rota
+   * exige oficina convidada, força `em_pregao` e grava um lance. Nada disso
+   * tem significado quando não há concorrência — não existe pregão de um
+   * participante só.
+   *
+   * Nasce em `aguardando_aprovacao`, que é o estado que a tela do painel já
+   * sabe aprovar: `podeAprovarOrcamento` olha só o status, e a aprovação já
+   * grava `oficinaVencedoraId: orc.oficinaId ?? null`.
+   *
+   * Substituir enquanto pendente, em vez de acumular versões, é o mesmo
+   * contrato do laudo: o gestor aprova UM número, e ter três rascunhos na
+   * tela dele só cria dúvida sobre qual vale.
+   */
+  async salvarOrcamento(
+    painel: PainelPayload,
+    osId: string,
+    dados: {
+      itens: OrcamentoItemDto[];
+      prazoDias?: number;
+      fotos?: string[];
+    },
+  ) {
+    const os = await this.detalhe(painel, osId);
+
+    // Reusa a validação da parceira: cada item precisa de descrição e o total
+    // tem de ser maior que zero. Orçamento de R$ 0 não é pedido de aprovação.
+    const { itens, valorTotal } = parseOrcamentoItemsFromDto(dados.itens);
+
+    const atual = await this.prisma.orcamento.findFirst({
+      where: { serviceOrderId: osId, oficinaId: null },
+    });
+
+    if (atual && atual.status !== 'aguardando_aprovacao') {
+      throw new ConflictException(
+        atual.status === 'aprovado'
+          ? 'Este orçamento já foi aprovado e não pode mais ser alterado.'
+          : 'Este orçamento já foi recusado. Fale com o gestor antes de enviar outro.',
+      );
+    }
+
+    const comum = {
+      itens: toInputJson(itens),
+      valorTotal,
+      prazoDias: dados.prazoDias ?? null,
+      fotosComprovacao: toInputJson(dados.fotos ?? []),
+      // Quem montou o orçamento. O modelo guarda aqui o nome de quem enviou
+      // — na parceira é a oficina; aqui, o mecânico.
+      operadorNome: painel.nomeExibicao,
+    };
+
+    if (atual) {
+      return this.prisma.orcamento.update({
+        where: { id: atual.id },
+        data: comum,
+      });
+    }
+
+    return this.prisma.orcamento.create({
+      data: {
+        companyId: painel.companyId,
+        serviceOrderId: osId,
+        protocolo: os.protocolo,
+        oficinaId: null,
+        oficinaNome: null,
+        equipamento: os.equipmentNome,
+        defeito: os.relato,
+        status: 'aguardando_aprovacao',
+        ...comum,
+      },
     });
   }
 
