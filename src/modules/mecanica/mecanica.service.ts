@@ -53,12 +53,23 @@ export class MecanicaService {
     });
   }
 
+  /**
+   * O contrato com o painel é devolver a OS já com as relações da tela de
+   * detalhe — sem isso, a tela quebraria em runtime com `undefined.map(...)`.
+   */
   async detalhe(painel: PainelPayload, osId: string) {
     const os = await this.prisma.serviceOrder.findFirst({
       where: {
         id: osId,
         companyId: painel.companyId,
         execucao: 'interna',
+      },
+      include: {
+        apontamentos: { orderBy: { inicio: 'asc' } },
+        insumos: { orderBy: { ordem: 'asc' } },
+        fotos: { orderBy: { createdAt: 'asc' } },
+        ocorrencias: { orderBy: { createdAt: 'asc' } },
+        laudo: true,
       },
     });
     if (!os) throw new NotFoundException('OS não encontrada.');

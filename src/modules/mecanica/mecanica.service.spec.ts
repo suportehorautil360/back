@@ -91,6 +91,140 @@ describe('MecanicaService.detalhe', () => {
 
 const d = (hhmm: string) => new Date(`2026-09-08T${hhmm}:00-03:00`);
 
+/**
+ * Fake dedicado ao `include` de `detalhe`. Continua aplicando o `where` de
+ * verdade sobre a OS (mesma regra dos demais fakes deste arquivo — um fake
+ * que ganhasse `include` e esquecesse o `where` esvaziaria a suíte em
+ * silêncio), e além disso RESOLVE o `include`: filtra cada relação por
+ * `serviceOrderId` e ordena pelo `orderBy` que o serviço de fato pediu, em
+ * vez de devolver uma lista fixa já na ordem esperada. Assim, se `detalhe`
+ * pedir o campo ou a direção errada, o teste vê a ordem errada e cai.
+ */
+function prismaComRelacoes(
+  os: Record<string, unknown>,
+  relacoes: {
+    apontamentos?: Record<string, unknown>[];
+    insumos?: Record<string, unknown>[];
+    fotos?: Record<string, unknown>[];
+    ocorrencias?: Record<string, unknown>[];
+    laudo?: Record<string, unknown> | null;
+  },
+) {
+  const casa = (l: Record<string, unknown>, w: Record<string, unknown>) =>
+    Object.entries(w).every(([k, v]) => l[k] === v);
+
+  const aplicarOrderBy = (
+    linhas: Record<string, unknown>[],
+    orderBy?: Record<string, 'asc' | 'desc'>,
+  ) => {
+    if (!orderBy) return [...linhas];
+    const [[campo, direcao]] = Object.entries(orderBy);
+    const sinal = direcao === 'desc' ? -1 : 1;
+    return [...linhas].sort((a, b) => {
+      const av = a[campo] as number | string | Date;
+      const bv = b[campo] as number | string | Date;
+      if (av < bv) return -1 * sinal;
+      if (av > bv) return 1 * sinal;
+      return 0;
+    });
+  };
+
+  const doOs = (linhas: Record<string, unknown>[] = []) =>
+    linhas.filter((l) => l.serviceOrderId === os.id);
+
+  return {
+    serviceOrder: {
+      findFirst: jest.fn(({ where, include }) => {
+        if (!casa(os, where)) return Promise.resolve(null);
+        if (!include) return Promise.resolve({ ...os });
+
+        const resultado: Record<string, unknown> = { ...os };
+        if (include.apontamentos) {
+          resultado.apontamentos = aplicarOrderBy(
+            doOs(relacoes.apontamentos),
+            include.apontamentos.orderBy,
+          );
+        }
+        if (include.insumos) {
+          resultado.insumos = aplicarOrderBy(
+            doOs(relacoes.insumos),
+            include.insumos.orderBy,
+          );
+        }
+        if (include.fotos) {
+          resultado.fotos = aplicarOrderBy(
+            doOs(relacoes.fotos),
+            include.fotos.orderBy,
+          );
+        }
+        if (include.ocorrencias) {
+          resultado.ocorrencias = aplicarOrderBy(
+            doOs(relacoes.ocorrencias),
+            include.ocorrencias.orderBy,
+          );
+        }
+        if (include.laudo) {
+          resultado.laudo = relacoes.laudo ?? null;
+        }
+        return Promise.resolve(resultado);
+      }),
+    },
+  } as never;
+}
+
+/**
+ * Contrato com o painel: `detalhe` tem que devolver as cinco relações da
+ * tela de detalhe já populadas — a tela quebraria em runtime com
+ * `undefined.map(...)` se alguma vier ausente.
+ */
+describe('MecanicaService.detalhe — relações', () => {
+  const OS = { id: 'os-1', companyId: 'empresa-1', execucao: 'interna' };
+
+  it('devolve apontamentos, insumos, fotos, ocorrências e laudo, cada um na ordem esperada', async () => {
+    const s = new MecanicaService(
+      prismaComRelacoes(OS, {
+        apontamentos: [
+          { id: 'ap-2', serviceOrderId: 'os-1', inicio: d('10:00') },
+          { id: 'ap-1', serviceOrderId: 'os-1', inicio: d('08:00') },
+        ],
+        insumos: [
+          { id: 'in-2', serviceOrderId: 'os-1', ordem: 2 },
+          { id: 'in-1', serviceOrderId: 'os-1', ordem: 1 },
+        ],
+        fotos: [
+          { id: 'fo-2', serviceOrderId: 'os-1', createdAt: d('12:00') },
+          { id: 'fo-1', serviceOrderId: 'os-1', createdAt: d('09:00') },
+        ],
+        ocorrencias: [
+          { id: 'oc-2', serviceOrderId: 'os-1', createdAt: d('11:00') },
+          { id: 'oc-1', serviceOrderId: 'os-1', createdAt: d('07:00') },
+        ],
+        laudo: { id: 'la-1', serviceOrderId: 'os-1', causa: 'Vazamento' },
+      }),
+    );
+
+    const detalhe = await s.detalhe(PAINEL, 'os-1');
+
+    expect(detalhe.apontamentos.map((a: { id: string }) => a.id)).toEqual([
+      'ap-1',
+      'ap-2',
+    ]);
+    expect(detalhe.insumos.map((i: { id: string }) => i.id)).toEqual([
+      'in-1',
+      'in-2',
+    ]);
+    expect(detalhe.fotos.map((f: { id: string }) => f.id)).toEqual([
+      'fo-1',
+      'fo-2',
+    ]);
+    expect(detalhe.ocorrencias.map((o: { id: string }) => o.id)).toEqual([
+      'oc-1',
+      'oc-2',
+    ]);
+    expect(detalhe.laudo).toMatchObject({ id: 'la-1', causa: 'Vazamento' });
+  });
+});
+
 function prismaComApontamentos(
   os: Record<string, unknown>[],
   apontamentos: Record<string, unknown>[],
