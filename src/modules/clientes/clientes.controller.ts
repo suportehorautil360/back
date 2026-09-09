@@ -10,6 +10,8 @@ import {
   Post,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../../common/jwt-auth.guard';
 import { ClientesOficinasService } from './clientes-oficinas.service';
 import { ClientesService } from './clientes.service';
 import { CreateClienteDto } from './dto/create-cliente.dto';
@@ -20,7 +22,17 @@ import { ResetSenhaAcessoDto } from './dto/reset-senha-acesso.dto';
 import { ChecklistLoginConfigDto } from './dto/checklist-login-config.dto';
 
 @ApiTags('clientes')
+/**
+ * Estava aberta e devolvendo a lista de clientes da plataforma para qualquer
+ * um na internet — verificado em produção em 09/09/2026: 200 com dados reais,
+ * sem token.
+ *
+ * O único chamador que resta é o 360, descontinuado. Se algum deploy dele
+ * ainda existir, vai passar a receber 401 aqui — e é preferível a continuar
+ * servindo a carteira de clientes aberta.
+ */
 @Controller('clientes')
+@UseGuards(JwtAuthGuard)
 export class ClientesController {
   constructor(
     private readonly clientesService: ClientesService,

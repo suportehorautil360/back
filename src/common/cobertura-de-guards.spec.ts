@@ -33,7 +33,6 @@ const ABERTOS_CONHECIDOS = new Set([
   'modules/checklist-devolucao/checklist-devolucao.controller.ts',
   'modules/checklists-registros/checklists-registros.controller.ts',
   'modules/checklists/checklists.controller.ts',
-  'modules/clientes/clientes.controller.ts',
   'modules/configuracoes/configuracoes.controller.ts',
   'modules/emergencies/emergencies.controller.ts',
   'modules/escala/escala.controller.ts',
@@ -102,6 +101,7 @@ describe('cobertura de guards', () => {
       'modules/financeiro/financeiro.controller.ts',
       'modules/cargos-permissao/cargos-permissao.controller.ts',
       'modules/parceiros/parceiros.controller.ts',
+      'modules/clientes/clientes.controller.ts',
     ]) {
       expect(abertos.has(critica)).toBe(false);
     }
