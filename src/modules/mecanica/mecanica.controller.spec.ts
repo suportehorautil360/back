@@ -67,6 +67,33 @@ function arquivo(
  * regressão que voltasse a ignorar `?situacao` no controller não derrubaria
  * teste nenhum se a prova ficasse só no service.
  */
+describe('MecanicaController.eu', () => {
+  it('devolve empresa, operador e nome de exibição do token', () => {
+    const controller = new MecanicaController(servicoFalso(), uploadsFalso());
+
+    expect(controller.eu(reqCom())).toEqual({
+      companyId: 'empresa-1',
+      operatorId: 'op-1',
+      nome: 'Carlos Mecânico',
+    });
+  });
+
+  it('não vaza o companyUserId — é chave interna, e a tela mostra o nome', () => {
+    const controller = new MecanicaController(servicoFalso(), uploadsFalso());
+
+    expect(controller.eu(reqCom())).not.toHaveProperty('companyUserId');
+  });
+
+  it('gestor sem Operator vem com operatorId nulo — o app decide o que fazer', () => {
+    // Ele lê a bancada, mas não aponta hora: quem executa precisa ser
+    // funcionário. O app precisa saber disso ANTES de mostrar o cronômetro.
+    const controller = new MecanicaController(servicoFalso(), uploadsFalso());
+    const gestor = { ...PAINEL, operatorId: null, nomeExibicao: 'Ana Gestora' };
+
+    expect(controller.eu(reqCom(gestor)).operatorId).toBeNull();
+  });
+});
+
 describe('MecanicaController.bancada — repasse de ?situacao', () => {
   it('repassa a situacao pedida para o service', async () => {
     const service = servicoFalso();

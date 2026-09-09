@@ -92,6 +92,25 @@ export class MecanicaController {
     private readonly uploads: UploadsService,
   ) {}
 
+  /**
+   * Quem é o portador do token, na visão deste módulo.
+   *
+   * Existe para o app de campo: depois do login no Supabase ele tem o token,
+   * mas não sabe a empresa nem o nome do mecânico — nada disso vem no JWT, e
+   * derivar no cliente exigiria confiar em claim que o cliente escolhe.
+   *
+   * Fica atrás do mesmo `@ModuloComercial` das outras rotas de propósito: se
+   * a empresa não contratou Mecânica ou o cargo não libera, a recusa acontece
+   * no login, com a mensagem certa, em vez de o app entrar e quebrar na
+   * primeira tela.
+   */
+  @Get('eu')
+  @ApiOperation({ summary: 'Identidade do usuário do token neste módulo' })
+  eu(@Req() req: RequestComPainel) {
+    const { companyId, operatorId, nomeExibicao } = req.painel;
+    return { companyId, operatorId, nome: nomeExibicao };
+  }
+
   @Get('os')
   @ApiOperation({
     summary:
