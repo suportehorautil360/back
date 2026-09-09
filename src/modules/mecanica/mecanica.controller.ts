@@ -17,6 +17,7 @@ import {
   EditarApontamentoDto,
   LancarApontamentoDto,
 } from './dto/apontamento.dto';
+import { FotoDto, OcorrenciaDto, PecaDto } from './dto/anexos.dto';
 
 @ApiTags('mecanica')
 @Controller('mecanica')
@@ -93,5 +94,47 @@ export class MecanicaController {
   @ApiOperation({ summary: 'Remover um apontamento do próprio mecânico' })
   async remover(@Req() req: RequestComPainel, @Param('id') id: string) {
     return this.service.removerApontamento(req.painel, id);
+  }
+
+  @Post('os/:id/pecas')
+  @ApiOperation({ summary: 'Registrar peça consumida na OS' })
+  async adicionarPeca(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: PecaDto,
+  ) {
+    return this.service.adicionarPeca(req.painel, id, {
+      descricao: dto.descricao,
+      quantidade: dto.quantidade,
+      valorUnit: dto.valorUnit,
+      codigo: dto.codigo ?? null,
+      marca: dto.marca ?? null,
+      unidade: dto.unidade ?? null,
+    });
+  }
+
+  @Post('os/:id/fotos')
+  @ApiOperation({ summary: 'Anexar foto (URL do Storage) à OS' })
+  async adicionarFoto(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: FotoDto,
+  ) {
+    return this.service.adicionarFoto(
+      req.painel,
+      id,
+      dto.url,
+      dto.legenda ?? null,
+    );
+  }
+
+  @Post('os/:id/ocorrencias')
+  @ApiOperation({ summary: 'Registrar ocorrência na timeline da OS' })
+  async adicionarOcorrencia(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: OcorrenciaDto,
+  ) {
+    return this.service.adicionarOcorrencia(req.painel, id, dto.mensagem);
   }
 }

@@ -271,4 +271,56 @@ export class MecanicaService {
       data: { situacao: 'EmAndamento' },
     });
   }
+
+  async adicionarPeca(
+    painel: PainelPayload,
+    osId: string,
+    peca: {
+      descricao: string;
+      quantidade: number;
+      valorUnit: number;
+      codigo: string | null;
+      marca: string | null;
+      unidade: string | null;
+    },
+  ) {
+    await this.detalhe(painel, osId);
+    return this.prisma.serviceOrderInsumo.create({
+      data: { serviceOrderId: osId, ...peca },
+    });
+  }
+
+  /**
+   * A URL vem do Storage — o arquivo sobe por `uploads` antes. Guardar
+   * data-URI aqui repetiria o erro do legado (`Emergency.fotos`), que engorda
+   * a linha e trava a listagem.
+   */
+  async adicionarFoto(
+    painel: PainelPayload,
+    osId: string,
+    url: string,
+    legenda: string | null,
+  ) {
+    await this.detalhe(painel, osId);
+    return this.prisma.serviceOrderFoto.create({
+      data: {
+        serviceOrderId: osId,
+        url,
+        legenda,
+        enviadaPorId: painel.companyUserId,
+      },
+    });
+  }
+
+  /** Timeline imutável: cada entrada é um registro novo, nunca um update. */
+  async adicionarOcorrencia(painel: PainelPayload, osId: string, mensagem: string) {
+    await this.detalhe(painel, osId);
+    return this.prisma.serviceOrderOcorrencia.create({
+      data: {
+        serviceOrderId: osId,
+        usuario: painel.companyUserId,
+        mensagem,
+      },
+    });
+  }
 }

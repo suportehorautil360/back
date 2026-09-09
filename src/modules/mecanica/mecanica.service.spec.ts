@@ -124,6 +124,15 @@ function prismaComApontamentos(
         return Promise.resolve(removido ?? null);
       }),
     },
+    serviceOrderInsumo: {
+      create: jest.fn(({ data }) => Promise.resolve({ id: 'novo', ...data })),
+    },
+    serviceOrderFoto: {
+      create: jest.fn(({ data }) => Promise.resolve({ id: 'novo', ...data })),
+    },
+    serviceOrderOcorrencia: {
+      create: jest.fn(({ data }) => Promise.resolve({ id: 'novo', ...data })),
+    },
   } as never;
 }
 
@@ -504,6 +513,125 @@ describe('MecanicaService — a situação anda sozinha (marcarEmAndamento)', ()
     await s.iniciarApontamento(PAINEL, 'os-1', d('08:00'));
     await expect(s.detalhe(PAINEL, 'os-1')).resolves.toMatchObject({
       situacao: 'Concluida',
+    });
+  });
+});
+
+/**
+ * Peça, foto e ocorrência começam todas por `detalhe(painel, osId)` — é isso
+ * que impede gravar anexo numa OS de outra empresa ou de pregão. Lição da
+ * revisão da Task 6: sem um teste que prove essa chamada, removê-la deixa a
+ * suíte inteira verde. Por isso cada um dos três métodos abaixo tem seu par
+ * "outra empresa" / "parceira", não só o caminho feliz.
+ */
+describe('MecanicaService — anexos', () => {
+  const OS_OUTRA_EMPRESA = {
+    id: 'os-outra-empresa',
+    companyId: 'empresa-2',
+    execucao: 'interna',
+    situacao: 'Aberta',
+  };
+  const OS_PARCEIRA = {
+    id: 'os-parceira',
+    companyId: 'empresa-1',
+    execucao: 'parceira',
+    situacao: 'Aberta',
+  };
+  const PECA = {
+    descricao: 'Filtro de óleo',
+    quantidade: 2,
+    valorUnit: 45.9,
+    codigo: null,
+    marca: null,
+    unidade: 'un',
+  };
+
+  describe('adicionarPeca', () => {
+    it('recusa peça em OS de outra empresa', async () => {
+      const s = new MecanicaService(prismaComApontamentos([OS_INTERNA], []));
+      await expect(
+        s.adicionarPeca(PAINEL, 'os-inexistente', PECA),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('404 ao gravar peça em OS de outra empresa', async () => {
+      const s = new MecanicaService(
+        prismaComApontamentos([OS_OUTRA_EMPRESA], []),
+      );
+      await expect(
+        s.adicionarPeca(PAINEL, 'os-outra-empresa', PECA),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('404 ao gravar peça em OS parceira — não existe para este módulo', async () => {
+      const s = new MecanicaService(prismaComApontamentos([OS_PARCEIRA], []));
+      await expect(
+        s.adicionarPeca(PAINEL, 'os-parceira', PECA),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('grava a peça vinculada à OS', async () => {
+      const s = new MecanicaService(prismaComApontamentos([OS_INTERNA], []));
+      await expect(s.adicionarPeca(PAINEL, 'os-1', PECA)).resolves.toMatchObject({
+        serviceOrderId: 'os-1',
+        descricao: 'Filtro de óleo',
+        quantidade: 2,
+      });
+    });
+  });
+
+  describe('adicionarFoto', () => {
+    it('404 ao anexar foto em OS de outra empresa', async () => {
+      const s = new MecanicaService(
+        prismaComApontamentos([OS_OUTRA_EMPRESA], []),
+      );
+      await expect(
+        s.adicionarFoto(PAINEL, 'os-outra-empresa', 'https://x/img.jpg', null),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('404 ao anexar foto em OS parceira — não existe para este módulo', async () => {
+      const s = new MecanicaService(prismaComApontamentos([OS_PARCEIRA], []));
+      await expect(
+        s.adicionarFoto(PAINEL, 'os-parceira', 'https://x/img.jpg', null),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('grava a URL com quem enviou', async () => {
+      const s = new MecanicaService(prismaComApontamentos([OS_INTERNA], []));
+      await expect(
+        s.adicionarFoto(PAINEL, 'os-1', 'https://x/img.jpg', 'antes do reparo'),
+      ).resolves.toMatchObject({
+        serviceOrderId: 'os-1',
+        url: 'https://x/img.jpg',
+        legenda: 'antes do reparo',
+        enviadaPorId: 'user-1',
+      });
+    });
+  });
+
+  describe('adicionarOcorrencia', () => {
+    it('404 ao lançar ocorrência em OS de outra empresa', async () => {
+      const s = new MecanicaService(
+        prismaComApontamentos([OS_OUTRA_EMPRESA], []),
+      );
+      await expect(
+        s.adicionarOcorrencia(PAINEL, 'os-outra-empresa', 'Aguardando peça'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('404 ao lançar ocorrência em OS parceira — não existe para este módulo', async () => {
+      const s = new MecanicaService(prismaComApontamentos([OS_PARCEIRA], []));
+      await expect(
+        s.adicionarOcorrencia(PAINEL, 'os-parceira', 'Aguardando peça'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('grava a ocorrência com o nome de quem escreveu', async () => {
+      const s = new MecanicaService(prismaComApontamentos([OS_INTERNA], []));
+      await expect(
+        s.adicionarOcorrencia(PAINEL, 'os-1', 'Aguardando peça'),
+      ).resolves.toMatchObject({ mensagem: 'Aguardando peça', usuario: 'user-1' });
     });
   });
 });
