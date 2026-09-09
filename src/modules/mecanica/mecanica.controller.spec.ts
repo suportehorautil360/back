@@ -1,4 +1,6 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { INTERCEPTORS_METADATA } from '@nestjs/common/constants';
+import { IdempotencyInterceptor } from '../../common/idempotency.interceptor';
 import { MecanicaController } from './mecanica.controller';
 import type {
   PainelPayload,
@@ -59,14 +61,44 @@ function arquivo(
   };
 }
 
-/**
- * Achado C2 da revisão final: o controller só lia `?minhas` — `?situacao`
- * chegava e era descartado em silêncio, e o painel (que chama
- * `/mecanica/os?situacao=Concluida` para o Histórico) recebia a mesma lista
- * da Bancada. Estes testes exercitam o CONTROLLER, não só o service: uma
- * regressão que voltasse a ignorar `?situacao` no controller não derrubaria
- * teste nenhum se a prova ficasse só no service.
- */
+describe('idempotência das escritas', () => {
+  /**
+   * Toda rota que CRIA linha precisa aceitar `Idempotency-Key`, senão o retry
+   * do outbox (resposta perdida numa rede ruim) duplica peça, foto e
+   * ocorrência. PATCH/PUT/DELETE ficam de fora porque são idempotentes por
+   * natureza: reenviar o mesmo corpo dá o mesmo estado.
+   */
+  const ROTAS_DE_ESCRITA: (keyof MecanicaController)[] = [
+    'assumir',
+    'iniciar',
+    'parar',
+    'lancar',
+    'adicionarPeca',
+    'adicionarFoto',
+    'uploadFoto',
+    'adicionarOcorrencia',
+    'concluir',
+  ];
+
+  it.each(ROTAS_DE_ESCRITA)('%s aceita Idempotency-Key', (metodo) => {
+    const interceptors: unknown[] =
+      Reflect.getMetadata(INTERCEPTORS_METADATA, MecanicaController.prototype[metodo]) ?? [];
+
+    expect(interceptors).toContain(IdempotencyInterceptor);
+  });
+
+  it('no upload, a idempotência vem ANTES do parser de multipart', () => {
+    // Num reenvio a resposta gravada volta sem subir o arquivo de novo — se o
+    // FileInterceptor viesse primeiro, o retry pagaria o upload à toa.
+    const interceptors: unknown[] = Reflect.getMetadata(
+      INTERCEPTORS_METADATA,
+      MecanicaController.prototype.uploadFoto,
+    );
+
+    expect(interceptors[0]).toBe(IdempotencyInterceptor);
+  });
+});
+
 describe('MecanicaController.eu', () => {
   it('devolve empresa, operador e nome de exibição do token', () => {
     const controller = new MecanicaController(servicoFalso(), uploadsFalso());
@@ -94,6 +126,14 @@ describe('MecanicaController.eu', () => {
   });
 });
 
+/**
+ * Achado C2 da revisão final: o controller só lia `?minhas` — `?situacao`
+ * chegava e era descartado em silêncio, e o painel (que chama
+ * `/mecanica/os?situacao=Concluida` para o Histórico) recebia a mesma lista
+ * da Bancada. Estes testes exercitam o CONTROLLER, não só o service: uma
+ * regressão que voltasse a ignorar `?situacao` no controller não derrubaria
+ * teste nenhum se a prova ficasse só no service.
+ */
 describe('MecanicaController.bancada — repasse de ?situacao', () => {
   it('repassa a situacao pedida para o service', async () => {
     const service = servicoFalso();

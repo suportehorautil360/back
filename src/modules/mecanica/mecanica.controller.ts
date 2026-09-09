@@ -16,6 +16,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { IdempotencyInterceptor } from '../../common/idempotency.interceptor';
 import { PainelGuard, type RequestComPainel } from '../../common/painel.guard';
 import { ModuloComercial } from '../../common/modulo-comercial.decorator';
 import {
@@ -135,24 +136,28 @@ export class MecanicaController {
   }
 
   @Post('os/:id/assumir')
+  @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: 'Assumir a OS — grava o responsável' })
   async assumir(@Req() req: RequestComPainel, @Param('id') id: string) {
     return this.service.assumir(req.painel, id);
   }
 
   @Post('os/:id/apontamentos/iniciar')
+  @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: 'Iniciar apontamento (fim em aberto)' })
   async iniciar(@Req() req: RequestComPainel, @Param('id') id: string) {
     return this.service.iniciarApontamento(req.painel, id);
   }
 
   @Post('apontamentos/:id/parar')
+  @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: 'Parar o apontamento aberto' })
   async parar(@Req() req: RequestComPainel, @Param('id') id: string) {
     return this.service.pararApontamento(req.painel, id);
   }
 
   @Post('os/:id/apontamentos')
+  @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: 'Lançar apontamento com início e fim' })
   async lancar(
     @Req() req: RequestComPainel,
@@ -191,6 +196,7 @@ export class MecanicaController {
   }
 
   @Post('os/:id/pecas')
+  @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: 'Registrar peça consumida na OS' })
   async adicionarPeca(
     @Req() req: RequestComPainel,
@@ -208,6 +214,7 @@ export class MecanicaController {
   }
 
   @Post('os/:id/fotos')
+  @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: 'Anexar foto (URL do Storage) à OS' })
   async adicionarFoto(
     @Req() req: RequestComPainel,
@@ -224,6 +231,7 @@ export class MecanicaController {
 
   @Post('os/:id/fotos/upload')
   @UseInterceptors(
+    IdempotencyInterceptor,
     FileInterceptor('file', { limits: { fileSize: TETO_MULTER_FOTO_OS } }),
   )
   @ApiConsumes('multipart/form-data')
@@ -269,6 +277,7 @@ export class MecanicaController {
   }
 
   @Post('os/:id/ocorrencias')
+  @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: 'Registrar ocorrência na timeline da OS' })
   async adicionarOcorrencia(
     @Req() req: RequestComPainel,
@@ -293,6 +302,7 @@ export class MecanicaController {
   }
 
   @Post('os/:id/concluir')
+  @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: 'Concluir a OS — exige laudo e nenhum apontamento aberto' })
   async concluir(@Req() req: RequestComPainel, @Param('id') id: string) {
     return this.service.concluir(req.painel, id);

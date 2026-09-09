@@ -166,12 +166,17 @@ describe('IdempotencyInterceptor', () => {
   });
 
   it('chave "processando" velha (>10 min) é assumida e o handler executa', async () => {
-    const { prisma, idempotencyKey } = prismaMock();
-    (prisma.idempotencyKey.findUnique as jest.Mock).mockResolvedValue({
+    const { prisma, idempotencyKey, store } = prismaMock();
+    const presa = {
       key: CHAVE,
       status: 'processando',
       createdAt: new Date(Date.now() - 11 * 60 * 1000),
-    });
+    };
+    // A linha precisa existir NO STORE, não só no retorno do findUnique: o
+    // interceptor assume a reserva com um `update`, e o fake procura ali. Sem
+    // semear, o teste falhava com "not found" — falha do dublê, não do código.
+    store.set(CHAVE, presa);
+    (prisma.idempotencyKey.findUnique as jest.Mock).mockResolvedValue(presa);
     const interceptor = new IdempotencyInterceptor(prisma);
     const handle = jest.fn(() => of({ data: 'executado' }));
     const r = await lastValueFrom(

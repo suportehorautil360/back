@@ -1,8 +1,9 @@
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/prisma/generated/client';
 
-const env = readFileSync(new URL('../.env', import.meta.url), 'utf8');
+const env = readFileSync(resolve(__dirname, '../.env'), 'utf8');
 const linha = env.split('\n').find((l) => l.startsWith('DATABASE_URL='));
 const connectionString = linha!.slice('DATABASE_URL='.length).trim().replace(/^["']|["']$/g, '');
 
