@@ -10,6 +10,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../../../common/jwt-auth.guard';
 import { AprovarSolicitacaoDto } from './dto/aprovar-solicitacao.dto';
 import { CreateSolicitacaoDto } from './dto/create-solicitacao.dto';
 import { ListSolicitacoesOficinaQueryDto } from './dto/list-solicitacoes-oficina-query.dto';
@@ -17,7 +19,16 @@ import { ListSolicitacoesQueryDto } from './dto/list-solicitacoes-query.dto';
 import { SolicitacoesService } from './solicitacoes.service';
 
 @ApiTags('os')
+/**
+ * Superfície herdada do 360, sem cliente vivo: nenhum app nem o painel chamam
+ * estas rotas hoje (levantado em 09/09/2026, lendo os repositórios clientes).
+ *
+ * Estava aberta — qualquer um na internet chamava. `JwtAuthGuard` exige token
+ * emitido pelo back; é o mínimo, e não substitui a checagem de a qual empresa
+ * o portador pertence, que estas rotas ainda não fazem.
+ */
 @Controller('os/solicitacoes')
+@UseGuards(JwtAuthGuard)
 export class SolicitacoesController {
   constructor(private readonly service: SolicitacoesService) {}
 

@@ -1,4 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../../common/jwt-auth.guard';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ParceirosService } from './parceiros.service';
 import { CreateParceiroDto } from './dto/create-parceiro.dto';
@@ -9,7 +11,16 @@ import {
 } from './dto/create-parceiro-login.dto';
 
 @ApiTags('parceiros')
+/**
+ * Superfície herdada do 360, sem cliente vivo: nenhum app nem o painel chamam
+ * estas rotas hoje (levantado em 09/09/2026, lendo os repositórios clientes).
+ *
+ * Estava aberta — qualquer um na internet chamava. `JwtAuthGuard` exige token
+ * emitido pelo back; é o mínimo, e não substitui a checagem de a qual empresa
+ * o portador pertence, que estas rotas ainda não fazem.
+ */
 @Controller('parceiros')
+@UseGuards(JwtAuthGuard)
 export class ParceirosController {
   constructor(private readonly parceirosService: ParceirosService) {}
 
