@@ -10,11 +10,19 @@ import {
   Put,
   Query,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PainelGuard, type RequestComPainel } from '../../common/painel.guard';
 import { ModuloComercial } from '../../common/modulo-comercial.decorator';
+import {
+  EXTENSOES,
+  LIMITE_BYTES_FOTO_OS,
+  UploadsService,
+} from '../uploads/uploads.service';
 import { MecanicaService } from './mecanica.service';
 import type { SituacaoOs } from './mecanica.service';
 import {
@@ -45,12 +53,44 @@ function validarSituacao(situacao?: string): SituacaoOs | undefined {
   return situacao as SituacaoOs;
 }
 
+/**
+ * Teto do multer SEMPRE acima de `LIMITE_BYTES_FOTO_OS`: se fossem iguais, um
+ * arquivo pouco maior nunca chegaria ao handler — o multer rejeitaria antes
+ * com um 413 cru, sem a mensagem amigável que `validarFotoOs` devolve em 400.
+ */
+const TETO_MULTER_FOTO_OS = LIMITE_BYTES_FOTO_OS + 3 * 1024 * 1024;
+
+/**
+ * Tipo e tamanho da foto de OS — a mesma dupla de checagem que
+ * `UploadsController` já faz para as outras fotos do back, lida daqui em vez
+ * de reinventada: `EXTENSOES` (tipos aceitos) e `LIMITE_BYTES_FOTO_OS`
+ * (teto de negócio) vêm do `UploadsService`.
+ */
+function validarFotoOs(file?: Express.Multer.File): Express.Multer.File {
+  if (!file) {
+    throw new BadRequestException('Envie a foto no campo "file".');
+  }
+  if (!EXTENSOES[file.mimetype]) {
+    throw new BadRequestException('Envie uma imagem (jpeg, png ou webp).');
+  }
+  if (file.size > LIMITE_BYTES_FOTO_OS) {
+    const limiteMb = LIMITE_BYTES_FOTO_OS / (1024 * 1024);
+    throw new BadRequestException(
+      `Imagem muito grande. Envie um arquivo de até ${limiteMb}MB.`,
+    );
+  }
+  return file;
+}
+
 @ApiTags('mecanica')
 @Controller('mecanica')
 @UseGuards(PainelGuard)
-@ModuloComercial('mecanica')
+@ModuloComercial('mecanica', 'mecanica')
 export class MecanicaController {
-  constructor(private readonly service: MecanicaService) {}
+  constructor(
+    private readonly service: MecanicaService,
+    private readonly uploads: UploadsService,
+  ) {}
 
   @Get('os')
   @ApiOperation({
@@ -160,6 +200,52 @@ export class MecanicaController {
       id,
       dto.url,
       dto.legenda ?? null,
+    );
+  }
+
+  @Post('os/:id/fotos/upload')
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: TETO_MULTER_FOTO_OS } }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Subir o arquivo da foto e anexar à OS numa única operação',
+    description:
+      'Multipart com campo "file" (imagem) e "legenda" opcional. Sobe pro ' +
+      'Storage e grava o ServiceOrderFoto na mesma chamada: nunca duas ' +
+      'requisições separadas (upload depois POST da URL), que deixariam ' +
+      'arquivo órfão no Storage se a segunda falhasse.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        legenda: { type: 'string' },
+      },
+    },
+  })
+  async uploadFoto(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('legenda') legenda: string | undefined,
+  ) {
+    const foto = validarFotoOs(file);
+    // Valida a posse da OS ANTES de subir pro Storage: se o upload viesse
+    // primeiro, uma OS de outra empresa (ou de pregão) deixaria o arquivo
+    // órfão no bucket assim que `adicionarFoto` recusasse a gravação.
+    await this.service.detalhe(req.painel, id);
+    const url = await this.uploads.uploadOsFoto(id, {
+      buffer: foto.buffer,
+      mimetype: foto.mimetype,
+    });
+    return this.service.adicionarFoto(
+      req.painel,
+      id,
+      url,
+      legenda?.trim() || null,
     );
   }
 

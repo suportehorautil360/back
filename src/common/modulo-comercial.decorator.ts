@@ -20,11 +20,14 @@ export interface ModuloComercialMeta {
   /**
    * `AccessGroup.key` em `role_access_groups`/`company_role_access_groups`.
    *
-   * Default = `featureKey`: coincide para mecânica (ambos `'mecanica'`), mas
-   * NÃO é regra geral — em `horautil/lib/company/access-groups.ts`,
+   * SEM default: em `horautil/lib/company/access-groups.ts`,
    * `ACCESS_GROUP_TO_MENU` mapeia `gestao_frota` → feature `frota` e
-   * `pessoas_rh` → feature `pessoas`. Quando o próximo módulo divergir assim,
-   * passe o segundo argumento.
+   * `pessoas_rh` → feature `pessoas` — as chaves divergem na maioria dos
+   * módulos, `mecanica` é a exceção que coincide. Um default `= featureKey`
+   * faria o próximo módulo esquecido virar um `AccessGroup` inexistente
+   * consultado em silêncio: `cargoLiberaGrupo` não acha a chave, nega pra
+   * todo mundo, e nada loga erro. Mapeamento de autorização não pode ter
+   * default implícito — por isso este é obrigatório.
    */
   accessGroupKey: string;
 }
@@ -35,13 +38,11 @@ export interface ModuloComercialMeta {
  *
  * @param featureKey Chave da feature em `company_features` (catálogo vive em
  *   `horautil/lib/features/catalog.ts`, não duplicado aqui).
- * @param accessGroupKey Chave do `AccessGroup` do cargo, quando diferente de
- *   `featureKey`.
+ * @param accessGroupKey Chave do `AccessGroup` do cargo. Obrigatório: veja o
+ *   comentário em `ModuloComercialMeta.accessGroupKey` sobre por que não tem
+ *   default.
  */
-export function ModuloComercial(
-  featureKey: string,
-  accessGroupKey = featureKey,
-) {
+export function ModuloComercial(featureKey: string, accessGroupKey: string) {
   const meta: ModuloComercialMeta = { featureKey, accessGroupKey };
   return SetMetadata(MODULO_COMERCIAL_KEY, meta);
 }

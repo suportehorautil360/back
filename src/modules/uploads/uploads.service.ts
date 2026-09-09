@@ -5,6 +5,7 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import WebSocket from 'ws';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -17,11 +18,15 @@ export type FotoUpload = {
   mimetype: string;
 };
 
-const EXTENSOES: Record<string, string> = {
+/** Extensões de imagem aceitas em todo upload de foto do back — leia daqui em vez de duplicar. */
+export const EXTENSOES: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
   'image/webp': 'webp',
 };
+
+/** Teto de negócio para a foto de uma OS (Mecânica) — mesma ordem de grandeza já usada para foto de checklist/abastecimento. */
+export const LIMITE_BYTES_FOTO_OS = 5 * 1024 * 1024;
 
 const DEFAULT_NOTA_FISCAL_BUCKET = 'notas-fiscais';
 
@@ -213,6 +218,45 @@ export class UploadsService {
       urls.push(storage.getPublicUrl(path).data.publicUrl);
     }
     return urls;
+  }
+
+  /**
+   * Sobe a foto de uma OS da Mecânica e devolve a URL pública.
+   *
+   * Mesmo bucket dos checklists (`this.bucket`) — não existe bucket dedicado
+   * pra Mecânica, e criar um só pra isso seria mais uma variável de ambiente
+   * pra configurar antes da demo, sem ganho nenhum. O prefixo `os-fotos/` é
+   * o que evita colidir com as pastas de checklist, que usam o checklistId
+   * cru como primeiro segmento (`uploadChecklistFotos` acima).
+   *
+   * Nome do arquivo é gerado aqui (timestamp + uuid), não o nome original do
+   * upload: assim dois envios da mesma OS nunca se sobrescrevem, ao contrário
+   * de `uploadChecklistFotos`, que upserta por nome porque ali o nome É o
+   * identificador do slot (ex.: "horimetro").
+   */
+  async uploadOsFoto(
+    osId: string,
+    file: { buffer: Buffer; mimetype: string },
+  ): Promise<string> {
+    const ext = EXTENSOES[file.mimetype];
+    if (!ext) {
+      throw new BadRequestException('Envie uma imagem (jpeg, png ou webp).');
+    }
+
+    await this.ensureBucket(this.bucket);
+    const storage = this.getCliente().storage.from(this.bucket);
+    const path = `os-fotos/${sanitizar(osId)}/${Date.now()}-${randomUUID()}.${ext}`;
+    const { error } = await storage.upload(path, file.buffer, {
+      contentType: file.mimetype,
+      upsert: false,
+    });
+    if (error) {
+      console.error('Erro no upload da foto da OS:', error);
+      throw new InternalServerErrorException(
+        `Não foi possível enviar a foto: ${storageErrorMessage(error)}`,
+      );
+    }
+    return storage.getPublicUrl(path).data.publicUrl;
   }
 
   /**
