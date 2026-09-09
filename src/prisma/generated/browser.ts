@@ -418,3 +418,13 @@ export type ApiAcessoSemToken = Prisma.ApiAcessoSemTokenModel
  * não para nada — o mecânico É a resposta ao problema.
  */
 export type ChecklistModelo = Prisma.ChecklistModeloModel
+/**
+ * Model ManualEquipamento
+ * Manual que o mecânico consulta na máquina.
+ * 
+ * Serve a UMA de três coisas: a máquina específica (`equipmentId`), todas as
+ * de um modelo, ou todas de um tipo. Sem isso, o manual de um modelo teria de
+ * ser subido uma vez por máquina — e atualizado doze vezes quando o
+ * fabricante revisa.
+ */
+export type ManualEquipamento = Prisma.ManualEquipamentoModel

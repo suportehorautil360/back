@@ -19,6 +19,7 @@ import {
   ordenarResultado,
 } from './regras/busca-checklist';
 import type { ChecklistModeloDto } from './dto/checklist-modelo.dto';
+import { ordenarParaMaquina } from './regras/manual';
 
 /** Mesma mensagem na checagem prévia e na rede do índice único parcial. */
 const MSG_APONTAMENTO_ABERTO =
@@ -489,6 +490,92 @@ export class MecanicaService {
         status: 'aguardando_aprovacao',
         ...comum,
       },
+    });
+  }
+
+  // ──────────────────────────────── manuais ────────────────────────────────
+
+  /**
+   * Os manuais que servem a uma máquina, do mais específico para o mais geral.
+   *
+   * Sem `equipamentoId`, devolve o acervo inteiro da empresa — é a visão de
+   * quem administra, não a de quem está na máquina.
+   */
+  async listarManuais(painel: PainelPayload, equipamentoId?: string) {
+    const manuais = await this.prisma.manualEquipamento.findMany({
+      where: { companyId: painel.companyId, ativo: true },
+      orderBy: { titulo: 'asc' },
+    });
+
+    if (!equipamentoId) return manuais;
+
+    const maquina = await this.prisma.equipment.findFirst({
+      where: { id: equipamentoId, companyId: painel.companyId },
+      select: { id: true, modelo: true, tipo: true },
+    });
+    if (!maquina) throw new NotFoundException('Equipamento não encontrado.');
+
+    return ordenarParaMaquina(manuais, maquina);
+  }
+
+  /**
+   * Registra o manual já subido para o Storage.
+   *
+   * Vínculo: `equipamentoId` prende a uma máquina; `modelo` ou `tipo` alcançam
+   * a família; nada preenchido vale para a frota inteira. Guardar os três
+   * evita subir o mesmo PDF uma vez por máquina — e atualizá-lo doze vezes
+   * quando o fabricante revisa.
+   */
+  async registrarManual(
+    painel: PainelPayload,
+    dados: {
+      titulo: string;
+      categoria?: string;
+      url: string;
+      mimetype: string;
+      tamanhoBytes: number;
+      equipamentoId?: string;
+      modelo?: string;
+      tipo?: string;
+    },
+  ) {
+    if (dados.equipamentoId) {
+      const existe = await this.prisma.equipment.findFirst({
+        where: { id: dados.equipamentoId, companyId: painel.companyId },
+        select: { id: true },
+      });
+      if (!existe) throw new NotFoundException('Equipamento não encontrado.');
+    }
+
+    return this.prisma.manualEquipamento.create({
+      data: {
+        companyId: painel.companyId,
+        titulo: dados.titulo,
+        categoria: dados.categoria ?? null,
+        url: dados.url,
+        mimetype: dados.mimetype,
+        tamanhoBytes: dados.tamanhoBytes,
+        equipmentId: dados.equipamentoId ?? null,
+        modelo: dados.modelo ?? null,
+        tipo: dados.tipo ?? null,
+      },
+    });
+  }
+
+  /**
+   * Arquiva em vez de apagar: o arquivo continua no Storage e a URL pode
+   * estar num histórico. Sumir com ele quebraria link antigo sem aviso.
+   */
+  async arquivarManual(painel: PainelPayload, id: string) {
+    const manual = await this.prisma.manualEquipamento.findFirst({
+      where: { id, companyId: painel.companyId },
+      select: { id: true },
+    });
+    if (!manual) throw new NotFoundException('Manual não encontrado.');
+
+    return this.prisma.manualEquipamento.update({
+      where: { id },
+      data: { ativo: false },
     });
   }
 

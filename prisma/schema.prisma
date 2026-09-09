@@ -116,6 +116,8 @@ model Company {
   notificacoes            Notificacao[]
   whatsappRecipients      CompanyWhatsappRecipient[]
   checklistModelos ChecklistModelo[]
+  manuais ManualEquipamento[]
+
 
 
   @@map("clients")
@@ -279,6 +281,8 @@ model Equipment {
   cargasComboio      ComboioReabastecimento[]
   serviceOrders      ServiceOrder[]
   fleetfuelIntencoes FleetfuelIntencao[]
+  manuais ManualEquipamento[]
+
 
   @@index([companyId, status])
   @@index([companyId, tipo])
@@ -1913,4 +1917,40 @@ model ChecklistModelo {
   @@unique([companyId, codigo])
   @@index([companyId, ativo])
   @@map("checklist_modelos")
+}
+
+/// Manual que o mecânico consulta na máquina.
+///
+/// Serve a UMA de três coisas: a máquina específica (`equipmentId`), todas as
+/// de um modelo, ou todas de um tipo. Sem isso, o manual de um modelo teria de
+/// ser subido uma vez por máquina — e atualizado doze vezes quando o
+/// fabricante revisa.
+model ManualEquipamento {
+  id        String @id @default(uuid()) @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+
+  titulo String
+  /// Texto livre: cada frota organiza do seu jeito.
+  categoria String?
+
+  /// O arquivo vive no Storage; aqui fica a URL.
+  url          String @db.Text
+  mimetype     String
+  tamanhoBytes Int    @map("tamanho_bytes")
+
+  /// Nenhum preenchido = vale para a frota inteira.
+  equipmentId String? @map("equipment_id") @db.Uuid
+  modelo      String?
+  tipo        String?
+
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  equipment Equipment? @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, ativo])
+  @@index([equipmentId])
+  @@map("manuais_equipamento")
 }

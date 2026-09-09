@@ -22,6 +22,8 @@ import { ModuloComercial } from '../../common/modulo-comercial.decorator';
 import {
   EXTENSOES,
   LIMITE_BYTES_FOTO_OS,
+  LIMITE_BYTES_MANUAL,
+  TIPOS_MANUAL,
   UploadsService,
 } from '../uploads/uploads.service';
 import { MecanicaService } from './mecanica.service';
@@ -63,6 +65,25 @@ function validarSituacao(situacao?: string): SituacaoOs | undefined {
  * com um 413 cru, sem a mensagem amigável que `validarFotoOs` devolve em 400.
  */
 const TETO_MULTER_FOTO_OS = LIMITE_BYTES_FOTO_OS + 3 * 1024 * 1024;
+
+/** Mesma folga do teto de foto, pelo mesmo motivo: mensagem em vez de 413 cru. */
+const TETO_MULTER_MANUAL = LIMITE_BYTES_MANUAL + 5 * 1024 * 1024;
+
+function validarManual(file?: Express.Multer.File): Express.Multer.File {
+  if (!file) {
+    throw new BadRequestException('Envie o arquivo no campo "file".');
+  }
+  if (!TIPOS_MANUAL[file.mimetype]) {
+    throw new BadRequestException('Envie um PDF ou uma imagem do manual.');
+  }
+  if (file.size > LIMITE_BYTES_MANUAL) {
+    const limiteMb = LIMITE_BYTES_MANUAL / (1024 * 1024);
+    throw new BadRequestException(
+      `Arquivo muito grande. Envie até ${limiteMb}MB.`,
+    );
+  }
+  return file;
+}
 
 /**
  * Tipo e tamanho da foto de OS — a mesma dupla de checagem que
@@ -351,6 +372,88 @@ export class MecanicaController {
   })
   async recusarOrcamento(@Req() req: RequestComPainel, @Param('id') id: string) {
     return this.service.decidirOrcamento(req.painel, id, 'recusar');
+  }
+
+  // ──────────────────────────────── manuais ────────────────────────────────
+
+  /**
+   * Manuais que o mecânico consulta.
+   *
+   * Com `equipamentoId`, vêm do mais específico para o mais geral: o manual
+   * daquela máquina antes do manual do modelo, e este antes do procedimento
+   * geral da frota. Sem ele, é o acervo inteiro — a visão de quem administra.
+   */
+  @Get('manuais')
+  @ApiOperation({ summary: 'Manuais da empresa, ordenados para a máquina' })
+  @ApiQuery({ name: 'equipamentoId', required: false })
+  async listarManuais(
+    @Req() req: RequestComPainel,
+    @Query('equipamentoId') equipamentoId?: string,
+  ) {
+    return this.service.listarManuais(req.painel, equipamentoId);
+  }
+
+  /**
+   * Sobe o arquivo e registra o manual numa chamada só — o mesmo desenho da
+   * foto de OS, pelo mesmo motivo: em duas requisições, falhar a segunda
+   * deixaria arquivo órfão no Storage.
+   */
+  @Post('manuais/upload')
+  @UseInterceptors(
+    IdempotencyInterceptor,
+    FileInterceptor('file', { limits: { fileSize: TETO_MULTER_MANUAL } }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Subir um manual (PDF ou imagem) e registrá-lo' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file', 'titulo'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        titulo: { type: 'string' },
+        categoria: { type: 'string' },
+        equipamentoId: { type: 'string', description: 'Prende a uma máquina.' },
+        modelo: { type: 'string', description: 'Vale para todas desse modelo.' },
+        tipo: { type: 'string', description: 'Vale para todas desse tipo.' },
+      },
+    },
+  })
+  async uploadManual(
+    @Req() req: RequestComPainel,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('titulo') titulo: string,
+    @Body('categoria') categoria?: string,
+    @Body('equipamentoId') equipamentoId?: string,
+    @Body('modelo') modelo?: string,
+    @Body('tipo') tipo?: string,
+  ) {
+    const arquivo = validarManual(file);
+    if (!titulo?.trim()) {
+      throw new BadRequestException('Dê um título ao manual.');
+    }
+
+    const url = await this.uploads.uploadManual(req.painel.companyId, {
+      buffer: arquivo.buffer,
+      mimetype: arquivo.mimetype,
+    });
+
+    return this.service.registrarManual(req.painel, {
+      titulo: titulo.trim(),
+      categoria: categoria?.trim() || undefined,
+      url,
+      mimetype: arquivo.mimetype,
+      tamanhoBytes: arquivo.size,
+      equipamentoId: equipamentoId?.trim() || undefined,
+      modelo: modelo?.trim() || undefined,
+      tipo: tipo?.trim() || undefined,
+    });
+  }
+
+  @Delete('manuais/:id')
+  @ApiOperation({ summary: 'Arquivar o manual — o arquivo continua no Storage' })
+  async arquivarManual(@Req() req: RequestComPainel, @Param('id') id: string) {
+    return this.service.arquivarManual(req.painel, id);
   }
 
   // ───────────────────────── checklists da empresa ─────────────────────────

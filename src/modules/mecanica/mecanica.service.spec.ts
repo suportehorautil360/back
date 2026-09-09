@@ -1711,3 +1711,86 @@ describe('MecanicaService — catálogo de checklist', () => {
     expect(atualizados[0]).toEqual({ ativo: false });
   });
 });
+
+/** Manuais que o mecânico consulta na máquina. */
+function prismaComManuais(manuais: Record<string, unknown>[], maquina: Record<string, unknown> | null) {
+  const criados: Record<string, unknown>[] = [];
+  return {
+    prisma: {
+      manualEquipamento: {
+        findMany: jest.fn(({ where }: { where: Record<string, unknown> }) =>
+          Promise.resolve(manuais.filter((m) => m.companyId === where.companyId && m.ativo)),
+        ),
+        findFirst: jest.fn(({ where }: { where: Record<string, unknown> }) =>
+          Promise.resolve(manuais.find((m) => m.id === where.id && m.companyId === where.companyId) ?? null),
+        ),
+        create: jest.fn(({ data }: { data: Record<string, unknown> }) => {
+          criados.push(data);
+          return Promise.resolve({ id: 'man-novo', ...data });
+        }),
+        update: jest.fn(({ data }: { data: Record<string, unknown> }) => Promise.resolve({ id: 'man-1', ...data })),
+      },
+      equipment: { findFirst: jest.fn(() => Promise.resolve(maquina)) },
+    } as never,
+    criados,
+  };
+}
+
+const MANUAIS = [
+  { id: 'm-geral', companyId: 'empresa-1', ativo: true, titulo: 'Procedimento geral', equipmentId: null, modelo: null, tipo: null },
+  { id: 'm-modelo', companyId: 'empresa-1', ativo: true, titulo: 'Manual CAT 320D', equipmentId: null, modelo: 'CAT 320D', tipo: null },
+  { id: 'm-maquina', companyId: 'empresa-1', ativo: true, titulo: 'Desta escavadeira', equipmentId: 'eq-1', modelo: null, tipo: null },
+  { id: 'm-outra', companyId: 'empresa-1', ativo: true, titulo: 'De outra máquina', equipmentId: 'eq-9', modelo: null, tipo: null },
+];
+
+describe('MecanicaService — manuais', () => {
+  it('ordena do mais específico para o mais geral', async () => {
+    // É a ordem em que o mecânico procura: o manual da máquina dele antes do
+    // procedimento geral da frota.
+    const { prisma } = prismaComManuais(MANUAIS, { id: 'eq-1', modelo: 'CAT 320D', tipo: 'Escavadeira' });
+    const s = new MecanicaService(prisma);
+
+    const r = await s.listarManuais(PAINEL, 'eq-1');
+
+    expect(r.map((m) => m.id)).toEqual(['m-maquina', 'm-modelo', 'm-geral']);
+  });
+
+  it('não mostra manual preso a outra máquina', async () => {
+    const { prisma } = prismaComManuais(MANUAIS, { id: 'eq-1', modelo: 'CAT 320D', tipo: null });
+    const s = new MecanicaService(prisma);
+
+    const r = await s.listarManuais(PAINEL, 'eq-1');
+
+    expect(r.some((m) => m.id === 'm-outra')).toBe(false);
+  });
+
+  it('sem equipamento, devolve o acervo inteiro — é a visão de quem administra', async () => {
+    const { prisma } = prismaComManuais(MANUAIS, null);
+    const s = new MecanicaService(prisma);
+
+    expect(await s.listarManuais(PAINEL)).toHaveLength(4);
+  });
+
+  it('recusa manual preso a máquina de outra empresa', async () => {
+    const { prisma, criados } = prismaComManuais(MANUAIS, null);
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.registrarManual(PAINEL, {
+        titulo: 'x', url: 'u', mimetype: 'application/pdf', tamanhoBytes: 1, equipamentoId: 'eq-de-outra',
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(criados).toHaveLength(0);
+  });
+
+  it('sem vínculo nenhum, o manual vale para a frota inteira', async () => {
+    const { prisma, criados } = prismaComManuais([], null);
+    const s = new MecanicaService(prisma);
+
+    await s.registrarManual(PAINEL, {
+      titulo: 'Norma de segurança', url: 'u', mimetype: 'application/pdf', tamanhoBytes: 10,
+    });
+
+    expect(criados[0]).toMatchObject({ equipmentId: null, modelo: null, tipo: null });
+  });
+});

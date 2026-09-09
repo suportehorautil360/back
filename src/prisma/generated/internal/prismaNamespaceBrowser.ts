@@ -104,7 +104,8 @@ export const ModelName = {
   IdempotencyKey: 'IdempotencyKey',
   Notificacao: 'Notificacao',
   ApiAcessoSemToken: 'ApiAcessoSemToken',
-  ChecklistModelo: 'ChecklistModelo'
+  ChecklistModelo: 'ChecklistModelo',
+  ManualEquipamento: 'ManualEquipamento'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1164,6 +1165,25 @@ export const ChecklistModeloScalarFieldEnum = {
 } as const
 
 export type ChecklistModeloScalarFieldEnum = (typeof ChecklistModeloScalarFieldEnum)[keyof typeof ChecklistModeloScalarFieldEnum]
+
+
+export const ManualEquipamentoScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  titulo: 'titulo',
+  categoria: 'categoria',
+  url: 'url',
+  mimetype: 'mimetype',
+  tamanhoBytes: 'tamanhoBytes',
+  equipmentId: 'equipmentId',
+  modelo: 'modelo',
+  tipo: 'tipo',
+  ativo: 'ativo',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ManualEquipamentoScalarFieldEnum = (typeof ManualEquipamentoScalarFieldEnum)[keyof typeof ManualEquipamentoScalarFieldEnum]
 
 
 export const SortOrder = {

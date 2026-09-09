@@ -28,6 +28,21 @@ export const EXTENSOES: Record<string, string> = {
 /** Teto de negócio para a foto de uma OS (Mecânica) — mesma ordem de grandeza já usada para foto de checklist/abastecimento. */
 export const LIMITE_BYTES_FOTO_OS = 5 * 1024 * 1024;
 
+/**
+ * Manual de máquina pesada é documento de fabricante: 200 páginas com esquema
+ * elétrico não cabem em 5MB. 25MB cobre o caso real sem abrir a porta para
+ * alguém usar o bucket como disco.
+ */
+export const LIMITE_BYTES_MANUAL = 25 * 1024 * 1024;
+
+/** PDF é o formato do fabricante; imagem cobre a foto da página do manual. */
+export const TIPOS_MANUAL: Record<string, string> = {
+  'application/pdf': 'pdf',
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
+
 const DEFAULT_NOTA_FISCAL_BUCKET = 'notas-fiscais';
 
 /** Privado por exigência da Portaria 671 — ver o comentário de `photoUrl` no schema. */
@@ -234,6 +249,38 @@ export class UploadsService {
    * de `uploadChecklistFotos`, que upserta por nome porque ali o nome É o
    * identificador do slot (ex.: "horimetro").
    */
+  /**
+   * Sobe o manual e devolve a URL pública.
+   *
+   * Vai para o mesmo bucket das fotos de OS, sob um prefixo próprio: o manual
+   * é documento de consulta, não dado sensível, e separar bucket obrigaria a
+   * mais uma configuração de ambiente sem ganho nenhum.
+   */
+  async uploadManual(
+    companyId: string,
+    file: { buffer: Buffer; mimetype: string },
+  ): Promise<string> {
+    const ext = TIPOS_MANUAL[file.mimetype];
+    if (!ext) {
+      throw new BadRequestException('Envie um PDF ou uma imagem do manual.');
+    }
+
+    await this.ensureBucket(this.bucket);
+    const storage = this.getCliente().storage.from(this.bucket);
+    const path = `manuais/${sanitizar(companyId)}/${Date.now()}-${randomUUID()}.${ext}`;
+    const { error } = await storage.upload(path, file.buffer, {
+      contentType: file.mimetype,
+      upsert: false,
+    });
+    if (error) {
+      console.error('Erro no upload do manual:', error);
+      throw new InternalServerErrorException(
+        `Não foi possível enviar o manual: ${storageErrorMessage(error)}`,
+      );
+    }
+    return storage.getPublicUrl(path).data.publicUrl;
+  }
+
   async uploadOsFoto(
     osId: string,
     file: { buffer: Buffer; mimetype: string },
