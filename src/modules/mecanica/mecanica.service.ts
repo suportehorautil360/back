@@ -506,7 +506,10 @@ export class MecanicaService {
       },
       select: {
         id: true,
-        prefixo: true,
+        // `descricao` é como o Equipment identifica a máquina; não existe
+        // coluna `prefixo` — o app chama de prefixo o que o back guarda aqui.
+        descricao: true,
+        tipo: true,
         placa: true,
         modelo: true,
         medicaoAtual: true,
@@ -514,7 +517,7 @@ export class MecanicaService {
         intervaloRevisao: true,
         unidadeRevisao: true,
       },
-      orderBy: { prefixo: 'asc' },
+      orderBy: { descricao: 'asc' },
     });
   }
 
