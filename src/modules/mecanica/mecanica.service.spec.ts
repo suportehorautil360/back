@@ -108,6 +108,9 @@ function prismaComRelacoes(
     fotos?: Record<string, unknown>[];
     ocorrencias?: Record<string, unknown>[];
     laudo?: Record<string, unknown> | null;
+    responsavel?: Record<string, unknown> | null;
+    /** Tabela de apoio pra resolver `apontamentos[].operator` por `operatorId`. */
+    operadores?: Record<string, unknown>[];
   },
 ) {
   const casa = (l: Record<string, unknown>, w: Record<string, unknown>) =>
@@ -132,6 +135,21 @@ function prismaComRelacoes(
   const doOs = (linhas: Record<string, unknown>[] = []) =>
     linhas.filter((l) => l.serviceOrderId === os.id);
 
+  /**
+   * Aplica `select` de verdade sobre o registro — sem isso, uma mutação que
+   * tirasse `nome` do `select` do responsável/operador não derrubaria teste
+   * nenhum, porque o fake sempre devolveria o fixture inteiro.
+   */
+  const aplicarSelect = (
+    registro: Record<string, unknown> | null,
+    select?: Record<string, boolean>,
+  ) => {
+    if (!registro || !select) return registro;
+    return Object.fromEntries(
+      Object.entries(registro).filter(([campo]) => select[campo]),
+    );
+  };
+
   return {
     serviceOrder: {
       findFirst: jest.fn(({ where, include }) => {
@@ -139,11 +157,29 @@ function prismaComRelacoes(
         if (!include) return Promise.resolve({ ...os });
 
         const resultado: Record<string, unknown> = { ...os };
+        if (include.responsavel) {
+          resultado.responsavel = aplicarSelect(
+            relacoes.responsavel ?? null,
+            include.responsavel.select,
+          );
+        }
         if (include.apontamentos) {
-          resultado.apontamentos = aplicarOrderBy(
+          const apontamentosOrdenados = aplicarOrderBy(
             doOs(relacoes.apontamentos),
             include.apontamentos.orderBy,
           );
+          const includeOperator = include.apontamentos.include?.operator;
+          resultado.apontamentos = includeOperator
+            ? apontamentosOrdenados.map((ap) => ({
+                ...ap,
+                operator: aplicarSelect(
+                  (relacoes.operadores ?? []).find(
+                    (op) => op.id === ap.operatorId,
+                  ) ?? null,
+                  includeOperator.select,
+                ),
+              }))
+            : apontamentosOrdenados;
         }
         if (include.insumos) {
           resultado.insumos = aplicarOrderBy(
@@ -222,6 +258,72 @@ describe('MecanicaService.detalhe — relações', () => {
       'oc-2',
     ]);
     expect(detalhe.laudo).toMatchObject({ id: 'la-1', causa: 'Vazamento' });
+  });
+});
+
+/**
+ * Achado: a tela de detalhe mostrava o UUID cru do responsável e não dizia
+ * quem apontou cada intervalo — a API não trazia `Operator.nome`. Prova aqui
+ * que `detalhe` devolve o nome do responsável da OS e o nome do operador de
+ * CADA apontamento, não só do primeiro.
+ */
+describe('MecanicaService.detalhe — nome do responsável e dos operadores', () => {
+  const OS_COM_RESPONSAVEL = {
+    id: 'os-1',
+    companyId: 'empresa-1',
+    execucao: 'interna',
+    responsavelOperatorId: 'op-1',
+  };
+
+  it('traz o nome do responsável e o nome do operador de cada apontamento', async () => {
+    const s = new MecanicaService(
+      prismaComRelacoes(OS_COM_RESPONSAVEL, {
+        responsavel: { id: 'op-1', nome: 'Carlos Mecânico' },
+        apontamentos: [
+          {
+            id: 'ap-1',
+            serviceOrderId: 'os-1',
+            operatorId: 'op-1',
+            inicio: d('08:00'),
+          },
+          {
+            id: 'ap-2',
+            serviceOrderId: 'os-1',
+            operatorId: 'op-2',
+            inicio: d('10:00'),
+          },
+        ],
+        operadores: [
+          { id: 'op-1', nome: 'Carlos Mecânico' },
+          { id: 'op-2', nome: 'Beatriz Mecânica' },
+        ],
+      }),
+    );
+
+    const detalhe = await s.detalhe(PAINEL, 'os-1');
+
+    expect(detalhe.responsavel).toMatchObject({ nome: 'Carlos Mecânico' });
+    expect(
+      detalhe.apontamentos.map(
+        (a: { operator: { nome: string } }) => a.operator.nome,
+      ),
+    ).toEqual(['Carlos Mecânico', 'Beatriz Mecânica']);
+  });
+
+  it('devolve responsavel nulo quando ninguém assumiu a OS', async () => {
+    const osSemResponsavel = {
+      id: 'os-2',
+      companyId: 'empresa-1',
+      execucao: 'interna',
+      responsavelOperatorId: null,
+    };
+    const s = new MecanicaService(
+      prismaComRelacoes(osSemResponsavel, { responsavel: null }),
+    );
+
+    const detalhe = await s.detalhe(PAINEL, 'os-2');
+
+    expect(detalhe.responsavel).toBeNull();
   });
 });
 

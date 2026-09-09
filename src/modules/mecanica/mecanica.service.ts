@@ -65,7 +65,11 @@ export class MecanicaService {
         execucao: 'interna',
       },
       include: {
-        apontamentos: { orderBy: { inicio: 'asc' } },
+        responsavel: { select: { id: true, nome: true } },
+        apontamentos: {
+          orderBy: { inicio: 'asc' },
+          include: { operator: { select: { id: true, nome: true } } },
+        },
         insumos: { orderBy: { ordem: 'asc' } },
         fotos: { orderBy: { createdAt: 'asc' } },
         ocorrencias: { orderBy: { createdAt: 'asc' } },
