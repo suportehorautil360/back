@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   Req,
   UseGuards,
@@ -18,6 +19,7 @@ import {
   LancarApontamentoDto,
 } from './dto/apontamento.dto';
 import { FotoDto, OcorrenciaDto, PecaDto } from './dto/anexos.dto';
+import { LaudoDto } from './dto/laudo.dto';
 
 @ApiTags('mecanica')
 @Controller('mecanica')
@@ -136,5 +138,25 @@ export class MecanicaController {
     @Body() dto: OcorrenciaDto,
   ) {
     return this.service.adicionarOcorrencia(req.painel, id, dto.mensagem);
+  }
+
+  @Put('os/:id/laudo')
+  @ApiOperation({ summary: 'Gravar ou editar o laudo técnico da OS' })
+  async salvarLaudo(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: LaudoDto,
+  ) {
+    return this.service.salvarLaudo(req.painel, id, {
+      causa: dto.causa,
+      servicoFeito: dto.servicoFeito,
+      pendencias: dto.pendencias ?? null,
+    });
+  }
+
+  @Post('os/:id/concluir')
+  @ApiOperation({ summary: 'Concluir a OS — exige laudo e nenhum apontamento aberto' })
+  async concluir(@Req() req: RequestComPainel, @Param('id') id: string) {
+    return this.service.concluir(req.painel, id);
   }
 }

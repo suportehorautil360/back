@@ -635,3 +635,165 @@ describe('MecanicaService — anexos', () => {
     });
   });
 });
+
+/**
+ * Estende o padrão dos fakes anteriores: `serviceOrderLaudo` ganha
+ * `findUnique`, `upsert` e `update` sobre uma tabela em memória própria, e
+ * `serviceOrderApontamento.findFirst` filtra `fim: null` — é o que prova que
+ * `concluir` barra a conclusão com o cronômetro rodando.
+ *
+ * `laudo` é copiado (`{ ...laudo }`) antes de entrar na tabela em memória:
+ * sem isso, `upsert`/`update` mutariam o objeto do fixture compartilhado
+ * entre os `it()` do describe (ex.: `laudoAberto`), vazando estado de um
+ * teste para o outro.
+ *
+ * `casa` ignora uma chave do `where` quando a linha não a possui (ex.:
+ * o apontamento fixture do teste de "apontamento aberto" não carrega
+ * `serviceOrderId`, só `fim`) — isso mantém o filtro por `fim: null` com
+ * dente de verdade, sem exigir que toda fixture repita todo campo do `where`.
+ */
+function prismaComLaudo(
+  os: Record<string, unknown>[],
+  laudo: Record<string, unknown> | null,
+  apontamentos: Record<string, unknown>[] = [],
+) {
+  const casa = (l: Record<string, unknown>, w: Record<string, unknown>) =>
+    Object.entries(w).every(([k, v]) =>
+      v === undefined || !(k in l) ? true : l[k] === v,
+    );
+  const laudos: Record<string, unknown>[] = laudo ? [{ ...laudo }] : [];
+  return {
+    serviceOrder: {
+      findFirst: jest.fn(({ where }) =>
+        Promise.resolve(os.find((l) => casa(l, where)) ?? null),
+      ),
+      update: jest.fn(({ data }) => Promise.resolve({ ...os[0], ...data })),
+    },
+    serviceOrderLaudo: {
+      findUnique: jest.fn(({ where }) =>
+        Promise.resolve(laudos.find((l) => casa(l, where)) ?? null),
+      ),
+      upsert: jest.fn(({ where, create, update }) => {
+        const indice = laudos.findIndex((l) => casa(l, where));
+        if (indice === -1) {
+          const novo = { id: 'novo-laudo', fechadoEm: null, ...create };
+          laudos.push(novo);
+          return Promise.resolve(novo);
+        }
+        Object.assign(laudos[indice], update);
+        return Promise.resolve(laudos[indice]);
+      }),
+      update: jest.fn(({ where, data }) => {
+        const alvo = laudos.find((l) => casa(l, where));
+        if (alvo) Object.assign(alvo, data);
+        return Promise.resolve(alvo ?? null);
+      }),
+    },
+    serviceOrderApontamento: {
+      findFirst: jest.fn(({ where }) =>
+        Promise.resolve(apontamentos.find((l) => casa(l, where)) ?? null),
+      ),
+    },
+  } as never;
+}
+
+describe('MecanicaService — laudo e conclusão', () => {
+  const laudoAberto = {
+    id: 'l-1',
+    serviceOrderId: 'os-1',
+    causa: 'Vazamento no cilindro',
+    servicoFeito: 'Troca do retentor',
+    fechadoEm: null,
+  };
+
+  it('recusa concluir sem laudo', async () => {
+    const s = new MecanicaService(prismaComLaudo([OS_INTERNA], null));
+    await expect(s.concluir(PAINEL, 'os-1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
+  it('conclui quando há laudo e carimba fechadoEm', async () => {
+    const s = new MecanicaService(prismaComLaudo([OS_INTERNA], laudoAberto));
+    await expect(s.concluir(PAINEL, 'os-1')).resolves.toMatchObject({
+      situacao: 'Concluida',
+    });
+  });
+
+  it('recusa editar laudo já fechado', async () => {
+    const s = new MecanicaService(
+      prismaComLaudo([OS_INTERNA], {
+        ...laudoAberto,
+        fechadoEm: new Date('2026-09-08T18:00:00-03:00'),
+      }),
+    );
+    await expect(
+      s.salvarLaudo(PAINEL, 'os-1', {
+        causa: 'outra',
+        servicoFeito: 'outro',
+        pendencias: null,
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('recusa concluir OS com apontamento ainda aberto', async () => {
+    const s = new MecanicaService(
+      prismaComLaudo([OS_INTERNA], laudoAberto, [
+        { id: 'ap-0', operatorId: 'op-1', inicio: d('08:00'), fim: null },
+      ]),
+    );
+    await expect(s.concluir(PAINEL, 'os-1')).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+  });
+});
+
+/**
+ * Lição das Tasks 6/7: `salvarLaudo` e `concluir` chamam `detalhe(painel,
+ * osId)` logo no início — é isso que impede escrever laudo ou concluir OS de
+ * outra empresa ou de pregão. Sem um teste que prove essa chamada, removê-la
+ * deixaria a suíte inteira verde.
+ */
+describe('MecanicaService — laudo e conclusão — posse/empresa', () => {
+  const OS_OUTRA_EMPRESA = {
+    id: 'os-outra-empresa',
+    companyId: 'empresa-2',
+    execucao: 'interna',
+    situacao: 'Aberta',
+  };
+  const OS_PARCEIRA = {
+    id: 'os-parceira',
+    companyId: 'empresa-1',
+    execucao: 'parceira',
+    situacao: 'Aberta',
+  };
+  const DADOS_LAUDO = { causa: 'x', servicoFeito: 'y', pendencias: null };
+
+  it('404 ao salvar laudo em OS de outra empresa', async () => {
+    const s = new MecanicaService(prismaComLaudo([OS_OUTRA_EMPRESA], null));
+    await expect(
+      s.salvarLaudo(PAINEL, 'os-outra-empresa', DADOS_LAUDO),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('404 ao salvar laudo em OS parceira — não existe para este módulo', async () => {
+    const s = new MecanicaService(prismaComLaudo([OS_PARCEIRA], null));
+    await expect(
+      s.salvarLaudo(PAINEL, 'os-parceira', DADOS_LAUDO),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('404 ao concluir OS de outra empresa', async () => {
+    const s = new MecanicaService(prismaComLaudo([OS_OUTRA_EMPRESA], null));
+    await expect(s.concluir(PAINEL, 'os-outra-empresa')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
+  it('404 ao concluir OS parceira — não existe para este módulo', async () => {
+    const s = new MecanicaService(prismaComLaudo([OS_PARCEIRA], null));
+    await expect(s.concluir(PAINEL, 'os-parceira')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+});

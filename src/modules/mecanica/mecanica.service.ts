@@ -323,4 +323,71 @@ export class MecanicaService {
       },
     });
   }
+
+  /**
+   * Um laudo por OS (`serviceOrderId` é único). Editável livremente até
+   * `concluir` carimbar `fechadoEm` — a partir daí é o documento que o
+   * gestor mostra ao cliente, e não aceita mais edição.
+   */
+  async salvarLaudo(
+    painel: PainelPayload,
+    osId: string,
+    dados: { causa: string; servicoFeito: string; pendencias: string | null },
+  ) {
+    await this.detalhe(painel, osId);
+    const atual = await this.prisma.serviceOrderLaudo.findUnique({
+      where: { serviceOrderId: osId },
+    });
+    if (atual?.fechadoEm) {
+      throw new ConflictException(
+        'Laudo já fechado. Reabra a OS para alterá-lo.',
+      );
+    }
+    return this.prisma.serviceOrderLaudo.upsert({
+      where: { serviceOrderId: osId },
+      create: { serviceOrderId: osId, autorId: painel.companyUserId, ...dados },
+      update: { ...dados },
+    });
+  }
+
+  /**
+   * Concluir carimba o laudo e o torna imutável — é o documento que o gestor
+   * mostra ao cliente.
+   *
+   * Apontamento aberto barra a conclusão de propósito: fechar a OS com o
+   * cronômetro rodando gravaria um intervalo que só cresce, e o custo da OS
+   * mudaria sozinho depois de ela estar fechada.
+   */
+  async concluir(painel: PainelPayload, osId: string, agora: Date = new Date()) {
+    await this.detalhe(painel, osId);
+
+    const laudo = await this.prisma.serviceOrderLaudo.findUnique({
+      where: { serviceOrderId: osId },
+    });
+    if (!laudo) {
+      throw new BadRequestException(
+        'Preencha o laudo antes de concluir a OS.',
+      );
+    }
+
+    const aberto = await this.prisma.serviceOrderApontamento.findFirst({
+      where: { serviceOrderId: osId, fim: null },
+    });
+    if (aberto) {
+      throw new ConflictException(
+        'Pare o apontamento em andamento antes de concluir.',
+      );
+    }
+
+    if (!laudo.fechadoEm) {
+      await this.prisma.serviceOrderLaudo.update({
+        where: { serviceOrderId: osId },
+        data: { fechadoEm: agora },
+      });
+    }
+    return this.prisma.serviceOrder.update({
+      where: { id: osId },
+      data: { situacao: 'Concluida' },
+    });
+  }
 }
