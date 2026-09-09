@@ -487,6 +487,87 @@ export class MecanicaService {
   }
 
   /**
+   * Preventivas da frota da empresa.
+   *
+   * Devolve o cru (`medicaoAtual`, `ultimaRevisao`, `intervaloRevisao`) e
+   * deixa o cálculo de "vencida / próxima / em dia" com o app, que já tem
+   * `features/preventiva/regras.ts` fazendo isso em função pura. Calcular
+   * aqui criaria uma segunda verdade sobre a mesma conta.
+   *
+   * Só equipamento COM intervalo definido: sem intervalo não existe próxima
+   * revisão, e listar todo o pátio afogaria a tela do mecânico.
+   */
+  async listarPreventivas(painel: PainelPayload) {
+    return this.prisma.equipment.findMany({
+      where: {
+        companyId: painel.companyId,
+        intervaloRevisao: { not: null },
+        status: { not: 'inativo' },
+      },
+      select: {
+        id: true,
+        prefixo: true,
+        placa: true,
+        modelo: true,
+        medicaoAtual: true,
+        ultimaRevisao: true,
+        intervaloRevisao: true,
+        unidadeRevisao: true,
+      },
+      orderBy: { prefixo: 'asc' },
+    });
+  }
+
+  /**
+   * Executa a revisão: grava o histórico e move a régua da máquina.
+   *
+   * Escrever `ultimaRevisao = leitura` é o que projeta a próxima — sem isso a
+   * máquina ficaria vencida para sempre, mesmo revisada.
+   */
+  async executarPreventiva(
+    painel: PainelPayload,
+    equipamentoId: string,
+    dados: { leitura: number; servicos?: string; custo?: number },
+    agora: Date = new Date(),
+  ) {
+    const equipamento = await this.prisma.equipment.findFirst({
+      where: { id: equipamentoId, companyId: painel.companyId },
+      select: { id: true, medicaoAtual: true, unidadeRevisao: true },
+    });
+    if (!equipamento) throw new NotFoundException('Equipamento não encontrado.');
+
+    // Medidor não anda para trás. Aceitar leitura menor bagunçaria o histórico
+    // e faria a próxima revisão ser projetada para um ponto já passado.
+    const atual = equipamento.medicaoAtual ?? 0;
+    if (dados.leitura < atual) {
+      throw new BadRequestException(
+        `A leitura (${dados.leitura}) não pode ser menor que a atual da máquina (${atual}).`,
+      );
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const revisao = await tx.equipmentRevision.create({
+        data: {
+          equipmentId: equipamentoId,
+          data: agora,
+          leitura: dados.leitura,
+          unidade: equipamento.unidadeRevisao ?? 'h',
+          servicos: dados.servicos ?? null,
+          custo: dados.custo ?? null,
+          createdById: painel.companyUserId,
+        },
+      });
+
+      await tx.equipment.update({
+        where: { id: equipamentoId },
+        data: { medicaoAtual: dados.leitura, ultimaRevisao: dados.leitura },
+      });
+
+      return revisao;
+    });
+  }
+
+  /**
    * Decide o orçamento interno.
    *
    * Existe aqui, e não na rota de aprovação da parceira, por dois motivos: o

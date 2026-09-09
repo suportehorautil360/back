@@ -1450,3 +1450,93 @@ describe('MecanicaService.decidirOrcamento', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 });
+
+/** Preventiva: a máquina do back já é agnóstica de ator; falta a porta. */
+function prismaComPreventiva(equipamento: Record<string, unknown> | null) {
+  const revisoes: Record<string, unknown>[] = [];
+  const equipAtualizado: Record<string, unknown>[] = [];
+  const tx = {
+    equipmentRevision: {
+      create: jest.fn(({ data }: { data: Record<string, unknown> }) => {
+        revisoes.push(data);
+        return Promise.resolve({ id: 'rev-1', ...data });
+      }),
+    },
+    equipment: {
+      update: jest.fn(({ data }: { data: Record<string, unknown> }) => {
+        equipAtualizado.push(data);
+        return Promise.resolve({});
+      }),
+    },
+  };
+  return {
+    prisma: {
+      equipment: {
+        findMany: jest.fn(({ where }: { where: Record<string, unknown> }) =>
+          Promise.resolve(where.companyId === 'empresa-1' ? [{ id: 'eq-1' }] : []),
+        ),
+        findFirst: jest.fn(({ where }: { where: Record<string, unknown> }) =>
+          Promise.resolve(where.companyId === 'empresa-1' ? equipamento : null),
+        ),
+      },
+      $transaction: jest.fn((fn: (t: typeof tx) => unknown) => fn(tx)),
+    } as never,
+    revisoes,
+    equipAtualizado,
+  };
+}
+
+describe('MecanicaService — preventiva', () => {
+  it('lista só equipamento COM intervalo, da empresa do token', async () => {
+    const { prisma } = prismaComPreventiva(null);
+    const s = new MecanicaService(prisma);
+
+    await s.listarPreventivas(PAINEL);
+
+    const where = (prisma as never as { equipment: { findMany: jest.Mock } }).equipment
+      .findMany.mock.calls[0][0].where;
+    expect(where.companyId).toBe('empresa-1');
+    // Sem intervalo não existe próxima revisão; listar o pátio todo afogaria
+    // a tela do mecânico.
+    expect(where.intervaloRevisao).toEqual({ not: null });
+  });
+
+  it('executar grava o histórico E move a régua', async () => {
+    // Sem mover `ultimaRevisao` a máquina fica vencida para sempre, mesmo
+    // tendo sido revisada.
+    const { prisma, revisoes, equipAtualizado } = prismaComPreventiva({
+      id: 'eq-1',
+      medicaoAtual: 1000,
+      unidadeRevisao: 'h',
+    });
+    const s = new MecanicaService(prisma);
+
+    await s.executarPreventiva(PAINEL, 'eq-1', { leitura: 1240 });
+
+    expect(revisoes[0]).toMatchObject({ equipmentId: 'eq-1', leitura: 1240, unidade: 'h' });
+    expect(equipAtualizado[0]).toEqual({ medicaoAtual: 1240, ultimaRevisao: 1240 });
+  });
+
+  it('recusa leitura menor que a atual — medidor não anda para trás', async () => {
+    const { prisma, revisoes } = prismaComPreventiva({
+      id: 'eq-1',
+      medicaoAtual: 1000,
+      unidadeRevisao: 'h',
+    });
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.executarPreventiva(PAINEL, 'eq-1', { leitura: 900 }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(revisoes).toHaveLength(0);
+  });
+
+  it('não executa preventiva em máquina de outra empresa', async () => {
+    const { prisma } = prismaComPreventiva({ id: 'eq-1', medicaoAtual: 0 });
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.executarPreventiva({ ...PAINEL, companyId: 'empresa-2' }, 'eq-1', { leitura: 10 }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+});

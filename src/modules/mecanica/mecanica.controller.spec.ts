@@ -79,6 +79,7 @@ describe('idempotência das escritas', () => {
     'adicionarOcorrencia',
     'aprovarOrcamento',
     'recusarOrcamento',
+    'executarPreventiva',
     'concluir',
   ];
 

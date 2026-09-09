@@ -33,6 +33,7 @@ import {
 import { FotoDto, OcorrenciaDto, PecaDto } from './dto/anexos.dto';
 import { LaudoDto } from './dto/laudo.dto';
 import { OrcamentoInternoDto } from './dto/orcamento.dto';
+import { ExecutarPreventivaDto } from './dto/preventiva.dto';
 
 const SITUACOES_VALIDAS: readonly SituacaoOs[] = [
   'Aberta',
@@ -349,6 +350,32 @@ export class MecanicaController {
   })
   async recusarOrcamento(@Req() req: RequestComPainel, @Param('id') id: string) {
     return this.service.decidirOrcamento(req.painel, id, 'recusar');
+  }
+
+  @Get('preventivas')
+  @ApiOperation({
+    summary:
+      'Preventivas da frota — devolve o cru (medição, última revisão, intervalo)',
+  })
+  async preventivas(@Req() req: RequestComPainel) {
+    return this.service.listarPreventivas(req.painel);
+  }
+
+  @Post('preventivas/:equipamentoId/executar')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({
+    summary: 'Registrar a revisão e mover a régua da máquina',
+  })
+  async executarPreventiva(
+    @Req() req: RequestComPainel,
+    @Param('equipamentoId') equipamentoId: string,
+    @Body() dto: ExecutarPreventivaDto,
+  ) {
+    return this.service.executarPreventiva(req.painel, equipamentoId, {
+      leitura: dto.leitura,
+      servicos: dto.servicos,
+      custo: dto.custo,
+    });
   }
 
   @Post('os/:id/concluir')
