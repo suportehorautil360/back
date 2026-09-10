@@ -451,3 +451,16 @@ export type ChecklistExecucao = Prisma.ChecklistExecucaoModel
  * vários tornariam a sugestão ambígua justamente onde ela é automática.
  */
 export type ProgramadorMecanico = Prisma.ProgramadorMecanicoModel
+/**
+ * Model ServiceOrderAuditoria
+ * Auditoria da OS concluída pelo mecânico.
+ * 
+ * Concluir deixou de ser terminal: a OS entra numa fila onde quem paga a
+ * conta confere laudo, horas e peças, e então aprova ou devolve com motivo.
+ * 
+ * Tabela à parte, e não um quarto valor em `ServiceOrder.situacao`: aquela
+ * coluna é lida pelo painel, pelo app e pelo portal legado, cada um com o
+ * próprio mapa e o mesmo fallback ("Aberta") — um valor novo faria a OS
+ * auditada reaparecer na bancada do mecânico nos três.
+ */
+export type ServiceOrderAuditoria = Prisma.ServiceOrderAuditoriaModel

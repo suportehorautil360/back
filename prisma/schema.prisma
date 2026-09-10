@@ -548,6 +548,7 @@ model ServiceOrder {
   apontamentos ServiceOrderApontamento[]
   fotos        ServiceOrderFoto[]
   laudo        ServiceOrderLaudo?
+  auditoria    ServiceOrderAuditoria?
   checklistExecucoes ChecklistExecucao[]
 
 
@@ -2082,4 +2083,43 @@ model ProgramadorMecanico {
   @@index([companyId])
   @@index([operatorId])
   @@map("programador_mecanicos")
+}
+
+/// Auditoria da OS concluída pelo mecânico.
+///
+/// Concluir deixou de ser terminal: a OS entra numa fila onde quem paga a
+/// conta confere laudo, horas e peças, e então aprova ou devolve com motivo.
+///
+/// Tabela à parte, e não um quarto valor em `ServiceOrder.situacao`: aquela
+/// coluna é lida pelo painel, pelo app e pelo portal legado, cada um com o
+/// próprio mapa e o mesmo fallback ("Aberta") — um valor novo faria a OS
+/// auditada reaparecer na bancada do mecânico nos três.
+model ServiceOrderAuditoria {
+  serviceOrderId String @id @map("service_order_id") @db.Uuid
+
+  /// "pendente" | "aprovada" | "devolvida".
+  status String @default("pendente")
+
+  /// Quando o mecânico concluiu — é o que ordena a fila. Uma OS devolvida e
+  /// reconcluída volta para o fim dela, que é onde deve estar.
+  concluidaEm DateTime  @map("concluida_em")
+  auditadaEm  DateTime? @map("auditada_em")
+  /// `CompanyUser.id` de quem auditou.
+  auditorId   String?   @map("auditor_id") @db.Uuid
+
+  /// Por que foi devolvida. É o texto que o mecânico lê no app — sem ele a OS
+  /// reaparece na bancada e ele não sabe o que refazer.
+  observacao String?
+
+  /// Quantas vezes já voltou. Número que cresce é sinal de problema no
+  /// serviço ou no critério de quem audita, e vale ser visível.
+  devolucoes Int @default(0)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  serviceOrder ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+
+  @@index([status, concluidaEm])
+  @@map("service_order_auditorias")
 }

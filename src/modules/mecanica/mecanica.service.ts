@@ -109,6 +109,8 @@ export class MecanicaService {
         fotos: { orderBy: { createdAt: 'asc' } },
         ocorrencias: { orderBy: { createdAt: 'asc' } },
         laudo: true,
+        // O app mostra ao mecânico quando a ordem dele voltou, e por quê.
+        auditoria: true,
         // Vem junto porque a tela do orçamento é a mesma da OS: pedir numa
         // segunda chamada seria uma viagem a mais por máquina aberta.
         orcamentos: { orderBy: { createdAt: 'desc' } },
@@ -1170,7 +1172,12 @@ export class MecanicaService {
 
   /**
    * Concluir carimba o laudo e o torna imutável — é o documento que o gestor
-   * mostra ao cliente.
+   * mostra ao cliente — e abre a AUDITORIA da ordem.
+   *
+   * Concluir deixou de ser terminal: a OS entra numa fila onde quem paga a
+   * conta confere laudo, horas e peças, e então aprova ou devolve com motivo.
+   * A devolução é o que faltava: antes, serviço malfeito só se resolvia
+   * abrindo outra OS.
    *
    * Apontamento aberto barra a conclusão de propósito: fechar a OS com o
    * cronômetro rodando gravaria um intervalo que só cresce, e o custo da OS
@@ -1203,9 +1210,28 @@ export class MecanicaService {
         data: { fechadoEm: agora },
       });
     }
-    return this.prisma.serviceOrder.update({
-      where: { id: osId },
-      data: { situacao: 'Concluida' },
-    });
+    // A auditoria e a situação andam juntas: uma OS concluída sem entrar na
+    // fila sumiria da bancada sem ninguém para conferi-la.
+    const [os] = await this.prisma.$transaction([
+      this.prisma.serviceOrder.update({
+        where: { id: osId },
+        data: { situacao: 'Concluida' },
+      }),
+      this.prisma.serviceOrderAuditoria.upsert({
+        where: { serviceOrderId: osId },
+        // Reconclusão depois de devolvida: volta para `pendente` com a data
+        // nova, o que a joga para o fim da fila. `devolucoes` e `observacao`
+        // ficam — são o histórico que explica por que ela está de volta.
+        update: {
+          status: 'pendente',
+          concluidaEm: agora,
+          auditadaEm: null,
+          auditorId: null,
+        },
+        create: { serviceOrderId: osId, concluidaEm: agora },
+      }),
+    ]);
+
+    return os;
   }
 }

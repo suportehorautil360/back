@@ -937,6 +937,10 @@ describe('MecanicaService — anexos', () => {
  * o apontamento fixture do teste de "apontamento aberto" não carrega
  * `serviceOrderId`, só `fim`) — isso mantém o filtro por `fim: null` com
  * dente de verdade, sem exigir que toda fixture repita todo campo do `where`.
+ *
+ * `$transaction` resolve o array de promises que recebe, na ordem — é assim
+ * que `concluir` grava a situação e abre a auditoria juntas, e o fake precisa
+ * devolver o primeiro elemento como a OS atualizada.
  */
 function prismaComLaudo(
   os: Record<string, unknown>[],
@@ -980,6 +984,12 @@ function prismaComLaudo(
         Promise.resolve(apontamentos.find((l) => casa(l, where)) ?? null),
       ),
     },
+    // Concluir abre a fila de auditoria. O fake guarda o último upsert para o
+    // teste poder olhar, sem simular a tabela inteira.
+    serviceOrderAuditoria: {
+      upsert: jest.fn((args) => Promise.resolve({ ...args.create })),
+    },
+    $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
   } as never;
 }
 
@@ -1094,6 +1104,48 @@ describe('MecanicaService.salvarLaudo — caminho de sucesso', () => {
  * original tem que sobreviver a uma segunda chamada. Sem este teste, a
  * mutação "carimbar sempre" (remover o `if`) não derrubava teste nenhum.
  */
+describe('MecanicaService.concluir — abre a auditoria', () => {
+  it('a OS concluída entra na fila de conferência', async () => {
+    const laudo = {
+      id: 'l-1',
+      serviceOrderId: 'os-1',
+      causa: 'Vazamento no cilindro',
+      servicoFeito: 'Troca do reparo',
+      fechadoEm: null,
+    };
+    const prisma = prismaComLaudo(
+      [{ id: 'os-1', companyId: 'c-1', execucao: 'interna' }],
+      laudo,
+    );
+    const servico = new MecanicaService(prisma);
+    const agora = new Date('2026-09-10T15:00:00Z');
+
+    await servico.concluir(
+      { companyId: 'c-1', operatorId: 'op-1' } as never,
+      'os-1',
+      agora,
+    );
+
+    const upsert = (
+      prisma as unknown as {
+        serviceOrderAuditoria: { upsert: jest.Mock };
+      }
+    ).serviceOrderAuditoria.upsert;
+
+    expect(upsert).toHaveBeenCalledTimes(1);
+    const arg = upsert.mock.calls[0][0];
+    expect(arg.create).toEqual({ serviceOrderId: 'os-1', concluidaEm: agora });
+    // Reconclusao depois de devolvida volta para `pendente` com a data nova.
+    // `devolucoes` e `observacao` ficam: sao o historico da ordem.
+    expect(arg.update).toEqual({
+      status: 'pendente',
+      concluidaEm: agora,
+      auditadaEm: null,
+      auditorId: null,
+    });
+  });
+});
+
 describe('MecanicaService.concluir — chamado duas vezes', () => {
   it('mantém fechadoEm original: concluir de novo não reescreve a data', async () => {
     const laudoAberto = {
