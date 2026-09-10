@@ -716,6 +716,15 @@ model PlanoPreventivo {
   /// iguais; a inspeção que o originou foi numa só.
   chassiInspecionado String? @map("chassi_inspecionado")
   horimetroInspecao  String? @map("horimetro_inspecao")
+  /// Quem executou a inspeção, quando não foi a própria empresa. Ao lado do
+  /// engenheiro, não no lugar dele: a ART é de uma pessoa física.
+  subcontratada      String?
+
+  /// O bloco "REFERÊNCIAS TÉCNICAS" do PMP — uma por linha. Texto livre, e
+  /// não tabela filha: são citações que cada engenheiro escreve do seu jeito
+  /// ("NR 12 item 12.11 e 12.14" é uma linha só no documento real), e
+  /// estruturar engessaria a próxima norma que aparecer.
+  referencias        String? @db.Text
 
   /// As ressalvas do fim do PMP — mudam a leitura de todos os ciclos.
   observacoes String? @db.Text

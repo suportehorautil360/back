@@ -5173,6 +5173,8 @@ export const PlanoPreventivoScalarFieldEnum = {
   dataInspecao: 'dataInspecao',
   chassiInspecionado: 'chassiInspecionado',
   horimetroInspecao: 'horimetroInspecao',
+  subcontratada: 'subcontratada',
+  referencias: 'referencias',
   observacoes: 'observacoes',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

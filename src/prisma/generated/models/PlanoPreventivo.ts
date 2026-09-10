@@ -40,6 +40,8 @@ export type PlanoPreventivoMinAggregateOutputType = {
   dataInspecao: Date | null
   chassiInspecionado: string | null
   horimetroInspecao: string | null
+  subcontratada: string | null
+  referencias: string | null
   observacoes: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -56,6 +58,8 @@ export type PlanoPreventivoMaxAggregateOutputType = {
   dataInspecao: Date | null
   chassiInspecionado: string | null
   horimetroInspecao: string | null
+  subcontratada: string | null
+  referencias: string | null
   observacoes: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -73,6 +77,8 @@ export type PlanoPreventivoCountAggregateOutputType = {
   dataInspecao: number
   chassiInspecionado: number
   horimetroInspecao: number
+  subcontratada: number
+  referencias: number
   observacoes: number
   createdAt: number
   updatedAt: number
@@ -91,6 +97,8 @@ export type PlanoPreventivoMinAggregateInputType = {
   dataInspecao?: true
   chassiInspecionado?: true
   horimetroInspecao?: true
+  subcontratada?: true
+  referencias?: true
   observacoes?: true
   createdAt?: true
   updatedAt?: true
@@ -107,6 +115,8 @@ export type PlanoPreventivoMaxAggregateInputType = {
   dataInspecao?: true
   chassiInspecionado?: true
   horimetroInspecao?: true
+  subcontratada?: true
+  referencias?: true
   observacoes?: true
   createdAt?: true
   updatedAt?: true
@@ -124,6 +134,8 @@ export type PlanoPreventivoCountAggregateInputType = {
   dataInspecao?: true
   chassiInspecionado?: true
   horimetroInspecao?: true
+  subcontratada?: true
+  referencias?: true
   observacoes?: true
   createdAt?: true
   updatedAt?: true
@@ -214,6 +226,8 @@ export type PlanoPreventivoGroupByOutputType = {
   dataInspecao: Date | null
   chassiInspecionado: string | null
   horimetroInspecao: string | null
+  subcontratada: string | null
+  referencias: string | null
   observacoes: string | null
   createdAt: Date
   updatedAt: Date
@@ -252,6 +266,8 @@ export type PlanoPreventivoWhereInput = {
   dataInspecao?: Prisma.DateTimeNullableFilter<"PlanoPreventivo"> | Date | string | null
   chassiInspecionado?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
   horimetroInspecao?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  subcontratada?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  referencias?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
   observacoes?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
   createdAt?: Prisma.DateTimeFilter<"PlanoPreventivo"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"PlanoPreventivo"> | Date | string
@@ -270,6 +286,8 @@ export type PlanoPreventivoOrderByWithRelationInput = {
   dataInspecao?: Prisma.SortOrderInput | Prisma.SortOrder
   chassiInspecionado?: Prisma.SortOrderInput | Prisma.SortOrder
   horimetroInspecao?: Prisma.SortOrderInput | Prisma.SortOrder
+  subcontratada?: Prisma.SortOrderInput | Prisma.SortOrder
+  referencias?: Prisma.SortOrderInput | Prisma.SortOrder
   observacoes?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -292,6 +310,8 @@ export type PlanoPreventivoWhereUniqueInput = Prisma.AtLeast<{
   dataInspecao?: Prisma.DateTimeNullableFilter<"PlanoPreventivo"> | Date | string | null
   chassiInspecionado?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
   horimetroInspecao?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  subcontratada?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  referencias?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
   observacoes?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
   createdAt?: Prisma.DateTimeFilter<"PlanoPreventivo"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"PlanoPreventivo"> | Date | string
@@ -310,6 +330,8 @@ export type PlanoPreventivoOrderByWithAggregationInput = {
   dataInspecao?: Prisma.SortOrderInput | Prisma.SortOrder
   chassiInspecionado?: Prisma.SortOrderInput | Prisma.SortOrder
   horimetroInspecao?: Prisma.SortOrderInput | Prisma.SortOrder
+  subcontratada?: Prisma.SortOrderInput | Prisma.SortOrder
+  referencias?: Prisma.SortOrderInput | Prisma.SortOrder
   observacoes?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -333,6 +355,8 @@ export type PlanoPreventivoScalarWhereWithAggregatesInput = {
   dataInspecao?: Prisma.DateTimeNullableWithAggregatesFilter<"PlanoPreventivo"> | Date | string | null
   chassiInspecionado?: Prisma.StringNullableWithAggregatesFilter<"PlanoPreventivo"> | string | null
   horimetroInspecao?: Prisma.StringNullableWithAggregatesFilter<"PlanoPreventivo"> | string | null
+  subcontratada?: Prisma.StringNullableWithAggregatesFilter<"PlanoPreventivo"> | string | null
+  referencias?: Prisma.StringNullableWithAggregatesFilter<"PlanoPreventivo"> | string | null
   observacoes?: Prisma.StringNullableWithAggregatesFilter<"PlanoPreventivo"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"PlanoPreventivo"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"PlanoPreventivo"> | Date | string
@@ -349,6 +373,8 @@ export type PlanoPreventivoCreateInput = {
   dataInspecao?: Date | string | null
   chassiInspecionado?: string | null
   horimetroInspecao?: string | null
+  subcontratada?: string | null
+  referencias?: string | null
   observacoes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -367,6 +393,8 @@ export type PlanoPreventivoUncheckedCreateInput = {
   dataInspecao?: Date | string | null
   chassiInspecionado?: string | null
   horimetroInspecao?: string | null
+  subcontratada?: string | null
+  referencias?: string | null
   observacoes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -383,6 +411,8 @@ export type PlanoPreventivoUpdateInput = {
   dataInspecao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chassiInspecionado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   horimetroInspecao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subcontratada?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referencias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -401,6 +431,8 @@ export type PlanoPreventivoUncheckedUpdateInput = {
   dataInspecao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chassiInspecionado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   horimetroInspecao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subcontratada?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referencias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -418,6 +450,8 @@ export type PlanoPreventivoCreateManyInput = {
   dataInspecao?: Date | string | null
   chassiInspecionado?: string | null
   horimetroInspecao?: string | null
+  subcontratada?: string | null
+  referencias?: string | null
   observacoes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -434,6 +468,8 @@ export type PlanoPreventivoUpdateManyMutationInput = {
   dataInspecao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chassiInspecionado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   horimetroInspecao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subcontratada?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referencias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -451,6 +487,8 @@ export type PlanoPreventivoUncheckedUpdateManyInput = {
   dataInspecao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chassiInspecionado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   horimetroInspecao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subcontratada?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referencias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -483,6 +521,8 @@ export type PlanoPreventivoCountOrderByAggregateInput = {
   dataInspecao?: Prisma.SortOrder
   chassiInspecionado?: Prisma.SortOrder
   horimetroInspecao?: Prisma.SortOrder
+  subcontratada?: Prisma.SortOrder
+  referencias?: Prisma.SortOrder
   observacoes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -499,6 +539,8 @@ export type PlanoPreventivoMaxOrderByAggregateInput = {
   dataInspecao?: Prisma.SortOrder
   chassiInspecionado?: Prisma.SortOrder
   horimetroInspecao?: Prisma.SortOrder
+  subcontratada?: Prisma.SortOrder
+  referencias?: Prisma.SortOrder
   observacoes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -515,6 +557,8 @@ export type PlanoPreventivoMinOrderByAggregateInput = {
   dataInspecao?: Prisma.SortOrder
   chassiInspecionado?: Prisma.SortOrder
   horimetroInspecao?: Prisma.SortOrder
+  subcontratada?: Prisma.SortOrder
+  referencias?: Prisma.SortOrder
   observacoes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -573,6 +617,8 @@ export type PlanoPreventivoCreateWithoutCompanyInput = {
   dataInspecao?: Date | string | null
   chassiInspecionado?: string | null
   horimetroInspecao?: string | null
+  subcontratada?: string | null
+  referencias?: string | null
   observacoes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -589,6 +635,8 @@ export type PlanoPreventivoUncheckedCreateWithoutCompanyInput = {
   dataInspecao?: Date | string | null
   chassiInspecionado?: string | null
   horimetroInspecao?: string | null
+  subcontratada?: string | null
+  referencias?: string | null
   observacoes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -635,6 +683,8 @@ export type PlanoPreventivoScalarWhereInput = {
   dataInspecao?: Prisma.DateTimeNullableFilter<"PlanoPreventivo"> | Date | string | null
   chassiInspecionado?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
   horimetroInspecao?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  subcontratada?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  referencias?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
   observacoes?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
   createdAt?: Prisma.DateTimeFilter<"PlanoPreventivo"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"PlanoPreventivo"> | Date | string
@@ -651,6 +701,8 @@ export type PlanoPreventivoCreateManyCompanyInput = {
   dataInspecao?: Date | string | null
   chassiInspecionado?: string | null
   horimetroInspecao?: string | null
+  subcontratada?: string | null
+  referencias?: string | null
   observacoes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -667,6 +719,8 @@ export type PlanoPreventivoUpdateWithoutCompanyInput = {
   dataInspecao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chassiInspecionado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   horimetroInspecao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subcontratada?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referencias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -683,6 +737,8 @@ export type PlanoPreventivoUncheckedUpdateWithoutCompanyInput = {
   dataInspecao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chassiInspecionado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   horimetroInspecao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subcontratada?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referencias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -699,6 +755,8 @@ export type PlanoPreventivoUncheckedUpdateManyWithoutCompanyInput = {
   dataInspecao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chassiInspecionado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   horimetroInspecao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subcontratada?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referencias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -718,6 +776,8 @@ export type PlanoPreventivoSelect<ExtArgs extends runtime.Types.Extensions.Inter
   dataInspecao?: boolean
   chassiInspecionado?: boolean
   horimetroInspecao?: boolean
+  subcontratada?: boolean
+  referencias?: boolean
   observacoes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -736,6 +796,8 @@ export type PlanoPreventivoSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   dataInspecao?: boolean
   chassiInspecionado?: boolean
   horimetroInspecao?: boolean
+  subcontratada?: boolean
+  referencias?: boolean
   observacoes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -754,6 +816,8 @@ export type PlanoPreventivoSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   dataInspecao?: boolean
   chassiInspecionado?: boolean
   horimetroInspecao?: boolean
+  subcontratada?: boolean
+  referencias?: boolean
   observacoes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -772,12 +836,14 @@ export type PlanoPreventivoSelectScalar = {
   dataInspecao?: boolean
   chassiInspecionado?: boolean
   horimetroInspecao?: boolean
+  subcontratada?: boolean
+  referencias?: boolean
   observacoes?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type PlanoPreventivoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "companyId" | "modelo" | "marca" | "categorias" | "engenheiro" | "crea" | "art" | "dataInspecao" | "chassiInspecionado" | "horimetroInspecao" | "observacoes" | "createdAt" | "updatedAt", ExtArgs["result"]["planoPreventivo"]>
+export type PlanoPreventivoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "companyId" | "modelo" | "marca" | "categorias" | "engenheiro" | "crea" | "art" | "dataInspecao" | "chassiInspecionado" | "horimetroInspecao" | "subcontratada" | "referencias" | "observacoes" | "createdAt" | "updatedAt", ExtArgs["result"]["planoPreventivo"]>
 export type PlanoPreventivoInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
 }
@@ -825,6 +891,18 @@ export type $PlanoPreventivoPayload<ExtArgs extends runtime.Types.Extensions.Int
      */
     chassiInspecionado: string | null
     horimetroInspecao: string | null
+    /**
+     * Quem executou a inspeção, quando não foi a própria empresa. Ao lado do
+     * engenheiro, não no lugar dele: a ART é de uma pessoa física.
+     */
+    subcontratada: string | null
+    /**
+     * O bloco "REFERÊNCIAS TÉCNICAS" do PMP — uma por linha. Texto livre, e
+     * não tabela filha: são citações que cada engenheiro escreve do seu jeito
+     * ("NR 12 item 12.11 e 12.14" é uma linha só no documento real), e
+     * estruturar engessaria a próxima norma que aparecer.
+     */
+    referencias: string | null
     /**
      * As ressalvas do fim do PMP — mudam a leitura de todos os ciclos.
      */
@@ -1266,6 +1344,8 @@ export interface PlanoPreventivoFieldRefs {
   readonly dataInspecao: Prisma.FieldRef<"PlanoPreventivo", 'DateTime'>
   readonly chassiInspecionado: Prisma.FieldRef<"PlanoPreventivo", 'String'>
   readonly horimetroInspecao: Prisma.FieldRef<"PlanoPreventivo", 'String'>
+  readonly subcontratada: Prisma.FieldRef<"PlanoPreventivo", 'String'>
+  readonly referencias: Prisma.FieldRef<"PlanoPreventivo", 'String'>
   readonly observacoes: Prisma.FieldRef<"PlanoPreventivo", 'String'>
   readonly createdAt: Prisma.FieldRef<"PlanoPreventivo", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"PlanoPreventivo", 'DateTime'>
