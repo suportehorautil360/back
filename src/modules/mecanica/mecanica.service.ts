@@ -1412,4 +1412,51 @@ export class MecanicaService {
     });
   }
 
+
+  /**
+   * O que o OPERADOR relatou nesta máquina.
+   *
+   * O mecânico pega a OS sabendo só o "defeito relatado" que alguém digitou ao
+   * abri-la. Quem estava na máquina — o operador — já tinha marcado item por
+   * item no checklist dele, com o problema escrito. Esse texto se perdia entre
+   * uma tela e outra.
+   *
+   * A ligação é por CHASSI, e não por `equipmentId`: `ChecklistRun` guarda um
+   * SNAPSHOT do equipamento (chassi, modelo, linha) para tolerar mudança e
+   * remoção no cadastro depois. Máquina sem chassi cadastrado não tem como
+   * casar, e devolve vazio em vez de trazer o checklist de outra.
+   *
+   * Só os itens REPROVADOS. As respostas inteiras trazem sessenta linhas de
+   * "conforme" e enterrariam as três que importam — e `respostas`,
+   * `fotoHorimetro` e `assinaturaOperador` são campos grandes (base64) que não
+   * têm por que atravessar a rede para um aparelho no galpão.
+   */
+  async relatosDoOperador(painel: PainelPayload, osId: string) {
+    const os = await this.prisma.serviceOrder.findFirst({
+      where: { id: osId, companyId: painel.companyId, execucao: 'interna' },
+      select: { equipment: { select: { chassi: true } } },
+    });
+    if (!os) throw new NotFoundException('OS não encontrada.');
+
+    const chassi = os.equipment?.chassi?.trim();
+    if (!chassi) return [];
+
+    // Três, e não um: o mecânico reconhece um problema que se repete ("é a
+    // terceira vez que reclamam do freio") — e isso muda o que ele procura.
+    return this.prisma.checklistRun.findMany({
+      where: { companyId: painel.companyId, chassi },
+      orderBy: { executedAt: 'desc' },
+      take: 3,
+      select: {
+        id: true,
+        operadorNome: true,
+        executedAt: true,
+        horimetro: true,
+        pontuacao: true,
+        itensNao: true,
+        obs: true,
+      },
+    });
+  }
+
 }

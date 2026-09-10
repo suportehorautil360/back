@@ -782,4 +782,21 @@ export class MecanicaController {
     return this.service.pontoDoDia(req.painel, dia ?? '');
   }
 
+
+  @Get('os/:id/relatos-do-operador')
+  @ApiOperation({
+    summary: 'O que o operador reprovou no checklist desta máquina',
+    description:
+      'Os três checklists de operador mais recentes do mesmo chassi, só com ' +
+      'os itens REPROVADOS. É o contexto que o mecânico não tinha: o "defeito ' +
+      'relatado" da OS é o que alguém digitou ao abri-la, e quem estava na ' +
+      'máquina já havia marcado item por item.',
+  })
+  async relatosDoOperador(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+  ) {
+    return this.service.relatosDoOperador(req.painel, id);
+  }
+
 }
