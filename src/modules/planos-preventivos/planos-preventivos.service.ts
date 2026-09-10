@@ -24,6 +24,19 @@ function toInputJson(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
 }
 
+/**
+ * O plano deixou de ser um por empresa e passou a ser um por MODELO de
+ * máquina (migration `20260910120000_plano_preventivo_por_modelo`). Esta API
+ * é do 360 legado e não conhece modelo: ela fala do plano ÚNICO da empresa,
+ * que a migration reetiquetou como "Geral".
+ *
+ * Apontar para cá preserva exatamente o comportamento que o portal legado
+ * sempre teve — e é de propósito que ele não enxerga os planos por modelo:
+ * são conceito novo, e mostrá-los aqui como se fossem o plano da prefeitura
+ * confundiria os dois.
+ */
+const MODELO_GERAL = 'Geral';
+
 @Injectable()
 export class PlanosPreventivosService {
   constructor(private readonly prisma: PrismaService) {}
@@ -38,7 +51,7 @@ export class PlanosPreventivosService {
     }
 
     const row = await this.prisma.planoPreventivo.findUnique({
-      where: { companyId },
+      where: { companyId_modelo: { companyId, modelo: MODELO_GERAL } },
     });
     if (!row) {
       throw new NotFoundException('Preventive plan not found for this municipality.');
@@ -93,10 +106,11 @@ export class PlanosPreventivosService {
     }
 
     const row = await this.prisma.planoPreventivo.upsert({
-      where: { companyId },
+      where: { companyId_modelo: { companyId, modelo: MODELO_GERAL } },
       update: { categorias: toInputJson(matriz.categorias) },
       create: {
         companyId,
+        modelo: MODELO_GERAL,
         categorias: toInputJson(matriz.categorias),
       },
     });

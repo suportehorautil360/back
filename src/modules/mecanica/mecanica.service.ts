@@ -77,6 +77,11 @@ export class MecanicaService {
           : {}),
         ...(situacao ? { situacao } : {}),
       },
+      // Modelo e tipo do equipamento vêm junto porque é por eles que o app
+      // acha o manual certo: um manual pode valer para todas as máquinas de
+      // um modelo, e a OS só desnormaliza nome e placa. Sem isto o app só
+      // enxergaria o manual preso àquela máquina e o geral da frota.
+      include: { equipment: { select: { modelo: true, tipo: true } } },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -93,6 +98,8 @@ export class MecanicaService {
         execucao: 'interna',
       },
       include: {
+        // Ver `listarBancada`: é por modelo e tipo que o app casa o manual.
+        equipment: { select: { modelo: true, tipo: true } },
         responsavel: { select: { id: true, nome: true } },
         apontamentos: {
           orderBy: { inicio: 'asc' },
