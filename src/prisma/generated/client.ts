@@ -159,12 +159,12 @@ export type ServiceOrderFoto = Prisma.ServiceOrderFotoModel
 export type ServiceOrderLaudo = Prisma.ServiceOrderLaudoModel
 /**
  * Model PlanoPreventivo
- * Plano preventivo da empresa — 1:1 com Company. Backfill do Firestore
- * `planosPreventivos/{prefeituraId}`. `categorias` é Json com o shape do
- * legado: array de { id, nome, ciclos: [{ id, horas, km, titulo }],
- * linhas: [{ id, item, especificacao, acoes: { [cicloId]: string } }] }.
- * Mantemos como JSONB pra não perder informação enquanto o domínio de
- * planos preventivos ainda evolui — as queries são leves (1 row por company).
+ * Plano de Manutenção Preventiva de um MODELO de máquina.
+ * 
+ * Um por modelo, não por empresa: o documento real (PMP assinado por
+ * engenheiro) cobre "Retroescavadeira JCB 3CX", e uma frota mista precisa de
+ * um plano por família. O plano que a empresa tinha antes desta separação
+ * virou o do modelo "Geral".
  */
 export type PlanoPreventivo = Prisma.PlanoPreventivoModel
 /**

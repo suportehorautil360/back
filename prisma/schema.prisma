@@ -111,7 +111,7 @@ model Company {
   lubrificacoes           Lubrificacao[]
   reabastecimentosComboio ComboioReabastecimento[]
   notasFiscais            NotaFiscal[]
-  planoPreventivo         PlanoPreventivo?
+  planosPreventivos       PlanoPreventivo[]
   fleetfuelIntencoes      FleetfuelIntencao[]
   notificacoes            Notificacao[]
   whatsappRecipients      CompanyWhatsappRecipient[]
@@ -683,19 +683,48 @@ model ServiceOrderLaudo {
   @@map("service_order_laudos")
 }
 
-/// Plano preventivo da empresa — 1:1 com Company. Backfill do Firestore
-/// `planosPreventivos/{prefeituraId}`. `categorias` é Json com o shape do
-/// legado: array de { id, nome, ciclos: [{ id, horas, km, titulo }],
-/// linhas: [{ id, item, especificacao, acoes: { [cicloId]: string } }] }.
-/// Mantemos como JSONB pra não perder informação enquanto o domínio de
-/// planos preventivos ainda evolui — as queries são leves (1 row por company).
+/// Plano de Manutenção Preventiva de um MODELO de máquina.
+///
+/// Um por modelo, não por empresa: o documento real (PMP assinado por
+/// engenheiro) cobre "Retroescavadeira JCB 3CX", e uma frota mista precisa de
+/// um plano por família. O plano que a empresa tinha antes desta separação
+/// virou o do modelo "Geral".
 model PlanoPreventivo {
-  companyId  String   @id @map("company_id") @db.Uuid
-  categorias Json     @default("[]")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id        String @id @default(uuid()) @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+
+  /// "Retroescavadeira 3CX". Casa com `Equipment.modelo`.
+  modelo String
+  /// Desambigua homônimos entre fabricantes.
+  marca  String?
+
+  /// `[{ id, nome, ciclos: [{ id, horas, km, titulo }],
+  ///     linhas: [{ id, item, especificacao, codigoPeca, quantidade,
+  ///                acoes: { cicloId: AcaoKey } }] }]`
+  categorias Json @default("[]")
+
+  /// Responsabilidade técnica — o cabeçalho do PMP assinado. Sem isto o plano
+  /// é uma tabela de intervalos; com isto é o documento que a empresa mostra
+  /// numa fiscalização.
+  engenheiro String?
+  crea       String?
+  art        String?
+  dataInspecao DateTime? @map("data_inspecao") @db.Date
+  /// A máquina inspecionada para levantar o plano. O plano vale para todas as
+  /// iguais; a inspeção que o originou foi numa só.
+  chassiInspecionado String? @map("chassi_inspecionado")
+  horimetroInspecao  String? @map("horimetro_inspecao")
+
+  /// As ressalvas do fim do PMP — mudam a leitura de todos os ciclos.
+  observacoes String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
+  @@unique([companyId, modelo])
+  @@index([companyId])
   @@map("planos_preventivos")
 }
 

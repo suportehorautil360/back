@@ -482,8 +482,19 @@ export type ServiceOrderLaudoScalarFieldEnum = (typeof ServiceOrderLaudoScalarFi
 
 
 export const PlanoPreventivoScalarFieldEnum = {
+  id: 'id',
   companyId: 'companyId',
+  modelo: 'modelo',
+  marca: 'marca',
   categorias: 'categorias',
+  engenheiro: 'engenheiro',
+  crea: 'crea',
+  art: 'art',
+  dataInspecao: 'dataInspecao',
+  chassiInspecionado: 'chassiInspecionado',
+  horimetroInspecao: 'horimetroInspecao',
+  observacoes: 'observacoes',
+  createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 

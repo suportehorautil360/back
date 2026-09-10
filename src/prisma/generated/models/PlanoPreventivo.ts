@@ -14,12 +14,12 @@ import type * as Prisma from "../internal/prismaNamespace.js"
 
 /**
  * Model PlanoPreventivo
- * Plano preventivo da empresa — 1:1 com Company. Backfill do Firestore
- * `planosPreventivos/{prefeituraId}`. `categorias` é Json com o shape do
- * legado: array de { id, nome, ciclos: [{ id, horas, km, titulo }],
- * linhas: [{ id, item, especificacao, acoes: { [cicloId]: string } }] }.
- * Mantemos como JSONB pra não perder informação enquanto o domínio de
- * planos preventivos ainda evolui — as queries são leves (1 row por company).
+ * Plano de Manutenção Preventiva de um MODELO de máquina.
+ * 
+ * Um por modelo, não por empresa: o documento real (PMP assinado por
+ * engenheiro) cobre "Retroescavadeira JCB 3CX", e uma frota mista precisa de
+ * um plano por família. O plano que a empresa tinha antes desta separação
+ * virou o do modelo "Geral".
  */
 export type PlanoPreventivoModel = runtime.Types.Result.DefaultSelection<Prisma.$PlanoPreventivoPayload>
 
@@ -30,36 +30,102 @@ export type AggregatePlanoPreventivo = {
 }
 
 export type PlanoPreventivoMinAggregateOutputType = {
+  id: string | null
   companyId: string | null
+  modelo: string | null
+  marca: string | null
+  engenheiro: string | null
+  crea: string | null
+  art: string | null
+  dataInspecao: Date | null
+  chassiInspecionado: string | null
+  horimetroInspecao: string | null
+  observacoes: string | null
+  createdAt: Date | null
   updatedAt: Date | null
 }
 
 export type PlanoPreventivoMaxAggregateOutputType = {
+  id: string | null
   companyId: string | null
+  modelo: string | null
+  marca: string | null
+  engenheiro: string | null
+  crea: string | null
+  art: string | null
+  dataInspecao: Date | null
+  chassiInspecionado: string | null
+  horimetroInspecao: string | null
+  observacoes: string | null
+  createdAt: Date | null
   updatedAt: Date | null
 }
 
 export type PlanoPreventivoCountAggregateOutputType = {
+  id: number
   companyId: number
+  modelo: number
+  marca: number
   categorias: number
+  engenheiro: number
+  crea: number
+  art: number
+  dataInspecao: number
+  chassiInspecionado: number
+  horimetroInspecao: number
+  observacoes: number
+  createdAt: number
   updatedAt: number
   _all: number
 }
 
 
 export type PlanoPreventivoMinAggregateInputType = {
+  id?: true
   companyId?: true
+  modelo?: true
+  marca?: true
+  engenheiro?: true
+  crea?: true
+  art?: true
+  dataInspecao?: true
+  chassiInspecionado?: true
+  horimetroInspecao?: true
+  observacoes?: true
+  createdAt?: true
   updatedAt?: true
 }
 
 export type PlanoPreventivoMaxAggregateInputType = {
+  id?: true
   companyId?: true
+  modelo?: true
+  marca?: true
+  engenheiro?: true
+  crea?: true
+  art?: true
+  dataInspecao?: true
+  chassiInspecionado?: true
+  horimetroInspecao?: true
+  observacoes?: true
+  createdAt?: true
   updatedAt?: true
 }
 
 export type PlanoPreventivoCountAggregateInputType = {
+  id?: true
   companyId?: true
+  modelo?: true
+  marca?: true
   categorias?: true
+  engenheiro?: true
+  crea?: true
+  art?: true
+  dataInspecao?: true
+  chassiInspecionado?: true
+  horimetroInspecao?: true
+  observacoes?: true
+  createdAt?: true
   updatedAt?: true
   _all?: true
 }
@@ -137,8 +203,19 @@ export type PlanoPreventivoGroupByArgs<ExtArgs extends runtime.Types.Extensions.
 }
 
 export type PlanoPreventivoGroupByOutputType = {
+  id: string
   companyId: string
+  modelo: string
+  marca: string | null
   categorias: runtime.JsonValue
+  engenheiro: string | null
+  crea: string | null
+  art: string | null
+  dataInspecao: Date | null
+  chassiInspecionado: string | null
+  horimetroInspecao: string | null
+  observacoes: string | null
+  createdAt: Date
   updatedAt: Date
   _count: PlanoPreventivoCountAggregateOutputType | null
   _min: PlanoPreventivoMinAggregateOutputType | null
@@ -164,32 +241,77 @@ export type PlanoPreventivoWhereInput = {
   AND?: Prisma.PlanoPreventivoWhereInput | Prisma.PlanoPreventivoWhereInput[]
   OR?: Prisma.PlanoPreventivoWhereInput[]
   NOT?: Prisma.PlanoPreventivoWhereInput | Prisma.PlanoPreventivoWhereInput[]
+  id?: Prisma.UuidFilter<"PlanoPreventivo"> | string
   companyId?: Prisma.UuidFilter<"PlanoPreventivo"> | string
+  modelo?: Prisma.StringFilter<"PlanoPreventivo"> | string
+  marca?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
   categorias?: Prisma.JsonFilter<"PlanoPreventivo">
+  engenheiro?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  crea?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  art?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  dataInspecao?: Prisma.DateTimeNullableFilter<"PlanoPreventivo"> | Date | string | null
+  chassiInspecionado?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  horimetroInspecao?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  observacoes?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"PlanoPreventivo"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"PlanoPreventivo"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
 }
 
 export type PlanoPreventivoOrderByWithRelationInput = {
+  id?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
+  modelo?: Prisma.SortOrder
+  marca?: Prisma.SortOrderInput | Prisma.SortOrder
   categorias?: Prisma.SortOrder
+  engenheiro?: Prisma.SortOrderInput | Prisma.SortOrder
+  crea?: Prisma.SortOrderInput | Prisma.SortOrder
+  art?: Prisma.SortOrderInput | Prisma.SortOrder
+  dataInspecao?: Prisma.SortOrderInput | Prisma.SortOrder
+  chassiInspecionado?: Prisma.SortOrderInput | Prisma.SortOrder
+  horimetroInspecao?: Prisma.SortOrderInput | Prisma.SortOrder
+  observacoes?: Prisma.SortOrderInput | Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   company?: Prisma.CompanyOrderByWithRelationInput
 }
 
 export type PlanoPreventivoWhereUniqueInput = Prisma.AtLeast<{
-  companyId?: string
+  id?: string
+  companyId_modelo?: Prisma.PlanoPreventivoCompanyIdModeloCompoundUniqueInput
   AND?: Prisma.PlanoPreventivoWhereInput | Prisma.PlanoPreventivoWhereInput[]
   OR?: Prisma.PlanoPreventivoWhereInput[]
   NOT?: Prisma.PlanoPreventivoWhereInput | Prisma.PlanoPreventivoWhereInput[]
+  companyId?: Prisma.UuidFilter<"PlanoPreventivo"> | string
+  modelo?: Prisma.StringFilter<"PlanoPreventivo"> | string
+  marca?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
   categorias?: Prisma.JsonFilter<"PlanoPreventivo">
+  engenheiro?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  crea?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  art?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  dataInspecao?: Prisma.DateTimeNullableFilter<"PlanoPreventivo"> | Date | string | null
+  chassiInspecionado?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  horimetroInspecao?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  observacoes?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"PlanoPreventivo"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"PlanoPreventivo"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
-}, "companyId">
+}, "id" | "companyId_modelo">
 
 export type PlanoPreventivoOrderByWithAggregationInput = {
+  id?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
+  modelo?: Prisma.SortOrder
+  marca?: Prisma.SortOrderInput | Prisma.SortOrder
   categorias?: Prisma.SortOrder
+  engenheiro?: Prisma.SortOrderInput | Prisma.SortOrder
+  crea?: Prisma.SortOrderInput | Prisma.SortOrder
+  art?: Prisma.SortOrderInput | Prisma.SortOrder
+  dataInspecao?: Prisma.SortOrderInput | Prisma.SortOrder
+  chassiInspecionado?: Prisma.SortOrderInput | Prisma.SortOrder
+  horimetroInspecao?: Prisma.SortOrderInput | Prisma.SortOrder
+  observacoes?: Prisma.SortOrderInput | Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.PlanoPreventivoCountOrderByAggregateInput
   _max?: Prisma.PlanoPreventivoMaxOrderByAggregateInput
@@ -200,112 +322,275 @@ export type PlanoPreventivoScalarWhereWithAggregatesInput = {
   AND?: Prisma.PlanoPreventivoScalarWhereWithAggregatesInput | Prisma.PlanoPreventivoScalarWhereWithAggregatesInput[]
   OR?: Prisma.PlanoPreventivoScalarWhereWithAggregatesInput[]
   NOT?: Prisma.PlanoPreventivoScalarWhereWithAggregatesInput | Prisma.PlanoPreventivoScalarWhereWithAggregatesInput[]
+  id?: Prisma.UuidWithAggregatesFilter<"PlanoPreventivo"> | string
   companyId?: Prisma.UuidWithAggregatesFilter<"PlanoPreventivo"> | string
+  modelo?: Prisma.StringWithAggregatesFilter<"PlanoPreventivo"> | string
+  marca?: Prisma.StringNullableWithAggregatesFilter<"PlanoPreventivo"> | string | null
   categorias?: Prisma.JsonWithAggregatesFilter<"PlanoPreventivo">
+  engenheiro?: Prisma.StringNullableWithAggregatesFilter<"PlanoPreventivo"> | string | null
+  crea?: Prisma.StringNullableWithAggregatesFilter<"PlanoPreventivo"> | string | null
+  art?: Prisma.StringNullableWithAggregatesFilter<"PlanoPreventivo"> | string | null
+  dataInspecao?: Prisma.DateTimeNullableWithAggregatesFilter<"PlanoPreventivo"> | Date | string | null
+  chassiInspecionado?: Prisma.StringNullableWithAggregatesFilter<"PlanoPreventivo"> | string | null
+  horimetroInspecao?: Prisma.StringNullableWithAggregatesFilter<"PlanoPreventivo"> | string | null
+  observacoes?: Prisma.StringNullableWithAggregatesFilter<"PlanoPreventivo"> | string | null
+  createdAt?: Prisma.DateTimeWithAggregatesFilter<"PlanoPreventivo"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"PlanoPreventivo"> | Date | string
 }
 
 export type PlanoPreventivoCreateInput = {
+  id?: string
+  modelo: string
+  marca?: string | null
   categorias?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  engenheiro?: string | null
+  crea?: string | null
+  art?: string | null
+  dataInspecao?: Date | string | null
+  chassiInspecionado?: string | null
+  horimetroInspecao?: string | null
+  observacoes?: string | null
+  createdAt?: Date | string
   updatedAt?: Date | string
-  company: Prisma.CompanyCreateNestedOneWithoutPlanoPreventivoInput
+  company: Prisma.CompanyCreateNestedOneWithoutPlanosPreventivosInput
 }
 
 export type PlanoPreventivoUncheckedCreateInput = {
+  id?: string
   companyId: string
+  modelo: string
+  marca?: string | null
   categorias?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  engenheiro?: string | null
+  crea?: string | null
+  art?: string | null
+  dataInspecao?: Date | string | null
+  chassiInspecionado?: string | null
+  horimetroInspecao?: string | null
+  observacoes?: string | null
+  createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type PlanoPreventivoUpdateInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  modelo?: Prisma.StringFieldUpdateOperationsInput | string
+  marca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   categorias?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  engenheiro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  crea?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  art?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dataInspecao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  chassiInspecionado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  horimetroInspecao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  company?: Prisma.CompanyUpdateOneRequiredWithoutPlanoPreventivoNestedInput
+  company?: Prisma.CompanyUpdateOneRequiredWithoutPlanosPreventivosNestedInput
 }
 
 export type PlanoPreventivoUncheckedUpdateInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  modelo?: Prisma.StringFieldUpdateOperationsInput | string
+  marca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   categorias?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  engenheiro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  crea?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  art?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dataInspecao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  chassiInspecionado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  horimetroInspecao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type PlanoPreventivoCreateManyInput = {
+  id?: string
   companyId: string
+  modelo: string
+  marca?: string | null
   categorias?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  engenheiro?: string | null
+  crea?: string | null
+  art?: string | null
+  dataInspecao?: Date | string | null
+  chassiInspecionado?: string | null
+  horimetroInspecao?: string | null
+  observacoes?: string | null
+  createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type PlanoPreventivoUpdateManyMutationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  modelo?: Prisma.StringFieldUpdateOperationsInput | string
+  marca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   categorias?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  engenheiro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  crea?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  art?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dataInspecao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  chassiInspecionado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  horimetroInspecao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type PlanoPreventivoUncheckedUpdateManyInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  modelo?: Prisma.StringFieldUpdateOperationsInput | string
+  marca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   categorias?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  engenheiro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  crea?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  art?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dataInspecao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  chassiInspecionado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  horimetroInspecao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type PlanoPreventivoNullableScalarRelationFilter = {
-  is?: Prisma.PlanoPreventivoWhereInput | null
-  isNot?: Prisma.PlanoPreventivoWhereInput | null
+export type PlanoPreventivoListRelationFilter = {
+  every?: Prisma.PlanoPreventivoWhereInput
+  some?: Prisma.PlanoPreventivoWhereInput
+  none?: Prisma.PlanoPreventivoWhereInput
+}
+
+export type PlanoPreventivoOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
+}
+
+export type PlanoPreventivoCompanyIdModeloCompoundUniqueInput = {
+  companyId: string
+  modelo: string
 }
 
 export type PlanoPreventivoCountOrderByAggregateInput = {
+  id?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
+  modelo?: Prisma.SortOrder
+  marca?: Prisma.SortOrder
   categorias?: Prisma.SortOrder
+  engenheiro?: Prisma.SortOrder
+  crea?: Prisma.SortOrder
+  art?: Prisma.SortOrder
+  dataInspecao?: Prisma.SortOrder
+  chassiInspecionado?: Prisma.SortOrder
+  horimetroInspecao?: Prisma.SortOrder
+  observacoes?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type PlanoPreventivoMaxOrderByAggregateInput = {
+  id?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
+  modelo?: Prisma.SortOrder
+  marca?: Prisma.SortOrder
+  engenheiro?: Prisma.SortOrder
+  crea?: Prisma.SortOrder
+  art?: Prisma.SortOrder
+  dataInspecao?: Prisma.SortOrder
+  chassiInspecionado?: Prisma.SortOrder
+  horimetroInspecao?: Prisma.SortOrder
+  observacoes?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type PlanoPreventivoMinOrderByAggregateInput = {
+  id?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
+  modelo?: Prisma.SortOrder
+  marca?: Prisma.SortOrder
+  engenheiro?: Prisma.SortOrder
+  crea?: Prisma.SortOrder
+  art?: Prisma.SortOrder
+  dataInspecao?: Prisma.SortOrder
+  chassiInspecionado?: Prisma.SortOrder
+  horimetroInspecao?: Prisma.SortOrder
+  observacoes?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
-export type PlanoPreventivoCreateNestedOneWithoutCompanyInput = {
-  create?: Prisma.XOR<Prisma.PlanoPreventivoCreateWithoutCompanyInput, Prisma.PlanoPreventivoUncheckedCreateWithoutCompanyInput>
-  connectOrCreate?: Prisma.PlanoPreventivoCreateOrConnectWithoutCompanyInput
-  connect?: Prisma.PlanoPreventivoWhereUniqueInput
+export type PlanoPreventivoCreateNestedManyWithoutCompanyInput = {
+  create?: Prisma.XOR<Prisma.PlanoPreventivoCreateWithoutCompanyInput, Prisma.PlanoPreventivoUncheckedCreateWithoutCompanyInput> | Prisma.PlanoPreventivoCreateWithoutCompanyInput[] | Prisma.PlanoPreventivoUncheckedCreateWithoutCompanyInput[]
+  connectOrCreate?: Prisma.PlanoPreventivoCreateOrConnectWithoutCompanyInput | Prisma.PlanoPreventivoCreateOrConnectWithoutCompanyInput[]
+  createMany?: Prisma.PlanoPreventivoCreateManyCompanyInputEnvelope
+  connect?: Prisma.PlanoPreventivoWhereUniqueInput | Prisma.PlanoPreventivoWhereUniqueInput[]
 }
 
-export type PlanoPreventivoUncheckedCreateNestedOneWithoutCompanyInput = {
-  create?: Prisma.XOR<Prisma.PlanoPreventivoCreateWithoutCompanyInput, Prisma.PlanoPreventivoUncheckedCreateWithoutCompanyInput>
-  connectOrCreate?: Prisma.PlanoPreventivoCreateOrConnectWithoutCompanyInput
-  connect?: Prisma.PlanoPreventivoWhereUniqueInput
+export type PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput = {
+  create?: Prisma.XOR<Prisma.PlanoPreventivoCreateWithoutCompanyInput, Prisma.PlanoPreventivoUncheckedCreateWithoutCompanyInput> | Prisma.PlanoPreventivoCreateWithoutCompanyInput[] | Prisma.PlanoPreventivoUncheckedCreateWithoutCompanyInput[]
+  connectOrCreate?: Prisma.PlanoPreventivoCreateOrConnectWithoutCompanyInput | Prisma.PlanoPreventivoCreateOrConnectWithoutCompanyInput[]
+  createMany?: Prisma.PlanoPreventivoCreateManyCompanyInputEnvelope
+  connect?: Prisma.PlanoPreventivoWhereUniqueInput | Prisma.PlanoPreventivoWhereUniqueInput[]
 }
 
-export type PlanoPreventivoUpdateOneWithoutCompanyNestedInput = {
-  create?: Prisma.XOR<Prisma.PlanoPreventivoCreateWithoutCompanyInput, Prisma.PlanoPreventivoUncheckedCreateWithoutCompanyInput>
-  connectOrCreate?: Prisma.PlanoPreventivoCreateOrConnectWithoutCompanyInput
-  upsert?: Prisma.PlanoPreventivoUpsertWithoutCompanyInput
-  disconnect?: Prisma.PlanoPreventivoWhereInput | boolean
-  delete?: Prisma.PlanoPreventivoWhereInput | boolean
-  connect?: Prisma.PlanoPreventivoWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.PlanoPreventivoUpdateToOneWithWhereWithoutCompanyInput, Prisma.PlanoPreventivoUpdateWithoutCompanyInput>, Prisma.PlanoPreventivoUncheckedUpdateWithoutCompanyInput>
+export type PlanoPreventivoUpdateManyWithoutCompanyNestedInput = {
+  create?: Prisma.XOR<Prisma.PlanoPreventivoCreateWithoutCompanyInput, Prisma.PlanoPreventivoUncheckedCreateWithoutCompanyInput> | Prisma.PlanoPreventivoCreateWithoutCompanyInput[] | Prisma.PlanoPreventivoUncheckedCreateWithoutCompanyInput[]
+  connectOrCreate?: Prisma.PlanoPreventivoCreateOrConnectWithoutCompanyInput | Prisma.PlanoPreventivoCreateOrConnectWithoutCompanyInput[]
+  upsert?: Prisma.PlanoPreventivoUpsertWithWhereUniqueWithoutCompanyInput | Prisma.PlanoPreventivoUpsertWithWhereUniqueWithoutCompanyInput[]
+  createMany?: Prisma.PlanoPreventivoCreateManyCompanyInputEnvelope
+  set?: Prisma.PlanoPreventivoWhereUniqueInput | Prisma.PlanoPreventivoWhereUniqueInput[]
+  disconnect?: Prisma.PlanoPreventivoWhereUniqueInput | Prisma.PlanoPreventivoWhereUniqueInput[]
+  delete?: Prisma.PlanoPreventivoWhereUniqueInput | Prisma.PlanoPreventivoWhereUniqueInput[]
+  connect?: Prisma.PlanoPreventivoWhereUniqueInput | Prisma.PlanoPreventivoWhereUniqueInput[]
+  update?: Prisma.PlanoPreventivoUpdateWithWhereUniqueWithoutCompanyInput | Prisma.PlanoPreventivoUpdateWithWhereUniqueWithoutCompanyInput[]
+  updateMany?: Prisma.PlanoPreventivoUpdateManyWithWhereWithoutCompanyInput | Prisma.PlanoPreventivoUpdateManyWithWhereWithoutCompanyInput[]
+  deleteMany?: Prisma.PlanoPreventivoScalarWhereInput | Prisma.PlanoPreventivoScalarWhereInput[]
 }
 
-export type PlanoPreventivoUncheckedUpdateOneWithoutCompanyNestedInput = {
-  create?: Prisma.XOR<Prisma.PlanoPreventivoCreateWithoutCompanyInput, Prisma.PlanoPreventivoUncheckedCreateWithoutCompanyInput>
-  connectOrCreate?: Prisma.PlanoPreventivoCreateOrConnectWithoutCompanyInput
-  upsert?: Prisma.PlanoPreventivoUpsertWithoutCompanyInput
-  disconnect?: Prisma.PlanoPreventivoWhereInput | boolean
-  delete?: Prisma.PlanoPreventivoWhereInput | boolean
-  connect?: Prisma.PlanoPreventivoWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.PlanoPreventivoUpdateToOneWithWhereWithoutCompanyInput, Prisma.PlanoPreventivoUpdateWithoutCompanyInput>, Prisma.PlanoPreventivoUncheckedUpdateWithoutCompanyInput>
+export type PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput = {
+  create?: Prisma.XOR<Prisma.PlanoPreventivoCreateWithoutCompanyInput, Prisma.PlanoPreventivoUncheckedCreateWithoutCompanyInput> | Prisma.PlanoPreventivoCreateWithoutCompanyInput[] | Prisma.PlanoPreventivoUncheckedCreateWithoutCompanyInput[]
+  connectOrCreate?: Prisma.PlanoPreventivoCreateOrConnectWithoutCompanyInput | Prisma.PlanoPreventivoCreateOrConnectWithoutCompanyInput[]
+  upsert?: Prisma.PlanoPreventivoUpsertWithWhereUniqueWithoutCompanyInput | Prisma.PlanoPreventivoUpsertWithWhereUniqueWithoutCompanyInput[]
+  createMany?: Prisma.PlanoPreventivoCreateManyCompanyInputEnvelope
+  set?: Prisma.PlanoPreventivoWhereUniqueInput | Prisma.PlanoPreventivoWhereUniqueInput[]
+  disconnect?: Prisma.PlanoPreventivoWhereUniqueInput | Prisma.PlanoPreventivoWhereUniqueInput[]
+  delete?: Prisma.PlanoPreventivoWhereUniqueInput | Prisma.PlanoPreventivoWhereUniqueInput[]
+  connect?: Prisma.PlanoPreventivoWhereUniqueInput | Prisma.PlanoPreventivoWhereUniqueInput[]
+  update?: Prisma.PlanoPreventivoUpdateWithWhereUniqueWithoutCompanyInput | Prisma.PlanoPreventivoUpdateWithWhereUniqueWithoutCompanyInput[]
+  updateMany?: Prisma.PlanoPreventivoUpdateManyWithWhereWithoutCompanyInput | Prisma.PlanoPreventivoUpdateManyWithWhereWithoutCompanyInput[]
+  deleteMany?: Prisma.PlanoPreventivoScalarWhereInput | Prisma.PlanoPreventivoScalarWhereInput[]
 }
 
 export type PlanoPreventivoCreateWithoutCompanyInput = {
+  id?: string
+  modelo: string
+  marca?: string | null
   categorias?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  engenheiro?: string | null
+  crea?: string | null
+  art?: string | null
+  dataInspecao?: Date | string | null
+  chassiInspecionado?: string | null
+  horimetroInspecao?: string | null
+  observacoes?: string | null
+  createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type PlanoPreventivoUncheckedCreateWithoutCompanyInput = {
+  id?: string
+  modelo: string
+  marca?: string | null
   categorias?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  engenheiro?: string | null
+  crea?: string | null
+  art?: string | null
+  dataInspecao?: Date | string | null
+  chassiInspecionado?: string | null
+  horimetroInspecao?: string | null
+  observacoes?: string | null
+  createdAt?: Date | string
   updatedAt?: Date | string
 }
 
@@ -314,57 +599,185 @@ export type PlanoPreventivoCreateOrConnectWithoutCompanyInput = {
   create: Prisma.XOR<Prisma.PlanoPreventivoCreateWithoutCompanyInput, Prisma.PlanoPreventivoUncheckedCreateWithoutCompanyInput>
 }
 
-export type PlanoPreventivoUpsertWithoutCompanyInput = {
-  update: Prisma.XOR<Prisma.PlanoPreventivoUpdateWithoutCompanyInput, Prisma.PlanoPreventivoUncheckedUpdateWithoutCompanyInput>
-  create: Prisma.XOR<Prisma.PlanoPreventivoCreateWithoutCompanyInput, Prisma.PlanoPreventivoUncheckedCreateWithoutCompanyInput>
-  where?: Prisma.PlanoPreventivoWhereInput
+export type PlanoPreventivoCreateManyCompanyInputEnvelope = {
+  data: Prisma.PlanoPreventivoCreateManyCompanyInput | Prisma.PlanoPreventivoCreateManyCompanyInput[]
+  skipDuplicates?: boolean
 }
 
-export type PlanoPreventivoUpdateToOneWithWhereWithoutCompanyInput = {
-  where?: Prisma.PlanoPreventivoWhereInput
+export type PlanoPreventivoUpsertWithWhereUniqueWithoutCompanyInput = {
+  where: Prisma.PlanoPreventivoWhereUniqueInput
+  update: Prisma.XOR<Prisma.PlanoPreventivoUpdateWithoutCompanyInput, Prisma.PlanoPreventivoUncheckedUpdateWithoutCompanyInput>
+  create: Prisma.XOR<Prisma.PlanoPreventivoCreateWithoutCompanyInput, Prisma.PlanoPreventivoUncheckedCreateWithoutCompanyInput>
+}
+
+export type PlanoPreventivoUpdateWithWhereUniqueWithoutCompanyInput = {
+  where: Prisma.PlanoPreventivoWhereUniqueInput
   data: Prisma.XOR<Prisma.PlanoPreventivoUpdateWithoutCompanyInput, Prisma.PlanoPreventivoUncheckedUpdateWithoutCompanyInput>
 }
 
-export type PlanoPreventivoUpdateWithoutCompanyInput = {
+export type PlanoPreventivoUpdateManyWithWhereWithoutCompanyInput = {
+  where: Prisma.PlanoPreventivoScalarWhereInput
+  data: Prisma.XOR<Prisma.PlanoPreventivoUpdateManyMutationInput, Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyInput>
+}
+
+export type PlanoPreventivoScalarWhereInput = {
+  AND?: Prisma.PlanoPreventivoScalarWhereInput | Prisma.PlanoPreventivoScalarWhereInput[]
+  OR?: Prisma.PlanoPreventivoScalarWhereInput[]
+  NOT?: Prisma.PlanoPreventivoScalarWhereInput | Prisma.PlanoPreventivoScalarWhereInput[]
+  id?: Prisma.UuidFilter<"PlanoPreventivo"> | string
+  companyId?: Prisma.UuidFilter<"PlanoPreventivo"> | string
+  modelo?: Prisma.StringFilter<"PlanoPreventivo"> | string
+  marca?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  categorias?: Prisma.JsonFilter<"PlanoPreventivo">
+  engenheiro?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  crea?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  art?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  dataInspecao?: Prisma.DateTimeNullableFilter<"PlanoPreventivo"> | Date | string | null
+  chassiInspecionado?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  horimetroInspecao?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  observacoes?: Prisma.StringNullableFilter<"PlanoPreventivo"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"PlanoPreventivo"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"PlanoPreventivo"> | Date | string
+}
+
+export type PlanoPreventivoCreateManyCompanyInput = {
+  id?: string
+  modelo: string
+  marca?: string | null
   categorias?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  engenheiro?: string | null
+  crea?: string | null
+  art?: string | null
+  dataInspecao?: Date | string | null
+  chassiInspecionado?: string | null
+  horimetroInspecao?: string | null
+  observacoes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type PlanoPreventivoUpdateWithoutCompanyInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  modelo?: Prisma.StringFieldUpdateOperationsInput | string
+  marca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  categorias?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  engenheiro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  crea?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  art?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dataInspecao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  chassiInspecionado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  horimetroInspecao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type PlanoPreventivoUncheckedUpdateWithoutCompanyInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  modelo?: Prisma.StringFieldUpdateOperationsInput | string
+  marca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   categorias?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  engenheiro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  crea?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  art?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dataInspecao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  chassiInspecionado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  horimetroInspecao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type PlanoPreventivoUncheckedUpdateManyWithoutCompanyInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  modelo?: Prisma.StringFieldUpdateOperationsInput | string
+  marca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  categorias?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  engenheiro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  crea?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  art?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dataInspecao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  chassiInspecionado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  horimetroInspecao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
 
 export type PlanoPreventivoSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
   companyId?: boolean
+  modelo?: boolean
+  marca?: boolean
   categorias?: boolean
+  engenheiro?: boolean
+  crea?: boolean
+  art?: boolean
+  dataInspecao?: boolean
+  chassiInspecionado?: boolean
+  horimetroInspecao?: boolean
+  observacoes?: boolean
+  createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["planoPreventivo"]>
 
 export type PlanoPreventivoSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
   companyId?: boolean
+  modelo?: boolean
+  marca?: boolean
   categorias?: boolean
+  engenheiro?: boolean
+  crea?: boolean
+  art?: boolean
+  dataInspecao?: boolean
+  chassiInspecionado?: boolean
+  horimetroInspecao?: boolean
+  observacoes?: boolean
+  createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["planoPreventivo"]>
 
 export type PlanoPreventivoSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
+  id?: boolean
   companyId?: boolean
+  modelo?: boolean
+  marca?: boolean
   categorias?: boolean
+  engenheiro?: boolean
+  crea?: boolean
+  art?: boolean
+  dataInspecao?: boolean
+  chassiInspecionado?: boolean
+  horimetroInspecao?: boolean
+  observacoes?: boolean
+  createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["planoPreventivo"]>
 
 export type PlanoPreventivoSelectScalar = {
+  id?: boolean
   companyId?: boolean
+  modelo?: boolean
+  marca?: boolean
   categorias?: boolean
+  engenheiro?: boolean
+  crea?: boolean
+  art?: boolean
+  dataInspecao?: boolean
+  chassiInspecionado?: boolean
+  horimetroInspecao?: boolean
+  observacoes?: boolean
+  createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type PlanoPreventivoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"companyId" | "categorias" | "updatedAt", ExtArgs["result"]["planoPreventivo"]>
+export type PlanoPreventivoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "companyId" | "modelo" | "marca" | "categorias" | "engenheiro" | "crea" | "art" | "dataInspecao" | "chassiInspecionado" | "horimetroInspecao" | "observacoes" | "createdAt" | "updatedAt", ExtArgs["result"]["planoPreventivo"]>
 export type PlanoPreventivoInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
 }
@@ -381,8 +794,42 @@ export type $PlanoPreventivoPayload<ExtArgs extends runtime.Types.Extensions.Int
     company: Prisma.$CompanyPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
+    id: string
     companyId: string
+    /**
+     * "Retroescavadeira 3CX". Casa com `Equipment.modelo`.
+     */
+    modelo: string
+    /**
+     * Desambigua homônimos entre fabricantes.
+     */
+    marca: string | null
+    /**
+     * `[{ id, nome, ciclos: [{ id, horas, km, titulo }],
+     * linhas: [{ id, item, especificacao, codigoPeca, quantidade,
+     * acoes: { cicloId: AcaoKey } }] }]`
+     */
     categorias: runtime.JsonValue
+    /**
+     * Responsabilidade técnica — o cabeçalho do PMP assinado. Sem isto o plano
+     * é uma tabela de intervalos; com isto é o documento que a empresa mostra
+     * numa fiscalização.
+     */
+    engenheiro: string | null
+    crea: string | null
+    art: string | null
+    dataInspecao: Date | null
+    /**
+     * A máquina inspecionada para levantar o plano. O plano vale para todas as
+     * iguais; a inspeção que o originou foi numa só.
+     */
+    chassiInspecionado: string | null
+    horimetroInspecao: string | null
+    /**
+     * As ressalvas do fim do PMP — mudam a leitura de todos os ciclos.
+     */
+    observacoes: string | null
+    createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["planoPreventivo"]>
   composites: {}
@@ -467,8 +914,8 @@ export interface PlanoPreventivoDelegate<ExtArgs extends runtime.Types.Extension
    * // Get first 10 PlanoPreventivos
    * const planoPreventivos = await prisma.planoPreventivo.findMany({ take: 10 })
    * 
-   * // Only select the `companyId`
-   * const planoPreventivoWithCompanyIdOnly = await prisma.planoPreventivo.findMany({ select: { companyId: true } })
+   * // Only select the `id`
+   * const planoPreventivoWithIdOnly = await prisma.planoPreventivo.findMany({ select: { id: true } })
    * 
    */
   findMany<T extends PlanoPreventivoFindManyArgs>(args?: Prisma.SelectSubset<T, PlanoPreventivoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlanoPreventivoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
@@ -512,9 +959,9 @@ export interface PlanoPreventivoDelegate<ExtArgs extends runtime.Types.Extension
    *   ]
    * })
    * 
-   * // Create many PlanoPreventivos and only return the `companyId`
-   * const planoPreventivoWithCompanyIdOnly = await prisma.planoPreventivo.createManyAndReturn({
-   *   select: { companyId: true },
+   * // Create many PlanoPreventivos and only return the `id`
+   * const planoPreventivoWithIdOnly = await prisma.planoPreventivo.createManyAndReturn({
+   *   select: { id: true },
    *   data: [
    *     // ... provide data here
    *   ]
@@ -603,9 +1050,9 @@ export interface PlanoPreventivoDelegate<ExtArgs extends runtime.Types.Extension
    *   ]
    * })
    * 
-   * // Update zero or more PlanoPreventivos and only return the `companyId`
-   * const planoPreventivoWithCompanyIdOnly = await prisma.planoPreventivo.updateManyAndReturn({
-   *   select: { companyId: true },
+   * // Update zero or more PlanoPreventivos and only return the `id`
+   * const planoPreventivoWithIdOnly = await prisma.planoPreventivo.updateManyAndReturn({
+   *   select: { id: true },
    *   where: {
    *     // ... provide filter here
    *   },
@@ -808,8 +1255,19 @@ export interface Prisma__PlanoPreventivoClient<T, Null = never, ExtArgs extends 
  * Fields of the PlanoPreventivo model
  */
 export interface PlanoPreventivoFieldRefs {
+  readonly id: Prisma.FieldRef<"PlanoPreventivo", 'String'>
   readonly companyId: Prisma.FieldRef<"PlanoPreventivo", 'String'>
+  readonly modelo: Prisma.FieldRef<"PlanoPreventivo", 'String'>
+  readonly marca: Prisma.FieldRef<"PlanoPreventivo", 'String'>
   readonly categorias: Prisma.FieldRef<"PlanoPreventivo", 'Json'>
+  readonly engenheiro: Prisma.FieldRef<"PlanoPreventivo", 'String'>
+  readonly crea: Prisma.FieldRef<"PlanoPreventivo", 'String'>
+  readonly art: Prisma.FieldRef<"PlanoPreventivo", 'String'>
+  readonly dataInspecao: Prisma.FieldRef<"PlanoPreventivo", 'DateTime'>
+  readonly chassiInspecionado: Prisma.FieldRef<"PlanoPreventivo", 'String'>
+  readonly horimetroInspecao: Prisma.FieldRef<"PlanoPreventivo", 'String'>
+  readonly observacoes: Prisma.FieldRef<"PlanoPreventivo", 'String'>
+  readonly createdAt: Prisma.FieldRef<"PlanoPreventivo", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"PlanoPreventivo", 'DateTime'>
 }
     
