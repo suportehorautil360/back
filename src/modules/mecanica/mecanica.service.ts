@@ -19,7 +19,13 @@ import {
   ordenarResultado,
 } from './regras/busca-checklist';
 import type { ChecklistModeloDto } from './dto/checklist-modelo.dto';
+import { randomUUID } from 'node:crypto';
 import { ordenarParaMaquina } from './regras/manual';
+import { selarBatidaOriginal } from '../checklist-auth/helpers/ponto-ledger.helper';
+import { UploadsService } from '../uploads/uploads.service';
+
+/** Os quatro momentos da folha do dia — mesma ordem do app do motorista. */
+const TIPOS_DE_PONTO = ['entrada', 'almoco', 'volta', 'saida'];
 import {
   impeditivosReprovados,
   lerGrupos,
@@ -61,7 +67,10 @@ export type SituacaoOs = 'Aberta' | 'EmAndamento' | 'Concluida';
  */
 @Injectable()
 export class MecanicaService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly uploads: UploadsService,
+  ) {}
 
   async listarBancada(
     painel: PainelPayload,
@@ -1234,4 +1243,173 @@ export class MecanicaService {
 
     return os;
   }
+
+  // ─────────────────────────── ponto do mecânico ───────────────────────────
+
+  /**
+   * A batida de ponto do mecânico, pelo app.
+   *
+   * Ele já batia pelo painel web — o gate de entrada até o obriga. O que
+   * faltava era bater **de dentro do app, sem rede**, que é onde ele passa o
+   * turno: no galpão, no subsolo, no pátio.
+   *
+   * Três diferenças em relação à batida do painel, e todas por causa do
+   * offline:
+   *
+   * - **O horário é o do APARELHO.** O painel carimba com o relógio do
+   *   servidor porque lá a pessoa está online. Aqui não: uma batida feita às
+   *   7h e sincronizada ao meio-dia tem de registrar 7h. É o horário que a lei
+   *   protege, e carimbar na chegada roubaria cinco horas de alguém.
+   * - **Idempotência pela chave do aparelho** (`legacyId`), e não só pelo
+   *   interceptor: a fila do app reenvia com a mesma chave depois de uma
+   *   resposta perdida, e uma batida duplicada no ledger é um registro legal
+   *   errado que não se apaga — só se cancela, deixando rastro.
+   * - **Recusa duplicada do mesmo tipo no dia** com a batida ORIGINAL que já
+   *   existe, em vez de erro: o app tentando de novo precisa saber que já
+   *   está registrado, não que falhou.
+   */
+  async baterPonto(
+    painel: PainelPayload,
+    dto: {
+      tipo: string;
+      timestampOriginal: string;
+      latitude?: number;
+      longitude?: number;
+      precisaoMetros?: number;
+    },
+    file: { buffer: Buffer; mimetype: string } | undefined,
+    chave: string,
+  ) {
+    const operatorId = this.exigirOperator(painel);
+
+    const operator = await this.prisma.operator.findFirst({
+      where: { id: operatorId, companyId: painel.companyId, status: 'ativo' },
+      select: { id: true, nome: true, cpf: true, baterPonto: true },
+    });
+    if (!operator) {
+      throw new NotFoundException('Funcionário não encontrado.');
+    }
+    // Mesma condição do painel: quem não bate ponto lá não bate aqui. São a
+    // mesma pessoa e o mesmo cadastro — um caminho mais frouxo que o outro
+    // seria uma porta lateral.
+    if (!operator.baterPonto) {
+      throw new ForbiddenException(
+        'Seu cadastro não registra ponto. Fale com o RH.',
+      );
+    }
+
+    if (!TIPOS_DE_PONTO.includes(dto.tipo)) {
+      throw new BadRequestException(
+        `Tipo de ponto inválido: "${dto.tipo}".`,
+      );
+    }
+
+    const quando = new Date(dto.timestampOriginal);
+    if (Number.isNaN(quando.getTime())) {
+      throw new BadRequestException('timestampOriginal inválido.');
+    }
+
+    // Reenvio da MESMA chave devolve a batida original — nunca uma segunda.
+    const jaGravada = await this.prisma.pontoRegistro.findFirst({
+      where: { legacyId: chave, companyId: painel.companyId },
+    });
+    if (jaGravada) return jaGravada;
+
+    const dia = quando.toISOString().slice(0, 10);
+    const doMesmoTipo = await this.prisma.pontoRegistro.findFirst({
+      where: {
+        companyId: painel.companyId,
+        operatorId: operator.id,
+        tipo: dto.tipo,
+        registro: 'original',
+        timestampOriginal: {
+          gte: new Date(`${dia}T00:00:00.000Z`),
+          lte: new Date(`${dia}T23:59:59.999Z`),
+        },
+      },
+    });
+    // Devolve em vez de recusar: o app que tentou de novo precisa saber que
+    // está registrado, não que falhou.
+    if (doMesmoTipo) return doMesmoTipo;
+
+    if (!file) {
+      throw new BadRequestException('A selfie é obrigatória na batida.');
+    }
+
+    const pontoId = randomUUID();
+    const chaveFoto = await this.uploads.uploadSelfiePontoPorCompany(
+      painel.companyId,
+      pontoId,
+      file,
+    );
+
+    return this.prisma.$transaction(async (tx) => {
+      const selo = await selarBatidaOriginal(tx as never, {
+        companyId: painel.companyId,
+        identificador: operator.cpf || operator.nome,
+        tipo: dto.tipo,
+        timestampOriginal: dto.timestampOriginal,
+      });
+
+      return tx.pontoRegistro.create({
+        data: {
+          id: pontoId,
+          legacyId: chave,
+          companyId: painel.companyId,
+          operatorId: operator.id,
+          operatorNome: operator.nome,
+          operatorCpf: operator.cpf,
+          timestampOriginal: quando,
+          tipo: dto.tipo,
+          photoUrl: chaveFoto,
+          registro: 'original',
+          nsr: selo.nsr,
+          hash: selo.hash,
+          hashAnterior: selo.hashAnterior,
+          aplicado: true,
+          latitude: dto.latitude ?? null,
+          longitude: dto.longitude ?? null,
+          // Coluna é Int; a API de geolocalização informa float.
+          precisaoMetros:
+            dto.precisaoMetros != null
+              ? Math.round(dto.precisaoMetros)
+              : null,
+        },
+      });
+    });
+  }
+
+  /**
+   * As batidas do mecânico no dia — é o que a tela do app mostra.
+   *
+   * Só as ORIGINAIS: ajuste e cancelamento são fluxo do RH, e resolvê-los aqui
+   * duplicaria `ledger.ts`. O app mostra o que a pessoa bateu.
+   */
+  async pontoDoDia(painel: PainelPayload, dia: string) {
+    const operatorId = this.exigirOperator(painel);
+    const alvo = /^\d{4}-\d{2}-\d{2}$/.test(dia)
+      ? dia
+      : new Date().toISOString().slice(0, 10);
+
+    return this.prisma.pontoRegistro.findMany({
+      where: {
+        companyId: painel.companyId,
+        operatorId,
+        registro: 'original',
+        timestampOriginal: {
+          gte: new Date(`${alvo}T00:00:00.000Z`),
+          lte: new Date(`${alvo}T23:59:59.999Z`),
+        },
+      },
+      orderBy: { timestampOriginal: 'asc' },
+      select: {
+        id: true,
+        legacyId: true,
+        tipo: true,
+        timestampOriginal: true,
+        nsr: true,
+      },
+    });
+  }
+
 }

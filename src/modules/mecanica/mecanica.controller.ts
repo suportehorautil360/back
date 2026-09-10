@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   Patch,
   Post,
@@ -23,6 +24,7 @@ import {
   EXTENSOES,
   LIMITE_BYTES_FOTO_OS,
   LIMITE_BYTES_MANUAL,
+  LIMITE_BYTES_SELFIE_PONTO,
   TIPOS_MANUAL,
   UploadsService,
 } from '../uploads/uploads.service';
@@ -706,4 +708,78 @@ export class MecanicaController {
   async concluir(@Req() req: RequestComPainel, @Param('id') id: string) {
     return this.service.concluir(req.painel, id);
   }
+
+  // ─────────────────────────── ponto do mecânico ───────────────────────────
+
+  @Post('ponto')
+  @UseInterceptors(
+    IdempotencyInterceptor,
+    FileInterceptor('file', { limits: { fileSize: LIMITE_BYTES_SELFIE_PONTO } }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Registrar batida de ponto do mecânico',
+    description:
+      'Multipart com "file" (selfie) e os campos da batida. O horário é o do ' +
+      'APARELHO, não o do servidor: uma batida feita às 7h no galpão e ' +
+      'sincronizada ao meio-dia registra 7h — é o horário que a lei protege. ' +
+      'A `Idempotency-Key` vira o `legacyId` do registro, então reenvio da ' +
+      'mesma chave devolve a batida original em vez de criar uma segunda.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file', 'tipo', 'timestampOriginal'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        tipo: {
+          type: 'string',
+          enum: ['entrada', 'almoco', 'volta', 'saida'],
+        },
+        timestampOriginal: { type: 'string', format: 'date-time' },
+        latitude: { type: 'number' },
+        longitude: { type: 'number' },
+        precisaoMetros: { type: 'number' },
+      },
+    },
+  })
+  async baterPonto(
+    @Req() req: RequestComPainel,
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Body() corpo: Record<string, string>,
+    @Headers('idempotency-key') chave?: string,
+  ) {
+    // Sem chave não há como distinguir reenvio de batida nova — e no ponto
+    // essa diferença é um registro legal a mais, que não se apaga.
+    if (!chave?.trim()) {
+      throw new BadRequestException('Idempotency-Key é obrigatória na batida.');
+    }
+
+    const numero = (v: string | undefined) => {
+      if (v === undefined || v === '') return undefined;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : undefined;
+    };
+
+    return this.service.baterPonto(
+      req.painel,
+      {
+        tipo: corpo.tipo,
+        timestampOriginal: corpo.timestampOriginal,
+        latitude: numero(corpo.latitude),
+        longitude: numero(corpo.longitude),
+        precisaoMetros: numero(corpo.precisaoMetros),
+      },
+      file ? { buffer: file.buffer, mimetype: file.mimetype } : undefined,
+      chave.trim(),
+    );
+  }
+
+  @Get('ponto/dia')
+  @ApiOperation({ summary: 'Batidas do mecânico num dia (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'dia', required: false })
+  async pontoDoDia(@Req() req: RequestComPainel, @Query('dia') dia?: string) {
+    return this.service.pontoDoDia(req.painel, dia ?? '');
+  }
+
 }

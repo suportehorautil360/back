@@ -5207,6 +5207,7 @@ export const OperatorScalarFieldEnum = {
   observacoes: 'observacoes',
   companyUserId: 'companyUserId',
   companyRoleId: 'companyRoleId',
+  baterPonto: 'baterPonto',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

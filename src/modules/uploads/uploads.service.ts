@@ -383,13 +383,27 @@ export class UploadsService {
     pontoId: string,
     file: { buffer: Buffer; mimetype: string },
   ): Promise<string> {
-    if (!pontoId?.trim()) {
-      throw new BadRequestException('pontoId é obrigatório.');
-    }
-
     const companyId = await resolverCompanyId(this.prisma, prefeituraId);
     if (!companyId) {
       throw new NotFoundException('Empresa não encontrada.');
+    }
+    return this.uploadSelfiePontoPorCompany(companyId, pontoId, file);
+  }
+
+  /**
+   * Mesma subida, para quem já tem o `companyId`.
+   *
+   * Quem entra pelo token do painel (app do mecânico) já resolveu a empresa no
+   * guard; obrigá-lo a traduzir de volta para `prefeituraId` só para o upload
+   * seria dar uma volta pelo identificador legado sem ganho nenhum.
+   */
+  async uploadSelfiePontoPorCompany(
+    companyId: string,
+    pontoId: string,
+    file: { buffer: Buffer; mimetype: string },
+  ): Promise<string> {
+    if (!pontoId?.trim()) {
+      throw new BadRequestException('pontoId é obrigatório.');
     }
 
     await this.ensureBucket(BUCKET_SELFIES_PONTO, false);

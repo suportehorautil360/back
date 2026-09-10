@@ -796,6 +796,12 @@ model Operator {
   /// scalar precisar dele.
   companyRoleId String? @map("company_role_id") @db.Uuid
 
+  /// Se false, não exige nem registra batidas de ponto. A coluna já existe no
+  /// Postgres (migration `20260819160000_operator_rh_profile` do horautil);
+  /// faltava o espelho, sem o qual o app do mecânico não sabia se a pessoa
+  /// bate ponto — e um caminho mais frouxo que o do painel seria porta lateral.
+  baterPonto Boolean @default(true) @map("bater_ponto")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
