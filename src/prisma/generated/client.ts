@@ -459,3 +459,17 @@ export type ManualEquipamento = Prisma.ManualEquipamentoModel
  * de uma OS — e sobrevive dias, porque corretiva não termina numa sentada.
  */
 export type ChecklistExecucao = Prisma.ChecklistExecucaoModel
+/**
+ * Model ProgramadorMecanico
+ * O mecânico que atende as máquinas de um programador.
+ * 
+ * Serve a UMA coisa: sugerir o responsável ao abrir uma OS. **Sugestão, não
+ * regra** — nada aqui restringe quem pode ser designado, a lista do
+ * formulário continua completa, e o mecânico segue podendo assumir pelo app.
+ * Por isso não há FK de `ServiceOrder` para cá: apagar um vínculo não deixa
+ * OS nenhuma inconsistente.
+ * 
+ * `companyUserId` é a chave primária porque é UM mecânico por programador —
+ * vários tornariam a sugestão ambígua justamente onde ela é automática.
+ */
+export type ProgramadorMecanico = Prisma.ProgramadorMecanicoModel

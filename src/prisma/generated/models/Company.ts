@@ -297,6 +297,7 @@ export type CompanyWhereInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoListRelationFilter
   notasFiscais?: Prisma.NotaFiscalListRelationFilter
   planosPreventivos?: Prisma.PlanoPreventivoListRelationFilter
+  programadorMecanicos?: Prisma.ProgramadorMecanicoListRelationFilter
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoListRelationFilter
   notificacoes?: Prisma.NotificacaoListRelationFilter
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientListRelationFilter
@@ -350,6 +351,7 @@ export type CompanyOrderByWithRelationInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoOrderByRelationAggregateInput
   notasFiscais?: Prisma.NotaFiscalOrderByRelationAggregateInput
   planosPreventivos?: Prisma.PlanoPreventivoOrderByRelationAggregateInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoOrderByRelationAggregateInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoOrderByRelationAggregateInput
   notificacoes?: Prisma.NotificacaoOrderByRelationAggregateInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientOrderByRelationAggregateInput
@@ -406,6 +408,7 @@ export type CompanyWhereUniqueInput = Prisma.AtLeast<{
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoListRelationFilter
   notasFiscais?: Prisma.NotaFiscalListRelationFilter
   planosPreventivos?: Prisma.PlanoPreventivoListRelationFilter
+  programadorMecanicos?: Prisma.ProgramadorMecanicoListRelationFilter
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoListRelationFilter
   notificacoes?: Prisma.NotificacaoListRelationFilter
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientListRelationFilter
@@ -505,6 +508,7 @@ export type CompanyCreateInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -558,6 +562,7 @@ export type CompanyUncheckedCreateInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -611,6 +616,7 @@ export type CompanyUpdateInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -664,6 +670,7 @@ export type CompanyUncheckedUpdateInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1259,6 +1266,20 @@ export type CompanyUpdateOneRequiredWithoutChecklistExecucoesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.CompanyUpdateToOneWithWhereWithoutChecklistExecucoesInput, Prisma.CompanyUpdateWithoutChecklistExecucoesInput>, Prisma.CompanyUncheckedUpdateWithoutChecklistExecucoesInput>
 }
 
+export type CompanyCreateNestedOneWithoutProgramadorMecanicosInput = {
+  create?: Prisma.XOR<Prisma.CompanyCreateWithoutProgramadorMecanicosInput, Prisma.CompanyUncheckedCreateWithoutProgramadorMecanicosInput>
+  connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutProgramadorMecanicosInput
+  connect?: Prisma.CompanyWhereUniqueInput
+}
+
+export type CompanyUpdateOneRequiredWithoutProgramadorMecanicosNestedInput = {
+  create?: Prisma.XOR<Prisma.CompanyCreateWithoutProgramadorMecanicosInput, Prisma.CompanyUncheckedCreateWithoutProgramadorMecanicosInput>
+  connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutProgramadorMecanicosInput
+  upsert?: Prisma.CompanyUpsertWithoutProgramadorMecanicosInput
+  connect?: Prisma.CompanyWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CompanyUpdateToOneWithWhereWithoutProgramadorMecanicosInput, Prisma.CompanyUpdateWithoutProgramadorMecanicosInput>, Prisma.CompanyUncheckedUpdateWithoutProgramadorMecanicosInput>
+}
+
 export type CompanyCreateWithoutWhatsappRecipientsInput = {
   id?: string
   legacyId?: string | null
@@ -1304,6 +1325,7 @@ export type CompanyCreateWithoutWhatsappRecipientsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   checklistModelos?: Prisma.ChecklistModeloCreateNestedManyWithoutCompanyInput
@@ -1356,6 +1378,7 @@ export type CompanyUncheckedCreateWithoutWhatsappRecipientsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   checklistModelos?: Prisma.ChecklistModeloUncheckedCreateNestedManyWithoutCompanyInput
@@ -1424,6 +1447,7 @@ export type CompanyUpdateWithoutWhatsappRecipientsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   checklistModelos?: Prisma.ChecklistModeloUpdateManyWithoutCompanyNestedInput
@@ -1476,6 +1500,7 @@ export type CompanyUncheckedUpdateWithoutWhatsappRecipientsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   checklistModelos?: Prisma.ChecklistModeloUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1527,6 +1552,7 @@ export type CompanyCreateWithoutSettingsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -1579,6 +1605,7 @@ export type CompanyUncheckedCreateWithoutSettingsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -1647,6 +1674,7 @@ export type CompanyUpdateWithoutSettingsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -1699,6 +1727,7 @@ export type CompanyUncheckedUpdateWithoutSettingsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1751,6 +1780,7 @@ export type CompanyCreateWithoutEquipmentsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -1803,6 +1833,7 @@ export type CompanyUncheckedCreateWithoutEquipmentsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -1871,6 +1902,7 @@ export type CompanyUpdateWithoutEquipmentsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -1923,6 +1955,7 @@ export type CompanyUncheckedUpdateWithoutEquipmentsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1975,6 +2008,7 @@ export type CompanyCreateWithoutWorkFrontsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -2027,6 +2061,7 @@ export type CompanyUncheckedCreateWithoutWorkFrontsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -2095,6 +2130,7 @@ export type CompanyUpdateWithoutWorkFrontsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -2147,6 +2183,7 @@ export type CompanyUncheckedUpdateWithoutWorkFrontsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -2199,6 +2236,7 @@ export type CompanyCreateWithoutChecklistRunsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -2251,6 +2289,7 @@ export type CompanyUncheckedCreateWithoutChecklistRunsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -2319,6 +2358,7 @@ export type CompanyUpdateWithoutChecklistRunsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -2371,6 +2411,7 @@ export type CompanyUncheckedUpdateWithoutChecklistRunsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -2423,6 +2464,7 @@ export type CompanyCreateWithoutServiceOrdersInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -2475,6 +2517,7 @@ export type CompanyUncheckedCreateWithoutServiceOrdersInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -2543,6 +2586,7 @@ export type CompanyUpdateWithoutServiceOrdersInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -2595,6 +2639,7 @@ export type CompanyUncheckedUpdateWithoutServiceOrdersInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -2647,6 +2692,7 @@ export type CompanyCreateWithoutPlanosPreventivosInput = {
   lubrificacoes?: Prisma.LubrificacaoCreateNestedManyWithoutCompanyInput
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -2699,6 +2745,7 @@ export type CompanyUncheckedCreateWithoutPlanosPreventivosInput = {
   lubrificacoes?: Prisma.LubrificacaoUncheckedCreateNestedManyWithoutCompanyInput
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -2767,6 +2814,7 @@ export type CompanyUpdateWithoutPlanosPreventivosInput = {
   lubrificacoes?: Prisma.LubrificacaoUpdateManyWithoutCompanyNestedInput
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -2819,6 +2867,7 @@ export type CompanyUncheckedUpdateWithoutPlanosPreventivosInput = {
   lubrificacoes?: Prisma.LubrificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -2871,6 +2920,7 @@ export type CompanyCreateWithoutOperatorsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -2923,6 +2973,7 @@ export type CompanyUncheckedCreateWithoutOperatorsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -2991,6 +3042,7 @@ export type CompanyUpdateWithoutOperatorsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -3043,6 +3095,7 @@ export type CompanyUncheckedUpdateWithoutOperatorsInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -3095,6 +3148,7 @@ export type CompanyCreateWithoutAbastecimentosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -3147,6 +3201,7 @@ export type CompanyUncheckedCreateWithoutAbastecimentosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -3215,6 +3270,7 @@ export type CompanyUpdateWithoutAbastecimentosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -3267,6 +3323,7 @@ export type CompanyUncheckedUpdateWithoutAbastecimentosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -3320,6 +3377,7 @@ export type CompanyCreateWithoutFleetfuelIntencoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
   checklistModelos?: Prisma.ChecklistModeloCreateNestedManyWithoutCompanyInput
@@ -3372,6 +3430,7 @@ export type CompanyUncheckedCreateWithoutFleetfuelIntencoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
   checklistModelos?: Prisma.ChecklistModeloUncheckedCreateNestedManyWithoutCompanyInput
@@ -3440,6 +3499,7 @@ export type CompanyUpdateWithoutFleetfuelIntencoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
   checklistModelos?: Prisma.ChecklistModeloUpdateManyWithoutCompanyNestedInput
@@ -3492,6 +3552,7 @@ export type CompanyUncheckedUpdateWithoutFleetfuelIntencoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
   checklistModelos?: Prisma.ChecklistModeloUncheckedUpdateManyWithoutCompanyNestedInput
@@ -3543,6 +3604,7 @@ export type CompanyCreateWithoutPartnersInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -3595,6 +3657,7 @@ export type CompanyUncheckedCreateWithoutPartnersInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -3663,6 +3726,7 @@ export type CompanyUpdateWithoutPartnersInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -3715,6 +3779,7 @@ export type CompanyUncheckedUpdateWithoutPartnersInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -3767,6 +3832,7 @@ export type CompanyCreateWithoutPartnerPortalUsersInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -3819,6 +3885,7 @@ export type CompanyUncheckedCreateWithoutPartnerPortalUsersInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -3887,6 +3954,7 @@ export type CompanyUpdateWithoutPartnerPortalUsersInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -3939,6 +4007,7 @@ export type CompanyUncheckedUpdateWithoutPartnerPortalUsersInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -3991,6 +4060,7 @@ export type CompanyCreateWithoutPontoRegistrosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -4043,6 +4113,7 @@ export type CompanyUncheckedCreateWithoutPontoRegistrosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -4111,6 +4182,7 @@ export type CompanyUpdateWithoutPontoRegistrosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -4163,6 +4235,7 @@ export type CompanyUncheckedUpdateWithoutPontoRegistrosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -4215,6 +4288,7 @@ export type CompanyCreateWithoutPontoNsrCounterInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -4267,6 +4341,7 @@ export type CompanyUncheckedCreateWithoutPontoNsrCounterInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -4335,6 +4410,7 @@ export type CompanyUpdateWithoutPontoNsrCounterInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -4387,6 +4463,7 @@ export type CompanyUncheckedUpdateWithoutPontoNsrCounterInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -4439,6 +4516,7 @@ export type CompanyCreateWithoutPontoSolicitacoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -4491,6 +4569,7 @@ export type CompanyUncheckedCreateWithoutPontoSolicitacoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -4559,6 +4638,7 @@ export type CompanyUpdateWithoutPontoSolicitacoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -4611,6 +4691,7 @@ export type CompanyUncheckedUpdateWithoutPontoSolicitacoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -4663,6 +4744,7 @@ export type CompanyCreateWithoutPontoAbonosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -4715,6 +4797,7 @@ export type CompanyUncheckedCreateWithoutPontoAbonosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -4783,6 +4866,7 @@ export type CompanyUpdateWithoutPontoAbonosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -4835,6 +4919,7 @@ export type CompanyUncheckedUpdateWithoutPontoAbonosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -4887,6 +4972,7 @@ export type CompanyCreateWithoutChecklistsDevolucaoInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -4939,6 +5025,7 @@ export type CompanyUncheckedCreateWithoutChecklistsDevolucaoInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -5007,6 +5094,7 @@ export type CompanyUpdateWithoutChecklistsDevolucaoInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -5059,6 +5147,7 @@ export type CompanyUncheckedUpdateWithoutChecklistsDevolucaoInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -5111,6 +5200,7 @@ export type CompanyCreateWithoutChecklistsChegadaInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -5163,6 +5253,7 @@ export type CompanyUncheckedCreateWithoutChecklistsChegadaInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -5231,6 +5322,7 @@ export type CompanyUpdateWithoutChecklistsChegadaInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -5283,6 +5375,7 @@ export type CompanyUncheckedUpdateWithoutChecklistsChegadaInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -5335,6 +5428,7 @@ export type CompanyCreateWithoutGarantiasInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -5387,6 +5481,7 @@ export type CompanyUncheckedCreateWithoutGarantiasInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -5455,6 +5550,7 @@ export type CompanyUpdateWithoutGarantiasInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -5507,6 +5603,7 @@ export type CompanyUncheckedUpdateWithoutGarantiasInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -5559,6 +5656,7 @@ export type CompanyCreateWithoutOrcamentosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -5611,6 +5709,7 @@ export type CompanyUncheckedCreateWithoutOrcamentosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -5679,6 +5778,7 @@ export type CompanyUpdateWithoutOrcamentosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -5731,6 +5831,7 @@ export type CompanyUncheckedUpdateWithoutOrcamentosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -5783,6 +5884,7 @@ export type CompanyCreateWithoutRolesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -5835,6 +5937,7 @@ export type CompanyUncheckedCreateWithoutRolesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -5903,6 +6006,7 @@ export type CompanyUpdateWithoutRolesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -5955,6 +6059,7 @@ export type CompanyUncheckedUpdateWithoutRolesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -6007,6 +6112,7 @@ export type CompanyCreateWithoutFeaturesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -6059,6 +6165,7 @@ export type CompanyUncheckedCreateWithoutFeaturesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -6127,6 +6234,7 @@ export type CompanyUpdateWithoutFeaturesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -6179,6 +6287,7 @@ export type CompanyUncheckedUpdateWithoutFeaturesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -6231,6 +6340,7 @@ export type CompanyCreateWithoutFeatureChangesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -6283,6 +6393,7 @@ export type CompanyUncheckedCreateWithoutFeatureChangesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -6351,6 +6462,7 @@ export type CompanyUpdateWithoutFeatureChangesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -6403,6 +6515,7 @@ export type CompanyUncheckedUpdateWithoutFeatureChangesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -6455,6 +6568,7 @@ export type CompanyCreateWithoutUsersInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -6507,6 +6621,7 @@ export type CompanyUncheckedCreateWithoutUsersInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -6575,6 +6690,7 @@ export type CompanyUpdateWithoutUsersInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -6627,6 +6743,7 @@ export type CompanyUncheckedUpdateWithoutUsersInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -6679,6 +6796,7 @@ export type CompanyCreateWithoutEmergenciesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -6731,6 +6849,7 @@ export type CompanyUncheckedCreateWithoutEmergenciesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -6799,6 +6918,7 @@ export type CompanyUpdateWithoutEmergenciesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -6851,6 +6971,7 @@ export type CompanyUncheckedUpdateWithoutEmergenciesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -6903,6 +7024,7 @@ export type CompanyCreateWithoutCreditosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -6955,6 +7077,7 @@ export type CompanyUncheckedCreateWithoutCreditosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -7023,6 +7146,7 @@ export type CompanyUpdateWithoutCreditosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -7075,6 +7199,7 @@ export type CompanyUncheckedUpdateWithoutCreditosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -7127,6 +7252,7 @@ export type CompanyCreateWithoutLubrificacoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -7179,6 +7305,7 @@ export type CompanyUncheckedCreateWithoutLubrificacoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -7247,6 +7374,7 @@ export type CompanyUpdateWithoutLubrificacoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -7299,6 +7427,7 @@ export type CompanyUncheckedUpdateWithoutLubrificacoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -7351,6 +7480,7 @@ export type CompanyCreateWithoutReabastecimentosComboioInput = {
   lubrificacoes?: Prisma.LubrificacaoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -7403,6 +7533,7 @@ export type CompanyUncheckedCreateWithoutReabastecimentosComboioInput = {
   lubrificacoes?: Prisma.LubrificacaoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -7471,6 +7602,7 @@ export type CompanyUpdateWithoutReabastecimentosComboioInput = {
   lubrificacoes?: Prisma.LubrificacaoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -7523,6 +7655,7 @@ export type CompanyUncheckedUpdateWithoutReabastecimentosComboioInput = {
   lubrificacoes?: Prisma.LubrificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -7575,6 +7708,7 @@ export type CompanyCreateWithoutNotasFiscaisInput = {
   lubrificacoes?: Prisma.LubrificacaoCreateNestedManyWithoutCompanyInput
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -7627,6 +7761,7 @@ export type CompanyUncheckedCreateWithoutNotasFiscaisInput = {
   lubrificacoes?: Prisma.LubrificacaoUncheckedCreateNestedManyWithoutCompanyInput
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -7695,6 +7830,7 @@ export type CompanyUpdateWithoutNotasFiscaisInput = {
   lubrificacoes?: Prisma.LubrificacaoUpdateManyWithoutCompanyNestedInput
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -7747,6 +7883,7 @@ export type CompanyUncheckedUpdateWithoutNotasFiscaisInput = {
   lubrificacoes?: Prisma.LubrificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -7800,6 +7937,7 @@ export type CompanyCreateWithoutNotificacoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
   checklistModelos?: Prisma.ChecklistModeloCreateNestedManyWithoutCompanyInput
@@ -7852,6 +7990,7 @@ export type CompanyUncheckedCreateWithoutNotificacoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
   checklistModelos?: Prisma.ChecklistModeloUncheckedCreateNestedManyWithoutCompanyInput
@@ -7920,6 +8059,7 @@ export type CompanyUpdateWithoutNotificacoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
   checklistModelos?: Prisma.ChecklistModeloUpdateManyWithoutCompanyNestedInput
@@ -7972,6 +8112,7 @@ export type CompanyUncheckedUpdateWithoutNotificacoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
   checklistModelos?: Prisma.ChecklistModeloUncheckedUpdateManyWithoutCompanyNestedInput
@@ -8024,6 +8165,7 @@ export type CompanyCreateWithoutChecklistModelosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -8076,6 +8218,7 @@ export type CompanyUncheckedCreateWithoutChecklistModelosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -8144,6 +8287,7 @@ export type CompanyUpdateWithoutChecklistModelosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -8196,6 +8340,7 @@ export type CompanyUncheckedUpdateWithoutChecklistModelosInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -8248,6 +8393,7 @@ export type CompanyCreateWithoutManuaisInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -8300,6 +8446,7 @@ export type CompanyUncheckedCreateWithoutManuaisInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -8368,6 +8515,7 @@ export type CompanyUpdateWithoutManuaisInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -8420,6 +8568,7 @@ export type CompanyUncheckedUpdateWithoutManuaisInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
@@ -8472,6 +8621,7 @@ export type CompanyCreateWithoutChecklistExecucoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
@@ -8524,6 +8674,7 @@ export type CompanyUncheckedCreateWithoutChecklistExecucoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
   notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
   notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
@@ -8592,6 +8743,7 @@ export type CompanyUpdateWithoutChecklistExecucoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
@@ -8644,11 +8796,240 @@ export type CompanyUncheckedUpdateWithoutChecklistExecucoesInput = {
   reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
   notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
   planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
   notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
   whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
   checklistModelos?: Prisma.ChecklistModeloUncheckedUpdateManyWithoutCompanyNestedInput
   manuais?: Prisma.ManualEquipamentoUncheckedUpdateManyWithoutCompanyNestedInput
+}
+
+export type CompanyCreateWithoutProgramadorMecanicosInput = {
+  id?: string
+  legacyId?: string | null
+  name: string
+  slug: string
+  type?: $Enums.CompanyType
+  status?: $Enums.Status
+  uf?: string | null
+  cidade?: string | null
+  email?: string | null
+  cnpj?: string | null
+  caepf?: string | null
+  whatsapp?: string | null
+  razaoSocial?: string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.CompanyUserCreateNestedManyWithoutCompanyInput
+  roles?: Prisma.CompanyRoleCreateNestedManyWithoutCompanyInput
+  pontoRegistros?: Prisma.PontoRegistroCreateNestedManyWithoutCompanyInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoCreateNestedManyWithoutCompanyInput
+  pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
+  orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
+  features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
+  featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
+  partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
+  equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
+  checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
+  serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
+  operators?: Prisma.OperatorCreateNestedManyWithoutCompanyInput
+  abastecimentos?: Prisma.AbastecimentoCreateNestedManyWithoutCompanyInput
+  workFronts?: Prisma.WorkFrontCreateNestedManyWithoutCompanyInput
+  settings?: Prisma.CompanySettingsCreateNestedOneWithoutCompanyInput
+  emergencies?: Prisma.EmergencyCreateNestedManyWithoutCompanyInput
+  creditos?: Prisma.CreditoCreateNestedManyWithoutCompanyInput
+  lubrificacoes?: Prisma.LubrificacaoCreateNestedManyWithoutCompanyInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
+  notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
+  planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
+  notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
+  whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
+  checklistModelos?: Prisma.ChecklistModeloCreateNestedManyWithoutCompanyInput
+  manuais?: Prisma.ManualEquipamentoCreateNestedManyWithoutCompanyInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutCompanyInput
+}
+
+export type CompanyUncheckedCreateWithoutProgramadorMecanicosInput = {
+  id?: string
+  legacyId?: string | null
+  name: string
+  slug: string
+  type?: $Enums.CompanyType
+  status?: $Enums.Status
+  uf?: string | null
+  cidade?: string | null
+  email?: string | null
+  cnpj?: string | null
+  caepf?: string | null
+  whatsapp?: string | null
+  razaoSocial?: string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.CompanyUserUncheckedCreateNestedManyWithoutCompanyInput
+  roles?: Prisma.CompanyRoleUncheckedCreateNestedManyWithoutCompanyInput
+  pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutCompanyInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedCreateNestedManyWithoutCompanyInput
+  pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
+  orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
+  features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
+  featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
+  partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
+  equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
+  checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
+  serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
+  operators?: Prisma.OperatorUncheckedCreateNestedManyWithoutCompanyInput
+  abastecimentos?: Prisma.AbastecimentoUncheckedCreateNestedManyWithoutCompanyInput
+  workFronts?: Prisma.WorkFrontUncheckedCreateNestedManyWithoutCompanyInput
+  settings?: Prisma.CompanySettingsUncheckedCreateNestedOneWithoutCompanyInput
+  emergencies?: Prisma.EmergencyUncheckedCreateNestedManyWithoutCompanyInput
+  creditos?: Prisma.CreditoUncheckedCreateNestedManyWithoutCompanyInput
+  lubrificacoes?: Prisma.LubrificacaoUncheckedCreateNestedManyWithoutCompanyInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
+  notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
+  planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
+  notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
+  whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
+  checklistModelos?: Prisma.ChecklistModeloUncheckedCreateNestedManyWithoutCompanyInput
+  manuais?: Prisma.ManualEquipamentoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutCompanyInput
+}
+
+export type CompanyCreateOrConnectWithoutProgramadorMecanicosInput = {
+  where: Prisma.CompanyWhereUniqueInput
+  create: Prisma.XOR<Prisma.CompanyCreateWithoutProgramadorMecanicosInput, Prisma.CompanyUncheckedCreateWithoutProgramadorMecanicosInput>
+}
+
+export type CompanyUpsertWithoutProgramadorMecanicosInput = {
+  update: Prisma.XOR<Prisma.CompanyUpdateWithoutProgramadorMecanicosInput, Prisma.CompanyUncheckedUpdateWithoutProgramadorMecanicosInput>
+  create: Prisma.XOR<Prisma.CompanyCreateWithoutProgramadorMecanicosInput, Prisma.CompanyUncheckedCreateWithoutProgramadorMecanicosInput>
+  where?: Prisma.CompanyWhereInput
+}
+
+export type CompanyUpdateToOneWithWhereWithoutProgramadorMecanicosInput = {
+  where?: Prisma.CompanyWhereInput
+  data: Prisma.XOR<Prisma.CompanyUpdateWithoutProgramadorMecanicosInput, Prisma.CompanyUncheckedUpdateWithoutProgramadorMecanicosInput>
+}
+
+export type CompanyUpdateWithoutProgramadorMecanicosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumCompanyTypeFieldUpdateOperationsInput | $Enums.CompanyType
+  status?: Prisma.EnumStatusFieldUpdateOperationsInput | $Enums.Status
+  uf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnpj?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caepf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razaoSocial?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.CompanyUserUpdateManyWithoutCompanyNestedInput
+  roles?: Prisma.CompanyRoleUpdateManyWithoutCompanyNestedInput
+  pontoRegistros?: Prisma.PontoRegistroUpdateManyWithoutCompanyNestedInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUpdateManyWithoutCompanyNestedInput
+  pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
+  orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
+  features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
+  featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
+  partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
+  equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
+  checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
+  serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
+  operators?: Prisma.OperatorUpdateManyWithoutCompanyNestedInput
+  abastecimentos?: Prisma.AbastecimentoUpdateManyWithoutCompanyNestedInput
+  workFronts?: Prisma.WorkFrontUpdateManyWithoutCompanyNestedInput
+  settings?: Prisma.CompanySettingsUpdateOneWithoutCompanyNestedInput
+  emergencies?: Prisma.EmergencyUpdateManyWithoutCompanyNestedInput
+  creditos?: Prisma.CreditoUpdateManyWithoutCompanyNestedInput
+  lubrificacoes?: Prisma.LubrificacaoUpdateManyWithoutCompanyNestedInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
+  notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
+  planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
+  notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
+  whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
+  checklistModelos?: Prisma.ChecklistModeloUpdateManyWithoutCompanyNestedInput
+  manuais?: Prisma.ManualEquipamentoUpdateManyWithoutCompanyNestedInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutCompanyNestedInput
+}
+
+export type CompanyUncheckedUpdateWithoutProgramadorMecanicosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumCompanyTypeFieldUpdateOperationsInput | $Enums.CompanyType
+  status?: Prisma.EnumStatusFieldUpdateOperationsInput | $Enums.Status
+  uf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnpj?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caepf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razaoSocial?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.CompanyUserUncheckedUpdateManyWithoutCompanyNestedInput
+  roles?: Prisma.CompanyRoleUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
+  orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
+  features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
+  featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
+  partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
+  equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
+  serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
+  operators?: Prisma.OperatorUncheckedUpdateManyWithoutCompanyNestedInput
+  abastecimentos?: Prisma.AbastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  workFronts?: Prisma.WorkFrontUncheckedUpdateManyWithoutCompanyNestedInput
+  settings?: Prisma.CompanySettingsUncheckedUpdateOneWithoutCompanyNestedInput
+  emergencies?: Prisma.EmergencyUncheckedUpdateManyWithoutCompanyNestedInput
+  creditos?: Prisma.CreditoUncheckedUpdateManyWithoutCompanyNestedInput
+  lubrificacoes?: Prisma.LubrificacaoUncheckedUpdateManyWithoutCompanyNestedInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
+  planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
+  notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
+  whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistModelos?: Prisma.ChecklistModeloUncheckedUpdateManyWithoutCompanyNestedInput
+  manuais?: Prisma.ManualEquipamentoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 
@@ -8682,6 +9063,7 @@ export type CompanyCountOutputType = {
   reabastecimentosComboio: number
   notasFiscais: number
   planosPreventivos: number
+  programadorMecanicos: number
   fleetfuelIntencoes: number
   notificacoes: number
   whatsappRecipients: number
@@ -8716,6 +9098,7 @@ export type CompanyCountOutputTypeSelect<ExtArgs extends runtime.Types.Extension
   reabastecimentosComboio?: boolean | CompanyCountOutputTypeCountReabastecimentosComboioArgs
   notasFiscais?: boolean | CompanyCountOutputTypeCountNotasFiscaisArgs
   planosPreventivos?: boolean | CompanyCountOutputTypeCountPlanosPreventivosArgs
+  programadorMecanicos?: boolean | CompanyCountOutputTypeCountProgramadorMecanicosArgs
   fleetfuelIntencoes?: boolean | CompanyCountOutputTypeCountFleetfuelIntencoesArgs
   notificacoes?: boolean | CompanyCountOutputTypeCountNotificacoesArgs
   whatsappRecipients?: boolean | CompanyCountOutputTypeCountWhatsappRecipientsArgs
@@ -8912,6 +9295,13 @@ export type CompanyCountOutputTypeCountPlanosPreventivosArgs<ExtArgs extends run
 /**
  * CompanyCountOutputType without action
  */
+export type CompanyCountOutputTypeCountProgramadorMecanicosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ProgramadorMecanicoWhereInput
+}
+
+/**
+ * CompanyCountOutputType without action
+ */
 export type CompanyCountOutputTypeCountFleetfuelIntencoesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.FleetfuelIntencaoWhereInput
 }
@@ -8997,6 +9387,7 @@ export type CompanySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   reabastecimentosComboio?: boolean | Prisma.Company$reabastecimentosComboioArgs<ExtArgs>
   notasFiscais?: boolean | Prisma.Company$notasFiscaisArgs<ExtArgs>
   planosPreventivos?: boolean | Prisma.Company$planosPreventivosArgs<ExtArgs>
+  programadorMecanicos?: boolean | Prisma.Company$programadorMecanicosArgs<ExtArgs>
   fleetfuelIntencoes?: boolean | Prisma.Company$fleetfuelIntencoesArgs<ExtArgs>
   notificacoes?: boolean | Prisma.Company$notificacoesArgs<ExtArgs>
   whatsappRecipients?: boolean | Prisma.Company$whatsappRecipientsArgs<ExtArgs>
@@ -9095,6 +9486,7 @@ export type CompanyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   reabastecimentosComboio?: boolean | Prisma.Company$reabastecimentosComboioArgs<ExtArgs>
   notasFiscais?: boolean | Prisma.Company$notasFiscaisArgs<ExtArgs>
   planosPreventivos?: boolean | Prisma.Company$planosPreventivosArgs<ExtArgs>
+  programadorMecanicos?: boolean | Prisma.Company$programadorMecanicosArgs<ExtArgs>
   fleetfuelIntencoes?: boolean | Prisma.Company$fleetfuelIntencoesArgs<ExtArgs>
   notificacoes?: boolean | Prisma.Company$notificacoesArgs<ExtArgs>
   whatsappRecipients?: boolean | Prisma.Company$whatsappRecipientsArgs<ExtArgs>
@@ -9136,6 +9528,7 @@ export type $CompanyPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     reabastecimentosComboio: Prisma.$ComboioReabastecimentoPayload<ExtArgs>[]
     notasFiscais: Prisma.$NotaFiscalPayload<ExtArgs>[]
     planosPreventivos: Prisma.$PlanoPreventivoPayload<ExtArgs>[]
+    programadorMecanicos: Prisma.$ProgramadorMecanicoPayload<ExtArgs>[]
     fleetfuelIntencoes: Prisma.$FleetfuelIntencaoPayload<ExtArgs>[]
     notificacoes: Prisma.$NotificacaoPayload<ExtArgs>[]
     whatsappRecipients: Prisma.$CompanyWhatsappRecipientPayload<ExtArgs>[]
@@ -9597,6 +9990,7 @@ export interface Prisma__CompanyClient<T, Null = never, ExtArgs extends runtime.
   reabastecimentosComboio<T extends Prisma.Company$reabastecimentosComboioArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$reabastecimentosComboioArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ComboioReabastecimentoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notasFiscais<T extends Prisma.Company$notasFiscaisArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$notasFiscaisArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotaFiscalPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   planosPreventivos<T extends Prisma.Company$planosPreventivosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$planosPreventivosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlanoPreventivoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  programadorMecanicos<T extends Prisma.Company$programadorMecanicosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$programadorMecanicosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProgramadorMecanicoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   fleetfuelIntencoes<T extends Prisma.Company$fleetfuelIntencoesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$fleetfuelIntencoesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FleetfuelIntencaoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notificacoes<T extends Prisma.Company$notificacoesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$notificacoesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificacaoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   whatsappRecipients<T extends Prisma.Company$whatsappRecipientsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$whatsappRecipientsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CompanyWhatsappRecipientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -10677,6 +11071,30 @@ export type Company$planosPreventivosArgs<ExtArgs extends runtime.Types.Extensio
   take?: number
   skip?: number
   distinct?: Prisma.PlanoPreventivoScalarFieldEnum | Prisma.PlanoPreventivoScalarFieldEnum[]
+}
+
+/**
+ * Company.programadorMecanicos
+ */
+export type Company$programadorMecanicosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ProgramadorMecanico
+   */
+  select?: Prisma.ProgramadorMecanicoSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ProgramadorMecanico
+   */
+  omit?: Prisma.ProgramadorMecanicoOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProgramadorMecanicoInclude<ExtArgs> | null
+  where?: Prisma.ProgramadorMecanicoWhereInput
+  orderBy?: Prisma.ProgramadorMecanicoOrderByWithRelationInput | Prisma.ProgramadorMecanicoOrderByWithRelationInput[]
+  cursor?: Prisma.ProgramadorMecanicoWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ProgramadorMecanicoScalarFieldEnum | Prisma.ProgramadorMecanicoScalarFieldEnum[]
 }
 
 /**

@@ -452,7 +452,8 @@ export const ModelName = {
   ApiAcessoSemToken: 'ApiAcessoSemToken',
   ChecklistModelo: 'ChecklistModelo',
   ManualEquipamento: 'ManualEquipamento',
-  ChecklistExecucao: 'ChecklistExecucao'
+  ChecklistExecucao: 'ChecklistExecucao',
+  ProgramadorMecanico: 'ProgramadorMecanico'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -468,7 +469,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken" | "checklistModelo" | "manualEquipamento" | "checklistExecucao"
+    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken" | "checklistModelo" | "manualEquipamento" | "checklistExecucao" | "programadorMecanico"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -4616,6 +4617,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ProgramadorMecanico: {
+      payload: Prisma.$ProgramadorMecanicoPayload<ExtArgs>
+      fields: Prisma.ProgramadorMecanicoFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ProgramadorMecanicoFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProgramadorMecanicoPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ProgramadorMecanicoFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProgramadorMecanicoPayload>
+        }
+        findFirst: {
+          args: Prisma.ProgramadorMecanicoFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProgramadorMecanicoPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ProgramadorMecanicoFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProgramadorMecanicoPayload>
+        }
+        findMany: {
+          args: Prisma.ProgramadorMecanicoFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProgramadorMecanicoPayload>[]
+        }
+        create: {
+          args: Prisma.ProgramadorMecanicoCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProgramadorMecanicoPayload>
+        }
+        createMany: {
+          args: Prisma.ProgramadorMecanicoCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ProgramadorMecanicoCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProgramadorMecanicoPayload>[]
+        }
+        delete: {
+          args: Prisma.ProgramadorMecanicoDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProgramadorMecanicoPayload>
+        }
+        update: {
+          args: Prisma.ProgramadorMecanicoUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProgramadorMecanicoPayload>
+        }
+        deleteMany: {
+          args: Prisma.ProgramadorMecanicoDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ProgramadorMecanicoUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ProgramadorMecanicoUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProgramadorMecanicoPayload>[]
+        }
+        upsert: {
+          args: Prisma.ProgramadorMecanicoUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProgramadorMecanicoPayload>
+        }
+        aggregate: {
+          args: Prisma.ProgramadorMecanicoAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProgramadorMecanico>
+        }
+        groupBy: {
+          args: Prisma.ProgramadorMecanicoGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProgramadorMecanicoGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ProgramadorMecanicoCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProgramadorMecanicoCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -5752,6 +5827,17 @@ export const ChecklistExecucaoScalarFieldEnum = {
 export type ChecklistExecucaoScalarFieldEnum = (typeof ChecklistExecucaoScalarFieldEnum)[keyof typeof ChecklistExecucaoScalarFieldEnum]
 
 
+export const ProgramadorMecanicoScalarFieldEnum = {
+  companyUserId: 'companyUserId',
+  operatorId: 'operatorId',
+  companyId: 'companyId',
+  createdAt: 'createdAt',
+  createdBy: 'createdBy'
+} as const
+
+export type ProgramadorMecanicoScalarFieldEnum = (typeof ProgramadorMecanicoScalarFieldEnum)[keyof typeof ProgramadorMecanicoScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -6215,6 +6301,7 @@ export type GlobalOmitConfig = {
   checklistModelo?: Prisma.ChecklistModeloOmit
   manualEquipamento?: Prisma.ManualEquipamentoOmit
   checklistExecucao?: Prisma.ChecklistExecucaoOmit
+  programadorMecanico?: Prisma.ProgramadorMecanicoOmit
 }
 
 /* Types for Logging */

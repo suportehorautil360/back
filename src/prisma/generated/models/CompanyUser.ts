@@ -209,6 +209,7 @@ export type CompanyUserWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"CompanyUser"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   operator?: Prisma.XOR<Prisma.OperatorNullableScalarRelationFilter, Prisma.OperatorWhereInput> | null
+  mecanicoDesignado?: Prisma.XOR<Prisma.ProgramadorMecanicoNullableScalarRelationFilter, Prisma.ProgramadorMecanicoWhereInput> | null
 }
 
 export type CompanyUserOrderByWithRelationInput = {
@@ -222,6 +223,7 @@ export type CompanyUserOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   company?: Prisma.CompanyOrderByWithRelationInput
   operator?: Prisma.OperatorOrderByWithRelationInput
+  mecanicoDesignado?: Prisma.ProgramadorMecanicoOrderByWithRelationInput
 }
 
 export type CompanyUserWhereUniqueInput = Prisma.AtLeast<{
@@ -239,6 +241,7 @@ export type CompanyUserWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"CompanyUser"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   operator?: Prisma.XOR<Prisma.OperatorNullableScalarRelationFilter, Prisma.OperatorWhereInput> | null
+  mecanicoDesignado?: Prisma.XOR<Prisma.ProgramadorMecanicoNullableScalarRelationFilter, Prisma.ProgramadorMecanicoWhereInput> | null
 }, "id" | "companyId_email">
 
 export type CompanyUserOrderByWithAggregationInput = {
@@ -279,6 +282,7 @@ export type CompanyUserCreateInput = {
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutUsersInput
   operator?: Prisma.OperatorCreateNestedOneWithoutCompanyUserInput
+  mecanicoDesignado?: Prisma.ProgramadorMecanicoCreateNestedOneWithoutCompanyUserInput
 }
 
 export type CompanyUserUncheckedCreateInput = {
@@ -291,6 +295,7 @@ export type CompanyUserUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   operator?: Prisma.OperatorUncheckedCreateNestedOneWithoutCompanyUserInput
+  mecanicoDesignado?: Prisma.ProgramadorMecanicoUncheckedCreateNestedOneWithoutCompanyUserInput
 }
 
 export type CompanyUserUpdateInput = {
@@ -303,6 +308,7 @@ export type CompanyUserUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
   operator?: Prisma.OperatorUpdateOneWithoutCompanyUserNestedInput
+  mecanicoDesignado?: Prisma.ProgramadorMecanicoUpdateOneWithoutCompanyUserNestedInput
 }
 
 export type CompanyUserUncheckedUpdateInput = {
@@ -315,6 +321,7 @@ export type CompanyUserUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   operator?: Prisma.OperatorUncheckedUpdateOneWithoutCompanyUserNestedInput
+  mecanicoDesignado?: Prisma.ProgramadorMecanicoUncheckedUpdateOneWithoutCompanyUserNestedInput
 }
 
 export type CompanyUserCreateManyInput = {
@@ -402,6 +409,11 @@ export type CompanyUserMinOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
 }
 
+export type CompanyUserScalarRelationFilter = {
+  is?: Prisma.CompanyUserWhereInput
+  isNot?: Prisma.CompanyUserWhereInput
+}
+
 export type CompanyUserCreateNestedManyWithoutCompanyInput = {
   create?: Prisma.XOR<Prisma.CompanyUserCreateWithoutCompanyInput, Prisma.CompanyUserUncheckedCreateWithoutCompanyInput> | Prisma.CompanyUserCreateWithoutCompanyInput[] | Prisma.CompanyUserUncheckedCreateWithoutCompanyInput[]
   connectOrCreate?: Prisma.CompanyUserCreateOrConnectWithoutCompanyInput | Prisma.CompanyUserCreateOrConnectWithoutCompanyInput[]
@@ -464,6 +476,20 @@ export type EnumCompanyUserRoleFieldUpdateOperationsInput = {
   set?: $Enums.CompanyUserRole
 }
 
+export type CompanyUserCreateNestedOneWithoutMecanicoDesignadoInput = {
+  create?: Prisma.XOR<Prisma.CompanyUserCreateWithoutMecanicoDesignadoInput, Prisma.CompanyUserUncheckedCreateWithoutMecanicoDesignadoInput>
+  connectOrCreate?: Prisma.CompanyUserCreateOrConnectWithoutMecanicoDesignadoInput
+  connect?: Prisma.CompanyUserWhereUniqueInput
+}
+
+export type CompanyUserUpdateOneRequiredWithoutMecanicoDesignadoNestedInput = {
+  create?: Prisma.XOR<Prisma.CompanyUserCreateWithoutMecanicoDesignadoInput, Prisma.CompanyUserUncheckedCreateWithoutMecanicoDesignadoInput>
+  connectOrCreate?: Prisma.CompanyUserCreateOrConnectWithoutMecanicoDesignadoInput
+  upsert?: Prisma.CompanyUserUpsertWithoutMecanicoDesignadoInput
+  connect?: Prisma.CompanyUserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CompanyUserUpdateToOneWithWhereWithoutMecanicoDesignadoInput, Prisma.CompanyUserUpdateWithoutMecanicoDesignadoInput>, Prisma.CompanyUserUncheckedUpdateWithoutMecanicoDesignadoInput>
+}
+
 export type CompanyUserCreateWithoutCompanyInput = {
   id: string
   email: string
@@ -473,6 +499,7 @@ export type CompanyUserCreateWithoutCompanyInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   operator?: Prisma.OperatorCreateNestedOneWithoutCompanyUserInput
+  mecanicoDesignado?: Prisma.ProgramadorMecanicoCreateNestedOneWithoutCompanyUserInput
 }
 
 export type CompanyUserUncheckedCreateWithoutCompanyInput = {
@@ -484,6 +511,7 @@ export type CompanyUserUncheckedCreateWithoutCompanyInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   operator?: Prisma.OperatorUncheckedCreateNestedOneWithoutCompanyUserInput
+  mecanicoDesignado?: Prisma.ProgramadorMecanicoUncheckedCreateNestedOneWithoutCompanyUserInput
 }
 
 export type CompanyUserCreateOrConnectWithoutCompanyInput = {
@@ -535,6 +563,7 @@ export type CompanyUserCreateWithoutOperatorInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutUsersInput
+  mecanicoDesignado?: Prisma.ProgramadorMecanicoCreateNestedOneWithoutCompanyUserInput
 }
 
 export type CompanyUserUncheckedCreateWithoutOperatorInput = {
@@ -546,6 +575,7 @@ export type CompanyUserUncheckedCreateWithoutOperatorInput = {
   status?: $Enums.Status
   createdAt?: Date | string
   updatedAt?: Date | string
+  mecanicoDesignado?: Prisma.ProgramadorMecanicoUncheckedCreateNestedOneWithoutCompanyUserInput
 }
 
 export type CompanyUserCreateOrConnectWithoutOperatorInput = {
@@ -573,6 +603,7 @@ export type CompanyUserUpdateWithoutOperatorInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
+  mecanicoDesignado?: Prisma.ProgramadorMecanicoUpdateOneWithoutCompanyUserNestedInput
 }
 
 export type CompanyUserUncheckedUpdateWithoutOperatorInput = {
@@ -584,6 +615,71 @@ export type CompanyUserUncheckedUpdateWithoutOperatorInput = {
   status?: Prisma.EnumStatusFieldUpdateOperationsInput | $Enums.Status
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mecanicoDesignado?: Prisma.ProgramadorMecanicoUncheckedUpdateOneWithoutCompanyUserNestedInput
+}
+
+export type CompanyUserCreateWithoutMecanicoDesignadoInput = {
+  id: string
+  email: string
+  name: string
+  role?: $Enums.CompanyUserRole
+  status?: $Enums.Status
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutUsersInput
+  operator?: Prisma.OperatorCreateNestedOneWithoutCompanyUserInput
+}
+
+export type CompanyUserUncheckedCreateWithoutMecanicoDesignadoInput = {
+  id: string
+  companyId: string
+  email: string
+  name: string
+  role?: $Enums.CompanyUserRole
+  status?: $Enums.Status
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  operator?: Prisma.OperatorUncheckedCreateNestedOneWithoutCompanyUserInput
+}
+
+export type CompanyUserCreateOrConnectWithoutMecanicoDesignadoInput = {
+  where: Prisma.CompanyUserWhereUniqueInput
+  create: Prisma.XOR<Prisma.CompanyUserCreateWithoutMecanicoDesignadoInput, Prisma.CompanyUserUncheckedCreateWithoutMecanicoDesignadoInput>
+}
+
+export type CompanyUserUpsertWithoutMecanicoDesignadoInput = {
+  update: Prisma.XOR<Prisma.CompanyUserUpdateWithoutMecanicoDesignadoInput, Prisma.CompanyUserUncheckedUpdateWithoutMecanicoDesignadoInput>
+  create: Prisma.XOR<Prisma.CompanyUserCreateWithoutMecanicoDesignadoInput, Prisma.CompanyUserUncheckedCreateWithoutMecanicoDesignadoInput>
+  where?: Prisma.CompanyUserWhereInput
+}
+
+export type CompanyUserUpdateToOneWithWhereWithoutMecanicoDesignadoInput = {
+  where?: Prisma.CompanyUserWhereInput
+  data: Prisma.XOR<Prisma.CompanyUserUpdateWithoutMecanicoDesignadoInput, Prisma.CompanyUserUncheckedUpdateWithoutMecanicoDesignadoInput>
+}
+
+export type CompanyUserUpdateWithoutMecanicoDesignadoInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumCompanyUserRoleFieldUpdateOperationsInput | $Enums.CompanyUserRole
+  status?: Prisma.EnumStatusFieldUpdateOperationsInput | $Enums.Status
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
+  operator?: Prisma.OperatorUpdateOneWithoutCompanyUserNestedInput
+}
+
+export type CompanyUserUncheckedUpdateWithoutMecanicoDesignadoInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumCompanyUserRoleFieldUpdateOperationsInput | $Enums.CompanyUserRole
+  status?: Prisma.EnumStatusFieldUpdateOperationsInput | $Enums.Status
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  operator?: Prisma.OperatorUncheckedUpdateOneWithoutCompanyUserNestedInput
 }
 
 export type CompanyUserCreateManyCompanyInput = {
@@ -605,6 +701,7 @@ export type CompanyUserUpdateWithoutCompanyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   operator?: Prisma.OperatorUpdateOneWithoutCompanyUserNestedInput
+  mecanicoDesignado?: Prisma.ProgramadorMecanicoUpdateOneWithoutCompanyUserNestedInput
 }
 
 export type CompanyUserUncheckedUpdateWithoutCompanyInput = {
@@ -616,6 +713,7 @@ export type CompanyUserUncheckedUpdateWithoutCompanyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   operator?: Prisma.OperatorUncheckedUpdateOneWithoutCompanyUserNestedInput
+  mecanicoDesignado?: Prisma.ProgramadorMecanicoUncheckedUpdateOneWithoutCompanyUserNestedInput
 }
 
 export type CompanyUserUncheckedUpdateManyWithoutCompanyInput = {
@@ -641,6 +739,7 @@ export type CompanyUserSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   operator?: boolean | Prisma.CompanyUser$operatorArgs<ExtArgs>
+  mecanicoDesignado?: boolean | Prisma.CompanyUser$mecanicoDesignadoArgs<ExtArgs>
 }, ExtArgs["result"]["companyUser"]>
 
 export type CompanyUserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -682,6 +781,7 @@ export type CompanyUserOmit<ExtArgs extends runtime.Types.Extensions.InternalArg
 export type CompanyUserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   operator?: boolean | Prisma.CompanyUser$operatorArgs<ExtArgs>
+  mecanicoDesignado?: boolean | Prisma.CompanyUser$mecanicoDesignadoArgs<ExtArgs>
 }
 export type CompanyUserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
@@ -695,6 +795,7 @@ export type $CompanyUserPayload<ExtArgs extends runtime.Types.Extensions.Interna
   objects: {
     company: Prisma.$CompanyPayload<ExtArgs>
     operator: Prisma.$OperatorPayload<ExtArgs> | null
+    mecanicoDesignado: Prisma.$ProgramadorMecanicoPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1101,6 +1202,7 @@ export interface Prisma__CompanyUserClient<T, Null = never, ExtArgs extends runt
   readonly [Symbol.toStringTag]: "PrismaPromise"
   company<T extends Prisma.CompanyDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CompanyDefaultArgs<ExtArgs>>): Prisma.Prisma__CompanyClient<runtime.Types.Result.GetResult<Prisma.$CompanyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   operator<T extends Prisma.CompanyUser$operatorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CompanyUser$operatorArgs<ExtArgs>>): Prisma.Prisma__OperatorClient<runtime.Types.Result.GetResult<Prisma.$OperatorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  mecanicoDesignado<T extends Prisma.CompanyUser$mecanicoDesignadoArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CompanyUser$mecanicoDesignadoArgs<ExtArgs>>): Prisma.Prisma__ProgramadorMecanicoClient<runtime.Types.Result.GetResult<Prisma.$ProgramadorMecanicoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1555,6 +1657,25 @@ export type CompanyUser$operatorArgs<ExtArgs extends runtime.Types.Extensions.In
    */
   include?: Prisma.OperatorInclude<ExtArgs> | null
   where?: Prisma.OperatorWhereInput
+}
+
+/**
+ * CompanyUser.mecanicoDesignado
+ */
+export type CompanyUser$mecanicoDesignadoArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ProgramadorMecanico
+   */
+  select?: Prisma.ProgramadorMecanicoSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ProgramadorMecanico
+   */
+  omit?: Prisma.ProgramadorMecanicoOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProgramadorMecanicoInclude<ExtArgs> | null
+  where?: Prisma.ProgramadorMecanicoWhereInput
 }
 
 /**

@@ -112,6 +112,7 @@ model Company {
   reabastecimentosComboio ComboioReabastecimento[]
   notasFiscais            NotaFiscal[]
   planosPreventivos       PlanoPreventivo[]
+  programadorMecanicos    ProgramadorMecanico[]
   fleetfuelIntencoes      FleetfuelIntencao[]
   notificacoes            Notificacao[]
   whatsappRecipients      CompanyWhatsappRecipient[]
@@ -806,6 +807,8 @@ model Operator {
   apontamentos        ServiceOrderApontamento[]
   checklistExecucoes ChecklistExecucao[]
 
+
+  programadoresAtendidos ProgramadorMecanico[] @relation("ProgramadorMecanicoOperator")
 
   @@unique([companyId, cpf])
   @@index([companyId])
@@ -1586,6 +1589,7 @@ model CompanyUser {
 
   company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   operator Operator?
+  mecanicoDesignado ProgramadorMecanico? @relation("ProgramadorMecanicoUser")
 
   @@unique([companyId, email])
   @@index([companyId])
@@ -2048,4 +2052,34 @@ model ChecklistExecucao {
   @@index([companyId, status])
   @@index([serviceOrderId])
   @@map("checklist_execucoes")
+}
+
+/// O mecânico que atende as máquinas de um programador.
+///
+/// Serve a UMA coisa: sugerir o responsável ao abrir uma OS. **Sugestão, não
+/// regra** — nada aqui restringe quem pode ser designado, a lista do
+/// formulário continua completa, e o mecânico segue podendo assumir pelo app.
+/// Por isso não há FK de `ServiceOrder` para cá: apagar um vínculo não deixa
+/// OS nenhuma inconsistente.
+///
+/// `companyUserId` é a chave primária porque é UM mecânico por programador —
+/// vários tornariam a sugestão ambígua justamente onde ela é automática.
+model ProgramadorMecanico {
+  /// `CompanyUser.id` do programador.
+  companyUserId String @id @map("company_user_id") @db.Uuid
+  /// `Operator.id` — o mesmo que `ServiceOrder.responsavelOperatorId` guarda.
+  operatorId    String @map("operator_id") @db.Uuid
+  /// Redundante com o `CompanyUser`, mas evita um JOIN na leitura da sugestão.
+  companyId     String @map("company_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by") @db.Uuid
+
+  companyUser CompanyUser @relation("ProgramadorMecanicoUser", fields: [companyUserId], references: [id], onDelete: Cascade)
+  operator    Operator    @relation("ProgramadorMecanicoOperator", fields: [operatorId], references: [id], onDelete: Cascade)
+  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([operatorId])
+  @@map("programador_mecanicos")
 }
