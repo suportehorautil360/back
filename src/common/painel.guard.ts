@@ -130,6 +130,7 @@ export class PainelGuard implements CanActivate {
         companyId: true,
         status: true,
         name: true,
+        role: true,
         company: { select: { status: true } },
         operator: {
           select: { id: true, status: true, companyRoleId: true, nome: true },
@@ -172,6 +173,7 @@ export class PainelGuard implements CanActivate {
   private async autorizarModuloComercial(
     usuario: {
       companyId: string;
+      role: string;
       operator: { companyRoleId: string | null } | null;
     },
     modulo: ModuloComercialMeta,
@@ -201,6 +203,24 @@ export class PainelGuard implements CanActivate {
     if (!feature?.enabled) {
       throw new ForbiddenException('Funcionalidade não contratada pela empresa.');
     }
+
+    /**
+     * OWNER e ADMIN da empresa não passam pelo gate de CARGO.
+     *
+     * É a mesma regra que o painel já aplica em
+     * `horautil/lib/company/access-groups.ts` (`isFullAccessCompanyRole`), e
+     * faltar aqui fazia painel e API discordarem sobre a mesma pessoa: o menu
+     * mostrava Mecânica, porque OWNER tem acesso total, e a API recusava,
+     * porque OWNER é gestor puro — não tem `Operator` e portanto não tem
+     * cargo, e `cargoLiberaGrupo` nega quem não tem cargo. O dono da conta
+     * via "não foi possível carregar" em todas as telas do módulo, enquanto o
+     * mecânico, que tem cargo, entrava normalmente.
+     *
+     * Fica DEPOIS do gate comercial de propósito: dono de empresa que não
+     * contratou o módulo continua barrado. O que esta exceção dispensa é o
+     * cargo operacional, não a licença.
+     */
+    if (usuario.role === 'OWNER' || usuario.role === 'ADMIN') return;
 
     const liberado = await this.cargoLiberaGrupo(
       usuario.operator?.companyRoleId ?? null,
