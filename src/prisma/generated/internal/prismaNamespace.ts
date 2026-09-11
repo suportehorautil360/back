@@ -5287,6 +5287,7 @@ export type FleetfuelIntencaoScalarFieldEnum = (typeof FleetfuelIntencaoScalarFi
 export const ChecklistDefinitionScalarFieldEnum = {
   id: 'id',
   legacyId: 'legacyId',
+  companyId: 'companyId',
   nome: 'nome',
   categoria: 'categoria',
   keywords: 'keywords',

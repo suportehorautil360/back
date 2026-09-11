@@ -9,8 +9,16 @@ import {
   Patch,
   Post,
   Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+
+import {
+  EmpresaDoTokenGuard,
+  type RequestComEmpresaOpcional,
+} from '../../common/empresa-do-token.guard';
+import { PainelGuard } from '../../common/painel.guard';
 import { ChecklistDefinitionsService } from './checklist-definitions.service';
 import { CreateChecklistDefinitionDto } from './dto/create-checklist-definition.dto';
 import { UpdateChecklistDefinitionDto } from './dto/update-checklist-definition.dto';
@@ -20,19 +28,34 @@ import { UpdateChecklistDefinitionDto } from './dto/update-checklist-definition.
 export class ChecklistDefinitionsController {
   constructor(private readonly service: ChecklistDefinitionsService) {}
 
+  /**
+   * Aberta de propósito, e recortada por isso.
+   *
+   * O login por CHASSI do operador não tem credencial — o chassi identifica
+   * uma máquina, não uma pessoa —, então exigir token aqui derrubaria um fluxo
+   * legítimo de campo. Quem não se identifica recebe o catálogo BASE e só ele;
+   * quem manda token recebe também o da empresa dele.
+   */
   @Get()
-  @ApiOperation({ summary: 'Listar definições de checklist (catálogo global)' })
+  @UseGuards(EmpresaDoTokenGuard)
+  @ApiOperation({
+    summary: 'Listar definições — base, mais as da empresa quando há token',
+  })
   @ApiQuery({
     name: 'ativo',
     required: false,
     description: 'Se "true", retorna apenas as definições ativas.',
     example: 'true',
   })
-  async findAll(@Query('ativo') ativo?: string) {
-    return this.service.findAll(ativo === 'true');
+  async findAll(
+    @Req() req: RequestComEmpresaOpcional,
+    @Query('ativo') ativo?: string,
+  ) {
+    return this.service.findAll(ativo === 'true', req.companyIdOpcional);
   }
 
   @Post('seed')
+  @UseGuards(PainelGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Bootstrap idempotente do catálogo a partir do seed',
@@ -48,6 +71,7 @@ export class ChecklistDefinitionsController {
   }
 
   @Get(':id')
+  @UseGuards(PainelGuard)
   @ApiOperation({ summary: 'Buscar uma definição pelo ID' })
   @ApiParam({ name: 'id', description: 'ID/slug da definição' })
   async findOne(@Param('id') id: string) {
@@ -55,6 +79,7 @@ export class ChecklistDefinitionsController {
   }
 
   @Post()
+  @UseGuards(PainelGuard)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Criar uma definição de checklist' })
   async create(@Body() dto: CreateChecklistDefinitionDto) {
@@ -62,6 +87,7 @@ export class ChecklistDefinitionsController {
   }
 
   @Patch(':id')
+  @UseGuards(PainelGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Atualizar uma definição (parcial)' })
   @ApiParam({ name: 'id', description: 'ID/slug da definição' })
@@ -73,6 +99,7 @@ export class ChecklistDefinitionsController {
   }
 
   @Delete(':id')
+  @UseGuards(PainelGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Desativar uma definição (soft-delete)' })
   @ApiParam({ name: 'id', description: 'ID/slug da definição' })

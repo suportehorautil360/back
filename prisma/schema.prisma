@@ -940,6 +940,14 @@ model FleetfuelIntencao {
 model ChecklistDefinition {
   id        String   @id @default(uuid()) @db.Uuid
   legacyId  String?  @unique @map("legacy_id")
+
+  /// `null` = catálogo BASE da Hora Útil, herdado por todas as empresas.
+  /// Preenchido = documento próprio daquela empresa, que SUBSTITUI o base de
+  /// mesma categoria. A resolução vive no painel
+  /// (`horautil/lib/company/checklist-do-operador.ts`) e é espelhada no app do
+  /// operador — a mesma especificidade de `regras/manual.ts`.
+  companyId String?  @map("company_id") @db.Uuid
+
   nome      String
   categoria String
   /// string[] em minúsculas — usado pra casar equipamento por nome/modelo.
@@ -953,6 +961,7 @@ model ChecklistDefinition {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([ativo])
+  @@index([companyId, ativo])
   @@map("checklist_definitions")
 }
 

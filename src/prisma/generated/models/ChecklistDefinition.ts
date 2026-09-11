@@ -39,6 +39,7 @@ export type ChecklistDefinitionSumAggregateOutputType = {
 export type ChecklistDefinitionMinAggregateOutputType = {
   id: string | null
   legacyId: string | null
+  companyId: string | null
   nome: string | null
   categoria: string | null
   ativo: boolean | null
@@ -50,6 +51,7 @@ export type ChecklistDefinitionMinAggregateOutputType = {
 export type ChecklistDefinitionMaxAggregateOutputType = {
   id: string | null
   legacyId: string | null
+  companyId: string | null
   nome: string | null
   categoria: string | null
   ativo: boolean | null
@@ -61,6 +63,7 @@ export type ChecklistDefinitionMaxAggregateOutputType = {
 export type ChecklistDefinitionCountAggregateOutputType = {
   id: number
   legacyId: number
+  companyId: number
   nome: number
   categoria: number
   keywords: number
@@ -84,6 +87,7 @@ export type ChecklistDefinitionSumAggregateInputType = {
 export type ChecklistDefinitionMinAggregateInputType = {
   id?: true
   legacyId?: true
+  companyId?: true
   nome?: true
   categoria?: true
   ativo?: true
@@ -95,6 +99,7 @@ export type ChecklistDefinitionMinAggregateInputType = {
 export type ChecklistDefinitionMaxAggregateInputType = {
   id?: true
   legacyId?: true
+  companyId?: true
   nome?: true
   categoria?: true
   ativo?: true
@@ -106,6 +111,7 @@ export type ChecklistDefinitionMaxAggregateInputType = {
 export type ChecklistDefinitionCountAggregateInputType = {
   id?: true
   legacyId?: true
+  companyId?: true
   nome?: true
   categoria?: true
   keywords?: true
@@ -206,6 +212,7 @@ export type ChecklistDefinitionGroupByArgs<ExtArgs extends runtime.Types.Extensi
 export type ChecklistDefinitionGroupByOutputType = {
   id: string
   legacyId: string | null
+  companyId: string | null
   nome: string
   categoria: string
   keywords: runtime.JsonValue
@@ -242,6 +249,7 @@ export type ChecklistDefinitionWhereInput = {
   NOT?: Prisma.ChecklistDefinitionWhereInput | Prisma.ChecklistDefinitionWhereInput[]
   id?: Prisma.UuidFilter<"ChecklistDefinition"> | string
   legacyId?: Prisma.StringNullableFilter<"ChecklistDefinition"> | string | null
+  companyId?: Prisma.UuidNullableFilter<"ChecklistDefinition"> | string | null
   nome?: Prisma.StringFilter<"ChecklistDefinition"> | string
   categoria?: Prisma.StringFilter<"ChecklistDefinition"> | string
   keywords?: Prisma.JsonFilter<"ChecklistDefinition">
@@ -255,6 +263,7 @@ export type ChecklistDefinitionWhereInput = {
 export type ChecklistDefinitionOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   legacyId?: Prisma.SortOrderInput | Prisma.SortOrder
+  companyId?: Prisma.SortOrderInput | Prisma.SortOrder
   nome?: Prisma.SortOrder
   categoria?: Prisma.SortOrder
   keywords?: Prisma.SortOrder
@@ -271,6 +280,7 @@ export type ChecklistDefinitionWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.ChecklistDefinitionWhereInput | Prisma.ChecklistDefinitionWhereInput[]
   OR?: Prisma.ChecklistDefinitionWhereInput[]
   NOT?: Prisma.ChecklistDefinitionWhereInput | Prisma.ChecklistDefinitionWhereInput[]
+  companyId?: Prisma.UuidNullableFilter<"ChecklistDefinition"> | string | null
   nome?: Prisma.StringFilter<"ChecklistDefinition"> | string
   categoria?: Prisma.StringFilter<"ChecklistDefinition"> | string
   keywords?: Prisma.JsonFilter<"ChecklistDefinition">
@@ -284,6 +294,7 @@ export type ChecklistDefinitionWhereUniqueInput = Prisma.AtLeast<{
 export type ChecklistDefinitionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   legacyId?: Prisma.SortOrderInput | Prisma.SortOrder
+  companyId?: Prisma.SortOrderInput | Prisma.SortOrder
   nome?: Prisma.SortOrder
   categoria?: Prisma.SortOrder
   keywords?: Prisma.SortOrder
@@ -305,6 +316,7 @@ export type ChecklistDefinitionScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ChecklistDefinitionScalarWhereWithAggregatesInput | Prisma.ChecklistDefinitionScalarWhereWithAggregatesInput[]
   id?: Prisma.UuidWithAggregatesFilter<"ChecklistDefinition"> | string
   legacyId?: Prisma.StringNullableWithAggregatesFilter<"ChecklistDefinition"> | string | null
+  companyId?: Prisma.UuidNullableWithAggregatesFilter<"ChecklistDefinition"> | string | null
   nome?: Prisma.StringWithAggregatesFilter<"ChecklistDefinition"> | string
   categoria?: Prisma.StringWithAggregatesFilter<"ChecklistDefinition"> | string
   keywords?: Prisma.JsonWithAggregatesFilter<"ChecklistDefinition">
@@ -318,6 +330,7 @@ export type ChecklistDefinitionScalarWhereWithAggregatesInput = {
 export type ChecklistDefinitionCreateInput = {
   id?: string
   legacyId?: string | null
+  companyId?: string | null
   nome: string
   categoria: string
   keywords?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -331,6 +344,7 @@ export type ChecklistDefinitionCreateInput = {
 export type ChecklistDefinitionUncheckedCreateInput = {
   id?: string
   legacyId?: string | null
+  companyId?: string | null
   nome: string
   categoria: string
   keywords?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -344,6 +358,7 @@ export type ChecklistDefinitionUncheckedCreateInput = {
 export type ChecklistDefinitionUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   categoria?: Prisma.StringFieldUpdateOperationsInput | string
   keywords?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -357,6 +372,7 @@ export type ChecklistDefinitionUpdateInput = {
 export type ChecklistDefinitionUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   categoria?: Prisma.StringFieldUpdateOperationsInput | string
   keywords?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -370,6 +386,7 @@ export type ChecklistDefinitionUncheckedUpdateInput = {
 export type ChecklistDefinitionCreateManyInput = {
   id?: string
   legacyId?: string | null
+  companyId?: string | null
   nome: string
   categoria: string
   keywords?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -383,6 +400,7 @@ export type ChecklistDefinitionCreateManyInput = {
 export type ChecklistDefinitionUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   categoria?: Prisma.StringFieldUpdateOperationsInput | string
   keywords?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -396,6 +414,7 @@ export type ChecklistDefinitionUpdateManyMutationInput = {
 export type ChecklistDefinitionUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   categoria?: Prisma.StringFieldUpdateOperationsInput | string
   keywords?: Prisma.JsonNullValueInput | runtime.InputJsonValue
@@ -409,6 +428,7 @@ export type ChecklistDefinitionUncheckedUpdateManyInput = {
 export type ChecklistDefinitionCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   legacyId?: Prisma.SortOrder
+  companyId?: Prisma.SortOrder
   nome?: Prisma.SortOrder
   categoria?: Prisma.SortOrder
   keywords?: Prisma.SortOrder
@@ -426,6 +446,7 @@ export type ChecklistDefinitionAvgOrderByAggregateInput = {
 export type ChecklistDefinitionMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   legacyId?: Prisma.SortOrder
+  companyId?: Prisma.SortOrder
   nome?: Prisma.SortOrder
   categoria?: Prisma.SortOrder
   ativo?: Prisma.SortOrder
@@ -437,6 +458,7 @@ export type ChecklistDefinitionMaxOrderByAggregateInput = {
 export type ChecklistDefinitionMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   legacyId?: Prisma.SortOrder
+  companyId?: Prisma.SortOrder
   nome?: Prisma.SortOrder
   categoria?: Prisma.SortOrder
   ativo?: Prisma.SortOrder
@@ -454,6 +476,7 @@ export type ChecklistDefinitionSumOrderByAggregateInput = {
 export type ChecklistDefinitionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   legacyId?: boolean
+  companyId?: boolean
   nome?: boolean
   categoria?: boolean
   keywords?: boolean
@@ -467,6 +490,7 @@ export type ChecklistDefinitionSelect<ExtArgs extends runtime.Types.Extensions.I
 export type ChecklistDefinitionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   legacyId?: boolean
+  companyId?: boolean
   nome?: boolean
   categoria?: boolean
   keywords?: boolean
@@ -480,6 +504,7 @@ export type ChecklistDefinitionSelectCreateManyAndReturn<ExtArgs extends runtime
 export type ChecklistDefinitionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   legacyId?: boolean
+  companyId?: boolean
   nome?: boolean
   categoria?: boolean
   keywords?: boolean
@@ -493,6 +518,7 @@ export type ChecklistDefinitionSelectUpdateManyAndReturn<ExtArgs extends runtime
 export type ChecklistDefinitionSelectScalar = {
   id?: boolean
   legacyId?: boolean
+  companyId?: boolean
   nome?: boolean
   categoria?: boolean
   keywords?: boolean
@@ -503,7 +529,7 @@ export type ChecklistDefinitionSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ChecklistDefinitionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "nome" | "categoria" | "keywords" | "ativo" | "version" | "itens" | "createdAt" | "updatedAt", ExtArgs["result"]["checklistDefinition"]>
+export type ChecklistDefinitionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "nome" | "categoria" | "keywords" | "ativo" | "version" | "itens" | "createdAt" | "updatedAt", ExtArgs["result"]["checklistDefinition"]>
 
 export type $ChecklistDefinitionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ChecklistDefinition"
@@ -511,6 +537,14 @@ export type $ChecklistDefinitionPayload<ExtArgs extends runtime.Types.Extensions
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     legacyId: string | null
+    /**
+     * `null` = catálogo BASE da Hora Útil, herdado por todas as empresas.
+     * Preenchido = documento próprio daquela empresa, que SUBSTITUI o base de
+     * mesma categoria. A resolução vive no painel
+     * (`horautil/lib/company/checklist-do-operador.ts`) e é espelhada no app do
+     * operador — a mesma especificidade de `regras/manual.ts`.
+     */
+    companyId: string | null
     nome: string
     categoria: string
     /**
@@ -953,6 +987,7 @@ export interface Prisma__ChecklistDefinitionClient<T, Null = never, ExtArgs exte
 export interface ChecklistDefinitionFieldRefs {
   readonly id: Prisma.FieldRef<"ChecklistDefinition", 'String'>
   readonly legacyId: Prisma.FieldRef<"ChecklistDefinition", 'String'>
+  readonly companyId: Prisma.FieldRef<"ChecklistDefinition", 'String'>
   readonly nome: Prisma.FieldRef<"ChecklistDefinition", 'String'>
   readonly categoria: Prisma.FieldRef<"ChecklistDefinition", 'String'>
   readonly keywords: Prisma.FieldRef<"ChecklistDefinition", 'Json'>

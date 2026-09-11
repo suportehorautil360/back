@@ -23,11 +23,7 @@ export interface ChecklistDefinitionDoc {
 }
 
 /** Descarta prototype/métodos do DTO — Prisma Json exige plain literals. */
-function toPlainItem(i: {
-  ordem: number;
-  texto: string;
-  severidade: string;
-}) {
+function toPlainItem(i: { ordem: number; texto: string; severidade: string }) {
   return { ordem: i.ordem, texto: i.texto, severidade: i.severidade };
 }
 
@@ -68,16 +64,16 @@ export class ChecklistDefinitionsService {
    * Postgres — front pode passar qualquer um dos dois. Ordem: legacyId
    * primeiro porque é o mais comum vindo de caches antigos.
    */
-  private async findByAnyId(
-    id: string,
-  ): Promise<ChecklistDefinition> {
+  private async findByAnyId(id: string): Promise<ChecklistDefinition> {
     const porLegacy = await this.prisma.checklistDefinition.findUnique({
       where: { legacyId: id },
     });
     if (porLegacy) return porLegacy;
 
     const isUuid =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        id,
+      );
     if (isUuid) {
       const porId = await this.prisma.checklistDefinition.findUnique({
         where: { id },
@@ -120,10 +116,30 @@ export class ChecklistDefinitionsService {
   }
 
   /** Lista o catálogo. `somenteAtivas=true` filtra por `ativo=true`. */
-  async findAll(somenteAtivas = false) {
+  /**
+   * O catálogo que o chamador pode ver.
+   *
+   * SEM empresa devolve só o catálogo BASE (`companyId` nulo) — nunca o que
+   * alguma empresa cadastrou. Não é recorte de conveniência: esta rota atende
+   * o login por CHASSI do operador, que não tem credencial nenhuma por
+   * desenho (o chassi identifica uma máquina, não uma pessoa). Servir a lista
+   * de todo mundo para quem não se identificou entregaria o documento interno
+   * de uma empresa a qualquer um que soubesse a URL.
+   *
+   * COM empresa devolve base + as dela, e a resolução de qual vale para cada
+   * categoria é do chamador (`horautil/lib/company/checklist-do-operador.ts`),
+   * que é quem já a aplica no painel e no PWA.
+   *
+   * Antes desta coluna existir, todas as linhas eram base — então, hoje, sem
+   * empresa a resposta é exatamente a mesma de sempre.
+   */
+  async findAll(somenteAtivas = false, companyId?: string | null) {
     try {
+      const escopo = companyId
+        ? { OR: [{ companyId: null }, { companyId }] }
+        : { companyId: null };
       const linhas = await this.prisma.checklistDefinition.findMany({
-        where: somenteAtivas ? { ativo: true } : undefined,
+        where: somenteAtivas ? { ...escopo, ativo: true } : escopo,
         orderBy: { nome: 'asc' },
       });
       return {

@@ -29,7 +29,6 @@ const ABERTOS_CONHECIDOS = new Set([
   'modules/abonos/abonos.controller.ts',
   'modules/allocations/allocations.controller.ts',
   'modules/checklist-chegada/checklist-chegada.controller.ts',
-  'modules/checklist-definitions/checklist-definitions.controller.ts',
   'modules/checklist-devolucao/checklist-devolucao.controller.ts',
   'modules/checklists-registros/checklists-registros.controller.ts',
   'modules/checklists/checklists.controller.ts',
