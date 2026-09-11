@@ -21,6 +21,12 @@ import {
 import type { ChecklistModeloDto } from './dto/checklist-modelo.dto';
 import { randomUUID } from 'node:crypto';
 import { ordenarParaMaquina } from './regras/manual';
+import {
+  gerarGrupos,
+  nomeDaInspecao,
+  PLANO_MODELO_GERAL,
+  TIPO_OS_PREVENTIVA,
+} from './regras/inspecao-do-plano';
 import { selarBatidaOriginal } from '../checklist-auth/helpers/ponto-ledger.helper';
 import { UploadsService } from '../uploads/uploads.service';
 
@@ -1022,6 +1028,164 @@ export class MecanicaService {
    * Só equipamento COM intervalo definido: sem intervalo não existe próxima
    * revisão, e listar todo o pátio afogaria a tela do mecânico.
    */
+  /**
+   * A inspeção de uma O.S. preventiva — o ciclo do plano virando documento.
+   *
+   * O relato da ordem já nasce com as linhas do ciclo, mas em texto corrido:
+   * dá para LER o que fazer, não para REGISTRAR o que foi feito. O mecânico
+   * passava item por item na máquina sem onde marcar conforme, não conforme e
+   * não se aplica — e a preventiva ficava provada por uma frase no laudo.
+   *
+   * Só monta o documento; quem o preenche é a mesma tela da inspeção comum.
+   *
+   * IDEMPOTENTE por natureza, e não só pelo header: chamar de novo devolve a
+   * inspeção que já está aberta para esta ordem. O botão fica no app, num
+   * aparelho que perde sinal e repete toque — duas inspeções abertas para a
+   * mesma O.S. dividiriam as respostas em dois documentos e nenhum dos dois
+   * seria a revisão.
+   */
+  async abrirInspecaoDaPreventiva(painel: PainelPayload, osId: string) {
+    const operatorId = this.exigirOperator(painel);
+
+    // Recorta empresa + execução interna, e 404 para OS de pregão.
+    const os = await this.detalhe(painel, osId);
+
+    if (os.tipoOs !== TIPO_OS_PREVENTIVA) {
+      throw new BadRequestException(
+        'Inspeção do plano só existe em O.S. preventiva.',
+      );
+    }
+    if (!os.categoriaPlanoId || !os.cicloId) {
+      throw new BadRequestException(
+        'Esta O.S. preventiva foi aberta sem categoria e ciclo do plano — ' +
+          'sem eles não há o que inspecionar.',
+      );
+    }
+    if (!os.equipmentId) {
+      throw new BadRequestException('O.S. sem equipamento vinculado.');
+    }
+
+    // Reabrir é continuar. Cancelada e concluída não contam: a primeira foi
+    // desfeita de propósito, e a segunda é a revisão já registrada — nas duas
+    // o mecânico está começando de novo.
+    const aberta = await this.prisma.checklistExecucao.findFirst({
+      where: {
+        companyId: painel.companyId,
+        serviceOrderId: os.id,
+        status: 'aberta',
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (aberta) return aberta;
+
+    const plano = await this.planoDaMaquina(painel.companyId, os.equipment?.modelo);
+    const grupos = gerarGrupos(
+      plano?.categorias,
+      os.categoriaPlanoId,
+      os.cicloId,
+    );
+    if (grupos.length === 0) {
+      throw new BadRequestException(
+        'O ciclo deste plano não tem nenhum item para inspecionar. ' +
+          'Confira a matriz em Engenharia › Plano preventivo.',
+      );
+    }
+
+    const modelo = await this.modeloDaPreventiva(painel.companyId, {
+      nome: nomeDaInspecao(plano?.categorias, os.categoriaPlanoId, os.cicloId),
+      grupos,
+      tipoMaquina: os.equipment?.tipo ?? null,
+    });
+
+    return this.prisma.$transaction(async (tx) => {
+      const ultimo = await tx.checklistExecucao.findFirst({
+        where: { companyId: painel.companyId },
+        orderBy: { numeroDoc: 'desc' },
+        select: { numeroDoc: true },
+      });
+
+      return tx.checklistExecucao.create({
+        data: {
+          companyId: painel.companyId,
+          modeloId: modelo.id,
+          equipmentId: os.equipmentId!,
+          serviceOrderId: os.id,
+          operatorId,
+          numeroDoc: (ultimo?.numeroDoc ?? 0) + 1,
+        },
+      });
+    });
+  }
+
+  /** Mesma ordem do painel (`getPlanoParaModelo`): o modelo da máquina, e o "Geral" atrás. */
+  private async planoDaMaquina(companyId: string, modelo?: string | null) {
+    for (const alvo of [modelo?.trim(), PLANO_MODELO_GERAL].filter(Boolean)) {
+      const row = await this.prisma.planoPreventivo.findUnique({
+        where: { companyId_modelo: { companyId, modelo: alvo as string } },
+        select: { categorias: true },
+      });
+      if (row) return row;
+    }
+    return null;
+  }
+
+  /**
+   * O modelo de checklist daquele ciclo, criado na primeira vez e reusado
+   * depois.
+   *
+   * Reusar pelo NOME, e não criar um por O.S., é o que mantém o histórico
+   * comparável: doze revisões de 500h da escavadeira respondem ao mesmo
+   * documento, e dá para perguntar o que vive reprovando naquele item.
+   *
+   * E é atualizado a cada abertura: o plano muda em Engenharia, e a inspeção
+   * de amanhã tem de ser a matriz de amanhã. Quem já respondeu guarda a
+   * resposta por id de linha — ver `gerarGrupos`.
+   */
+  private async modeloDaPreventiva(
+    companyId: string,
+    dados: {
+      nome: string;
+      grupos: ReturnType<typeof gerarGrupos>;
+      tipoMaquina: string | null;
+    },
+  ) {
+    const existente = await this.prisma.checklistModelo.findFirst({
+      where: { companyId, nome: dados.nome },
+    });
+
+    if (existente) {
+      return this.prisma.checklistModelo.update({
+        where: { id: existente.id },
+        data: {
+          grupos: toInputJson(dados.grupos),
+          ativo: true,
+          version: { increment: 1 },
+        },
+      });
+    }
+
+    const ultimo = await this.prisma.checklistModelo.findFirst({
+      where: { companyId },
+      orderBy: { codigo: 'desc' },
+      select: { codigo: true },
+    });
+
+    return this.prisma.checklistModelo.create({
+      data: {
+        companyId,
+        codigo: (ultimo?.codigo ?? 0) + 1,
+        nome: dados.nome,
+        familia: 'PREVENTIVA',
+        tipoMaquina: dados.tipoMaquina,
+        grupos: toInputJson(dados.grupos),
+        // Nasce da ordem e não faz sentido fora dela: um "avulso" desta
+        // família apareceria na lista de inspeções soltas sem máquina nem
+        // ciclo, e ninguém saberia de qual revisão ele é.
+        exigeOs: 'exige_os',
+      },
+    });
+  }
+
   async listarPreventivas(painel: PainelPayload) {
     return this.prisma.equipment.findMany({
       where: {

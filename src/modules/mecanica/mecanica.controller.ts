@@ -676,6 +676,29 @@ export class MecanicaController {
     return this.service.arquivarModeloDeChecklist(req.painel, id);
   }
 
+  /**
+   * Abre (ou retoma) a inspeção do ciclo desta O.S. preventiva.
+   *
+   * POST porque cria documento. Repetir é seguro de duas formas: o
+   * `IdempotencyInterceptor` devolve a mesma resposta para a mesma chave, e o
+   * serviço devolve a inspeção já aberta para a ordem mesmo sem chave — é um
+   * botão num aparelho que perde sinal e recebe toque repetido.
+   */
+  @Post('os/:id/inspecao')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({
+    summary: 'Abrir a inspeção da preventiva a partir do ciclo do plano',
+    description:
+      'Monta o documento com as linhas da categoria e do ciclo que a O.S. ' +
+      'guarda. Chamar de novo devolve a inspeção que já está aberta.',
+  })
+  async abrirInspecaoDaPreventiva(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+  ) {
+    return this.service.abrirInspecaoDaPreventiva(req.painel, id);
+  }
+
   @Get('preventivas')
   @ApiOperation({
     summary:
