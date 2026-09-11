@@ -9,6 +9,7 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 import type { Request } from 'express';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { ehTokenDeChassi } from '../modules/checklist-auth/helpers/token-do-chassi.helper';
 
 /**
  * De qual empresa é quem está chamando — quando dá para saber, e sem exigir.
@@ -29,11 +30,17 @@ import { PrismaService } from '../prisma/prisma.service';
  * guard que barrasse aqui transformaria "sua sessão venceu" em "esta tela
  * quebrou" no meio do pátio.
  *
- * Duas origens de empresa, porque são dois cadastros diferentes:
- *  - `app_metadata.company_id` no token — é o que a sessão do OPERADOR carrega
- *    (emitida pela edge function do login por CPF);
- *  - `CompanyUser.id = sub` — é o usuário do PAINEL, que não tem
- *    `app_metadata`.
+ * TRÊS origens de empresa, porque são três cadastros diferentes:
+ *  - `app_metadata.company_id` no token do Supabase — a sessão do OPERADOR que
+ *    entrou por CPF (emitida pela edge function);
+ *  - `CompanyUser.id = sub` — o usuário do PAINEL, que não tem `app_metadata`;
+ *  - `companyId` num token assinado com `JWT_SECRET` e `tipo: 'chassi'` — o
+ *    login por CHASSI, que identifica uma MÁQUINA e não uma pessoa.
+ *
+ * O do chassi é verificado por último e com outro segredo: os dois primeiros
+ * são JWT do Supabase, com chave assimétrica; o terceiro é HS256 emitido por
+ * este servidor. Tentar o segundo só depois de o primeiro falhar evita pagar
+ * uma verificação de assinatura à toa no caso comum.
  */
 export type RequestComEmpresaOpcional = Request & {
   companyIdOpcional: string | null;
@@ -98,8 +105,37 @@ export class EmpresaDoTokenGuard implements CanActivate {
       const { sub, companyId } = await this.ler(token);
       // O do operador vem no próprio token e não custa consulta.
       if (companyId) return companyId;
-      if (!sub) return null;
+      if (sub) return this.empresaDoUsuarioDoPainel(sub);
+    } catch {
+      // Não é token do Supabase. Pode ser o do chassi, abaixo.
+    }
 
+    return this.empresaDoChassi(token);
+  }
+
+  /**
+   * O token de MÁQUINA do login por chassi — HS256, assinado por este servidor
+   * com `JWT_SECRET`, ao contrário dos dois do Supabase (assimétricos).
+   *
+   * Sem `JWT_SECRET` não há o que verificar, e o resultado é anônimo: quem
+   * não emite token não deveria estar recebendo um.
+   */
+  private async empresaDoChassi(token: string): Promise<string | null> {
+    const segredo = process.env.JWT_SECRET;
+    if (!segredo) return null;
+    try {
+      const { payload } = await jwtVerify(
+        token,
+        new TextEncoder().encode(segredo),
+      );
+      return ehTokenDeChassi(payload) ? payload.companyId : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async empresaDoUsuarioDoPainel(sub: string): Promise<string | null> {
+    try {
       const usuario = await this.prisma.companyUser.findUnique({
         where: { id: sub },
         select: { companyId: true, status: true },

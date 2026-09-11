@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Param, Post, UseGuards, BadRequestException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { ChecklistChassiService } from './checklist-chassi.service';
@@ -16,13 +27,19 @@ export class ChecklistAuthController {
 
   @Post('resolver-chassi')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Resolve empresa/máquina a partir do chassi (público, rate-limited).' })
+  @ApiOperation({
+    summary:
+      'Resolve empresa/máquina a partir do chassi (público, rate-limited).',
+  })
   async resolver(@Body() dto: ResolverChassiDto) {
     return this.service.resolverChassi(dto.chassi);
   }
 
   @Get('chassis-empresa/:empresaId')
-  @ApiOperation({ summary: 'Lista chassis da empresa para cache offline (público, rate-limited).' })
+  @ApiOperation({
+    summary:
+      'Lista chassis da empresa para cache offline (público, rate-limited).',
+  })
   async chassisEmpresa(@Param('empresaId') empresaId: string) {
     return this.service.listarChassisDaEmpresa(empresaId);
   }
@@ -78,12 +95,12 @@ export class ChecklistAuthController {
     return { data, message: 'Batida registrada.' };
   }
 
-  @Get("runs/:empresaId")
+  @Get('runs/:empresaId')
   @ApiOperation({
     summary:
-      "Lista checklists da empresa (login por chassi, sem sessão Supabase).",
+      'Lista checklists da empresa (login por chassi, sem sessão Supabase).',
   })
-  async listarRuns(@Param("empresaId") empresaId: string) {
+  async listarRuns(@Param('empresaId') empresaId: string) {
     return this.service.listarRunsEmpresa(empresaId);
   }
 }

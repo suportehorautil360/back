@@ -4,7 +4,10 @@ import {
   ConflictException,
   BadRequestException,
   Logger,
+  Optional,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '../../prisma/generated/client';
@@ -16,6 +19,10 @@ import {
   calcularHashPonto,
   formatTimestampForLedger,
 } from './helpers/ponto-ledger.helper';
+import {
+  montarPayloadDoChassi,
+  VALIDADE_DO_TOKEN_DE_CHASSI,
+} from './helpers/token-do-chassi.helper';
 
 /**
  * Resolver chassi → empresa/equipamento (login por chassi do PWA operador).
@@ -28,7 +35,18 @@ import {
 export class ChecklistChassiService {
   private readonly logger = new Logger(ChecklistChassiService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    /**
+     * Opcionais para os testes que só exercitam consulta poderem construir o
+     * serviço com o Prisma e mais nada. Em produção os dois vêm do módulo; sem
+     * eles, `resolverChassi` devolve o resultado SEM token — que é exatamente
+     * o comportamento de antes desta mudança, e não uma falha silenciosa de
+     * autorização: o token só ACRESCENTA escopo, nunca é o que libera.
+     */
+    @Optional() private readonly jwt?: JwtService,
+    @Optional() private readonly config?: ConfigService,
+  ) {}
 
   async resolverChassi(chassiInput: string) {
     const chassi = normalizarChassi(chassiInput);
@@ -145,6 +163,19 @@ export class ChecklistChassiService {
 
     const [primeiro] = habilitados;
     const resultado = {
+      /**
+       * A credencial que este login não tinha.
+       *
+       * Sem ela o servidor não sabe para quem responder, e o operador do
+       * chassi recebia o catálogo BASE mesmo na empresa que personalizou o
+       * dela. A alternativa — o cliente mandar a empresa na requisição — é o
+       * antipadrão de deixar quem pergunta afirmar quem é.
+       */
+      token: await this.emitirTokenDoChassi({
+        chassi,
+        companyId: primeiro.companyId,
+        idMaquina: primeiro.legacyId ?? primeiro.id,
+      }),
       // Compat: PWA legado usa `empresaId` como docId Firestore. Preservamos
       // via `legacyId` quando houver, senão UUID Postgres.
       empresaId: primeiro.company?.legacyId ?? primeiro.companyId,
@@ -163,6 +194,31 @@ export class ChecklistChassiService {
     );
 
     return resultado;
+  }
+
+  /**
+   * `undefined` quando o JWT não está configurado — o fluxo segue sem token,
+   * como antes. O que se perde é o recorte por empresa no catálogo, não o
+   * login: degradar para "vê o base" é o desfecho certo, e derrubar o login
+   * por causa de uma variável de ambiente seria trocar um recorte por uma
+   * máquina parada no pátio.
+   */
+  private async emitirTokenDoChassi(entrada: {
+    chassi: string;
+    companyId: string;
+    idMaquina: string;
+  }): Promise<string | undefined> {
+    const segredo = this.config?.get<string>('JWT_SECRET');
+    if (!this.jwt || !segredo) {
+      this.logger.warn(
+        JSON.stringify({ evento: 'token-chassi', resultado: 'sem-jwt' }),
+      );
+      return undefined;
+    }
+    return this.jwt.signAsync(montarPayloadDoChassi(entrada), {
+      secret: segredo,
+      expiresIn: VALIDADE_DO_TOKEN_DE_CHASSI,
+    });
   }
 
   async listarChassisDaEmpresa(

@@ -12,6 +12,8 @@
  */
 import type { ExecutionContext } from '@nestjs/common';
 
+import { SignJWT } from 'jose';
+
 import {
   EmpresaDoTokenGuard,
   type LeitorDeToken,
@@ -154,5 +156,116 @@ describe('EmpresaDoTokenGuard', () => {
 
     await g.canActivate(ctx);
     expect(req.companyIdOpcional).toBe('c-2');
+  });
+});
+
+/**
+ * O terceiro cadastro: o token de MÁQUINA.
+ *
+ * O login por chassi passou a emitir credencial própria, HS256 com
+ * `JWT_SECRET` — e não JWT do Supabase como os outros dois. Sem ele o operador
+ * do chassi recebia o catálogo BASE mesmo numa empresa que personalizou o
+ * dela, e a alternativa (o cliente mandar a empresa na requisição) é deixar
+ * quem pergunta afirmar quem é.
+ */
+describe('EmpresaDoTokenGuard — token de chassi', () => {
+  const SEGREDO = 'segredo-de-teste';
+  const semSupabase: LeitorDeToken = () =>
+    Promise.reject(new Error('não é token do Supabase'));
+
+  function assinar(payload: Record<string, unknown>, expiraEm = '12h') {
+    return new SignJWT(payload)
+      .setProtectedHeader({ alg: 'HS256' })
+      .setExpirationTime(expiraEm)
+      .sign(new TextEncoder().encode(SEGREDO));
+  }
+
+  const anterior = process.env.JWT_SECRET;
+  beforeEach(() => {
+    process.env.JWT_SECRET = SEGREDO;
+  });
+  afterAll(() => {
+    process.env.JWT_SECRET = anterior;
+  });
+
+  it('lê a empresa do token de chassi', async () => {
+    const { guard: g } = guard({ ler: semSupabase });
+    const token = await assinar({
+      sub: 'ESC-014',
+      tipo: 'chassi',
+      companyId: 'c-7',
+      idMaquina: 'eq-1',
+    });
+    const { ctx, req } = contexto(`Bearer ${token}`);
+
+    await g.canActivate(ctx);
+    expect(req.companyIdOpcional).toBe('c-7');
+  });
+
+  /**
+   * O único poder deste token é dizer de que empresa é a leitura. Sem a
+   * empresa ele não diz nada — e um payload assim não pode passar por
+   * identificado.
+   */
+  it('token de chassi sem empresa não identifica ninguém', async () => {
+    const { guard: g } = guard({ ler: semSupabase });
+    const token = await assinar({ sub: 'ESC-014', tipo: 'chassi' });
+    const { ctx, req } = contexto(`Bearer ${token}`);
+
+    await g.canActivate(ctx);
+    expect(req.companyIdOpcional).toBeNull();
+  });
+
+  // Assinado com outro segredo é forjado — e forjado não vira empresa.
+  it('assinatura de outro segredo não passa', async () => {
+    const { guard: g } = guard({ ler: semSupabase });
+    const token = await new SignJWT({ tipo: 'chassi', companyId: 'c-7' })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setExpirationTime('12h')
+      .sign(new TextEncoder().encode('outro-segredo'));
+    const { ctx, req } = contexto(`Bearer ${token}`);
+
+    await g.canActivate(ctx);
+    expect(req.companyIdOpcional).toBeNull();
+  });
+
+  it('token expirado vira anônimo, sem recusar', async () => {
+    const { guard: g } = guard({ ler: semSupabase });
+    const token = await assinar({ tipo: 'chassi', companyId: 'c-7' }, '-1s');
+    const { ctx, req } = contexto(`Bearer ${token}`);
+
+    expect(await g.canActivate(ctx)).toBe(true);
+    expect(req.companyIdOpcional).toBeNull();
+  });
+
+  /**
+   * O token de PESSOA (`tipo: 'operador'`) é assinado com o mesmo segredo e
+   * passaria na verificação de assinatura. Não pode virar empresa por este
+   * caminho: quem o emite é outro fluxo, com outro significado, e confundir os
+   * dois é como uma credencial de máquina acabaria autorizando coisa de gente.
+   */
+  it('token de operador NÃO entra pelo caminho do chassi', async () => {
+    const { guard: g } = guard({ ler: semSupabase });
+    const token = await assinar({
+      sub: 'login-123',
+      tipo: 'operador',
+      funcionarioId: 'f-1',
+      prefeituraId: 'c-7',
+    });
+    const { ctx, req } = contexto(`Bearer ${token}`);
+
+    await g.canActivate(ctx);
+    expect(req.companyIdOpcional).toBeNull();
+  });
+
+  it('sem JWT_SECRET configurado, ninguém é identificado por este caminho', async () => {
+    const token = await assinar({ tipo: 'chassi', companyId: 'c-7' });
+    delete process.env.JWT_SECRET;
+
+    const { guard: g } = guard({ ler: semSupabase });
+    const { ctx, req } = contexto(`Bearer ${token}`);
+
+    await g.canActivate(ctx);
+    expect(req.companyIdOpcional).toBeNull();
   });
 });

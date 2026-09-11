@@ -12,7 +12,9 @@ function servicoComPontoMockado() {
   const tx = {
     pontoNsrCounter: {
       upsert: jest.fn().mockResolvedValue({}),
-      findUniqueOrThrow: jest.fn().mockResolvedValue({ ultimo: 0, ultimoHash: null }),
+      findUniqueOrThrow: jest
+        .fn()
+        .mockResolvedValue({ ultimo: 0, ultimoHash: null }),
       update: jest.fn().mockResolvedValue({}),
     },
     $executeRaw: jest.fn().mockResolvedValue(1),
@@ -26,11 +28,16 @@ function servicoComPontoMockado() {
 
   const prisma = {
     company: {
-      findFirst: jest.fn().mockResolvedValue({ id: '4c2f78c1-0000-4000-8000-000000000001', legacyId: 'pref-1' }),
+      findFirst: jest.fn().mockResolvedValue({
+        id: '4c2f78c1-0000-4000-8000-000000000001',
+        legacyId: 'pref-1',
+      }),
     },
     pontoRegistro: { findFirst: jest.fn().mockResolvedValue(null) },
     operator: { findFirst: jest.fn().mockResolvedValue(null) },
-    $transaction: jest.fn((fn: (t: typeof tx) => unknown) => Promise.resolve(fn(tx))),
+    $transaction: jest.fn((fn: (t: typeof tx) => unknown) =>
+      Promise.resolve(fn(tx)),
+    ),
   } as unknown as PrismaService;
 
   return { service: new ChecklistChassiService(prisma), criados };
@@ -73,7 +80,11 @@ describe('ChecklistChassiService.baterPonto — coordenada', () => {
       },
       'chave-2',
     );
-    expect(criados[0]).toMatchObject({ latitude: null, longitude: null, precisaoMetros: null });
+    expect(criados[0]).toMatchObject({
+      latitude: null,
+      longitude: null,
+      precisaoMetros: null,
+    });
   });
 
   it('aceita precisão fracionária do navegador e grava arredondada — coluna é Int', async () => {
