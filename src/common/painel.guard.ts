@@ -205,22 +205,38 @@ export class PainelGuard implements CanActivate {
     }
 
     /**
-     * OWNER e ADMIN da empresa não passam pelo gate de CARGO.
+     * Quem ADMINISTRA a conta não passa pelo gate de CARGO — não tem cargo
+     * operacional para o gate olhar.
      *
-     * É a mesma regra que o painel já aplica em
-     * `horautil/lib/company/access-groups.ts` (`isFullAccessCompanyRole`), e
-     * faltar aqui fazia painel e API discordarem sobre a mesma pessoa: o menu
-     * mostrava Mecânica, porque OWNER tem acesso total, e a API recusava,
-     * porque OWNER é gestor puro — não tem `Operator` e portanto não tem
-     * cargo, e `cargoLiberaGrupo` nega quem não tem cargo. O dono da conta
-     * via "não foi possível carregar" em todas as telas do módulo, enquanto o
-     * mecânico, que tem cargo, entrava normalmente.
+     * São os MESMOS dois casos em que o painel devolve `FULL_ACCESS`
+     * (`horautil/lib/company/access-groups.ts`, `getCompanyAccessContext`), e
+     * a equivalência precisa ser exata: enquanto a API for mais estreita que
+     * o painel, o menu mostra o módulo e a API recusa — e a recusa chega ao
+     * usuário como "não foi possível carregar esta tela agora", que parece o
+     * Render hibernando e é autorização.
+     *
+     *  - `role` OWNER/ADMIN (o `isFullAccessCompanyRole` de lá);
+     *  - `CompanyUser` SEM `Operator` — "conta criada para operar o painel,
+     *    não para trabalhar na empresa". É o que o painel de admin grava no
+     *    perfil "gestor" (`horautil/lib/clientes/service.ts`: perfil "admin"
+     *    vira ADMIN, qualquer outro vira MEMBER, e nenhum dos dois cria
+     *    `Operator`). Isentar só por `role` cobria metade desse cadastro — o
+     *    gestor entrava no painel com acesso total e levava 403 na primeira
+     *    tela do módulo.
+     *
+     * A condição é a ausência de `Operator`, NÃO a ausência de
+     * `companyRoleId`, e a diferença é a regra: funcionário cadastrado e sem
+     * cargo atribuído continua recusado por `cargoLiberaGrupo`. O painel
+     * também o recusa (`allowedMenuKeys: []`), porque ler "a empresa ainda
+     * não montou os cargos" como acesso total abriria a conta inteira para
+     * qualquer login novo.
      *
      * Fica DEPOIS do gate comercial de propósito: dono de empresa que não
      * contratou o módulo continua barrado. O que esta exceção dispensa é o
      * cargo operacional, não a licença.
      */
     if (usuario.role === 'OWNER' || usuario.role === 'ADMIN') return;
+    if (!usuario.operator) return;
 
     const liberado = await this.cargoLiberaGrupo(
       usuario.operator?.companyRoleId ?? null,

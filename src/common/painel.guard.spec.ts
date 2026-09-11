@@ -353,6 +353,75 @@ describe('PainelGuard — gate comercial e de cargo', () => {
     await expect(guard.canActivate(ctx)).resolves.toBe(true);
   });
 
+  /**
+   * Quem ADMINISTRA a conta não tem cargo operacional para o gate olhar, e o
+   * painel já sabe disso: `getCompanyAccessContext`
+   * (`horautil/lib/company/access-groups.ts`) devolve `FULL_ACCESS` em DOIS
+   * casos — `role` OWNER/ADMIN, e o `CompanyUser` que não tem `Operator`
+   * nenhum ("conta criada para operar o painel, não para trabalhar na
+   * empresa"). Os três testes abaixo prendem essa equivalência: enquanto a
+   * API for mais estreita que o painel, o menu mostra o módulo e a API
+   * recusa — e o usuário vê "não foi possível carregar" onde a resposta certa
+   * era a tela.
+   */
+  const SEM_CARGO = {
+    features: [
+      { companyId: 'empresa-1', featureKey: 'mecanica', enabled: true },
+    ],
+    companyRoles: [],
+    roleAccess: [],
+  };
+
+  it('passa OWNER sem Operator — não tem cargo para o gate olhar', async () => {
+    const { ctx } = ctxCom('Bearer t', MODULO_MECANICA);
+    const guard = new PainelGuard(
+      prismaCom({ ...ATIVO, role: 'OWNER', operator: null }, SEM_CARGO),
+      VERIFICA_OK,
+    );
+    await expect(guard.canActivate(ctx)).resolves.toBe(true);
+  });
+
+  /**
+   * O perfil "gestor" do painel de admin (`horautil/lib/clientes/service.ts`)
+   * grava `role: MEMBER` e NÃO cria `Operator` — perfil "admin" grava ADMIN.
+   * Isentar só OWNER/ADMIN deixava metade desse cadastro de fora: o gestor
+   * entrava no painel com acesso total e levava 403 na primeira tela.
+   */
+  it('passa MEMBER sem Operator — gestor puro do painel de admin', async () => {
+    const { ctx } = ctxCom('Bearer t', MODULO_MECANICA);
+    const guard = new PainelGuard(
+      prismaCom({ ...ATIVO, role: 'MEMBER', operator: null }, SEM_CARGO),
+      VERIFICA_OK,
+    );
+    await expect(guard.canActivate(ctx)).resolves.toBe(true);
+  });
+
+  /**
+   * O limite da isenção, e o motivo de ela olhar a AUSÊNCIA de `Operator` em
+   * vez da ausência de `companyRoleId`: funcionário cadastrado e sem cargo
+   * atribuído continua recusado. O painel faz o mesmo — devolve
+   * `allowedMenuKeys: []`, não `FULL_ACCESS` — porque ler "ainda não montaram
+   * os cargos" como acesso total abriria a empresa inteira para qualquer
+   * login de conta nova.
+   */
+  it('recusa funcionário COM Operator e sem cargo atribuído', async () => {
+    const { ctx } = ctxCom('Bearer t', MODULO_MECANICA);
+    const guard = new PainelGuard(
+      prismaCom(
+        {
+          ...ATIVO,
+          role: 'MEMBER',
+          operator: { id: 'op-1', status: 'ativo', companyRoleId: null },
+        },
+        SEM_CARGO,
+      ),
+      VERIFICA_OK,
+    );
+    await expect(guard.canActivate(ctx)).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
+  });
+
   // As rotas sem `@ModuloComercial` continuam só com os três checks de
   // `status` — nenhuma tabela nova é sequer consultada.
   it('rota sem @ModuloComercial ignora o gate e passa sem consultar feature/cargo', async () => {
