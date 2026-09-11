@@ -432,6 +432,12 @@ model ChecklistRun {
   respostas Json?
   /// Itens marcados "Não" — objetos `{ titulo, problema?, numero?, impeditivo? }`.
   itensNao  Json?   @map("itens_nao")
+
+  /// As PERGUNTAS que foram feitas: `[{ ordem, texto, severidade }]`, como o
+  /// operador as viu, na mesma numeração das chaves de `respostas`. Sem isto a
+  /// auditoria reconstruía o enunciado a partir da definição de HOJE, e um
+  /// item inserido no meio deslocava as respostas seguintes.
+  itens     Json?
   obs       String?
 
   /// Data URLs base64 (mesmo formato do legado). TEXT pode chegar a algumas

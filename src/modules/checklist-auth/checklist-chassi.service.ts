@@ -57,7 +57,12 @@ export class ChecklistChassiService {
         chassi: true,
         companyId: true,
         company: {
-          select: { id: true, name: true, checklistLogin: true, legacyId: true },
+          select: {
+            id: true,
+            name: true,
+            checklistLogin: true,
+            legacyId: true,
+          },
         },
       },
       take: 5,
@@ -167,7 +172,10 @@ export class ChecklistChassiService {
     // Tentamos os dois.
     const equipamentos = await this.prisma.equipment.findMany({
       where: {
-        OR: [{ companyId: this.tryUuid(empresaId) }, { company: { legacyId: empresaId } }],
+        OR: [
+          { companyId: this.tryUuid(empresaId) },
+          { company: { legacyId: empresaId } },
+        ],
         chassi: { not: null },
       },
       select: { chassi: true },
@@ -199,7 +207,9 @@ export class ChecklistChassiService {
    * Grava checklist no Postgres quando o operador entrou por chassi (sem JWT
    * Supabase). Valida que o chassi pertence à empresa informada.
    */
-  async salvarChecklistRun(dto: SalvarChecklistRunDto): Promise<{ id: string }> {
+  async salvarChecklistRun(
+    dto: SalvarChecklistRunDto,
+  ): Promise<{ id: string }> {
     const company = await this.resolveCompany(dto.prefeituraId);
     await this.assertEquipamentoDaEmpresa(
       company.id,
@@ -234,6 +244,14 @@ export class ChecklistChassiService {
         dto.itensNao === null || dto.itensNao === undefined
           ? undefined
           : (dto.itensNao as Prisma.InputJsonValue),
+      // O retrato do documento. Mesmo tratamento de `undefined` dos outros
+      // Json: `null` explícito apagaria o retrato num reenvio de app antigo,
+      // que é justamente o dado que não dá para recuperar depois.
+      itens:
+        dto.itens === null || dto.itens === undefined
+          ? undefined
+          : (dto.itens as Prisma.InputJsonValue),
+      definitionLegacyId: dto.definitionLegacyId ?? null,
       obs: dto.obs ?? null,
       fotoHorimetro: dto.fotoHorimetro ?? null,
       assinaturaOperador: dto.assinaturaOperador ?? null,
@@ -261,6 +279,8 @@ export class ChecklistChassiService {
         horimetro: row.horimetro,
         respostas: row.respostas,
         itensNao: row.itensNao,
+        itens: row.itens,
+        definitionLegacyId: row.definitionLegacyId,
         obs: row.obs,
         fotoHorimetro: row.fotoHorimetro,
         assinaturaOperador: row.assinaturaOperador,
@@ -493,7 +513,7 @@ export class ChecklistChassiService {
     const company = await this.resolveCompany(empresaId);
     const rows = await this.prisma.checklistRun.findMany({
       where: { companyId: company.id },
-      orderBy: { executedAt: "desc" },
+      orderBy: { executedAt: 'desc' },
       take: 500,
       select: {
         id: true,
@@ -632,7 +652,9 @@ export class ChecklistChassiService {
 
   /** Se `id` é UUID válido, devolve; senão devolve string vazia (não bate). */
   private tryUuid(id: string): string {
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      id,
+    )
       ? id
       : '00000000-0000-0000-0000-000000000000';
   }

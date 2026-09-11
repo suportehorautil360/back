@@ -5016,6 +5016,7 @@ export const ChecklistRunScalarFieldEnum = {
   horimetro: 'horimetro',
   respostas: 'respostas',
   itensNao: 'itensNao',
+  itens: 'itens',
   obs: 'obs',
   fotoHorimetro: 'fotoHorimetro',
   assinaturaOperador: 'assinaturaOperador',

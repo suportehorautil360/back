@@ -8,7 +8,9 @@ export class SalvarChecklistRunDto {
   @IsNotEmpty()
   id!: string;
 
-  @ApiProperty({ description: 'legacyId Firestore ou UUID Postgres da empresa' })
+  @ApiProperty({
+    description: 'legacyId Firestore ou UUID Postgres da empresa',
+  })
   @IsString()
   @IsNotEmpty()
   prefeituraId!: string;
@@ -98,6 +100,22 @@ export class SalvarChecklistRunDto {
   @ApiPropertyOptional()
   @IsOptional()
   itensNao?: unknown[];
+
+  /**
+   * As PERGUNTAS que foram feitas: `[{ ordem, texto, severidade }]`, como o
+   * operador as viu, na mesma numeração das chaves de `respostas`.
+   *
+   * Sem isto a auditoria reconstrói o enunciado a partir da definição de hoje,
+   * e um item inserido no meio desloca as respostas seguintes.
+   */
+  @ApiPropertyOptional()
+  @IsOptional()
+  itens?: unknown[];
+
+  /** Qual documento foi preenchido. Antes se perdia. */
+  @ApiPropertyOptional()
+  @IsOptional()
+  definitionLegacyId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

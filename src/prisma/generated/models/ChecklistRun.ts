@@ -125,6 +125,7 @@ export type ChecklistRunCountAggregateOutputType = {
   horimetro: number
   respostas: number
   itensNao: number
+  itens: number
   obs: number
   fotoHorimetro: number
   assinaturaOperador: number
@@ -231,6 +232,7 @@ export type ChecklistRunCountAggregateInputType = {
   horimetro?: true
   respostas?: true
   itensNao?: true
+  itens?: true
   obs?: true
   fotoHorimetro?: true
   assinaturaOperador?: true
@@ -348,6 +350,7 @@ export type ChecklistRunGroupByOutputType = {
   horimetro: string | null
   respostas: runtime.JsonValue | null
   itensNao: runtime.JsonValue | null
+  itens: runtime.JsonValue | null
   obs: string | null
   fotoHorimetro: string | null
   assinaturaOperador: string | null
@@ -401,6 +404,7 @@ export type ChecklistRunWhereInput = {
   horimetro?: Prisma.StringNullableFilter<"ChecklistRun"> | string | null
   respostas?: Prisma.JsonNullableFilter<"ChecklistRun">
   itensNao?: Prisma.JsonNullableFilter<"ChecklistRun">
+  itens?: Prisma.JsonNullableFilter<"ChecklistRun">
   obs?: Prisma.StringNullableFilter<"ChecklistRun"> | string | null
   fotoHorimetro?: Prisma.StringNullableFilter<"ChecklistRun"> | string | null
   assinaturaOperador?: Prisma.StringNullableFilter<"ChecklistRun"> | string | null
@@ -432,6 +436,7 @@ export type ChecklistRunOrderByWithRelationInput = {
   horimetro?: Prisma.SortOrderInput | Prisma.SortOrder
   respostas?: Prisma.SortOrderInput | Prisma.SortOrder
   itensNao?: Prisma.SortOrderInput | Prisma.SortOrder
+  itens?: Prisma.SortOrderInput | Prisma.SortOrder
   obs?: Prisma.SortOrderInput | Prisma.SortOrder
   fotoHorimetro?: Prisma.SortOrderInput | Prisma.SortOrder
   assinaturaOperador?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -466,6 +471,7 @@ export type ChecklistRunWhereUniqueInput = Prisma.AtLeast<{
   horimetro?: Prisma.StringNullableFilter<"ChecklistRun"> | string | null
   respostas?: Prisma.JsonNullableFilter<"ChecklistRun">
   itensNao?: Prisma.JsonNullableFilter<"ChecklistRun">
+  itens?: Prisma.JsonNullableFilter<"ChecklistRun">
   obs?: Prisma.StringNullableFilter<"ChecklistRun"> | string | null
   fotoHorimetro?: Prisma.StringNullableFilter<"ChecklistRun"> | string | null
   assinaturaOperador?: Prisma.StringNullableFilter<"ChecklistRun"> | string | null
@@ -497,6 +503,7 @@ export type ChecklistRunOrderByWithAggregationInput = {
   horimetro?: Prisma.SortOrderInput | Prisma.SortOrder
   respostas?: Prisma.SortOrderInput | Prisma.SortOrder
   itensNao?: Prisma.SortOrderInput | Prisma.SortOrder
+  itens?: Prisma.SortOrderInput | Prisma.SortOrder
   obs?: Prisma.SortOrderInput | Prisma.SortOrder
   fotoHorimetro?: Prisma.SortOrderInput | Prisma.SortOrder
   assinaturaOperador?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -535,6 +542,7 @@ export type ChecklistRunScalarWhereWithAggregatesInput = {
   horimetro?: Prisma.StringNullableWithAggregatesFilter<"ChecklistRun"> | string | null
   respostas?: Prisma.JsonNullableWithAggregatesFilter<"ChecklistRun">
   itensNao?: Prisma.JsonNullableWithAggregatesFilter<"ChecklistRun">
+  itens?: Prisma.JsonNullableWithAggregatesFilter<"ChecklistRun">
   obs?: Prisma.StringNullableWithAggregatesFilter<"ChecklistRun"> | string | null
   fotoHorimetro?: Prisma.StringNullableWithAggregatesFilter<"ChecklistRun"> | string | null
   assinaturaOperador?: Prisma.StringNullableWithAggregatesFilter<"ChecklistRun"> | string | null
@@ -564,6 +572,7 @@ export type ChecklistRunCreateInput = {
   horimetro?: string | null
   respostas?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   itensNao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  itens?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   obs?: string | null
   fotoHorimetro?: string | null
   assinaturaOperador?: string | null
@@ -595,6 +604,7 @@ export type ChecklistRunUncheckedCreateInput = {
   horimetro?: string | null
   respostas?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   itensNao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  itens?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   obs?: string | null
   fotoHorimetro?: string | null
   assinaturaOperador?: string | null
@@ -624,6 +634,7 @@ export type ChecklistRunUpdateInput = {
   horimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   respostas?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   itensNao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  itens?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   obs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fotoHorimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assinaturaOperador?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -655,6 +666,7 @@ export type ChecklistRunUncheckedUpdateInput = {
   horimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   respostas?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   itensNao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  itens?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   obs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fotoHorimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assinaturaOperador?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -685,6 +697,7 @@ export type ChecklistRunCreateManyInput = {
   horimetro?: string | null
   respostas?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   itensNao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  itens?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   obs?: string | null
   fotoHorimetro?: string | null
   assinaturaOperador?: string | null
@@ -714,6 +727,7 @@ export type ChecklistRunUpdateManyMutationInput = {
   horimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   respostas?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   itensNao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  itens?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   obs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fotoHorimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assinaturaOperador?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -744,6 +758,7 @@ export type ChecklistRunUncheckedUpdateManyInput = {
   horimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   respostas?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   itensNao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  itens?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   obs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fotoHorimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assinaturaOperador?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -784,6 +799,7 @@ export type ChecklistRunCountOrderByAggregateInput = {
   horimetro?: Prisma.SortOrder
   respostas?: Prisma.SortOrder
   itensNao?: Prisma.SortOrder
+  itens?: Prisma.SortOrder
   obs?: Prisma.SortOrder
   fotoHorimetro?: Prisma.SortOrder
   assinaturaOperador?: Prisma.SortOrder
@@ -937,6 +953,7 @@ export type ChecklistRunCreateWithoutCompanyInput = {
   horimetro?: string | null
   respostas?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   itensNao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  itens?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   obs?: string | null
   fotoHorimetro?: string | null
   assinaturaOperador?: string | null
@@ -966,6 +983,7 @@ export type ChecklistRunUncheckedCreateWithoutCompanyInput = {
   horimetro?: string | null
   respostas?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   itensNao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  itens?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   obs?: string | null
   fotoHorimetro?: string | null
   assinaturaOperador?: string | null
@@ -1025,6 +1043,7 @@ export type ChecklistRunScalarWhereInput = {
   horimetro?: Prisma.StringNullableFilter<"ChecklistRun"> | string | null
   respostas?: Prisma.JsonNullableFilter<"ChecklistRun">
   itensNao?: Prisma.JsonNullableFilter<"ChecklistRun">
+  itens?: Prisma.JsonNullableFilter<"ChecklistRun">
   obs?: Prisma.StringNullableFilter<"ChecklistRun"> | string | null
   fotoHorimetro?: Prisma.StringNullableFilter<"ChecklistRun"> | string | null
   assinaturaOperador?: Prisma.StringNullableFilter<"ChecklistRun"> | string | null
@@ -1054,6 +1073,7 @@ export type ChecklistRunCreateManyCompanyInput = {
   horimetro?: string | null
   respostas?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   itensNao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  itens?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   obs?: string | null
   fotoHorimetro?: string | null
   assinaturaOperador?: string | null
@@ -1083,6 +1103,7 @@ export type ChecklistRunUpdateWithoutCompanyInput = {
   horimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   respostas?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   itensNao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  itens?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   obs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fotoHorimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assinaturaOperador?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1112,6 +1133,7 @@ export type ChecklistRunUncheckedUpdateWithoutCompanyInput = {
   horimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   respostas?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   itensNao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  itens?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   obs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fotoHorimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assinaturaOperador?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1141,6 +1163,7 @@ export type ChecklistRunUncheckedUpdateManyWithoutCompanyInput = {
   horimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   respostas?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   itensNao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  itens?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   obs?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fotoHorimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   assinaturaOperador?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1173,6 +1196,7 @@ export type ChecklistRunSelect<ExtArgs extends runtime.Types.Extensions.Internal
   horimetro?: boolean
   respostas?: boolean
   itensNao?: boolean
+  itens?: boolean
   obs?: boolean
   fotoHorimetro?: boolean
   assinaturaOperador?: boolean
@@ -1204,6 +1228,7 @@ export type ChecklistRunSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   horimetro?: boolean
   respostas?: boolean
   itensNao?: boolean
+  itens?: boolean
   obs?: boolean
   fotoHorimetro?: boolean
   assinaturaOperador?: boolean
@@ -1235,6 +1260,7 @@ export type ChecklistRunSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   horimetro?: boolean
   respostas?: boolean
   itensNao?: boolean
+  itens?: boolean
   obs?: boolean
   fotoHorimetro?: boolean
   assinaturaOperador?: boolean
@@ -1266,6 +1292,7 @@ export type ChecklistRunSelectScalar = {
   horimetro?: boolean
   respostas?: boolean
   itensNao?: boolean
+  itens?: boolean
   obs?: boolean
   fotoHorimetro?: boolean
   assinaturaOperador?: boolean
@@ -1275,7 +1302,7 @@ export type ChecklistRunSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ChecklistRunOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "operadorLegacyId" | "operadorNome" | "operadorCpf" | "definitionLegacyId" | "chassi" | "categoria" | "modelo" | "linha" | "totalItens" | "totalSim" | "totalNao" | "totalNa" | "totalAplicaveis" | "pontuacao" | "horimetro" | "respostas" | "itensNao" | "obs" | "fotoHorimetro" | "assinaturaOperador" | "localizacaoGps" | "executedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["checklistRun"]>
+export type ChecklistRunOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "operadorLegacyId" | "operadorNome" | "operadorCpf" | "definitionLegacyId" | "chassi" | "categoria" | "modelo" | "linha" | "totalItens" | "totalSim" | "totalNao" | "totalNa" | "totalAplicaveis" | "pontuacao" | "horimetro" | "respostas" | "itensNao" | "itens" | "obs" | "fotoHorimetro" | "assinaturaOperador" | "localizacaoGps" | "executedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["checklistRun"]>
 export type ChecklistRunInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
 }
@@ -1337,6 +1364,13 @@ export type $ChecklistRunPayload<ExtArgs extends runtime.Types.Extensions.Intern
      * Itens marcados "Não" — objetos `{ titulo, problema?, numero?, impeditivo? }`.
      */
     itensNao: runtime.JsonValue | null
+    /**
+     * As PERGUNTAS que foram feitas: `[{ ordem, texto, severidade }]`, como o
+     * operador as viu, na mesma numeração das chaves de `respostas`. Sem isto a
+     * auditoria reconstruía o enunciado a partir da definição de HOJE, e um
+     * item inserido no meio deslocava as respostas seguintes.
+     */
+    itens: runtime.JsonValue | null
     obs: string | null
     /**
      * Data URLs base64 (mesmo formato do legado). TEXT pode chegar a algumas
@@ -1800,6 +1834,7 @@ export interface ChecklistRunFieldRefs {
   readonly horimetro: Prisma.FieldRef<"ChecklistRun", 'String'>
   readonly respostas: Prisma.FieldRef<"ChecklistRun", 'Json'>
   readonly itensNao: Prisma.FieldRef<"ChecklistRun", 'Json'>
+  readonly itens: Prisma.FieldRef<"ChecklistRun", 'Json'>
   readonly obs: Prisma.FieldRef<"ChecklistRun", 'String'>
   readonly fotoHorimetro: Prisma.FieldRef<"ChecklistRun", 'String'>
   readonly assinaturaOperador: Prisma.FieldRef<"ChecklistRun", 'String'>
