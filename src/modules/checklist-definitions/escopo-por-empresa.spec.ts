@@ -56,14 +56,15 @@ describe('ChecklistDefinitionsService.findAll — escopo', () => {
     });
   });
 
-  it('com empresa e só ativas, combina os dois recortes', async () => {
+  // As da empresa vêm também arquivadas: é o que diz quais categorias ela
+  // excluiu, para o base não voltar no lugar.
+  it('com empresa e só ativas, traz o base ativo e TODAS as dela', async () => {
     const { servico: s, findMany } = servico();
 
     await s.findAll(true, 'c-1');
 
     expect(findMany.mock.calls[0][0].where).toEqual({
-      OR: [{ companyId: null }, { companyId: 'c-1' }],
-      ativo: true,
+      OR: [{ companyId: null, ativo: true }, { companyId: 'c-1' }],
     });
   });
 
@@ -91,5 +92,79 @@ describe('ChecklistDefinitionsService.findAll — escopo', () => {
     await s.findAll(false, '');
 
     expect(findMany.mock.calls[0][0].where).toEqual({ companyId: null });
+  });
+});
+
+/**
+ * O que o aparelho do operador recebe no login por CHASSI.
+ *
+ * Ele usa a lista como vem — não sabe de empresa nenhuma. Devolver o base e o
+ * da empresa lado a lado para a mesma categoria deixava a escolha para a
+ * pontuação por palavra-chave, e o operador podia preencher o documento que a
+ * empresa trocou. Quem pede só as ativas recebe UMA por categoria.
+ */
+describe('ChecklistDefinitionsService.findAll — o que vale para a empresa', () => {
+  const agora = new Date('2026-09-11T12:00:00Z');
+  const linha = (
+    id: string,
+    categoria: string,
+    companyId: string | null,
+    ativo = true,
+  ) => ({
+    id,
+    legacyId: null,
+    companyId,
+    nome: `${categoria} (${id})`,
+    categoria,
+    keywords: [],
+    ativo,
+    version: 1,
+    itens: [],
+    createdAt: agora,
+    updatedAt: agora,
+  });
+
+  function servicoCom(linhas: ReturnType<typeof linha>[]) {
+    const findMany = jest.fn(() => Promise.resolve(linhas));
+    return new ChecklistDefinitionsService({
+      checklistDefinition: { findMany },
+    } as never);
+  }
+
+  it('a da empresa substitui o base da mesma categoria', async () => {
+    const s = servicoCom([
+      linha('base-retro', 'Retroescavadeira', null),
+      linha('base-bau', 'Baú', null),
+      linha('emp-retro', 'retroescavadeira ', 'c-1'),
+    ]);
+
+    const r = await s.findAll(true, 'c-1');
+
+    expect(r.data.map((d) => d.id).sort()).toEqual(['base-bau', 'emp-retro']);
+  });
+
+  it('a excluída pela empresa esconde o base, e não aparece ela mesma', async () => {
+    const s = servicoCom([
+      linha('base-comboio', 'Comboio', null),
+      linha('emp-comboio', 'Comboio', 'c-1', false),
+      linha('base-bau', 'Baú', null),
+    ]);
+
+    const r = await s.findAll(true, 'c-1');
+
+    expect(r.data.map((d) => d.id)).toEqual(['base-bau']);
+  });
+
+  // Sem o filtro de ativas é a leitura de quem mantém o catálogo: lá o
+  // trabalho é ver tudo, então nada é escondido.
+  it('sem o filtro de ativas, não resolve nada', async () => {
+    const s = servicoCom([
+      linha('base-comboio', 'Comboio', null),
+      linha('emp-comboio', 'Comboio', 'c-1', false),
+    ]);
+
+    const r = await s.findAll(false, 'c-1');
+
+    expect(r.data).toHaveLength(2);
   });
 });

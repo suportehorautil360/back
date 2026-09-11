@@ -8,6 +8,7 @@ import type { ChecklistDefinition } from '../../prisma/generated/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateChecklistDefinitionDto } from './dto/create-checklist-definition.dto';
 import { UpdateChecklistDefinitionDto } from './dto/update-checklist-definition.dto';
+import { resolverParaEmpresa } from './resolver-por-empresa';
 import { SEED_CHECKLIST_DEFINITIONS } from './seed-data';
 
 export interface ChecklistDefinitionDoc {
@@ -126,24 +127,38 @@ export class ChecklistDefinitionsService {
    * de todo mundo para quem não se identificou entregaria o documento interno
    * de uma empresa a qualquer um que soubesse a URL.
    *
-   * COM empresa devolve base + as dela, e a resolução de qual vale para cada
-   * categoria é do chamador (`horautil/lib/company/checklist-do-operador.ts`),
-   * que é quem já a aplica no painel e no PWA.
+   * COM empresa e só as ativas — o que o aparelho do operador pede — devolve
+   * o que VALE para ela: uma definição por categoria, já resolvida aqui
+   * (`resolver-por-empresa.ts`). O aparelho usa a lista como vem; base e
+   * empresa lado a lado deixariam a escolha para a pontuação por
+   * palavra-chave. As dela vêm do banco também arquivadas, porque é o
+   * arquivado que diz que ela excluiu a categoria.
+   *
+   * COM empresa e sem filtro devolve base + as dela cruas: é a leitura de
+   * quem mantém o catálogo, e ali ver tudo é o trabalho.
    *
    * Antes desta coluna existir, todas as linhas eram base — então, hoje, sem
    * empresa a resposta é exatamente a mesma de sempre.
    */
   async findAll(somenteAtivas = false, companyId?: string | null) {
     try {
-      const escopo = companyId
-        ? { OR: [{ companyId: null }, { companyId }] }
-        : { companyId: null };
+      const where = !companyId
+        ? somenteAtivas
+          ? { companyId: null, ativo: true }
+          : { companyId: null }
+        : somenteAtivas
+          ? { OR: [{ companyId: null, ativo: true }, { companyId }] }
+          : { OR: [{ companyId: null }, { companyId }] };
       const linhas = await this.prisma.checklistDefinition.findMany({
-        where: somenteAtivas ? { ...escopo, ativo: true } : escopo,
+        where,
         orderBy: { nome: 'asc' },
       });
+      const valem =
+        companyId && somenteAtivas
+          ? resolverParaEmpresa(linhas, companyId)
+          : linhas;
       return {
-        data: linhas.map((l) => this.toDoc(l)),
+        data: valem.map((l) => this.toDoc(l)),
         message: 'Definições de checklist listadas.',
       };
     } catch (error) {
