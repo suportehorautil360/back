@@ -4,7 +4,13 @@ import { normalizarCodigo } from './regras/codigo';
 import { Prisma } from '../../prisma/generated/client';
 import { disponivel } from './regras/disponibilidade';
 import { novoCustoMedio } from './regras/movimento';
-import { statusAposConsulta, type StatusMateriais } from './regras/status-materiais';
+import { statusAposConsulta, statusAposSeparacao, type StatusMateriais } from './regras/status-materiais';
+import {
+  requisicaoEstaSeparada,
+  statusDoItemAposSeparacao,
+  temDivergencia,
+  validarConferencia,
+} from './regras/separacao';
 import {
   categoriaECicloExistem,
   itensDeTrocaDoCiclo,
@@ -664,6 +670,182 @@ export class AlmoxarifadoService {
       });
 
       return { saldoFisico: depois, custoMedio };
+    });
+  }
+
+  /**
+   * A conferência do kit pelo almoxarife.
+   *
+   * Mexe em `saldo_separado`, não em `saldo_fisico`: a peça continua no
+   * depósito, só que agora dentro de uma caixa com o nome da OS. O físico só
+   * cai na entrega (Task 6).
+   *
+   * `saldo_separado <= saldo_reservado` é CHECK no banco — a validação pura
+   * (`validarConferencia`) existe para devolver mensagem em vez de 500, e
+   * roda ANTES de abrir transação: recusar no meio deixaria metade do kit
+   * conferido e metade não, e o almoxarife não saberia onde parou.
+   */
+  async separarItens(input: {
+    companyId: string;
+    requisicaoId: string;
+    autorCompanyUserId: string;
+    itens: Array<{ itemId: string; quantidade: number; divergencia?: string | null }>;
+  }): Promise<{ statusRequisicao: string; statusMateriais: StatusMateriais }> {
+    const req = await this.prisma.requisicaoMaterial.findFirst({
+      where: { id: input.requisicaoId, companyId: input.companyId },
+      include: { itens: true },
+    });
+    if (!req) throw new NotFoundException('Requisição não encontrada para esta empresa.');
+    if (req.status === 'entregue' || req.status === 'cancelada') {
+      throw new ConflictException(`Requisição ${req.status} não aceita conferência.`);
+    }
+
+    // Valida TUDO antes de abrir transação: recusar no meio deixaria metade
+    // do kit conferido e metade não, e o almoxarife não saberia onde parou.
+    const porId = new Map(req.itens.map((i) => [i.id, i]));
+    const planejado: Array<{
+      item: (typeof req.itens)[number];
+      quantidade: number;
+      divergencia: string | null;
+    }> = [];
+    for (const conferido of input.itens) {
+      const item = porId.get(conferido.itemId);
+      if (!item) {
+        // Sem isto, um itemId de outra requisição faria o saldo de outra OS
+        // mexer — a linha de saldo é achada por `pecaId`, não por `itemId`.
+        throw new BadRequestException(`Item ${conferido.itemId} não é desta requisição.`);
+      }
+      const v = validarConferencia(
+        {
+          quantidadeReservada: Number(item.quantidadeReservada),
+          status: item.status,
+          impeditivo: item.impeditivo,
+          divergencia: item.divergencia,
+        },
+        { quantidade: conferido.quantidade },
+      );
+      if (!v.ok) throw new BadRequestException(v.erro);
+      planejado.push({
+        item,
+        quantidade: v.quantidade,
+        divergencia: conferido.divergencia?.trim() || null,
+      });
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // Achado I1 da reserva, válido aqui pela mesma razão: trava
+      // `peca_saldos` SEMPRE na mesma ordem — por `pecaId` — entre chamadas
+      // concorrentes. Duas conferências simultâneas travando as mesmas
+      // linhas em ordens opostas dão deadlock (`40P01`), que não é `P2002`.
+      const ordemDeTrava = [...planejado].sort((a, b) => {
+        const pa = a.item.pecaId ?? '';
+        const pb = b.item.pecaId ?? '';
+        return pa < pb ? -1 : pa > pb ? 1 : 0;
+      });
+
+      for (const p of ordemDeTrava) {
+        // Item `nao_vinculado` não tem `pecaId` — nenhuma linha de saldo
+        // para travar ou mexer; só o status do item muda, mais abaixo.
+        if (!p.item.pecaId) continue;
+
+        const linhas = await tx.$queryRaw<{ saldo_separado: string }[]>(Prisma.sql`
+          SELECT saldo_separado FROM peca_saldos
+           WHERE peca_id = ${p.item.pecaId}::uuid
+             AND deposito_id = ${req.depositoId}::uuid
+             FOR UPDATE
+        `);
+        // `FOR UPDATE` não trava linha que não existe — se não houver linha,
+        // `linhas[0]` vem vazio. Isso só é inofensivo aqui porque um item só
+        // chega a `status: 'reservada'` (a única porta que passa em
+        // `validarConferencia`) quando `reservarParaOs` conseguiu gravar
+        // `saldo_reservado > 0`, e isso exige a linha de `peca_saldos` já
+        // existir naquele momento — ou seja, todo item conferível TEM linha.
+        // Tratar como zero é só a rede: se esse invariante um dia quebrar, o
+        // `UPDATE` abaixo casa zero linhas (silencioso, sem erro — o CHECK
+        // só vale para linha que É escrita) enquanto o item já teria sido
+        // marcado como separado, um estado inconsistente que pediria alerta
+        // próprio, não um try/catch aqui.
+        const separadoAtual = linhas[0] ? Number(linhas[0].saldo_separado) : 0;
+        const delta = p.quantidade - Number(p.item.quantidadeSeparada);
+
+        if (delta !== 0) {
+          await tx.$executeRaw(Prisma.sql`
+            UPDATE peca_saldos
+               SET saldo_separado = ${separadoAtual + delta}, updated_at = now()
+             WHERE peca_id = ${p.item.pecaId}::uuid
+               AND deposito_id = ${req.depositoId}::uuid
+          `);
+        }
+
+        await tx.requisicaoMaterialItem.update({
+          where: { id: p.item.id },
+          data: {
+            quantidadeSeparada: p.quantidade,
+            divergencia: p.divergencia,
+            status: statusDoItemAposSeparacao(
+              {
+                quantidadeReservada: Number(p.item.quantidadeReservada),
+                status: p.item.status,
+                impeditivo: p.item.impeditivo,
+                divergencia: p.divergencia,
+              },
+              { quantidade: p.quantidade },
+            ),
+          },
+        });
+      }
+
+      const depois = req.itens.map((i) => {
+        const p = planejado.find((x) => x.item.id === i.id);
+        if (!p) return i;
+        return {
+          ...i,
+          quantidadeSeparada: p.quantidade,
+          divergencia: p.divergencia,
+          status: statusDoItemAposSeparacao(
+            {
+              quantidadeReservada: Number(i.quantidadeReservada),
+              status: i.status,
+              impeditivo: i.impeditivo,
+              divergencia: p.divergencia,
+            },
+            { quantidade: p.quantidade },
+          ),
+        };
+      });
+
+      const paraRegra = depois.map((i) => ({
+        quantidadeReservada: Number(i.quantidadeReservada),
+        status: i.status,
+        impeditivo: i.impeditivo,
+        divergencia: i.divergencia,
+      }));
+
+      // Divergência impede o kit de fechar, mesmo com tudo conferido (spec
+      // funcional, pág. 6: "divergência impede a liberação").
+      const fechado = requisicaoEstaSeparada(paraRegra) && !temDivergencia(paraRegra);
+      const statusRequisicao = fechado ? 'separada' : 'em_separacao';
+
+      await tx.requisicaoMaterial.update({
+        where: { id: req.id },
+        data: { status: statusRequisicao, atendidaPorCompanyUserId: input.autorCompanyUserId },
+      });
+
+      // `statusAposSeparacao` decide o estado dos MATERIAIS da OS — inclusive
+      // os casos em que um item virou `faltante` ou `nao_vinculado` entre a
+      // reserva e a conferência. Só a DIVERGÊNCIA é tratada aqui por fora,
+      // porque ela não é um estado do item: é uma observação do almoxarife
+      // que segura a liberação mesmo com tudo separado.
+      const statusMateriais = temDivergencia(paraRegra)
+        ? 'aguardando_separacao'
+        : statusAposSeparacao(paraRegra.map((i) => ({ impeditivo: i.impeditivo, status: i.status })));
+
+      await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
+
+      // Task 8: quando `statusRequisicao === 'separada'`, é aqui que entra a
+      // chamada a `notificarKitCompleto` — o kit acabou de fechar.
+
+      return { statusRequisicao, statusMateriais };
     });
   }
 

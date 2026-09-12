@@ -6,6 +6,7 @@ import { IdempotencyInterceptor } from '../../common/idempotency.interceptor';
 import { AlmoxarifadoService } from './almoxarifado.service';
 import { ReservarDto } from './dto/reserva.dto';
 import { EntradaDto } from './dto/entrada.dto';
+import { SepararDto } from './dto/separacao.dto';
 
 @ApiTags('almoxarifado')
 @Controller('almoxarifado')
@@ -77,5 +78,24 @@ export class AlmoxarifadoController {
   @ApiOperation({ summary: 'Uma requisição com itens e depósito' })
   async requisicao(@Req() req: RequestComPainel, @Param('id') id: string) {
     return this.servico.detalharRequisicao(req.painel.companyId, id);
+  }
+
+  @Post('requisicoes/:id/separar')
+  // Mesma razão das outras duas rotas de escrita: reenvio de rede (ou duplo
+  // clique) repetindo a MESMA conferência não pode mexer no saldo separado
+  // duas vezes.
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Confere o kit item a item' })
+  async separar(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: SepararDto,
+  ) {
+    return this.servico.separarItens({
+      companyId: req.painel.companyId,
+      requisicaoId: id,
+      autorCompanyUserId: req.painel.companyUserId,
+      itens: dto.itens,
+    });
   }
 }
