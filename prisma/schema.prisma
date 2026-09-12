@@ -116,12 +116,11 @@ model Company {
   fleetfuelIntencoes      FleetfuelIntencao[]
   notificacoes            Notificacao[]
   whatsappRecipients      CompanyWhatsappRecipient[]
-  checklistModelos ChecklistModelo[]
-  manuais ManualEquipamento[]
-  checklistExecucoes ChecklistExecucao[]
-
-
-
+  checklistModelos        ChecklistModelo[]
+  manuais                 ManualEquipamento[]
+  checklistExecucoes      ChecklistExecucao[]
+  depositos               Deposito[]
+  pecas                   Peca[]
 
   @@map("clients")
 }
@@ -154,7 +153,7 @@ model WhatsappPlatformSession {
   keys  String? @db.Text
 
   conectadoDesde DateTime? @map("conectado_desde")
-  versaoSessao   String?  @map("versao_sessao")
+  versaoSessao   String?   @map("versao_sessao")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -275,19 +274,17 @@ model Equipment {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  company        Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  abastecimentos Abastecimento[]
-  revisoes       EquipmentRevision[]
-  alocacoes      WorkFrontAllocation[]
-  creditos       Credito[]
-  lubrificacoes  Lubrificacao[]
+  company            Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  abastecimentos     Abastecimento[]
+  revisoes           EquipmentRevision[]
+  alocacoes          WorkFrontAllocation[]
+  creditos           Credito[]
+  lubrificacoes      Lubrificacao[]
   cargasComboio      ComboioReabastecimento[]
   serviceOrders      ServiceOrder[]
   fleetfuelIntencoes FleetfuelIntencao[]
-  manuais ManualEquipamento[]
+  manuais            ManualEquipamento[]
   checklistExecucoes ChecklistExecucao[]
-
-
 
   @@index([companyId, status])
   @@index([companyId, tipo])
@@ -431,14 +428,14 @@ model ChecklistRun {
   /// shape entre versões do PWA.
   respostas Json?
   /// Itens marcados "Não" — objetos `{ titulo, problema?, numero?, impeditivo? }`.
-  itensNao  Json?   @map("itens_nao")
+  itensNao  Json? @map("itens_nao")
 
   /// As PERGUNTAS que foram feitas: `[{ ordem, texto, severidade }]`, como o
   /// operador as viu, na mesma numeração das chaves de `respostas`. Sem isto a
   /// auditoria reconstruía o enunciado a partir da definição de HOJE, e um
   /// item inserido no meio deslocava as respostas seguintes.
-  itens     Json?
-  obs       String?
+  itens Json?
+  obs   String?
 
   /// Data URLs base64 (mesmo formato do legado). TEXT pode chegar a algumas
   /// centenas de KB por row — ok pra volumes atuais.
@@ -542,21 +539,20 @@ model ServiceOrder {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  company      Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  equipment    Equipment?                @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
-  insumos      ServiceOrderInsumo[]
-  etapas       ServiceOrderEtapa[]
-  sintomas     ServiceOrderSintoma[]
-  ocorrencias  ServiceOrderOcorrencia[]
-  orcamentos   Orcamento[]
-  emergencies  Emergency[]
-  responsavel  Operator?                 @relation("ServiceOrderResponsavel", fields: [responsavelOperatorId], references: [id], onDelete: SetNull)
-  apontamentos ServiceOrderApontamento[]
-  fotos        ServiceOrderFoto[]
-  laudo        ServiceOrderLaudo?
-  auditoria    ServiceOrderAuditoria?
+  company            Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  equipment          Equipment?                @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  insumos            ServiceOrderInsumo[]
+  etapas             ServiceOrderEtapa[]
+  sintomas           ServiceOrderSintoma[]
+  ocorrencias        ServiceOrderOcorrencia[]
+  orcamentos         Orcamento[]
+  emergencies        Emergency[]
+  responsavel        Operator?                 @relation("ServiceOrderResponsavel", fields: [responsavelOperatorId], references: [id], onDelete: SetNull)
+  apontamentos       ServiceOrderApontamento[]
+  fotos              ServiceOrderFoto[]
+  laudo              ServiceOrderLaudo?
+  auditoria          ServiceOrderAuditoria?
   checklistExecucoes ChecklistExecucao[]
-
 
   @@unique([companyId, protocolo])
   @@index([companyId, status])
@@ -714,14 +710,14 @@ model PlanoPreventivo {
   /// Responsabilidade técnica — o cabeçalho do PMP assinado. Sem isto o plano
   /// é uma tabela de intervalos; com isto é o documento que a empresa mostra
   /// numa fiscalização.
-  engenheiro String?
-  crea       String?
-  art        String?
-  dataInspecao DateTime? @map("data_inspecao") @db.Date
+  engenheiro         String?
+  crea               String?
+  art                String?
+  dataInspecao       DateTime? @map("data_inspecao") @db.Date
   /// A máquina inspecionada para levantar o plano. O plano vale para todas as
   /// iguais; a inspeção que o originou foi numa só.
-  chassiInspecionado String? @map("chassi_inspecionado")
-  horimetroInspecao  String? @map("horimetro_inspecao")
+  chassiInspecionado String?   @map("chassi_inspecionado")
+  horimetroInspecao  String?   @map("horimetro_inspecao")
   /// Quem executou a inspeção, quando não foi a própria empresa. Ao lado do
   /// engenheiro, não no lugar dele: a ART é de uma pessoa física.
   subcontratada      String?
@@ -730,7 +726,7 @@ model PlanoPreventivo {
   /// não tabela filha: são citações que cada engenheiro escreve do seu jeito
   /// ("NR 12 item 12.11 e 12.14" é uma linha só no documento real), e
   /// estruturar engessaria a próxima norma que aparecer.
-  referencias        String? @db.Text
+  referencias String? @db.Text
 
   /// As ressalvas do fim do PMP — mudam a leitura de todos os ciclos.
   observacoes String? @db.Text
@@ -820,15 +816,15 @@ model Operator {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  company             Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyUser         CompanyUser?        @relation(fields: [companyUserId], references: [id], onDelete: SetNull)
-  pontoRegistros      PontoRegistro[]
-  pontoSolicitacoes   PontoSolicitacao[]
-  pontoAbonos         PontoAbono[]
-  osComoResponsavel   ServiceOrder[]      @relation("ServiceOrderResponsavel")
-  apontamentos        ServiceOrderApontamento[]
-  checklistExecucoes ChecklistExecucao[]
-
+  company                      Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyUser                  CompanyUser?              @relation(fields: [companyUserId], references: [id], onDelete: SetNull)
+  pontoRegistros               PontoRegistro[]
+  pontoSolicitacoes            PontoSolicitacao[]
+  pontoAbonos                  PontoAbono[]
+  osComoResponsavel            ServiceOrder[]            @relation("ServiceOrderResponsavel")
+  apontamentos                 ServiceOrderApontamento[]
+  checklistExecucoes           ChecklistExecucao[]
+  depositosSobResponsabilidade Deposito[]                @relation("DepositoResponsavel")
 
   programadoresAtendidos ProgramadorMecanico[] @relation("ProgramadorMecanicoOperator")
 
@@ -855,31 +851,31 @@ model Abastecimento {
   comboioLegacyId  String? @map("comboio_legacy_id")
 
   /// Data do abastecimento (dia). Hora fica no campo separado se necessário.
-  data           DateTime @db.Date
-  hora           String?
-  litros         Decimal  @db.Decimal(10, 3)
+  data                DateTime @db.Date
+  hora                String?
+  litros              Decimal  @db.Decimal(10, 3)
   /// Valor total em reais. 0 quando `origem = 'comboio'`.
-  valor          Decimal  @db.Decimal(12, 2)
-  combustivel    String?
+  valor               Decimal  @db.Decimal(12, 2)
+  combustivel         String?
   /// "posto" | "comboio"
-  origem         String   @default("posto")
+  origem              String   @default("posto")
   /// Leitura do hodômetro/horímetro no momento do abastecimento.
-  leitura        Float?
+  leitura             Float?
   /// "km" | "h"
-  leituraUnidade String?  @map("leitura_unidade")
-  postoNome      String?  @map("posto_nome")
-  plateOrChassis String?  @map("plate_or_chassis")
-  precoLitro     Decimal? @map("preco_litro") @db.Decimal(10, 4)
+  leituraUnidade      String?  @map("leitura_unidade")
+  postoNome           String?  @map("posto_nome")
+  plateOrChassis      String?  @map("plate_or_chassis")
+  precoLitro          Decimal? @map("preco_litro") @db.Decimal(10, 4)
   /// "aprovado" | "pendente_aprovacao" | "rejeitado"
-  status         String   @default("aprovado")
+  status              String   @default("aprovado")
   /// Tipo de operação legado: "comboio" | "manual_motorista" | "fleetfuel"
-  tipo           String?
-  motoristaNome  String?  @map("motorista_nome")
-  latitude       Float?
-  longitude      Float?
-  meterPhoto     String?  @map("meter_photo")
-  receiptPhoto   String?  @map("receipt_photo")
-  fleetfuelIntencaoId String? @map("fleetfuel_intencao_id") @db.Uuid
+  tipo                String?
+  motoristaNome       String?  @map("motorista_nome")
+  latitude            Float?
+  longitude           Float?
+  meterPhoto          String?  @map("meter_photo")
+  receiptPhoto        String?  @map("receipt_photo")
+  fleetfuelIntencaoId String?  @map("fleetfuel_intencao_id") @db.Uuid
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -900,13 +896,13 @@ model FleetfuelIntencao {
   legacyId  String? @unique @map("legacy_id")
   companyId String  @map("company_id") @db.Uuid
 
-  postoLegacyId String  @map("posto_legacy_id")
-  postoNome     String? @map("posto_nome")
-  equipmentId   String? @map("equipment_id") @db.Uuid
-  plateOrChassis String @map("plate_or_chassis")
+  postoLegacyId  String  @map("posto_legacy_id")
+  postoNome      String? @map("posto_nome")
+  equipmentId    String? @map("equipment_id") @db.Uuid
+  plateOrChassis String  @map("plate_or_chassis")
 
-  veiculoModelo     String? @map("veiculo_modelo")
-  veiculoDescricao  String? @map("veiculo_descricao")
+  veiculoModelo      String? @map("veiculo_modelo")
+  veiculoDescricao   String? @map("veiculo_descricao")
   combustivelVeiculo String? @map("combustivel_veiculo")
 
   operadorLegacyId String? @map("operador_legacy_id")
@@ -923,11 +919,11 @@ model FleetfuelIntencao {
   /// "pendente_validacao" | "concluido" | "expirado" | "cancelado"
   status String @default("pendente_validacao")
 
-  abastecimentoId String? @map("abastecimento_id") @db.Uuid
-  jti             String?
-  expiresAt       DateTime @map("expires_at")
-  validatedAt     DateTime? @map("validated_at")
-  validadoPorOperadorLegacyId String? @map("validado_por_operador_legacy_id")
+  abastecimentoId             String?   @map("abastecimento_id") @db.Uuid
+  jti                         String?
+  expiresAt                   DateTime  @map("expires_at")
+  validatedAt                 DateTime? @map("validated_at")
+  validadoPorOperadorLegacyId String?   @map("validado_por_operador_legacy_id")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -944,15 +940,15 @@ model FleetfuelIntencao {
 /// sem FK Company. Espelhado no Firestore `checklistDefinitions/{legacyId}`
 /// pra compat com o portal do operador do 360 legacy.
 model ChecklistDefinition {
-  id        String   @id @default(uuid()) @db.Uuid
-  legacyId  String?  @unique @map("legacy_id")
+  id       String  @id @default(uuid()) @db.Uuid
+  legacyId String? @unique @map("legacy_id")
 
   /// `null` = catálogo BASE da Hora Útil, herdado por todas as empresas.
   /// Preenchido = documento próprio daquela empresa, que SUBSTITUI o base de
   /// mesma categoria. A resolução vive no painel
   /// (`horautil/lib/company/checklist-do-operador.ts`) e é espelhada no app do
   /// operador — a mesma especificidade de `regras/manual.ts`.
-  companyId String?  @map("company_id") @db.Uuid
+  companyId String? @map("company_id") @db.Uuid
 
   nome      String
   categoria String
@@ -1124,8 +1120,8 @@ model Partner {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  company             Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  partnerPortalUsers  PartnerPortalUser[]
+  company            Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  partnerPortalUsers PartnerPortalUser[]
 
   @@index([companyId])
   @@index([type])
@@ -1153,8 +1149,8 @@ model PartnerPortalUser {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  company Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  partner Partner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  company        Company                      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  partner        Partner?                     @relation(fields: [partnerId], references: [id], onDelete: SetNull)
   passwordResets PartnerPortalPasswordReset[]
 
   @@unique([usuario])
@@ -1165,14 +1161,14 @@ model PartnerPortalUser {
 
 /// Token de redefinição de senha do portal do posto (substitui Firestore `user_password_resets`).
 model PartnerPortalPasswordReset {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
   email     String
-  token     String   @unique
-  used      Boolean  @default(false)
-  expiresAt DateTime @map("expires_at")
+  token     String    @unique
+  used      Boolean   @default(false)
+  expiresAt DateTime  @map("expires_at")
   usedAt    DateTime? @map("used_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   user PartnerPortalUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1433,7 +1429,7 @@ model ChecklistChegada {
   legacyId  String? @unique @map("legacy_id")
   companyId String  @map("company_id") @db.Uuid
 
-  number String
+  number    String
   oficinaId String? @map("oficina_id")
 
   osProtocolo     String? @map("os_protocolo")
@@ -1618,8 +1614,8 @@ model CompanyUser {
   createdAt DateTime        @default(now()) @map("created_at")
   updatedAt DateTime        @updatedAt @map("updated_at")
 
-  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  operator Operator?
+  company           Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  operator          Operator?
   mecanicoDesignado ProgramadorMecanico? @relation("ProgramadorMecanicoUser")
 
   @@unique([companyId, email])
@@ -1894,8 +1890,8 @@ model Notificacao {
   legacyId  String? @unique @map("legacy_id")
   companyId String  @map("company_id") @db.Uuid
 
-  destinatarioTipo String @map("destinatario_tipo")
-  destinatarioId   String @map("destinatario_id")
+  destinatarioTipo   String @map("destinatario_tipo")
+  destinatarioId     String @map("destinatario_id")
   /// Snapshot do tenant (legacyId) — compat com API legada.
   prefeituraLegacyId String @map("prefeitura_legacy_id")
 
@@ -1984,9 +1980,8 @@ model ChecklistModelo {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company   Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
   execucoes ChecklistExecucao[]
-
 
   @@unique([companyId, codigo])
   @@index([companyId, ativo])
@@ -2003,7 +1998,7 @@ model ManualEquipamento {
   id        String @id @default(uuid()) @db.Uuid
   companyId String @map("company_id") @db.Uuid
 
-  titulo String
+  titulo    String
   /// Texto livre: cada frota organiza do seu jeito.
   categoria String?
 
@@ -2052,8 +2047,8 @@ model ChecklistExecucao {
 
   /// "aberta" | "concluida" | "cancelada". Em coluna, não dentro do Json: a
   /// tela de parados filtra por isto.
-  status              String  @default("aberta")
-  motivoCancelamento  String? @map("motivo_cancelamento")
+  status             String  @default("aberta")
+  motivoCancelamento String? @map("motivo_cancelamento")
 
   /// `itemId → { valor, observacao?, fotos?[] }`. Gravado por GRUPO, com merge
   /// que preserva os outros — é o que faz o trabalho de terça sobreviver até
@@ -2152,4 +2147,89 @@ model ServiceOrderAuditoria {
 
   @@index([status, concluidaEm])
   @@map("service_order_auditorias")
+}
+
+/// Onde a peça fica. Um por empresa nesta fase — a tabela existe desde já para
+/// que a segunda obra seja um INSERT, e não uma migração de saldo em produção.
+model Deposito {
+  id                    String   @id @default(uuid()) @db.Uuid
+  companyId             String   @map("company_id") @db.Uuid
+  nome                  String
+  unidadeObra           String?  @map("unidade_obra")
+  endereco              String?
+  responsavelOperatorId String?  @map("responsavel_operator_id") @db.Uuid
+  ativo                 Boolean  @default(true)
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  responsavel Operator?   @relation("DepositoResponsavel", fields: [responsavelOperatorId], references: [id], onDelete: SetNull)
+  saldos      PecaSaldo[]
+
+  @@unique([companyId, nome])
+  @@map("depositos")
+}
+
+/// O catálogo — o que a peça É. Saldo não mora aqui.
+model Peca {
+  id        String @id @default(uuid()) @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+
+  /// O código DA CASA, que vira a etiqueta de barras ("ALM-000123").
+  codigoInterno    String  @map("codigo_interno")
+  /// EAN/part number do fabricante. NÃO é único: duas marcas equivalentes
+  /// repetem part number, e um unique aqui recusaria cadastro legítimo.
+  codigoFabricante String? @map("codigo_fabricante")
+
+  descricao     String
+  especificacao String?
+  marca         String?
+  unidade       String  @default("un")
+  categoria     String?
+  /// `pecaId[]`. Json e não tabela de ligação: a lista é curta, lida sempre
+  /// inteira e escrita pela mesma tela.
+  equivalentes  Json    @default("[]")
+
+  estoqueMinimo Decimal @default(0) @map("estoque_minimo") @db.Decimal(12, 3)
+  /// 0 = comprar só o que falta para voltar ao mínimo.
+  loteReposicao Decimal @default(0) @map("lote_reposicao") @db.Decimal(12, 3)
+  custoMedio    Decimal @default(0) @map("custo_medio") @db.Decimal(12, 4)
+
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  saldos  PecaSaldo[]
+
+  @@unique([companyId, codigoInterno])
+  @@index([companyId, codigoFabricante])
+  @@index([companyId, ativo])
+  @@map("pecas")
+}
+
+/// As cinco quantidades. `disponivel = saldoFisico − saldoReservado` é
+/// DERIVADO e nunca gravado: duas fontes para o mesmo número divergem no
+/// primeiro bug, e é este número que decide se uma máquina para.
+model PecaSaldo {
+  pecaId     String @map("peca_id") @db.Uuid
+  depositoId String @map("deposito_id") @db.Uuid
+
+  saldoFisico    Decimal @default(0) @map("saldo_fisico") @db.Decimal(12, 3)
+  saldoReservado Decimal @default(0) @map("saldo_reservado") @db.Decimal(12, 3)
+  /// Já conferido e montado no kit — SUBCONJUNTO do reservado.
+  saldoSeparado  Decimal @default(0) @map("saldo_separado") @db.Decimal(12, 3)
+  /// Em OC não recebida. NÃO integra o disponível.
+  saldoEmCompra  Decimal @default(0) @map("saldo_em_compra") @db.Decimal(12, 3)
+  /// Endereço na prateleira — é por depósito, não por peça.
+  localizacao    String?
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  peca     Peca     @relation(fields: [pecaId], references: [id], onDelete: Cascade)
+  deposito Deposito @relation(fields: [depositoId], references: [id], onDelete: Restrict)
+
+  @@id([pecaId, depositoId])
+  @@index([depositoId])
+  @@map("peca_saldos")
 }

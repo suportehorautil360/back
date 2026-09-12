@@ -454,7 +454,10 @@ export const ModelName = {
   ManualEquipamento: 'ManualEquipamento',
   ChecklistExecucao: 'ChecklistExecucao',
   ProgramadorMecanico: 'ProgramadorMecanico',
-  ServiceOrderAuditoria: 'ServiceOrderAuditoria'
+  ServiceOrderAuditoria: 'ServiceOrderAuditoria',
+  Deposito: 'Deposito',
+  Peca: 'Peca',
+  PecaSaldo: 'PecaSaldo'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -470,7 +473,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken" | "checklistModelo" | "manualEquipamento" | "checklistExecucao" | "programadorMecanico" | "serviceOrderAuditoria"
+    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken" | "checklistModelo" | "manualEquipamento" | "checklistExecucao" | "programadorMecanico" | "serviceOrderAuditoria" | "deposito" | "peca" | "pecaSaldo"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -4766,6 +4769,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Deposito: {
+      payload: Prisma.$DepositoPayload<ExtArgs>
+      fields: Prisma.DepositoFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DepositoFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DepositoPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DepositoFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DepositoPayload>
+        }
+        findFirst: {
+          args: Prisma.DepositoFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DepositoPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DepositoFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DepositoPayload>
+        }
+        findMany: {
+          args: Prisma.DepositoFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DepositoPayload>[]
+        }
+        create: {
+          args: Prisma.DepositoCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DepositoPayload>
+        }
+        createMany: {
+          args: Prisma.DepositoCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DepositoCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DepositoPayload>[]
+        }
+        delete: {
+          args: Prisma.DepositoDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DepositoPayload>
+        }
+        update: {
+          args: Prisma.DepositoUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DepositoPayload>
+        }
+        deleteMany: {
+          args: Prisma.DepositoDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DepositoUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DepositoUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DepositoPayload>[]
+        }
+        upsert: {
+          args: Prisma.DepositoUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DepositoPayload>
+        }
+        aggregate: {
+          args: Prisma.DepositoAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDeposito>
+        }
+        groupBy: {
+          args: Prisma.DepositoGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DepositoGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DepositoCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DepositoCountAggregateOutputType> | number
+        }
+      }
+    }
+    Peca: {
+      payload: Prisma.$PecaPayload<ExtArgs>
+      fields: Prisma.PecaFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PecaFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PecaFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaPayload>
+        }
+        findFirst: {
+          args: Prisma.PecaFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PecaFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaPayload>
+        }
+        findMany: {
+          args: Prisma.PecaFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaPayload>[]
+        }
+        create: {
+          args: Prisma.PecaCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaPayload>
+        }
+        createMany: {
+          args: Prisma.PecaCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PecaCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaPayload>[]
+        }
+        delete: {
+          args: Prisma.PecaDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaPayload>
+        }
+        update: {
+          args: Prisma.PecaUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaPayload>
+        }
+        deleteMany: {
+          args: Prisma.PecaDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PecaUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PecaUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaPayload>[]
+        }
+        upsert: {
+          args: Prisma.PecaUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaPayload>
+        }
+        aggregate: {
+          args: Prisma.PecaAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePeca>
+        }
+        groupBy: {
+          args: Prisma.PecaGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PecaGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PecaCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PecaCountAggregateOutputType> | number
+        }
+      }
+    }
+    PecaSaldo: {
+      payload: Prisma.$PecaSaldoPayload<ExtArgs>
+      fields: Prisma.PecaSaldoFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PecaSaldoFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaSaldoPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PecaSaldoFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaSaldoPayload>
+        }
+        findFirst: {
+          args: Prisma.PecaSaldoFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaSaldoPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PecaSaldoFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaSaldoPayload>
+        }
+        findMany: {
+          args: Prisma.PecaSaldoFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaSaldoPayload>[]
+        }
+        create: {
+          args: Prisma.PecaSaldoCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaSaldoPayload>
+        }
+        createMany: {
+          args: Prisma.PecaSaldoCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PecaSaldoCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaSaldoPayload>[]
+        }
+        delete: {
+          args: Prisma.PecaSaldoDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaSaldoPayload>
+        }
+        update: {
+          args: Prisma.PecaSaldoUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaSaldoPayload>
+        }
+        deleteMany: {
+          args: Prisma.PecaSaldoDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PecaSaldoUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PecaSaldoUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaSaldoPayload>[]
+        }
+        upsert: {
+          args: Prisma.PecaSaldoUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PecaSaldoPayload>
+        }
+        aggregate: {
+          args: Prisma.PecaSaldoAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePecaSaldo>
+        }
+        groupBy: {
+          args: Prisma.PecaSaldoGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PecaSaldoGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PecaSaldoCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PecaSaldoCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -5933,6 +6158,57 @@ export const ServiceOrderAuditoriaScalarFieldEnum = {
 export type ServiceOrderAuditoriaScalarFieldEnum = (typeof ServiceOrderAuditoriaScalarFieldEnum)[keyof typeof ServiceOrderAuditoriaScalarFieldEnum]
 
 
+export const DepositoScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  nome: 'nome',
+  unidadeObra: 'unidadeObra',
+  endereco: 'endereco',
+  responsavelOperatorId: 'responsavelOperatorId',
+  ativo: 'ativo',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type DepositoScalarFieldEnum = (typeof DepositoScalarFieldEnum)[keyof typeof DepositoScalarFieldEnum]
+
+
+export const PecaScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  codigoInterno: 'codigoInterno',
+  codigoFabricante: 'codigoFabricante',
+  descricao: 'descricao',
+  especificacao: 'especificacao',
+  marca: 'marca',
+  unidade: 'unidade',
+  categoria: 'categoria',
+  equivalentes: 'equivalentes',
+  estoqueMinimo: 'estoqueMinimo',
+  loteReposicao: 'loteReposicao',
+  custoMedio: 'custoMedio',
+  ativo: 'ativo',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PecaScalarFieldEnum = (typeof PecaScalarFieldEnum)[keyof typeof PecaScalarFieldEnum]
+
+
+export const PecaSaldoScalarFieldEnum = {
+  pecaId: 'pecaId',
+  depositoId: 'depositoId',
+  saldoFisico: 'saldoFisico',
+  saldoReservado: 'saldoReservado',
+  saldoSeparado: 'saldoSeparado',
+  saldoEmCompra: 'saldoEmCompra',
+  localizacao: 'localizacao',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PecaSaldoScalarFieldEnum = (typeof PecaSaldoScalarFieldEnum)[keyof typeof PecaSaldoScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -6398,6 +6674,9 @@ export type GlobalOmitConfig = {
   checklistExecucao?: Prisma.ChecklistExecucaoOmit
   programadorMecanico?: Prisma.ProgramadorMecanicoOmit
   serviceOrderAuditoria?: Prisma.ServiceOrderAuditoriaOmit
+  deposito?: Prisma.DepositoOmit
+  peca?: Prisma.PecaOmit
+  pecaSaldo?: Prisma.PecaSaldoOmit
 }
 
 /* Types for Logging */

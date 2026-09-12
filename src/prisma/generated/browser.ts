@@ -464,3 +464,21 @@ export type ProgramadorMecanico = Prisma.ProgramadorMecanicoModel
  * auditada reaparecer na bancada do mecânico nos três.
  */
 export type ServiceOrderAuditoria = Prisma.ServiceOrderAuditoriaModel
+/**
+ * Model Deposito
+ * Onde a peça fica. Um por empresa nesta fase — a tabela existe desde já para
+ * que a segunda obra seja um INSERT, e não uma migração de saldo em produção.
+ */
+export type Deposito = Prisma.DepositoModel
+/**
+ * Model Peca
+ * O catálogo — o que a peça É. Saldo não mora aqui.
+ */
+export type Peca = Prisma.PecaModel
+/**
+ * Model PecaSaldo
+ * As cinco quantidades. `disponivel = saldoFisico − saldoReservado` é
+ * DERIVADO e nunca gravado: duas fontes para o mesmo número divergem no
+ * primeiro bug, e é este número que decide se uma máquina para.
+ */
+export type PecaSaldo = Prisma.PecaSaldoModel

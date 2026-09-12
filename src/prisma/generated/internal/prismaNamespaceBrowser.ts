@@ -108,7 +108,10 @@ export const ModelName = {
   ManualEquipamento: 'ManualEquipamento',
   ChecklistExecucao: 'ChecklistExecucao',
   ProgramadorMecanico: 'ProgramadorMecanico',
-  ServiceOrderAuditoria: 'ServiceOrderAuditoria'
+  ServiceOrderAuditoria: 'ServiceOrderAuditoria',
+  Deposito: 'Deposito',
+  Peca: 'Peca',
+  PecaSaldo: 'PecaSaldo'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1253,6 +1256,57 @@ export const ServiceOrderAuditoriaScalarFieldEnum = {
 } as const
 
 export type ServiceOrderAuditoriaScalarFieldEnum = (typeof ServiceOrderAuditoriaScalarFieldEnum)[keyof typeof ServiceOrderAuditoriaScalarFieldEnum]
+
+
+export const DepositoScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  nome: 'nome',
+  unidadeObra: 'unidadeObra',
+  endereco: 'endereco',
+  responsavelOperatorId: 'responsavelOperatorId',
+  ativo: 'ativo',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type DepositoScalarFieldEnum = (typeof DepositoScalarFieldEnum)[keyof typeof DepositoScalarFieldEnum]
+
+
+export const PecaScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  codigoInterno: 'codigoInterno',
+  codigoFabricante: 'codigoFabricante',
+  descricao: 'descricao',
+  especificacao: 'especificacao',
+  marca: 'marca',
+  unidade: 'unidade',
+  categoria: 'categoria',
+  equivalentes: 'equivalentes',
+  estoqueMinimo: 'estoqueMinimo',
+  loteReposicao: 'loteReposicao',
+  custoMedio: 'custoMedio',
+  ativo: 'ativo',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PecaScalarFieldEnum = (typeof PecaScalarFieldEnum)[keyof typeof PecaScalarFieldEnum]
+
+
+export const PecaSaldoScalarFieldEnum = {
+  pecaId: 'pecaId',
+  depositoId: 'depositoId',
+  saldoFisico: 'saldoFisico',
+  saldoReservado: 'saldoReservado',
+  saldoSeparado: 'saldoSeparado',
+  saldoEmCompra: 'saldoEmCompra',
+  localizacao: 'localizacao',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PecaSaldoScalarFieldEnum = (typeof PecaSaldoScalarFieldEnum)[keyof typeof PecaSaldoScalarFieldEnum]
 
 
 export const SortOrder = {

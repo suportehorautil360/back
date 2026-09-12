@@ -384,6 +384,7 @@ export type OperatorWhereInput = {
   osComoResponsavel?: Prisma.ServiceOrderListRelationFilter
   apontamentos?: Prisma.ServiceOrderApontamentoListRelationFilter
   checklistExecucoes?: Prisma.ChecklistExecucaoListRelationFilter
+  depositosSobResponsabilidade?: Prisma.DepositoListRelationFilter
   programadoresAtendidos?: Prisma.ProgramadorMecanicoListRelationFilter
 }
 
@@ -424,6 +425,7 @@ export type OperatorOrderByWithRelationInput = {
   osComoResponsavel?: Prisma.ServiceOrderOrderByRelationAggregateInput
   apontamentos?: Prisma.ServiceOrderApontamentoOrderByRelationAggregateInput
   checklistExecucoes?: Prisma.ChecklistExecucaoOrderByRelationAggregateInput
+  depositosSobResponsabilidade?: Prisma.DepositoOrderByRelationAggregateInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoOrderByRelationAggregateInput
 }
 
@@ -468,6 +470,7 @@ export type OperatorWhereUniqueInput = Prisma.AtLeast<{
   osComoResponsavel?: Prisma.ServiceOrderListRelationFilter
   apontamentos?: Prisma.ServiceOrderApontamentoListRelationFilter
   checklistExecucoes?: Prisma.ChecklistExecucaoListRelationFilter
+  depositosSobResponsabilidade?: Prisma.DepositoListRelationFilter
   programadoresAtendidos?: Prisma.ProgramadorMecanicoListRelationFilter
 }, "id" | "legacyId" | "companyUserId" | "companyId_cpf">
 
@@ -574,6 +577,7 @@ export type OperatorCreateInput = {
   osComoResponsavel?: Prisma.ServiceOrderCreateNestedManyWithoutResponsavelInput
   apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutOperatorInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoCreateNestedManyWithoutResponsavelInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutOperatorInput
 }
 
@@ -612,6 +616,7 @@ export type OperatorUncheckedCreateInput = {
   osComoResponsavel?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutResponsavelInput
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutOperatorInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedCreateNestedManyWithoutResponsavelInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutOperatorInput
 }
 
@@ -650,6 +655,7 @@ export type OperatorUpdateInput = {
   osComoResponsavel?: Prisma.ServiceOrderUpdateManyWithoutResponsavelNestedInput
   apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutOperatorNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUpdateManyWithoutResponsavelNestedInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUpdateManyWithoutOperatorNestedInput
 }
 
@@ -688,6 +694,7 @@ export type OperatorUncheckedUpdateInput = {
   osComoResponsavel?: Prisma.ServiceOrderUncheckedUpdateManyWithoutResponsavelNestedInput
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutOperatorNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedUpdateManyWithoutResponsavelNestedInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutOperatorNestedInput
 }
 
@@ -1080,6 +1087,22 @@ export type OperatorUpdateOneRequiredWithoutProgramadoresAtendidosNestedInput = 
   update?: Prisma.XOR<Prisma.XOR<Prisma.OperatorUpdateToOneWithWhereWithoutProgramadoresAtendidosInput, Prisma.OperatorUpdateWithoutProgramadoresAtendidosInput>, Prisma.OperatorUncheckedUpdateWithoutProgramadoresAtendidosInput>
 }
 
+export type OperatorCreateNestedOneWithoutDepositosSobResponsabilidadeInput = {
+  create?: Prisma.XOR<Prisma.OperatorCreateWithoutDepositosSobResponsabilidadeInput, Prisma.OperatorUncheckedCreateWithoutDepositosSobResponsabilidadeInput>
+  connectOrCreate?: Prisma.OperatorCreateOrConnectWithoutDepositosSobResponsabilidadeInput
+  connect?: Prisma.OperatorWhereUniqueInput
+}
+
+export type OperatorUpdateOneWithoutDepositosSobResponsabilidadeNestedInput = {
+  create?: Prisma.XOR<Prisma.OperatorCreateWithoutDepositosSobResponsabilidadeInput, Prisma.OperatorUncheckedCreateWithoutDepositosSobResponsabilidadeInput>
+  connectOrCreate?: Prisma.OperatorCreateOrConnectWithoutDepositosSobResponsabilidadeInput
+  upsert?: Prisma.OperatorUpsertWithoutDepositosSobResponsabilidadeInput
+  disconnect?: Prisma.OperatorWhereInput | boolean
+  delete?: Prisma.OperatorWhereInput | boolean
+  connect?: Prisma.OperatorWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OperatorUpdateToOneWithWhereWithoutDepositosSobResponsabilidadeInput, Prisma.OperatorUpdateWithoutDepositosSobResponsabilidadeInput>, Prisma.OperatorUncheckedUpdateWithoutDepositosSobResponsabilidadeInput>
+}
+
 export type OperatorCreateWithoutCompanyInput = {
   id?: string
   legacyId?: string | null
@@ -1114,6 +1137,7 @@ export type OperatorCreateWithoutCompanyInput = {
   osComoResponsavel?: Prisma.ServiceOrderCreateNestedManyWithoutResponsavelInput
   apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutOperatorInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoCreateNestedManyWithoutResponsavelInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutOperatorInput
 }
 
@@ -1151,6 +1175,7 @@ export type OperatorUncheckedCreateWithoutCompanyInput = {
   osComoResponsavel?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutResponsavelInput
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutOperatorInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedCreateNestedManyWithoutResponsavelInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutOperatorInput
 }
 
@@ -1248,6 +1273,7 @@ export type OperatorCreateWithoutOsComoResponsavelInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutOperatorInput
   apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutOperatorInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoCreateNestedManyWithoutResponsavelInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutOperatorInput
 }
 
@@ -1285,6 +1311,7 @@ export type OperatorUncheckedCreateWithoutOsComoResponsavelInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutOperatorInput
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutOperatorInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedCreateNestedManyWithoutResponsavelInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutOperatorInput
 }
 
@@ -1338,6 +1365,7 @@ export type OperatorUpdateWithoutOsComoResponsavelInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutOperatorNestedInput
   apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutOperatorNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUpdateManyWithoutResponsavelNestedInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUpdateManyWithoutOperatorNestedInput
 }
 
@@ -1375,6 +1403,7 @@ export type OperatorUncheckedUpdateWithoutOsComoResponsavelInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutOperatorNestedInput
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutOperatorNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedUpdateManyWithoutResponsavelNestedInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutOperatorNestedInput
 }
 
@@ -1412,6 +1441,7 @@ export type OperatorCreateWithoutApontamentosInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutOperatorInput
   osComoResponsavel?: Prisma.ServiceOrderCreateNestedManyWithoutResponsavelInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoCreateNestedManyWithoutResponsavelInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutOperatorInput
 }
 
@@ -1449,6 +1479,7 @@ export type OperatorUncheckedCreateWithoutApontamentosInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutOperatorInput
   osComoResponsavel?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutResponsavelInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedCreateNestedManyWithoutResponsavelInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutOperatorInput
 }
 
@@ -1502,6 +1533,7 @@ export type OperatorUpdateWithoutApontamentosInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutOperatorNestedInput
   osComoResponsavel?: Prisma.ServiceOrderUpdateManyWithoutResponsavelNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUpdateManyWithoutResponsavelNestedInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUpdateManyWithoutOperatorNestedInput
 }
 
@@ -1539,6 +1571,7 @@ export type OperatorUncheckedUpdateWithoutApontamentosInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutOperatorNestedInput
   osComoResponsavel?: Prisma.ServiceOrderUncheckedUpdateManyWithoutResponsavelNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedUpdateManyWithoutResponsavelNestedInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutOperatorNestedInput
 }
 
@@ -1576,6 +1609,7 @@ export type OperatorCreateWithoutPontoRegistrosInput = {
   osComoResponsavel?: Prisma.ServiceOrderCreateNestedManyWithoutResponsavelInput
   apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutOperatorInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoCreateNestedManyWithoutResponsavelInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutOperatorInput
 }
 
@@ -1613,6 +1647,7 @@ export type OperatorUncheckedCreateWithoutPontoRegistrosInput = {
   osComoResponsavel?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutResponsavelInput
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutOperatorInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedCreateNestedManyWithoutResponsavelInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutOperatorInput
 }
 
@@ -1666,6 +1701,7 @@ export type OperatorUpdateWithoutPontoRegistrosInput = {
   osComoResponsavel?: Prisma.ServiceOrderUpdateManyWithoutResponsavelNestedInput
   apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutOperatorNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUpdateManyWithoutResponsavelNestedInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUpdateManyWithoutOperatorNestedInput
 }
 
@@ -1703,6 +1739,7 @@ export type OperatorUncheckedUpdateWithoutPontoRegistrosInput = {
   osComoResponsavel?: Prisma.ServiceOrderUncheckedUpdateManyWithoutResponsavelNestedInput
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutOperatorNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedUpdateManyWithoutResponsavelNestedInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutOperatorNestedInput
 }
 
@@ -1740,6 +1777,7 @@ export type OperatorCreateWithoutPontoSolicitacoesInput = {
   osComoResponsavel?: Prisma.ServiceOrderCreateNestedManyWithoutResponsavelInput
   apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutOperatorInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoCreateNestedManyWithoutResponsavelInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutOperatorInput
 }
 
@@ -1777,6 +1815,7 @@ export type OperatorUncheckedCreateWithoutPontoSolicitacoesInput = {
   osComoResponsavel?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutResponsavelInput
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutOperatorInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedCreateNestedManyWithoutResponsavelInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutOperatorInput
 }
 
@@ -1830,6 +1869,7 @@ export type OperatorUpdateWithoutPontoSolicitacoesInput = {
   osComoResponsavel?: Prisma.ServiceOrderUpdateManyWithoutResponsavelNestedInput
   apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutOperatorNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUpdateManyWithoutResponsavelNestedInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUpdateManyWithoutOperatorNestedInput
 }
 
@@ -1867,6 +1907,7 @@ export type OperatorUncheckedUpdateWithoutPontoSolicitacoesInput = {
   osComoResponsavel?: Prisma.ServiceOrderUncheckedUpdateManyWithoutResponsavelNestedInput
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutOperatorNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedUpdateManyWithoutResponsavelNestedInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutOperatorNestedInput
 }
 
@@ -1904,6 +1945,7 @@ export type OperatorCreateWithoutPontoAbonosInput = {
   osComoResponsavel?: Prisma.ServiceOrderCreateNestedManyWithoutResponsavelInput
   apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutOperatorInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoCreateNestedManyWithoutResponsavelInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutOperatorInput
 }
 
@@ -1941,6 +1983,7 @@ export type OperatorUncheckedCreateWithoutPontoAbonosInput = {
   osComoResponsavel?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutResponsavelInput
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutOperatorInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedCreateNestedManyWithoutResponsavelInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutOperatorInput
 }
 
@@ -1994,6 +2037,7 @@ export type OperatorUpdateWithoutPontoAbonosInput = {
   osComoResponsavel?: Prisma.ServiceOrderUpdateManyWithoutResponsavelNestedInput
   apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutOperatorNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUpdateManyWithoutResponsavelNestedInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUpdateManyWithoutOperatorNestedInput
 }
 
@@ -2031,6 +2075,7 @@ export type OperatorUncheckedUpdateWithoutPontoAbonosInput = {
   osComoResponsavel?: Prisma.ServiceOrderUncheckedUpdateManyWithoutResponsavelNestedInput
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutOperatorNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedUpdateManyWithoutResponsavelNestedInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutOperatorNestedInput
 }
 
@@ -2068,6 +2113,7 @@ export type OperatorCreateWithoutCompanyUserInput = {
   osComoResponsavel?: Prisma.ServiceOrderCreateNestedManyWithoutResponsavelInput
   apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutOperatorInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoCreateNestedManyWithoutResponsavelInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutOperatorInput
 }
 
@@ -2105,6 +2151,7 @@ export type OperatorUncheckedCreateWithoutCompanyUserInput = {
   osComoResponsavel?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutResponsavelInput
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutOperatorInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedCreateNestedManyWithoutResponsavelInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutOperatorInput
 }
 
@@ -2158,6 +2205,7 @@ export type OperatorUpdateWithoutCompanyUserInput = {
   osComoResponsavel?: Prisma.ServiceOrderUpdateManyWithoutResponsavelNestedInput
   apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutOperatorNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUpdateManyWithoutResponsavelNestedInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUpdateManyWithoutOperatorNestedInput
 }
 
@@ -2195,6 +2243,7 @@ export type OperatorUncheckedUpdateWithoutCompanyUserInput = {
   osComoResponsavel?: Prisma.ServiceOrderUncheckedUpdateManyWithoutResponsavelNestedInput
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutOperatorNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedUpdateManyWithoutResponsavelNestedInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutOperatorNestedInput
 }
 
@@ -2232,6 +2281,7 @@ export type OperatorCreateWithoutChecklistExecucoesInput = {
   pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutOperatorInput
   osComoResponsavel?: Prisma.ServiceOrderCreateNestedManyWithoutResponsavelInput
   apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoCreateNestedManyWithoutResponsavelInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutOperatorInput
 }
 
@@ -2269,6 +2319,7 @@ export type OperatorUncheckedCreateWithoutChecklistExecucoesInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutOperatorInput
   osComoResponsavel?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutResponsavelInput
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedCreateNestedManyWithoutResponsavelInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutOperatorInput
 }
 
@@ -2322,6 +2373,7 @@ export type OperatorUpdateWithoutChecklistExecucoesInput = {
   pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutOperatorNestedInput
   osComoResponsavel?: Prisma.ServiceOrderUpdateManyWithoutResponsavelNestedInput
   apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUpdateManyWithoutResponsavelNestedInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUpdateManyWithoutOperatorNestedInput
 }
 
@@ -2359,6 +2411,7 @@ export type OperatorUncheckedUpdateWithoutChecklistExecucoesInput = {
   pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutOperatorNestedInput
   osComoResponsavel?: Prisma.ServiceOrderUncheckedUpdateManyWithoutResponsavelNestedInput
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedUpdateManyWithoutResponsavelNestedInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutOperatorNestedInput
 }
 
@@ -2397,6 +2450,7 @@ export type OperatorCreateWithoutProgramadoresAtendidosInput = {
   osComoResponsavel?: Prisma.ServiceOrderCreateNestedManyWithoutResponsavelInput
   apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutOperatorInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoCreateNestedManyWithoutResponsavelInput
 }
 
 export type OperatorUncheckedCreateWithoutProgramadoresAtendidosInput = {
@@ -2434,6 +2488,7 @@ export type OperatorUncheckedCreateWithoutProgramadoresAtendidosInput = {
   osComoResponsavel?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutResponsavelInput
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutOperatorInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutOperatorInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedCreateNestedManyWithoutResponsavelInput
 }
 
 export type OperatorCreateOrConnectWithoutProgramadoresAtendidosInput = {
@@ -2487,6 +2542,7 @@ export type OperatorUpdateWithoutProgramadoresAtendidosInput = {
   osComoResponsavel?: Prisma.ServiceOrderUpdateManyWithoutResponsavelNestedInput
   apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutOperatorNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUpdateManyWithoutResponsavelNestedInput
 }
 
 export type OperatorUncheckedUpdateWithoutProgramadoresAtendidosInput = {
@@ -2524,6 +2580,175 @@ export type OperatorUncheckedUpdateWithoutProgramadoresAtendidosInput = {
   osComoResponsavel?: Prisma.ServiceOrderUncheckedUpdateManyWithoutResponsavelNestedInput
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutOperatorNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedUpdateManyWithoutResponsavelNestedInput
+}
+
+export type OperatorCreateWithoutDepositosSobResponsabilidadeInput = {
+  id?: string
+  legacyId?: string | null
+  nome: string
+  cpf?: string | null
+  matricula?: string | null
+  dataNascimento?: Date | string | null
+  rg?: string | null
+  celular?: string | null
+  cargo?: string | null
+  funcao?: string | null
+  tipo?: string
+  status?: string
+  ativo?: boolean
+  cnh?: string | null
+  cnhCategoria?: string | null
+  cnhValidade?: Date | string | null
+  cnhEmissao?: Date | string | null
+  cnhLocalEmissao?: string | null
+  cnhRestricao?: string | null
+  loginGerado?: string | null
+  senhaHash?: string | null
+  observacoes?: string | null
+  companyRoleId?: string | null
+  baterPonto?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutOperatorsInput
+  companyUser?: Prisma.CompanyUserCreateNestedOneWithoutOperatorInput
+  pontoRegistros?: Prisma.PontoRegistroCreateNestedManyWithoutOperatorInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoCreateNestedManyWithoutOperatorInput
+  pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutOperatorInput
+  osComoResponsavel?: Prisma.ServiceOrderCreateNestedManyWithoutResponsavelInput
+  apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutOperatorInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutOperatorInput
+  programadoresAtendidos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutOperatorInput
+}
+
+export type OperatorUncheckedCreateWithoutDepositosSobResponsabilidadeInput = {
+  id?: string
+  legacyId?: string | null
+  companyId: string
+  nome: string
+  cpf?: string | null
+  matricula?: string | null
+  dataNascimento?: Date | string | null
+  rg?: string | null
+  celular?: string | null
+  cargo?: string | null
+  funcao?: string | null
+  tipo?: string
+  status?: string
+  ativo?: boolean
+  cnh?: string | null
+  cnhCategoria?: string | null
+  cnhValidade?: Date | string | null
+  cnhEmissao?: Date | string | null
+  cnhLocalEmissao?: string | null
+  cnhRestricao?: string | null
+  loginGerado?: string | null
+  senhaHash?: string | null
+  observacoes?: string | null
+  companyUserId?: string | null
+  companyRoleId?: string | null
+  baterPonto?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutOperatorInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedCreateNestedManyWithoutOperatorInput
+  pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutOperatorInput
+  osComoResponsavel?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutResponsavelInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutOperatorInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutOperatorInput
+  programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutOperatorInput
+}
+
+export type OperatorCreateOrConnectWithoutDepositosSobResponsabilidadeInput = {
+  where: Prisma.OperatorWhereUniqueInput
+  create: Prisma.XOR<Prisma.OperatorCreateWithoutDepositosSobResponsabilidadeInput, Prisma.OperatorUncheckedCreateWithoutDepositosSobResponsabilidadeInput>
+}
+
+export type OperatorUpsertWithoutDepositosSobResponsabilidadeInput = {
+  update: Prisma.XOR<Prisma.OperatorUpdateWithoutDepositosSobResponsabilidadeInput, Prisma.OperatorUncheckedUpdateWithoutDepositosSobResponsabilidadeInput>
+  create: Prisma.XOR<Prisma.OperatorCreateWithoutDepositosSobResponsabilidadeInput, Prisma.OperatorUncheckedCreateWithoutDepositosSobResponsabilidadeInput>
+  where?: Prisma.OperatorWhereInput
+}
+
+export type OperatorUpdateToOneWithWhereWithoutDepositosSobResponsabilidadeInput = {
+  where?: Prisma.OperatorWhereInput
+  data: Prisma.XOR<Prisma.OperatorUpdateWithoutDepositosSobResponsabilidadeInput, Prisma.OperatorUncheckedUpdateWithoutDepositosSobResponsabilidadeInput>
+}
+
+export type OperatorUpdateWithoutDepositosSobResponsabilidadeInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  cpf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  matricula?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dataNascimento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rg?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  celular?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cargo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  funcao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipo?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  cnh?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhCategoria?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhValidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cnhEmissao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cnhLocalEmissao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhRestricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baterPonto?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutOperatorsNestedInput
+  companyUser?: Prisma.CompanyUserUpdateOneWithoutOperatorNestedInput
+  pontoRegistros?: Prisma.PontoRegistroUpdateManyWithoutOperatorNestedInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUpdateManyWithoutOperatorNestedInput
+  pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutOperatorNestedInput
+  osComoResponsavel?: Prisma.ServiceOrderUpdateManyWithoutResponsavelNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutOperatorNestedInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutOperatorNestedInput
+  programadoresAtendidos?: Prisma.ProgramadorMecanicoUpdateManyWithoutOperatorNestedInput
+}
+
+export type OperatorUncheckedUpdateWithoutDepositosSobResponsabilidadeInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  cpf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  matricula?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dataNascimento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rg?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  celular?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cargo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  funcao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipo?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  cnh?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhCategoria?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhValidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cnhEmissao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cnhLocalEmissao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnhRestricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  loginGerado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  senhaHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  observacoes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baterPonto?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutOperatorNestedInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedUpdateManyWithoutOperatorNestedInput
+  pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutOperatorNestedInput
+  osComoResponsavel?: Prisma.ServiceOrderUncheckedUpdateManyWithoutResponsavelNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutOperatorNestedInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutOperatorNestedInput
+  programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutOperatorNestedInput
 }
 
 export type OperatorCreateManyCompanyInput = {
@@ -2590,6 +2815,7 @@ export type OperatorUpdateWithoutCompanyInput = {
   osComoResponsavel?: Prisma.ServiceOrderUpdateManyWithoutResponsavelNestedInput
   apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutOperatorNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUpdateManyWithoutResponsavelNestedInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUpdateManyWithoutOperatorNestedInput
 }
 
@@ -2627,6 +2853,7 @@ export type OperatorUncheckedUpdateWithoutCompanyInput = {
   osComoResponsavel?: Prisma.ServiceOrderUncheckedUpdateManyWithoutResponsavelNestedInput
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutOperatorNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutOperatorNestedInput
+  depositosSobResponsabilidade?: Prisma.DepositoUncheckedUpdateManyWithoutResponsavelNestedInput
   programadoresAtendidos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutOperatorNestedInput
 }
 
@@ -2672,6 +2899,7 @@ export type OperatorCountOutputType = {
   osComoResponsavel: number
   apontamentos: number
   checklistExecucoes: number
+  depositosSobResponsabilidade: number
   programadoresAtendidos: number
 }
 
@@ -2682,6 +2910,7 @@ export type OperatorCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensio
   osComoResponsavel?: boolean | OperatorCountOutputTypeCountOsComoResponsavelArgs
   apontamentos?: boolean | OperatorCountOutputTypeCountApontamentosArgs
   checklistExecucoes?: boolean | OperatorCountOutputTypeCountChecklistExecucoesArgs
+  depositosSobResponsabilidade?: boolean | OperatorCountOutputTypeCountDepositosSobResponsabilidadeArgs
   programadoresAtendidos?: boolean | OperatorCountOutputTypeCountProgramadoresAtendidosArgs
 }
 
@@ -2740,6 +2969,13 @@ export type OperatorCountOutputTypeCountChecklistExecucoesArgs<ExtArgs extends r
 /**
  * OperatorCountOutputType without action
  */
+export type OperatorCountOutputTypeCountDepositosSobResponsabilidadeArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.DepositoWhereInput
+}
+
+/**
+ * OperatorCountOutputType without action
+ */
 export type OperatorCountOutputTypeCountProgramadoresAtendidosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ProgramadorMecanicoWhereInput
 }
@@ -2782,6 +3018,7 @@ export type OperatorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   osComoResponsavel?: boolean | Prisma.Operator$osComoResponsavelArgs<ExtArgs>
   apontamentos?: boolean | Prisma.Operator$apontamentosArgs<ExtArgs>
   checklistExecucoes?: boolean | Prisma.Operator$checklistExecucoesArgs<ExtArgs>
+  depositosSobResponsabilidade?: boolean | Prisma.Operator$depositosSobResponsabilidadeArgs<ExtArgs>
   programadoresAtendidos?: boolean | Prisma.Operator$programadoresAtendidosArgs<ExtArgs>
   _count?: boolean | Prisma.OperatorCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["operator"]>
@@ -2893,6 +3130,7 @@ export type OperatorInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   osComoResponsavel?: boolean | Prisma.Operator$osComoResponsavelArgs<ExtArgs>
   apontamentos?: boolean | Prisma.Operator$apontamentosArgs<ExtArgs>
   checklistExecucoes?: boolean | Prisma.Operator$checklistExecucoesArgs<ExtArgs>
+  depositosSobResponsabilidade?: boolean | Prisma.Operator$depositosSobResponsabilidadeArgs<ExtArgs>
   programadoresAtendidos?: boolean | Prisma.Operator$programadoresAtendidosArgs<ExtArgs>
   _count?: boolean | Prisma.OperatorCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -2916,6 +3154,7 @@ export type $OperatorPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     osComoResponsavel: Prisma.$ServiceOrderPayload<ExtArgs>[]
     apontamentos: Prisma.$ServiceOrderApontamentoPayload<ExtArgs>[]
     checklistExecucoes: Prisma.$ChecklistExecucaoPayload<ExtArgs>[]
+    depositosSobResponsabilidade: Prisma.$DepositoPayload<ExtArgs>[]
     programadoresAtendidos: Prisma.$ProgramadorMecanicoPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -3396,6 +3635,7 @@ export interface Prisma__OperatorClient<T, Null = never, ExtArgs extends runtime
   osComoResponsavel<T extends Prisma.Operator$osComoResponsavelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Operator$osComoResponsavelArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   apontamentos<T extends Prisma.Operator$apontamentosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Operator$apontamentosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ServiceOrderApontamentoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   checklistExecucoes<T extends Prisma.Operator$checklistExecucoesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Operator$checklistExecucoesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChecklistExecucaoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  depositosSobResponsabilidade<T extends Prisma.Operator$depositosSobResponsabilidadeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Operator$depositosSobResponsabilidadeArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DepositoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   programadoresAtendidos<T extends Prisma.Operator$programadoresAtendidosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Operator$programadoresAtendidosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProgramadorMecanicoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -4015,6 +4255,30 @@ export type Operator$checklistExecucoesArgs<ExtArgs extends runtime.Types.Extens
   take?: number
   skip?: number
   distinct?: Prisma.ChecklistExecucaoScalarFieldEnum | Prisma.ChecklistExecucaoScalarFieldEnum[]
+}
+
+/**
+ * Operator.depositosSobResponsabilidade
+ */
+export type Operator$depositosSobResponsabilidadeArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Deposito
+   */
+  select?: Prisma.DepositoSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Deposito
+   */
+  omit?: Prisma.DepositoOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DepositoInclude<ExtArgs> | null
+  where?: Prisma.DepositoWhereInput
+  orderBy?: Prisma.DepositoOrderByWithRelationInput | Prisma.DepositoOrderByWithRelationInput[]
+  cursor?: Prisma.DepositoWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.DepositoScalarFieldEnum | Prisma.DepositoScalarFieldEnum[]
 }
 
 /**
