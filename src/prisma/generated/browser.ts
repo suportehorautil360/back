@@ -482,3 +482,11 @@ export type Peca = Prisma.PecaModel
  * primeiro bug, e é este número que decide se uma máquina para.
  */
 export type PecaSaldo = Prisma.PecaSaldoModel
+/**
+ * Model EstoqueMovimento
+ * O razão do estoque. Append-only por gatilho de banco (UPDATE e DELETE são
+ * recusados): um saldo errado se corrige com um NOVO movimento de ajuste,
+ * nunca reescrevendo o histórico — é essa garantia que permite reconstruir
+ * "quanto tinha em cada instante" sem confiar em nada além da soma da linha.
+ */
+export type EstoqueMovimento = Prisma.EstoqueMovimentoModel

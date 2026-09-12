@@ -310,6 +310,7 @@ export type PecaWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Peca"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   saldos?: Prisma.PecaSaldoListRelationFilter
+  movimentos?: Prisma.EstoqueMovimentoListRelationFilter
 }
 
 export type PecaOrderByWithRelationInput = {
@@ -331,6 +332,7 @@ export type PecaOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   company?: Prisma.CompanyOrderByWithRelationInput
   saldos?: Prisma.PecaSaldoOrderByRelationAggregateInput
+  movimentos?: Prisma.EstoqueMovimentoOrderByRelationAggregateInput
 }
 
 export type PecaWhereUniqueInput = Prisma.AtLeast<{
@@ -356,6 +358,7 @@ export type PecaWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Peca"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   saldos?: Prisma.PecaSaldoListRelationFilter
+  movimentos?: Prisma.EstoqueMovimentoListRelationFilter
 }, "id" | "companyId_codigoInterno">
 
 export type PecaOrderByWithAggregationInput = {
@@ -422,6 +425,7 @@ export type PecaCreateInput = {
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutPecasInput
   saldos?: Prisma.PecaSaldoCreateNestedManyWithoutPecaInput
+  movimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutPecaInput
 }
 
 export type PecaUncheckedCreateInput = {
@@ -442,6 +446,7 @@ export type PecaUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   saldos?: Prisma.PecaSaldoUncheckedCreateNestedManyWithoutPecaInput
+  movimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutPecaInput
 }
 
 export type PecaUpdateInput = {
@@ -462,6 +467,7 @@ export type PecaUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutPecasNestedInput
   saldos?: Prisma.PecaSaldoUpdateManyWithoutPecaNestedInput
+  movimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutPecaNestedInput
 }
 
 export type PecaUncheckedUpdateInput = {
@@ -482,6 +488,7 @@ export type PecaUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   saldos?: Prisma.PecaSaldoUncheckedUpdateManyWithoutPecaNestedInput
+  movimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutPecaNestedInput
 }
 
 export type PecaCreateManyInput = {
@@ -683,6 +690,20 @@ export type PecaUpdateOneRequiredWithoutSaldosNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.PecaUpdateToOneWithWhereWithoutSaldosInput, Prisma.PecaUpdateWithoutSaldosInput>, Prisma.PecaUncheckedUpdateWithoutSaldosInput>
 }
 
+export type PecaCreateNestedOneWithoutMovimentosInput = {
+  create?: Prisma.XOR<Prisma.PecaCreateWithoutMovimentosInput, Prisma.PecaUncheckedCreateWithoutMovimentosInput>
+  connectOrCreate?: Prisma.PecaCreateOrConnectWithoutMovimentosInput
+  connect?: Prisma.PecaWhereUniqueInput
+}
+
+export type PecaUpdateOneRequiredWithoutMovimentosNestedInput = {
+  create?: Prisma.XOR<Prisma.PecaCreateWithoutMovimentosInput, Prisma.PecaUncheckedCreateWithoutMovimentosInput>
+  connectOrCreate?: Prisma.PecaCreateOrConnectWithoutMovimentosInput
+  upsert?: Prisma.PecaUpsertWithoutMovimentosInput
+  connect?: Prisma.PecaWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PecaUpdateToOneWithWhereWithoutMovimentosInput, Prisma.PecaUpdateWithoutMovimentosInput>, Prisma.PecaUncheckedUpdateWithoutMovimentosInput>
+}
+
 export type PecaCreateWithoutCompanyInput = {
   id?: string
   codigoInterno: string
@@ -700,6 +721,7 @@ export type PecaCreateWithoutCompanyInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   saldos?: Prisma.PecaSaldoCreateNestedManyWithoutPecaInput
+  movimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutPecaInput
 }
 
 export type PecaUncheckedCreateWithoutCompanyInput = {
@@ -719,6 +741,7 @@ export type PecaUncheckedCreateWithoutCompanyInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   saldos?: Prisma.PecaSaldoUncheckedCreateNestedManyWithoutPecaInput
+  movimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutPecaInput
 }
 
 export type PecaCreateOrConnectWithoutCompanyInput = {
@@ -786,6 +809,7 @@ export type PecaCreateWithoutSaldosInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutPecasInput
+  movimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutPecaInput
 }
 
 export type PecaUncheckedCreateWithoutSaldosInput = {
@@ -805,6 +829,7 @@ export type PecaUncheckedCreateWithoutSaldosInput = {
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  movimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutPecaInput
 }
 
 export type PecaCreateOrConnectWithoutSaldosInput = {
@@ -840,6 +865,7 @@ export type PecaUpdateWithoutSaldosInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutPecasNestedInput
+  movimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutPecaNestedInput
 }
 
 export type PecaUncheckedUpdateWithoutSaldosInput = {
@@ -859,6 +885,103 @@ export type PecaUncheckedUpdateWithoutSaldosInput = {
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  movimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutPecaNestedInput
+}
+
+export type PecaCreateWithoutMovimentosInput = {
+  id?: string
+  codigoInterno: string
+  codigoFabricante?: string | null
+  descricao: string
+  especificacao?: string | null
+  marca?: string | null
+  unidade?: string
+  categoria?: string | null
+  equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  ativo?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutPecasInput
+  saldos?: Prisma.PecaSaldoCreateNestedManyWithoutPecaInput
+}
+
+export type PecaUncheckedCreateWithoutMovimentosInput = {
+  id?: string
+  companyId: string
+  codigoInterno: string
+  codigoFabricante?: string | null
+  descricao: string
+  especificacao?: string | null
+  marca?: string | null
+  unidade?: string
+  categoria?: string | null
+  equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  ativo?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  saldos?: Prisma.PecaSaldoUncheckedCreateNestedManyWithoutPecaInput
+}
+
+export type PecaCreateOrConnectWithoutMovimentosInput = {
+  where: Prisma.PecaWhereUniqueInput
+  create: Prisma.XOR<Prisma.PecaCreateWithoutMovimentosInput, Prisma.PecaUncheckedCreateWithoutMovimentosInput>
+}
+
+export type PecaUpsertWithoutMovimentosInput = {
+  update: Prisma.XOR<Prisma.PecaUpdateWithoutMovimentosInput, Prisma.PecaUncheckedUpdateWithoutMovimentosInput>
+  create: Prisma.XOR<Prisma.PecaCreateWithoutMovimentosInput, Prisma.PecaUncheckedCreateWithoutMovimentosInput>
+  where?: Prisma.PecaWhereInput
+}
+
+export type PecaUpdateToOneWithWhereWithoutMovimentosInput = {
+  where?: Prisma.PecaWhereInput
+  data: Prisma.XOR<Prisma.PecaUpdateWithoutMovimentosInput, Prisma.PecaUncheckedUpdateWithoutMovimentosInput>
+}
+
+export type PecaUpdateWithoutMovimentosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  codigoInterno?: Prisma.StringFieldUpdateOperationsInput | string
+  codigoFabricante?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descricao?: Prisma.StringFieldUpdateOperationsInput | string
+  especificacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  marca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  unidade?: Prisma.StringFieldUpdateOperationsInput | string
+  categoria?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutPecasNestedInput
+  saldos?: Prisma.PecaSaldoUpdateManyWithoutPecaNestedInput
+}
+
+export type PecaUncheckedUpdateWithoutMovimentosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  codigoInterno?: Prisma.StringFieldUpdateOperationsInput | string
+  codigoFabricante?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descricao?: Prisma.StringFieldUpdateOperationsInput | string
+  especificacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  marca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  unidade?: Prisma.StringFieldUpdateOperationsInput | string
+  categoria?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  saldos?: Prisma.PecaSaldoUncheckedUpdateManyWithoutPecaNestedInput
 }
 
 export type PecaCreateManyCompanyInput = {
@@ -896,6 +1019,7 @@ export type PecaUpdateWithoutCompanyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   saldos?: Prisma.PecaSaldoUpdateManyWithoutPecaNestedInput
+  movimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutPecaNestedInput
 }
 
 export type PecaUncheckedUpdateWithoutCompanyInput = {
@@ -915,6 +1039,7 @@ export type PecaUncheckedUpdateWithoutCompanyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   saldos?: Prisma.PecaSaldoUncheckedUpdateManyWithoutPecaNestedInput
+  movimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutPecaNestedInput
 }
 
 export type PecaUncheckedUpdateManyWithoutCompanyInput = {
@@ -942,10 +1067,12 @@ export type PecaUncheckedUpdateManyWithoutCompanyInput = {
 
 export type PecaCountOutputType = {
   saldos: number
+  movimentos: number
 }
 
 export type PecaCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   saldos?: boolean | PecaCountOutputTypeCountSaldosArgs
+  movimentos?: boolean | PecaCountOutputTypeCountMovimentosArgs
 }
 
 /**
@@ -963,6 +1090,13 @@ export type PecaCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensi
  */
 export type PecaCountOutputTypeCountSaldosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.PecaSaldoWhereInput
+}
+
+/**
+ * PecaCountOutputType without action
+ */
+export type PecaCountOutputTypeCountMovimentosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.EstoqueMovimentoWhereInput
 }
 
 
@@ -985,6 +1119,7 @@ export type PecaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   saldos?: boolean | Prisma.Peca$saldosArgs<ExtArgs>
+  movimentos?: boolean | Prisma.Peca$movimentosArgs<ExtArgs>
   _count?: boolean | Prisma.PecaCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["peca"]>
 
@@ -1051,6 +1186,7 @@ export type PecaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = run
 export type PecaInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   saldos?: boolean | Prisma.Peca$saldosArgs<ExtArgs>
+  movimentos?: boolean | Prisma.Peca$movimentosArgs<ExtArgs>
   _count?: boolean | Prisma.PecaCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type PecaIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1065,6 +1201,7 @@ export type $PecaPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     company: Prisma.$CompanyPayload<ExtArgs>
     saldos: Prisma.$PecaSaldoPayload<ExtArgs>[]
+    movimentos: Prisma.$EstoqueMovimentoPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1493,6 +1630,7 @@ export interface Prisma__PecaClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   company<T extends Prisma.CompanyDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CompanyDefaultArgs<ExtArgs>>): Prisma.Prisma__CompanyClient<runtime.Types.Result.GetResult<Prisma.$CompanyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   saldos<T extends Prisma.Peca$saldosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Peca$saldosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PecaSaldoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  movimentos<T extends Prisma.Peca$movimentosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Peca$movimentosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EstoqueMovimentoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1960,6 +2098,30 @@ export type Peca$saldosArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
   take?: number
   skip?: number
   distinct?: Prisma.PecaSaldoScalarFieldEnum | Prisma.PecaSaldoScalarFieldEnum[]
+}
+
+/**
+ * Peca.movimentos
+ */
+export type Peca$movimentosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EstoqueMovimento
+   */
+  select?: Prisma.EstoqueMovimentoSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the EstoqueMovimento
+   */
+  omit?: Prisma.EstoqueMovimentoOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EstoqueMovimentoInclude<ExtArgs> | null
+  where?: Prisma.EstoqueMovimentoWhereInput
+  orderBy?: Prisma.EstoqueMovimentoOrderByWithRelationInput | Prisma.EstoqueMovimentoOrderByWithRelationInput[]
+  cursor?: Prisma.EstoqueMovimentoWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.EstoqueMovimentoScalarFieldEnum | Prisma.EstoqueMovimentoScalarFieldEnum[]
 }
 
 /**

@@ -457,7 +457,8 @@ export const ModelName = {
   ServiceOrderAuditoria: 'ServiceOrderAuditoria',
   Deposito: 'Deposito',
   Peca: 'Peca',
-  PecaSaldo: 'PecaSaldo'
+  PecaSaldo: 'PecaSaldo',
+  EstoqueMovimento: 'EstoqueMovimento'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -473,7 +474,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken" | "checklistModelo" | "manualEquipamento" | "checklistExecucao" | "programadorMecanico" | "serviceOrderAuditoria" | "deposito" | "peca" | "pecaSaldo"
+    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken" | "checklistModelo" | "manualEquipamento" | "checklistExecucao" | "programadorMecanico" | "serviceOrderAuditoria" | "deposito" | "peca" | "pecaSaldo" | "estoqueMovimento"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -4991,6 +4992,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    EstoqueMovimento: {
+      payload: Prisma.$EstoqueMovimentoPayload<ExtArgs>
+      fields: Prisma.EstoqueMovimentoFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EstoqueMovimentoFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EstoqueMovimentoPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EstoqueMovimentoFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EstoqueMovimentoPayload>
+        }
+        findFirst: {
+          args: Prisma.EstoqueMovimentoFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EstoqueMovimentoPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EstoqueMovimentoFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EstoqueMovimentoPayload>
+        }
+        findMany: {
+          args: Prisma.EstoqueMovimentoFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EstoqueMovimentoPayload>[]
+        }
+        create: {
+          args: Prisma.EstoqueMovimentoCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EstoqueMovimentoPayload>
+        }
+        createMany: {
+          args: Prisma.EstoqueMovimentoCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EstoqueMovimentoCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EstoqueMovimentoPayload>[]
+        }
+        delete: {
+          args: Prisma.EstoqueMovimentoDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EstoqueMovimentoPayload>
+        }
+        update: {
+          args: Prisma.EstoqueMovimentoUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EstoqueMovimentoPayload>
+        }
+        deleteMany: {
+          args: Prisma.EstoqueMovimentoDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EstoqueMovimentoUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EstoqueMovimentoUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EstoqueMovimentoPayload>[]
+        }
+        upsert: {
+          args: Prisma.EstoqueMovimentoUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EstoqueMovimentoPayload>
+        }
+        aggregate: {
+          args: Prisma.EstoqueMovimentoAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEstoqueMovimento>
+        }
+        groupBy: {
+          args: Prisma.EstoqueMovimentoGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EstoqueMovimentoGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EstoqueMovimentoCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EstoqueMovimentoCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -6209,6 +6284,25 @@ export const PecaSaldoScalarFieldEnum = {
 export type PecaSaldoScalarFieldEnum = (typeof PecaSaldoScalarFieldEnum)[keyof typeof PecaSaldoScalarFieldEnum]
 
 
+export const EstoqueMovimentoScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  pecaId: 'pecaId',
+  depositoId: 'depositoId',
+  tipo: 'tipo',
+  quantidade: 'quantidade',
+  saldoApos: 'saldoApos',
+  custoUnit: 'custoUnit',
+  origemTipo: 'origemTipo',
+  origemId: 'origemId',
+  autorCompanyUserId: 'autorCompanyUserId',
+  observacao: 'observacao',
+  createdAt: 'createdAt'
+} as const
+
+export type EstoqueMovimentoScalarFieldEnum = (typeof EstoqueMovimentoScalarFieldEnum)[keyof typeof EstoqueMovimentoScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -6677,6 +6771,7 @@ export type GlobalOmitConfig = {
   deposito?: Prisma.DepositoOmit
   peca?: Prisma.PecaOmit
   pecaSaldo?: Prisma.PecaSaldoOmit
+  estoqueMovimento?: Prisma.EstoqueMovimentoOmit
 }
 
 /* Types for Logging */

@@ -121,6 +121,7 @@ model Company {
   checklistExecucoes      ChecklistExecucao[]
   depositos               Deposito[]
   pecas                   Peca[]
+  estoqueMovimentos       EstoqueMovimento[]
 
   @@map("clients")
 }
@@ -2162,9 +2163,10 @@ model Deposito {
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
 
-  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  responsavel Operator?   @relation("DepositoResponsavel", fields: [responsavelOperatorId], references: [id], onDelete: SetNull)
+  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  responsavel Operator?          @relation("DepositoResponsavel", fields: [responsavelOperatorId], references: [id], onDelete: SetNull)
   saldos      PecaSaldo[]
+  movimentos  EstoqueMovimento[]
 
   @@unique([companyId, nome])
   @@map("depositos")
@@ -2199,8 +2201,9 @@ model Peca {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  company Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  saldos  PecaSaldo[]
+  company    Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  saldos     PecaSaldo[]
+  movimentos EstoqueMovimento[]
 
   @@unique([companyId, codigoInterno])
   @@index([companyId, codigoFabricante])
@@ -2232,4 +2235,48 @@ model PecaSaldo {
   @@id([pecaId, depositoId])
   @@index([depositoId])
   @@map("peca_saldos")
+}
+
+/// O razão do estoque. Append-only por gatilho de banco (UPDATE e DELETE são
+/// recusados): um saldo errado se corrige com um NOVO movimento de ajuste,
+/// nunca reescrevendo o histórico — é essa garantia que permite reconstruir
+/// "quanto tinha em cada instante" sem confiar em nada além da soma da linha.
+model EstoqueMovimento {
+  id         String @id @default(uuid()) @db.Uuid
+  companyId  String @map("company_id") @db.Uuid
+  pecaId     String @map("peca_id") @db.Uuid
+  depositoId String @map("deposito_id") @db.Uuid
+
+  /// 'entrada' | 'saida' | 'ajuste' | 'devolucao' | 'transferencia' — ver
+  /// `TipoMovimento` em src/modules/almoxarifado/regras/movimento.ts.
+  tipo String
+
+  /// COM SINAL (positiva entra, negativa sai): conferir o saldo vira um SUM,
+  /// e não um CASE que alguém escreve errado um dia.
+  quantidade Decimal  @db.Decimal(12, 3)
+  /// Saldo físico da peça neste depósito IMEDIATAMENTE após este movimento —
+  /// a foto que permite auditar sem recalcular a soma de tudo toda vez.
+  saldoApos  Decimal  @map("saldo_apos") @db.Decimal(12, 3)
+  custoUnit  Decimal? @map("custo_unit") @db.Decimal(12, 4)
+
+  /// Texto livre porque a origem muda de tipo (requisição, OC, ajuste manual).
+  origemTipo String  @map("origem_tipo")
+  origemId   String? @map("origem_id") @db.Uuid
+
+  /// UUID solto de propósito (sem relação), no molde de `PontoAuditoria.atorId`:
+  /// o razão precisa sobreviver à remoção do CompanyUser que autorou o movimento.
+  autorCompanyUserId String @map("autor_company_user_id") @db.Uuid
+
+  observacao String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  peca     Peca     @relation(fields: [pecaId], references: [id], onDelete: Restrict)
+  deposito Deposito @relation(fields: [depositoId], references: [id], onDelete: Restrict)
+
+  @@index([companyId, pecaId, createdAt])
+  @@index([companyId, createdAt])
+  @@index([origemTipo, origemId])
+  @@map("estoque_movimentos")
 }

@@ -111,7 +111,8 @@ export const ModelName = {
   ServiceOrderAuditoria: 'ServiceOrderAuditoria',
   Deposito: 'Deposito',
   Peca: 'Peca',
-  PecaSaldo: 'PecaSaldo'
+  PecaSaldo: 'PecaSaldo',
+  EstoqueMovimento: 'EstoqueMovimento'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1307,6 +1308,25 @@ export const PecaSaldoScalarFieldEnum = {
 } as const
 
 export type PecaSaldoScalarFieldEnum = (typeof PecaSaldoScalarFieldEnum)[keyof typeof PecaSaldoScalarFieldEnum]
+
+
+export const EstoqueMovimentoScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  pecaId: 'pecaId',
+  depositoId: 'depositoId',
+  tipo: 'tipo',
+  quantidade: 'quantidade',
+  saldoApos: 'saldoApos',
+  custoUnit: 'custoUnit',
+  origemTipo: 'origemTipo',
+  origemId: 'origemId',
+  autorCompanyUserId: 'autorCompanyUserId',
+  observacao: 'observacao',
+  createdAt: 'createdAt'
+} as const
+
+export type EstoqueMovimentoScalarFieldEnum = (typeof EstoqueMovimentoScalarFieldEnum)[keyof typeof EstoqueMovimentoScalarFieldEnum]
 
 
 export const SortOrder = {
