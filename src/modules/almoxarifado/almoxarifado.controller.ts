@@ -65,4 +65,17 @@ export class AlmoxarifadoController {
       observacao: dto.observacao ?? null,
     });
   }
+
+  @Get('requisicoes')
+  @ApiOperation({ summary: 'A fila do almoxarife' })
+  @ApiQuery({ name: 'status', required: false })
+  async requisicoes(@Req() req: RequestComPainel, @Query('status') status?: string) {
+    return this.servico.listarRequisicoes(req.painel.companyId, status);
+  }
+
+  @Get('requisicoes/:id')
+  @ApiOperation({ summary: 'Uma requisição com itens e depósito' })
+  async requisicao(@Req() req: RequestComPainel, @Param('id') id: string) {
+    return this.servico.detalharRequisicao(req.painel.companyId, id);
+  }
 }

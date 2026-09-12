@@ -135,6 +135,10 @@ function erroDeContencaoTransitoria(erro: unknown): boolean {
   return false;
 }
 
+/** Os status que ainda dão trabalho ao almoxarife. */
+const STATUS_NA_FILA = ['pendente', 'em_separacao', 'separada'] as const;
+const STATUS_REQUISICAO = [...STATUS_NA_FILA, 'entregue', 'cancelada'] as const;
+
 @Injectable()
 export class AlmoxarifadoService {
   constructor(private readonly prisma: PrismaService) {}
@@ -661,5 +665,53 @@ export class AlmoxarifadoService {
 
       return { saldoFisico: depois, custoMedio };
     });
+  }
+
+  /**
+   * A fila do almoxarife. FIFO: quem pediu primeiro espera menos.
+   *
+   * Sem filtro, `entregue` e `cancelada` ficam de fora — a tela responde "o que
+   * eu faço agora", e histórico tem tela própria.
+   */
+  async listarRequisicoes(companyId: string, status?: string) {
+    if (status && !STATUS_REQUISICAO.includes(status as never)) {
+      throw new BadRequestException(`Status desconhecido: ${status}`);
+    }
+    return this.prisma.requisicaoMaterial.findMany({
+      where: {
+        companyId,
+        status: status ? status : { in: [...STATUS_NA_FILA] },
+      },
+      include: {
+        deposito: true,
+        serviceOrder: {
+          select: { id: true, protocolo: true, equipmentNome: true, equipmentPlaca: true },
+        },
+        itens: { include: { peca: { select: { codigoInterno: true, unidade: true } } } },
+      },
+      orderBy: { createdAt: 'asc' },
+      take: 200,
+    });
+  }
+
+  async detalharRequisicao(companyId: string, id: string) {
+    const req = await this.prisma.requisicaoMaterial.findFirst({
+      where: { id, companyId },
+      include: {
+        deposito: true,
+        serviceOrder: {
+          select: { id: true, protocolo: true, equipmentNome: true, equipmentPlaca: true },
+        },
+        itens: {
+          include: {
+            peca: {
+              select: { id: true, codigoInterno: true, codigoFabricante: true, unidade: true },
+            },
+          },
+        },
+      },
+    });
+    if (!req) throw new NotFoundException('Requisição não encontrada para esta empresa.');
+    return req;
   }
 }
