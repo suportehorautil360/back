@@ -52,6 +52,42 @@ export function statusAposConsulta(itens: ItemParaStatus[]): StatusMateriais {
 }
 
 /**
+ * O estado da OS depois de o almoxarife conferir o kit.
+ *
+ * Não é `statusAposConsulta` com outro nome: aquela decide o que fazer com uma
+ * necessidade recém-nascida; esta decide o que fazer com um kit em cima do
+ * balcão. As duas concordam nos casos degenerados (item não vinculado ganha de
+ * tudo, falta manda comprar) porque essas prioridades são do domínio, não da
+ * etapa.
+ */
+export function statusAposSeparacao(itens: ItemParaStatus[]): StatusMateriais {
+  const vivos = itens.filter((i) => !FORA.has(i.status));
+  if (vivos.some((i) => i.status === 'nao_vinculado')) return 'em_analise_materiais';
+  if (vivos.some((i) => i.status === 'faltante')) return 'aguardando_compra';
+  return podeLiberar(vivos) ? 'materiais_separados' : 'aguardando_separacao';
+}
+
+/**
+ * O estado da OS quando os materiais estão RESOLVIDOS — usada tanto na
+ * liberação quanto na entrega, porque a pergunta é a mesma nas duas: sobrou
+ * alguma pendência de material? O nome fala da entrega por ser o caso que a
+ * originou; se um terceiro consumidor aparecer, renomeie para
+ * `statusComMateriaisResolvidos`.
+ *
+ * Depois da entrega a OS continua LIBERADA, não "em execução".
+ *
+ * Entregar é a peça trocando de mãos; começar o serviço é outro ato, do
+ * mecânico, na bancada dele. Carimbar `em_execucao` aqui faria o painel dizer
+ * que o conserto começou porque alguém pegou um filtro no balcão.
+ */
+export function statusAposEntrega(itens: ItemParaStatus[]): StatusMateriais {
+  const vivos = itens.filter((i) => !FORA.has(i.status));
+  if (vivos.some((i) => i.status === 'nao_vinculado')) return 'em_analise_materiais';
+  if (vivos.some((i) => i.status === 'faltante')) return 'aguardando_compra';
+  return 'liberada_para_execucao';
+}
+
+/**
  * O critério de liberação: TODOS os impeditivos separados.
  *
  * Restando apenas não-impeditivos, quem decide é o programador, com

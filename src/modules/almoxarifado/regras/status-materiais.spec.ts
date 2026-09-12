@@ -1,4 +1,4 @@
-import { podeLiberar, statusAposConsulta } from './status-materiais';
+import { podeLiberar, statusAposConsulta, statusAposSeparacao, statusAposEntrega } from './status-materiais';
 
 const item = (p: Partial<{ impeditivo: boolean; status: string }> = {}) => ({
   impeditivo: false,
@@ -68,5 +68,44 @@ describe('podeLiberar', () => {
 
   it('não vinculado impeditivo NUNCA conta como atendido (achado C3)', () => {
     expect(podeLiberar([item({ impeditivo: true, status: 'nao_vinculado' })])).toBe(false);
+  });
+});
+
+describe('statusAposSeparacao', () => {
+  const it_ = (p: Partial<{ impeditivo: boolean; status: string }> = {}) =>
+    ({ impeditivo: true, status: 'separada', ...p });
+
+  it('todos os impeditivos separados leva a materiais_separados', () => {
+    expect(statusAposSeparacao([it_(), it_({ impeditivo: false, status: 'reservada' })]))
+      .toBe('materiais_separados');
+  });
+
+  it('impeditivo ainda reservado continua aguardando separação', () => {
+    expect(statusAposSeparacao([it_({ status: 'reservada' })])).toBe('aguardando_separacao');
+  });
+
+  it('impeditivo faltante volta para aguardando compra', () => {
+    // Uma peça que sumiu do kit entre a reserva e a conferência deixou de
+    // estar disponível: o caminho não é separar, é comprar.
+    expect(statusAposSeparacao([it_({ status: 'faltante' })])).toBe('aguardando_compra');
+  });
+
+  it('item não vinculado ganha de tudo e volta para análise', () => {
+    expect(statusAposSeparacao([it_(), it_({ status: 'nao_vinculado' })]))
+      .toBe('em_analise_materiais');
+  });
+});
+
+describe('statusAposEntrega', () => {
+  const it_ = (p: Partial<{ impeditivo: boolean; status: string }> = {}) =>
+    ({ impeditivo: true, status: 'entregue', ...p });
+
+  it('tudo entregue mantém a OS liberada — quem a põe em execução é o mecânico', () => {
+    // A entrega é a peça trocando de mãos, não o serviço começando.
+    expect(statusAposEntrega([it_()])).toBe('liberada_para_execucao');
+  });
+
+  it('impeditivo que voltou a faltar derruba a liberação', () => {
+    expect(statusAposEntrega([it_(), it_({ status: 'faltante' })])).toBe('aguardando_compra');
   });
 });
