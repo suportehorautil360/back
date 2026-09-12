@@ -170,21 +170,41 @@ describe('separarItens', () => {
   });
 
   it('Critical C1: o delta usa a quantidade JÁ separada relida na transação, não o retrato de fora dela', async () => {
-    // Item que já tinha 2 no kit; confere fechando em 4. Delta tem que ser
-    // 2 (4 novo − 2 já separado), nunca 4 — que é o que uma leitura estale
-    // (fora da transação) produziria e dobraria o saldo.
-    const { servico, tx } = montar([item({ quantidadeSeparada: 2 })]);
+    // Achado da re-revisão: `itensIniciais` (o que `findFirst` devolve FORA
+    // da transação) mostra `quantidadeSeparada: 0` — mas o "banco" (`itensDb`,
+    // o que `findUniqueOrThrow` lê DEPOIS da trava) já está em 2, simulando
+    // uma conferência concorrente que comitou nesse meio-tempo. Semear os
+    // dois iguais (como a primeira versão deste teste fazia) não discrimina
+    // nada: o código antigo, que soma contra o retrato de fora, calcularia
+    // exatamente o mesmo delta que o código correto quando as duas leituras
+    // coincidem. Só divergindo os dois é que a leitura errada (0) e a certa
+    // (2) produzem números diferentes de verdade: antigo 4 − 0 = 4, correto
+    // 4 − 2 = 2.
+    const { servico, tx, itensDb } = montar([item({ quantidadeSeparada: 0 })]);
+    itensDb.set('it-1', { ...item(), quantidadeSeparada: 2 });
+
     await servico.separarItens({
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
       itens: [{ itemId: 'it-1', quantidade: 4 }],
     });
-    const chamadaUpdate = tx.$executeRaw.mock.calls[0][0] as { values: unknown[] };
+    const chamadaUpdate = tx.$executeRaw.mock.calls[0][0] as { values: unknown[]; text: string };
     expect(Number(chamadaUpdate.values[0])).toBe(2);
+    // Afirma a FORMA da escrita, não só o alvo: sem isto, nada impede
+    // voltar a calcular o absoluto em JavaScript e ainda assim citar
+    // `saldo_separado` no texto.
+    expect(chamadaUpdate.text).toMatch(/saldo_separado\s*=\s*saldo_separado\s*\+/);
   });
 
-  it('Critical C1: reconferir a MESMA quantidade não escreve em saldo_separado de novo', async () => {
-    // Delta 0 não deveria gerar UPDATE nenhum — nem redundante, quanto mais dobrado.
-    const { servico, tx } = montar([item({ quantidadeSeparada: 4 })]);
+  it('Critical C1: reconferir uma quantidade já integralmente separada (por outra transação) não escreve de novo', async () => {
+    // Mesma lógica do teste acima, na direção oposta: de fora da transação
+    // o item parece com 0 separado (`itensIniciais`), mas o banco já tem 4
+    // — outra conferência já fechou este item enquanto esta chamada
+    // esperava a trava. O código antigo (contra o retrato de fora, 0)
+    // calcularia delta 4 e gravaria de novo, dobrando o saldo; o correto
+    // relê o fresco (4), vê delta 0 e não escreve nada.
+    const { servico, tx, itensDb } = montar([item({ quantidadeSeparada: 0 })]);
+    itensDb.set('it-1', { ...item(), quantidadeSeparada: 4 });
+
     await servico.separarItens({
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
       itens: [{ itemId: 'it-1', quantidade: 4 }],
@@ -226,6 +246,10 @@ describe('separarItens', () => {
     const atualizaSaldo = tx.$executeRaw.mock.calls[0][0] as { text: string };
     expect(atualizaSaldo.text).toContain('saldo_separado');
     expect(atualizaSaldo.text).not.toContain('saldo_fisico');
+    // A FORMA da escrita, não só o alvo: sem isto, nada impede voltar a
+    // calcular o absoluto em JavaScript (`SET saldo_separado = ${valor}`) —
+    // o texto continuaria citando `saldo_separado` do mesmo jeito.
+    expect(atualizaSaldo.text).toMatch(/saldo_separado\s*=\s*saldo_separado\s*\+/);
   });
 
   it('Important I2: omitir divergencia mantém a que já estava registrada', async () => {
