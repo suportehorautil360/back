@@ -2354,6 +2354,10 @@ model RequisicaoMaterial {
   @@unique([companyId, numero])
   @@index([companyId, status, createdAt])
   @@index([serviceOrderId])
+  /// Suporta filtro/ordenação por entrega (relatório e fila de entregues) —
+  /// mesmo índice `requisicoes_material_entrega` criado em
+  /// `20260913100000_entrega_de_requisicao`.
+  @@index([companyId, entregueEm])
   /// No máximo UMA requisição ABERTA (status <> 'cancelada') por OS — índice
   /// único PARCIAL aplicado em SQL puro (Prisma não expressa índice
   /// parcial), mesmo recurso de `operator_salario_vigente_key`
