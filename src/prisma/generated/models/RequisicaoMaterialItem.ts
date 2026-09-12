@@ -46,6 +46,8 @@ export type RequisicaoMaterialItemMinAggregateOutputType = {
   id: string | null
   requisicaoId: string | null
   pecaId: string | null
+  descricao: string | null
+  codigoPeca: string | null
   planoLinhaId: string | null
   quantidadeSolicitada: runtime.Decimal | null
   quantidadeReservada: runtime.Decimal | null
@@ -65,6 +67,8 @@ export type RequisicaoMaterialItemMaxAggregateOutputType = {
   id: string | null
   requisicaoId: string | null
   pecaId: string | null
+  descricao: string | null
+  codigoPeca: string | null
   planoLinhaId: string | null
   quantidadeSolicitada: runtime.Decimal | null
   quantidadeReservada: runtime.Decimal | null
@@ -84,6 +88,8 @@ export type RequisicaoMaterialItemCountAggregateOutputType = {
   id: number
   requisicaoId: number
   pecaId: number
+  descricao: number
+  codigoPeca: number
   planoLinhaId: number
   quantidadeSolicitada: number
   quantidadeReservada: number
@@ -121,6 +127,8 @@ export type RequisicaoMaterialItemMinAggregateInputType = {
   id?: true
   requisicaoId?: true
   pecaId?: true
+  descricao?: true
+  codigoPeca?: true
   planoLinhaId?: true
   quantidadeSolicitada?: true
   quantidadeReservada?: true
@@ -140,6 +148,8 @@ export type RequisicaoMaterialItemMaxAggregateInputType = {
   id?: true
   requisicaoId?: true
   pecaId?: true
+  descricao?: true
+  codigoPeca?: true
   planoLinhaId?: true
   quantidadeSolicitada?: true
   quantidadeReservada?: true
@@ -159,6 +169,8 @@ export type RequisicaoMaterialItemCountAggregateInputType = {
   id?: true
   requisicaoId?: true
   pecaId?: true
+  descricao?: true
+  codigoPeca?: true
   planoLinhaId?: true
   quantidadeSolicitada?: true
   quantidadeReservada?: true
@@ -264,7 +276,9 @@ export type RequisicaoMaterialItemGroupByArgs<ExtArgs extends runtime.Types.Exte
 export type RequisicaoMaterialItemGroupByOutputType = {
   id: string
   requisicaoId: string
-  pecaId: string
+  pecaId: string | null
+  descricao: string | null
+  codigoPeca: string | null
   planoLinhaId: string | null
   quantidadeSolicitada: runtime.Decimal
   quantidadeReservada: runtime.Decimal
@@ -306,7 +320,9 @@ export type RequisicaoMaterialItemWhereInput = {
   NOT?: Prisma.RequisicaoMaterialItemWhereInput | Prisma.RequisicaoMaterialItemWhereInput[]
   id?: Prisma.UuidFilter<"RequisicaoMaterialItem"> | string
   requisicaoId?: Prisma.UuidFilter<"RequisicaoMaterialItem"> | string
-  pecaId?: Prisma.UuidFilter<"RequisicaoMaterialItem"> | string
+  pecaId?: Prisma.UuidNullableFilter<"RequisicaoMaterialItem"> | string | null
+  descricao?: Prisma.StringNullableFilter<"RequisicaoMaterialItem"> | string | null
+  codigoPeca?: Prisma.StringNullableFilter<"RequisicaoMaterialItem"> | string | null
   planoLinhaId?: Prisma.StringNullableFilter<"RequisicaoMaterialItem"> | string | null
   quantidadeSolicitada?: Prisma.DecimalFilter<"RequisicaoMaterialItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: Prisma.DecimalFilter<"RequisicaoMaterialItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -321,14 +337,16 @@ export type RequisicaoMaterialItemWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"RequisicaoMaterialItem"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"RequisicaoMaterialItem"> | Date | string
   requisicao?: Prisma.XOR<Prisma.RequisicaoMaterialScalarRelationFilter, Prisma.RequisicaoMaterialWhereInput>
-  peca?: Prisma.XOR<Prisma.PecaScalarRelationFilter, Prisma.PecaWhereInput>
+  peca?: Prisma.XOR<Prisma.PecaNullableScalarRelationFilter, Prisma.PecaWhereInput> | null
   equivalenteDe?: Prisma.XOR<Prisma.PecaNullableScalarRelationFilter, Prisma.PecaWhereInput> | null
 }
 
 export type RequisicaoMaterialItemOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   requisicaoId?: Prisma.SortOrder
-  pecaId?: Prisma.SortOrder
+  pecaId?: Prisma.SortOrderInput | Prisma.SortOrder
+  descricao?: Prisma.SortOrderInput | Prisma.SortOrder
+  codigoPeca?: Prisma.SortOrderInput | Prisma.SortOrder
   planoLinhaId?: Prisma.SortOrderInput | Prisma.SortOrder
   quantidadeSolicitada?: Prisma.SortOrder
   quantidadeReservada?: Prisma.SortOrder
@@ -353,7 +371,9 @@ export type RequisicaoMaterialItemWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.RequisicaoMaterialItemWhereInput[]
   NOT?: Prisma.RequisicaoMaterialItemWhereInput | Prisma.RequisicaoMaterialItemWhereInput[]
   requisicaoId?: Prisma.UuidFilter<"RequisicaoMaterialItem"> | string
-  pecaId?: Prisma.UuidFilter<"RequisicaoMaterialItem"> | string
+  pecaId?: Prisma.UuidNullableFilter<"RequisicaoMaterialItem"> | string | null
+  descricao?: Prisma.StringNullableFilter<"RequisicaoMaterialItem"> | string | null
+  codigoPeca?: Prisma.StringNullableFilter<"RequisicaoMaterialItem"> | string | null
   planoLinhaId?: Prisma.StringNullableFilter<"RequisicaoMaterialItem"> | string | null
   quantidadeSolicitada?: Prisma.DecimalFilter<"RequisicaoMaterialItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: Prisma.DecimalFilter<"RequisicaoMaterialItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -368,14 +388,16 @@ export type RequisicaoMaterialItemWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"RequisicaoMaterialItem"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"RequisicaoMaterialItem"> | Date | string
   requisicao?: Prisma.XOR<Prisma.RequisicaoMaterialScalarRelationFilter, Prisma.RequisicaoMaterialWhereInput>
-  peca?: Prisma.XOR<Prisma.PecaScalarRelationFilter, Prisma.PecaWhereInput>
+  peca?: Prisma.XOR<Prisma.PecaNullableScalarRelationFilter, Prisma.PecaWhereInput> | null
   equivalenteDe?: Prisma.XOR<Prisma.PecaNullableScalarRelationFilter, Prisma.PecaWhereInput> | null
 }, "id">
 
 export type RequisicaoMaterialItemOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   requisicaoId?: Prisma.SortOrder
-  pecaId?: Prisma.SortOrder
+  pecaId?: Prisma.SortOrderInput | Prisma.SortOrder
+  descricao?: Prisma.SortOrderInput | Prisma.SortOrder
+  codigoPeca?: Prisma.SortOrderInput | Prisma.SortOrder
   planoLinhaId?: Prisma.SortOrderInput | Prisma.SortOrder
   quantidadeSolicitada?: Prisma.SortOrder
   quantidadeReservada?: Prisma.SortOrder
@@ -402,7 +424,9 @@ export type RequisicaoMaterialItemScalarWhereWithAggregatesInput = {
   NOT?: Prisma.RequisicaoMaterialItemScalarWhereWithAggregatesInput | Prisma.RequisicaoMaterialItemScalarWhereWithAggregatesInput[]
   id?: Prisma.UuidWithAggregatesFilter<"RequisicaoMaterialItem"> | string
   requisicaoId?: Prisma.UuidWithAggregatesFilter<"RequisicaoMaterialItem"> | string
-  pecaId?: Prisma.UuidWithAggregatesFilter<"RequisicaoMaterialItem"> | string
+  pecaId?: Prisma.UuidNullableWithAggregatesFilter<"RequisicaoMaterialItem"> | string | null
+  descricao?: Prisma.StringNullableWithAggregatesFilter<"RequisicaoMaterialItem"> | string | null
+  codigoPeca?: Prisma.StringNullableWithAggregatesFilter<"RequisicaoMaterialItem"> | string | null
   planoLinhaId?: Prisma.StringNullableWithAggregatesFilter<"RequisicaoMaterialItem"> | string | null
   quantidadeSolicitada?: Prisma.DecimalWithAggregatesFilter<"RequisicaoMaterialItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: Prisma.DecimalWithAggregatesFilter<"RequisicaoMaterialItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -420,6 +444,8 @@ export type RequisicaoMaterialItemScalarWhereWithAggregatesInput = {
 
 export type RequisicaoMaterialItemCreateInput = {
   id?: string
+  descricao?: string | null
+  codigoPeca?: string | null
   planoLinhaId?: string | null
   quantidadeSolicitada: runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -433,14 +459,16 @@ export type RequisicaoMaterialItemCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   requisicao: Prisma.RequisicaoMaterialCreateNestedOneWithoutItensInput
-  peca: Prisma.PecaCreateNestedOneWithoutRequisicaoItensInput
+  peca?: Prisma.PecaCreateNestedOneWithoutRequisicaoItensInput
   equivalenteDe?: Prisma.PecaCreateNestedOneWithoutPecasEquivalentesInput
 }
 
 export type RequisicaoMaterialItemUncheckedCreateInput = {
   id?: string
   requisicaoId: string
-  pecaId: string
+  pecaId?: string | null
+  descricao?: string | null
+  codigoPeca?: string | null
   planoLinhaId?: string | null
   quantidadeSolicitada: runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -458,6 +486,8 @@ export type RequisicaoMaterialItemUncheckedCreateInput = {
 
 export type RequisicaoMaterialItemUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  codigoPeca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   planoLinhaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantidadeSolicitada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -471,14 +501,16 @@ export type RequisicaoMaterialItemUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   requisicao?: Prisma.RequisicaoMaterialUpdateOneRequiredWithoutItensNestedInput
-  peca?: Prisma.PecaUpdateOneRequiredWithoutRequisicaoItensNestedInput
+  peca?: Prisma.PecaUpdateOneWithoutRequisicaoItensNestedInput
   equivalenteDe?: Prisma.PecaUpdateOneWithoutPecasEquivalentesNestedInput
 }
 
 export type RequisicaoMaterialItemUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   requisicaoId?: Prisma.StringFieldUpdateOperationsInput | string
-  pecaId?: Prisma.StringFieldUpdateOperationsInput | string
+  pecaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  codigoPeca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   planoLinhaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantidadeSolicitada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -497,7 +529,9 @@ export type RequisicaoMaterialItemUncheckedUpdateInput = {
 export type RequisicaoMaterialItemCreateManyInput = {
   id?: string
   requisicaoId: string
-  pecaId: string
+  pecaId?: string | null
+  descricao?: string | null
+  codigoPeca?: string | null
   planoLinhaId?: string | null
   quantidadeSolicitada: runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -515,6 +549,8 @@ export type RequisicaoMaterialItemCreateManyInput = {
 
 export type RequisicaoMaterialItemUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  codigoPeca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   planoLinhaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantidadeSolicitada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -532,7 +568,9 @@ export type RequisicaoMaterialItemUpdateManyMutationInput = {
 export type RequisicaoMaterialItemUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   requisicaoId?: Prisma.StringFieldUpdateOperationsInput | string
-  pecaId?: Prisma.StringFieldUpdateOperationsInput | string
+  pecaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  codigoPeca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   planoLinhaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantidadeSolicitada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -562,6 +600,8 @@ export type RequisicaoMaterialItemCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   requisicaoId?: Prisma.SortOrder
   pecaId?: Prisma.SortOrder
+  descricao?: Prisma.SortOrder
+  codigoPeca?: Prisma.SortOrder
   planoLinhaId?: Prisma.SortOrder
   quantidadeSolicitada?: Prisma.SortOrder
   quantidadeReservada?: Prisma.SortOrder
@@ -589,6 +629,8 @@ export type RequisicaoMaterialItemMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   requisicaoId?: Prisma.SortOrder
   pecaId?: Prisma.SortOrder
+  descricao?: Prisma.SortOrder
+  codigoPeca?: Prisma.SortOrder
   planoLinhaId?: Prisma.SortOrder
   quantidadeSolicitada?: Prisma.SortOrder
   quantidadeReservada?: Prisma.SortOrder
@@ -608,6 +650,8 @@ export type RequisicaoMaterialItemMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   requisicaoId?: Prisma.SortOrder
   pecaId?: Prisma.SortOrder
+  descricao?: Prisma.SortOrder
+  codigoPeca?: Prisma.SortOrder
   planoLinhaId?: Prisma.SortOrder
   quantidadeSolicitada?: Prisma.SortOrder
   quantidadeReservada?: Prisma.SortOrder
@@ -759,6 +803,8 @@ export type RequisicaoMaterialItemUncheckedUpdateManyWithoutRequisicaoNestedInpu
 
 export type RequisicaoMaterialItemCreateWithoutPecaInput = {
   id?: string
+  descricao?: string | null
+  codigoPeca?: string | null
   planoLinhaId?: string | null
   quantidadeSolicitada: runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -778,6 +824,8 @@ export type RequisicaoMaterialItemCreateWithoutPecaInput = {
 export type RequisicaoMaterialItemUncheckedCreateWithoutPecaInput = {
   id?: string
   requisicaoId: string
+  descricao?: string | null
+  codigoPeca?: string | null
   planoLinhaId?: string | null
   quantidadeSolicitada: runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -805,6 +853,8 @@ export type RequisicaoMaterialItemCreateManyPecaInputEnvelope = {
 
 export type RequisicaoMaterialItemCreateWithoutEquivalenteDeInput = {
   id?: string
+  descricao?: string | null
+  codigoPeca?: string | null
   planoLinhaId?: string | null
   quantidadeSolicitada: runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -818,13 +868,15 @@ export type RequisicaoMaterialItemCreateWithoutEquivalenteDeInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   requisicao: Prisma.RequisicaoMaterialCreateNestedOneWithoutItensInput
-  peca: Prisma.PecaCreateNestedOneWithoutRequisicaoItensInput
+  peca?: Prisma.PecaCreateNestedOneWithoutRequisicaoItensInput
 }
 
 export type RequisicaoMaterialItemUncheckedCreateWithoutEquivalenteDeInput = {
   id?: string
   requisicaoId: string
-  pecaId: string
+  pecaId?: string | null
+  descricao?: string | null
+  codigoPeca?: string | null
   planoLinhaId?: string | null
   quantidadeSolicitada: runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -871,7 +923,9 @@ export type RequisicaoMaterialItemScalarWhereInput = {
   NOT?: Prisma.RequisicaoMaterialItemScalarWhereInput | Prisma.RequisicaoMaterialItemScalarWhereInput[]
   id?: Prisma.UuidFilter<"RequisicaoMaterialItem"> | string
   requisicaoId?: Prisma.UuidFilter<"RequisicaoMaterialItem"> | string
-  pecaId?: Prisma.UuidFilter<"RequisicaoMaterialItem"> | string
+  pecaId?: Prisma.UuidNullableFilter<"RequisicaoMaterialItem"> | string | null
+  descricao?: Prisma.StringNullableFilter<"RequisicaoMaterialItem"> | string | null
+  codigoPeca?: Prisma.StringNullableFilter<"RequisicaoMaterialItem"> | string | null
   planoLinhaId?: Prisma.StringNullableFilter<"RequisicaoMaterialItem"> | string | null
   quantidadeSolicitada?: Prisma.DecimalFilter<"RequisicaoMaterialItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: Prisma.DecimalFilter<"RequisicaoMaterialItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -905,6 +959,8 @@ export type RequisicaoMaterialItemUpdateManyWithWhereWithoutEquivalenteDeInput =
 
 export type RequisicaoMaterialItemCreateWithoutRequisicaoInput = {
   id?: string
+  descricao?: string | null
+  codigoPeca?: string | null
   planoLinhaId?: string | null
   quantidadeSolicitada: runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -917,13 +973,15 @@ export type RequisicaoMaterialItemCreateWithoutRequisicaoInput = {
   status?: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  peca: Prisma.PecaCreateNestedOneWithoutRequisicaoItensInput
+  peca?: Prisma.PecaCreateNestedOneWithoutRequisicaoItensInput
   equivalenteDe?: Prisma.PecaCreateNestedOneWithoutPecasEquivalentesInput
 }
 
 export type RequisicaoMaterialItemUncheckedCreateWithoutRequisicaoInput = {
   id?: string
-  pecaId: string
+  pecaId?: string | null
+  descricao?: string | null
+  codigoPeca?: string | null
   planoLinhaId?: string | null
   quantidadeSolicitada: runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -968,6 +1026,8 @@ export type RequisicaoMaterialItemUpdateManyWithWhereWithoutRequisicaoInput = {
 export type RequisicaoMaterialItemCreateManyPecaInput = {
   id?: string
   requisicaoId: string
+  descricao?: string | null
+  codigoPeca?: string | null
   planoLinhaId?: string | null
   quantidadeSolicitada: runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -986,7 +1046,9 @@ export type RequisicaoMaterialItemCreateManyPecaInput = {
 export type RequisicaoMaterialItemCreateManyEquivalenteDeInput = {
   id?: string
   requisicaoId: string
-  pecaId: string
+  pecaId?: string | null
+  descricao?: string | null
+  codigoPeca?: string | null
   planoLinhaId?: string | null
   quantidadeSolicitada: runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1003,6 +1065,8 @@ export type RequisicaoMaterialItemCreateManyEquivalenteDeInput = {
 
 export type RequisicaoMaterialItemUpdateWithoutPecaInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  codigoPeca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   planoLinhaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantidadeSolicitada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1022,6 +1086,8 @@ export type RequisicaoMaterialItemUpdateWithoutPecaInput = {
 export type RequisicaoMaterialItemUncheckedUpdateWithoutPecaInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   requisicaoId?: Prisma.StringFieldUpdateOperationsInput | string
+  descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  codigoPeca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   planoLinhaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantidadeSolicitada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1040,6 +1106,8 @@ export type RequisicaoMaterialItemUncheckedUpdateWithoutPecaInput = {
 export type RequisicaoMaterialItemUncheckedUpdateManyWithoutPecaInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   requisicaoId?: Prisma.StringFieldUpdateOperationsInput | string
+  descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  codigoPeca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   planoLinhaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantidadeSolicitada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1057,6 +1125,8 @@ export type RequisicaoMaterialItemUncheckedUpdateManyWithoutPecaInput = {
 
 export type RequisicaoMaterialItemUpdateWithoutEquivalenteDeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  codigoPeca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   planoLinhaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantidadeSolicitada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1070,13 +1140,15 @@ export type RequisicaoMaterialItemUpdateWithoutEquivalenteDeInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   requisicao?: Prisma.RequisicaoMaterialUpdateOneRequiredWithoutItensNestedInput
-  peca?: Prisma.PecaUpdateOneRequiredWithoutRequisicaoItensNestedInput
+  peca?: Prisma.PecaUpdateOneWithoutRequisicaoItensNestedInput
 }
 
 export type RequisicaoMaterialItemUncheckedUpdateWithoutEquivalenteDeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   requisicaoId?: Prisma.StringFieldUpdateOperationsInput | string
-  pecaId?: Prisma.StringFieldUpdateOperationsInput | string
+  pecaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  codigoPeca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   planoLinhaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantidadeSolicitada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1094,7 +1166,9 @@ export type RequisicaoMaterialItemUncheckedUpdateWithoutEquivalenteDeInput = {
 export type RequisicaoMaterialItemUncheckedUpdateManyWithoutEquivalenteDeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   requisicaoId?: Prisma.StringFieldUpdateOperationsInput | string
-  pecaId?: Prisma.StringFieldUpdateOperationsInput | string
+  pecaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  codigoPeca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   planoLinhaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantidadeSolicitada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1111,7 +1185,9 @@ export type RequisicaoMaterialItemUncheckedUpdateManyWithoutEquivalenteDeInput =
 
 export type RequisicaoMaterialItemCreateManyRequisicaoInput = {
   id?: string
-  pecaId: string
+  pecaId?: string | null
+  descricao?: string | null
+  codigoPeca?: string | null
   planoLinhaId?: string | null
   quantidadeSolicitada: runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1129,6 +1205,8 @@ export type RequisicaoMaterialItemCreateManyRequisicaoInput = {
 
 export type RequisicaoMaterialItemUpdateWithoutRequisicaoInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  codigoPeca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   planoLinhaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantidadeSolicitada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1141,13 +1219,15 @@ export type RequisicaoMaterialItemUpdateWithoutRequisicaoInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  peca?: Prisma.PecaUpdateOneRequiredWithoutRequisicaoItensNestedInput
+  peca?: Prisma.PecaUpdateOneWithoutRequisicaoItensNestedInput
   equivalenteDe?: Prisma.PecaUpdateOneWithoutPecasEquivalentesNestedInput
 }
 
 export type RequisicaoMaterialItemUncheckedUpdateWithoutRequisicaoInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  pecaId?: Prisma.StringFieldUpdateOperationsInput | string
+  pecaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  codigoPeca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   planoLinhaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantidadeSolicitada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1165,7 +1245,9 @@ export type RequisicaoMaterialItemUncheckedUpdateWithoutRequisicaoInput = {
 
 export type RequisicaoMaterialItemUncheckedUpdateManyWithoutRequisicaoInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  pecaId?: Prisma.StringFieldUpdateOperationsInput | string
+  pecaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  codigoPeca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   planoLinhaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   quantidadeSolicitada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   quantidadeReservada?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1187,6 +1269,8 @@ export type RequisicaoMaterialItemSelect<ExtArgs extends runtime.Types.Extension
   id?: boolean
   requisicaoId?: boolean
   pecaId?: boolean
+  descricao?: boolean
+  codigoPeca?: boolean
   planoLinhaId?: boolean
   quantidadeSolicitada?: boolean
   quantidadeReservada?: boolean
@@ -1201,7 +1285,7 @@ export type RequisicaoMaterialItemSelect<ExtArgs extends runtime.Types.Extension
   createdAt?: boolean
   updatedAt?: boolean
   requisicao?: boolean | Prisma.RequisicaoMaterialDefaultArgs<ExtArgs>
-  peca?: boolean | Prisma.PecaDefaultArgs<ExtArgs>
+  peca?: boolean | Prisma.RequisicaoMaterialItem$pecaArgs<ExtArgs>
   equivalenteDe?: boolean | Prisma.RequisicaoMaterialItem$equivalenteDeArgs<ExtArgs>
 }, ExtArgs["result"]["requisicaoMaterialItem"]>
 
@@ -1209,6 +1293,8 @@ export type RequisicaoMaterialItemSelectCreateManyAndReturn<ExtArgs extends runt
   id?: boolean
   requisicaoId?: boolean
   pecaId?: boolean
+  descricao?: boolean
+  codigoPeca?: boolean
   planoLinhaId?: boolean
   quantidadeSolicitada?: boolean
   quantidadeReservada?: boolean
@@ -1223,7 +1309,7 @@ export type RequisicaoMaterialItemSelectCreateManyAndReturn<ExtArgs extends runt
   createdAt?: boolean
   updatedAt?: boolean
   requisicao?: boolean | Prisma.RequisicaoMaterialDefaultArgs<ExtArgs>
-  peca?: boolean | Prisma.PecaDefaultArgs<ExtArgs>
+  peca?: boolean | Prisma.RequisicaoMaterialItem$pecaArgs<ExtArgs>
   equivalenteDe?: boolean | Prisma.RequisicaoMaterialItem$equivalenteDeArgs<ExtArgs>
 }, ExtArgs["result"]["requisicaoMaterialItem"]>
 
@@ -1231,6 +1317,8 @@ export type RequisicaoMaterialItemSelectUpdateManyAndReturn<ExtArgs extends runt
   id?: boolean
   requisicaoId?: boolean
   pecaId?: boolean
+  descricao?: boolean
+  codigoPeca?: boolean
   planoLinhaId?: boolean
   quantidadeSolicitada?: boolean
   quantidadeReservada?: boolean
@@ -1245,7 +1333,7 @@ export type RequisicaoMaterialItemSelectUpdateManyAndReturn<ExtArgs extends runt
   createdAt?: boolean
   updatedAt?: boolean
   requisicao?: boolean | Prisma.RequisicaoMaterialDefaultArgs<ExtArgs>
-  peca?: boolean | Prisma.PecaDefaultArgs<ExtArgs>
+  peca?: boolean | Prisma.RequisicaoMaterialItem$pecaArgs<ExtArgs>
   equivalenteDe?: boolean | Prisma.RequisicaoMaterialItem$equivalenteDeArgs<ExtArgs>
 }, ExtArgs["result"]["requisicaoMaterialItem"]>
 
@@ -1253,6 +1341,8 @@ export type RequisicaoMaterialItemSelectScalar = {
   id?: boolean
   requisicaoId?: boolean
   pecaId?: boolean
+  descricao?: boolean
+  codigoPeca?: boolean
   planoLinhaId?: boolean
   quantidadeSolicitada?: boolean
   quantidadeReservada?: boolean
@@ -1268,20 +1358,20 @@ export type RequisicaoMaterialItemSelectScalar = {
   updatedAt?: boolean
 }
 
-export type RequisicaoMaterialItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "requisicaoId" | "pecaId" | "planoLinhaId" | "quantidadeSolicitada" | "quantidadeReservada" | "quantidadeSeparada" | "quantidadeEntregue" | "quantidadeDevolvida" | "impeditivo" | "prioridade" | "dataNecessidade" | "equivalenteDePecaId" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["requisicaoMaterialItem"]>
+export type RequisicaoMaterialItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "requisicaoId" | "pecaId" | "descricao" | "codigoPeca" | "planoLinhaId" | "quantidadeSolicitada" | "quantidadeReservada" | "quantidadeSeparada" | "quantidadeEntregue" | "quantidadeDevolvida" | "impeditivo" | "prioridade" | "dataNecessidade" | "equivalenteDePecaId" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["requisicaoMaterialItem"]>
 export type RequisicaoMaterialItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   requisicao?: boolean | Prisma.RequisicaoMaterialDefaultArgs<ExtArgs>
-  peca?: boolean | Prisma.PecaDefaultArgs<ExtArgs>
+  peca?: boolean | Prisma.RequisicaoMaterialItem$pecaArgs<ExtArgs>
   equivalenteDe?: boolean | Prisma.RequisicaoMaterialItem$equivalenteDeArgs<ExtArgs>
 }
 export type RequisicaoMaterialItemIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   requisicao?: boolean | Prisma.RequisicaoMaterialDefaultArgs<ExtArgs>
-  peca?: boolean | Prisma.PecaDefaultArgs<ExtArgs>
+  peca?: boolean | Prisma.RequisicaoMaterialItem$pecaArgs<ExtArgs>
   equivalenteDe?: boolean | Prisma.RequisicaoMaterialItem$equivalenteDeArgs<ExtArgs>
 }
 export type RequisicaoMaterialItemIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   requisicao?: boolean | Prisma.RequisicaoMaterialDefaultArgs<ExtArgs>
-  peca?: boolean | Prisma.PecaDefaultArgs<ExtArgs>
+  peca?: boolean | Prisma.RequisicaoMaterialItem$pecaArgs<ExtArgs>
   equivalenteDe?: boolean | Prisma.RequisicaoMaterialItem$equivalenteDeArgs<ExtArgs>
 }
 
@@ -1289,13 +1379,28 @@ export type $RequisicaoMaterialItemPayload<ExtArgs extends runtime.Types.Extensi
   name: "RequisicaoMaterialItem"
   objects: {
     requisicao: Prisma.$RequisicaoMaterialPayload<ExtArgs>
-    peca: Prisma.$PecaPayload<ExtArgs>
+    peca: Prisma.$PecaPayload<ExtArgs> | null
     equivalenteDe: Prisma.$PecaPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     requisicaoId: string
-    pecaId: string
+    /**
+     * NULLABLE: item cuja peça o sistema não conseguiu resolver contra o
+     * catálogo (`status = "nao_vinculado"`) ainda precisa ser gravado — não
+     * pode sumir da lista nem ser contado como atendido. `descricao`/
+     * `codigoPeca` abaixo cobrem o retrato do que o plano sabia quando
+     * `pecaId` é nulo.
+     */
+    pecaId: string | null
+    /**
+     * Retrato do que o plano sabia sobre a linha no momento da reserva.
+     * Gravado para TODO item, não só o não vinculado: é o retrato do PLANO,
+     * não do catálogo — o catálogo (`Peca.descricao`/`codigoInterno`) muda
+     * depois, e este campo não deve mudar com ele.
+     */
+    descricao: string | null
+    codigoPeca: string | null
     /**
      * `PlanoLinha.id` de onde o item veio — é o que liga a peça de volta à
      * linha da lista que o mecânico executa, mesmo que a ordem mude no plano.
@@ -1318,7 +1423,8 @@ export type $RequisicaoMaterialItemPayload<ExtArgs extends runtime.Types.Extensi
     dataNecessidade: Date | null
     equivalenteDePecaId: string | null
     /**
-     * "faltante" | "reservada" | "separada" | "entregue" | "devolvida" | "cancelada"
+     * "faltante" | "reservada" | "separada" | "entregue" | "devolvida" |
+     * "cancelada" | "nao_vinculado"
      */
     status: string
     createdAt: Date
@@ -1718,7 +1824,7 @@ readonly fields: RequisicaoMaterialItemFieldRefs;
 export interface Prisma__RequisicaoMaterialItemClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   requisicao<T extends Prisma.RequisicaoMaterialDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RequisicaoMaterialDefaultArgs<ExtArgs>>): Prisma.Prisma__RequisicaoMaterialClient<runtime.Types.Result.GetResult<Prisma.$RequisicaoMaterialPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  peca<T extends Prisma.PecaDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PecaDefaultArgs<ExtArgs>>): Prisma.Prisma__PecaClient<runtime.Types.Result.GetResult<Prisma.$PecaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  peca<T extends Prisma.RequisicaoMaterialItem$pecaArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RequisicaoMaterialItem$pecaArgs<ExtArgs>>): Prisma.Prisma__PecaClient<runtime.Types.Result.GetResult<Prisma.$PecaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   equivalenteDe<T extends Prisma.RequisicaoMaterialItem$equivalenteDeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RequisicaoMaterialItem$equivalenteDeArgs<ExtArgs>>): Prisma.Prisma__PecaClient<runtime.Types.Result.GetResult<Prisma.$PecaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1752,6 +1858,8 @@ export interface RequisicaoMaterialItemFieldRefs {
   readonly id: Prisma.FieldRef<"RequisicaoMaterialItem", 'String'>
   readonly requisicaoId: Prisma.FieldRef<"RequisicaoMaterialItem", 'String'>
   readonly pecaId: Prisma.FieldRef<"RequisicaoMaterialItem", 'String'>
+  readonly descricao: Prisma.FieldRef<"RequisicaoMaterialItem", 'String'>
+  readonly codigoPeca: Prisma.FieldRef<"RequisicaoMaterialItem", 'String'>
   readonly planoLinhaId: Prisma.FieldRef<"RequisicaoMaterialItem", 'String'>
   readonly quantidadeSolicitada: Prisma.FieldRef<"RequisicaoMaterialItem", 'Decimal'>
   readonly quantidadeReservada: Prisma.FieldRef<"RequisicaoMaterialItem", 'Decimal'>
@@ -2163,6 +2271,25 @@ export type RequisicaoMaterialItemDeleteManyArgs<ExtArgs extends runtime.Types.E
    * Limit how many RequisicaoMaterialItems to delete.
    */
   limit?: number
+}
+
+/**
+ * RequisicaoMaterialItem.peca
+ */
+export type RequisicaoMaterialItem$pecaArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Peca
+   */
+  select?: Prisma.PecaSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Peca
+   */
+  omit?: Prisma.PecaOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PecaInclude<ExtArgs> | null
+  where?: Prisma.PecaWhereInput
 }
 
 /**

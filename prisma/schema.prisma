@@ -2339,7 +2339,19 @@ model RequisicaoMaterial {
 model RequisicaoMaterialItem {
   id           String @id @default(uuid()) @db.Uuid
   requisicaoId String @map("requisicao_id") @db.Uuid
-  pecaId       String @map("peca_id") @db.Uuid
+  /// NULLABLE: item cuja peça o sistema não conseguiu resolver contra o
+  /// catálogo (`status = "nao_vinculado"`) ainda precisa ser gravado — não
+  /// pode sumir da lista nem ser contado como atendido. `descricao`/
+  /// `codigoPeca` abaixo cobrem o retrato do que o plano sabia quando
+  /// `pecaId` é nulo.
+  pecaId       String? @map("peca_id") @db.Uuid
+
+  /// Retrato do que o plano sabia sobre a linha no momento da reserva.
+  /// Gravado para TODO item, não só o não vinculado: é o retrato do PLANO,
+  /// não do catálogo — o catálogo (`Peca.descricao`/`codigoInterno`) muda
+  /// depois, e este campo não deve mudar com ele.
+  descricao  String?
+  codigoPeca String? @map("codigo_peca")
 
   /// `PlanoLinha.id` de onde o item veio — é o que liga a peça de volta à
   /// linha da lista que o mecânico executa, mesmo que a ordem mude no plano.
@@ -2360,14 +2372,15 @@ model RequisicaoMaterialItem {
 
   equivalenteDePecaId String? @map("equivalente_de_peca_id") @db.Uuid
 
-  /// "faltante" | "reservada" | "separada" | "entregue" | "devolvida" | "cancelada"
+  /// "faltante" | "reservada" | "separada" | "entregue" | "devolvida" |
+  /// "cancelada" | "nao_vinculado"
   status String @default("faltante")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   requisicao     RequisicaoMaterial @relation(fields: [requisicaoId], references: [id], onDelete: Cascade)
-  peca           Peca               @relation(fields: [pecaId], references: [id], onDelete: Restrict)
+  peca           Peca?              @relation(fields: [pecaId], references: [id], onDelete: Restrict)
   equivalenteDe  Peca?              @relation("PecaEquivalente", fields: [equivalenteDePecaId], references: [id], onDelete: SetNull)
 
   @@index([requisicaoId])

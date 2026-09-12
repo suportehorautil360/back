@@ -735,10 +735,12 @@ export type PecaCreateNestedOneWithoutPecasEquivalentesInput = {
   connect?: Prisma.PecaWhereUniqueInput
 }
 
-export type PecaUpdateOneRequiredWithoutRequisicaoItensNestedInput = {
+export type PecaUpdateOneWithoutRequisicaoItensNestedInput = {
   create?: Prisma.XOR<Prisma.PecaCreateWithoutRequisicaoItensInput, Prisma.PecaUncheckedCreateWithoutRequisicaoItensInput>
   connectOrCreate?: Prisma.PecaCreateOrConnectWithoutRequisicaoItensInput
   upsert?: Prisma.PecaUpsertWithoutRequisicaoItensInput
+  disconnect?: Prisma.PecaWhereInput | boolean
+  delete?: Prisma.PecaWhereInput | boolean
   connect?: Prisma.PecaWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.PecaUpdateToOneWithWhereWithoutRequisicaoItensInput, Prisma.PecaUpdateWithoutRequisicaoItensInput>, Prisma.PecaUncheckedUpdateWithoutRequisicaoItensInput>
 }

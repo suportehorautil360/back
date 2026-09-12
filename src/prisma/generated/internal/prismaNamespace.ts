@@ -6478,6 +6478,8 @@ export const RequisicaoMaterialItemScalarFieldEnum = {
   id: 'id',
   requisicaoId: 'requisicaoId',
   pecaId: 'pecaId',
+  descricao: 'descricao',
+  codigoPeca: 'codigoPeca',
   planoLinhaId: 'planoLinhaId',
   quantidadeSolicitada: 'quantidadeSolicitada',
   quantidadeReservada: 'quantidadeReservada',
