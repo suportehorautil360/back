@@ -1,5 +1,14 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { AlmoxarifadoService } from './almoxarifado.service';
+import { Prisma } from '../../prisma/generated/client';
+
+/** Fabrica o erro que o Postgres/Prisma devolve numa colisão de unique. */
+function erroDeUniqueViolado(): Prisma.PrismaClientKnownRequestError {
+  return new Prisma.PrismaClientKnownRequestError(
+    'Unique constraint failed on the fields: (`company_id`,`numero`)',
+    { code: 'P2002', clientVersion: '7.9.1', meta: { target: ['company_id', 'numero'] } },
+  );
+}
 
 const COMPANY = '11111111-1111-1111-1111-111111111111';
 const DEPOSITO = '22222222-2222-2222-2222-222222222222';
@@ -185,6 +194,70 @@ describe('reservarParaOs', () => {
       }),
     ).rejects.toThrow(NotFoundException);
     expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('recalcula o número e tenta de novo quando duas reservas colidem no mesmo REQ-... (P2002)', async () => {
+    // É o teste que separa "o unique absorve a concorrência" (errado — o
+    // brief original dizia isso) de "o unique detecta, o retry absorve"
+    // (correto): a mesma corrida de duas OS abertas no mesmo segundo que o
+    // `SELECT FOR UPDATE` resolve para o SALDO também pode acontecer no
+    // NÚMERO da requisição — e sem retry, a segunda perderia a reserva
+    // inteira com um 500, mesmo tendo saldo de sobra para as duas.
+    const { prisma, tx } = prismaFalso(5, 0);
+    let tentativas = 0;
+    tx.requisicaoMaterial.create = jest.fn(async () => {
+      tentativas++;
+      if (tentativas === 1) throw erroDeUniqueViolado();
+      return { id: 'req-2', numero: 'REQ-2026-002' };
+    });
+    const servico = new AlmoxarifadoService(prisma as never);
+
+    const r = await servico.reservarParaOs({
+      companyId: COMPANY, serviceOrderId: OS, depositoId: DEPOSITO,
+      autorCompanyUserId: AUTOR, categoriaPlanoId: 'cat-1', cicloId: 'c1',
+    });
+
+    expect(tentativas).toBe(2);
+    // A transação inteira foi refeita — não só o INSERT — porque depois de
+    // um erro o Postgres marca a transação como abortada.
+    expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+    expect(r.numero).toBe('REQ-2026-002');
+    expect(r.itens[0]).toMatchObject({ status: 'reservada', quantidadeReservada: 1 });
+  });
+
+  it('desiste depois do teto de tentativas e propaga um erro que explica o que houve', async () => {
+    const { prisma, tx } = prismaFalso(5, 0);
+    tx.requisicaoMaterial.create = jest.fn(async () => {
+      throw erroDeUniqueViolado();
+    });
+    const servico = new AlmoxarifadoService(prisma as never);
+
+    await expect(
+      servico.reservarParaOs({
+        companyId: COMPANY, serviceOrderId: OS, depositoId: DEPOSITO,
+        autorCompanyUserId: AUTOR, categoriaPlanoId: 'cat-1', cicloId: 'c1',
+      }),
+    ).rejects.toThrow(ConflictException);
+    // Não é um 500 mudo: o teto tem um número fixo de tentativas.
+    expect(tx.requisicaoMaterial.create).toHaveBeenCalledTimes(5);
+    expect(prisma.$transaction).toHaveBeenCalledTimes(5);
+  });
+
+  it('erro que NÃO é colisão de número propaga na hora, sem retry', async () => {
+    const { prisma, tx } = prismaFalso(5, 0);
+    const erroQualquer = new Error('conexão caiu');
+    tx.requisicaoMaterial.create = jest.fn(async () => {
+      throw erroQualquer;
+    });
+    const servico = new AlmoxarifadoService(prisma as never);
+
+    await expect(
+      servico.reservarParaOs({
+        companyId: COMPANY, serviceOrderId: OS, depositoId: DEPOSITO,
+        autorCompanyUserId: AUTOR, categoriaPlanoId: 'cat-1', cicloId: 'c1',
+      }),
+    ).rejects.toThrow(erroQualquer);
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
   });
 });
 

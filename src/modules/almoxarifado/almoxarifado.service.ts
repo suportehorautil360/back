@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { normalizarCodigo } from './regras/codigo';
 import { Prisma } from '../../prisma/generated/client';
@@ -25,6 +25,30 @@ export interface ResultadoDaReserva {
   numero: string;
   statusMateriais: StatusMateriais;
   itens: ItemReservado[];
+}
+
+/**
+ * Quantas vezes recalcular `numero` antes de desistir.
+ *
+ * O brief original dizia "o unique de (company_id, numero) absorve a
+ * concorrência" — mas um `@@unique` DETECTA colisão, não a absorve: sem
+ * retry, a segunda de duas reservas abertas no mesmo segundo (o cenário que
+ * esta tarefa existe para resolver) levava P2002 e derrubava a transação
+ * inteira, sem requisição nenhuma. `nextProtocoloOsPg` (protocolo de OS)
+ * tem o mesmo problema hoje e fica fora desta frente — aqui, resolvido.
+ */
+const MAX_TENTATIVAS_NUMERO = 5;
+
+/**
+ * Verdadeiro só para a colisão que sabemos que pode acontecer aqui: duas
+ * transações calculando o mesmo `numero` (MAX+1) ao mesmo tempo — a única
+ * constraint de unicidade não-PK escrita dentro de `reservarParaOs` é
+ * `RequisicaoMaterial.@@unique([companyId, numero])`. Não inspeciona
+ * `meta.target` porque o formato exato varia por driver/versão do Prisma;
+ * `code === 'P2002'` já é inequívoco neste método.
+ */
+function colisaoDeNumeroDaRequisicao(erro: unknown): boolean {
+  return erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === 'P2002';
 }
 
 @Injectable()
@@ -82,103 +106,146 @@ export class AlmoxarifadoService {
   ): Promise<ResultadoDaReserva> {
     const itens = override?.itensDoPlano ?? (await this.itensDoPlanoDaOs(input));
 
-    return this.prisma.$transaction(async (tx) => {
-      const resultado: ItemReservado[] = [];
-
-      for (const item of itens) {
-        if (!item.pecaId) {
-          resultado.push({
-            linhaId: item.linhaId, pecaId: null, descricao: item.descricao,
-            unidade: item.unidade,
-            quantidadeSolicitada: item.quantidade, quantidadeReservada: 0,
-            quantidadeFaltante: item.quantidade, impeditivo: item.impeditivo,
-            status: 'nao_vinculado',
-          });
-          continue;
+    // A transação inteira é a unidade de retry, não só o INSERT do número.
+    // Depois de um P2002 o Postgres marca a transação como abortada (todo
+    // comando seguinte, mesmo um novo INSERT, falharia com "current
+    // transaction is aborted") — não dá para só tentar de novo o create
+    // dentro do mesmo `tx`. Refazer a transação do zero é seguro: o rollback
+    // automático do Prisma já liberou o lock de `peca_saldos`, e a nova
+    // tentativa relê o saldo (possivelmente mudado por quem venceu a
+    // corrida) e recalcula tudo — inclusive o próximo número — do zero.
+    for (let tentativa = 1; tentativa <= MAX_TENTATIVAS_NUMERO; tentativa++) {
+      try {
+        return await this.prisma.$transaction((tx) =>
+          this.executarReserva(tx, input, itens),
+        );
+      } catch (erro) {
+        if (!colisaoDeNumeroDaRequisicao(erro) || tentativa === MAX_TENTATIVAS_NUMERO) {
+          if (colisaoDeNumeroDaRequisicao(erro)) {
+            throw new ConflictException(
+              `Não foi possível gerar um número de requisição único após ` +
+                `${MAX_TENTATIVAS_NUMERO} tentativas — tente novamente.`,
+            );
+          }
+          throw erro;
         }
+        // volta pro topo do for: recalcula `numero` do zero na próxima tentativa.
+      }
+    }
+    // Inalcançável: o loop acima sempre retorna ou lança. Só aqui pro TS
+    // aceitar que a função tem um valor de retorno em todo caminho.
+    throw new ConflictException('Não foi possível concluir a reserva.');
+  }
 
-        const linhas = await tx.$queryRaw<
-          { saldo_fisico: string; saldo_reservado: string }[]
-        >(Prisma.sql`
-          SELECT saldo_fisico, saldo_reservado
-            FROM peca_saldos
+  /**
+   * O corpo da transação de `reservarParaOs`, isolado para poder ser
+   * chamado de novo em caso de retry (ver `MAX_TENTATIVAS_NUMERO`).
+   */
+  private async executarReserva(
+    tx: Prisma.TransactionClient,
+    input: {
+      companyId: string;
+      serviceOrderId: string;
+      depositoId: string;
+      autorCompanyUserId: string;
+    },
+    itens: ItemDeTroca[],
+  ): Promise<ResultadoDaReserva> {
+    const resultado: ItemReservado[] = [];
+
+    for (const item of itens) {
+      if (!item.pecaId) {
+        resultado.push({
+          linhaId: item.linhaId, pecaId: null, descricao: item.descricao,
+          unidade: item.unidade,
+          quantidadeSolicitada: item.quantidade, quantidadeReservada: 0,
+          quantidadeFaltante: item.quantidade, impeditivo: item.impeditivo,
+          status: 'nao_vinculado',
+        });
+        continue;
+      }
+
+      const linhas = await tx.$queryRaw<
+        { saldo_fisico: string; saldo_reservado: string }[]
+      >(Prisma.sql`
+        SELECT saldo_fisico, saldo_reservado
+          FROM peca_saldos
+         WHERE peca_id = ${item.pecaId}::uuid
+           AND deposito_id = ${input.depositoId}::uuid
+           FOR UPDATE
+      `);
+
+      const saldo = linhas[0]
+        ? {
+            saldoFisico: Number(linhas[0].saldo_fisico),
+            saldoReservado: Number(linhas[0].saldo_reservado),
+            saldoSeparado: 0,
+            saldoEmCompra: 0,
+          }
+        : null;
+
+      const livre = saldo ? disponivel(saldo) : 0;
+      const reservar = Math.min(livre, item.quantidade);
+      const faltante = item.quantidade - reservar;
+
+      if (reservar > 0) {
+        await tx.$executeRaw(Prisma.sql`
+          UPDATE peca_saldos
+             SET saldo_reservado = saldo_reservado + ${reservar},
+                 updated_at = now()
            WHERE peca_id = ${item.pecaId}::uuid
              AND deposito_id = ${input.depositoId}::uuid
-             FOR UPDATE
         `);
-
-        const saldo = linhas[0]
-          ? {
-              saldoFisico: Number(linhas[0].saldo_fisico),
-              saldoReservado: Number(linhas[0].saldo_reservado),
-              saldoSeparado: 0,
-              saldoEmCompra: 0,
-            }
-          : null;
-
-        const livre = saldo ? disponivel(saldo) : 0;
-        const reservar = Math.min(livre, item.quantidade);
-        const faltante = item.quantidade - reservar;
-
-        if (reservar > 0) {
-          await tx.$executeRaw(Prisma.sql`
-            UPDATE peca_saldos
-               SET saldo_reservado = saldo_reservado + ${reservar},
-                   updated_at = now()
-             WHERE peca_id = ${item.pecaId}::uuid
-               AND deposito_id = ${input.depositoId}::uuid
-          `);
-        }
-
-        resultado.push({
-          linhaId: item.linhaId, pecaId: item.pecaId, descricao: item.descricao,
-          unidade: item.unidade,
-          quantidadeSolicitada: item.quantidade, quantidadeReservada: reservar,
-          quantidadeFaltante: faltante, impeditivo: item.impeditivo,
-          status: faltante > 0 ? 'faltante' : 'reservada',
-        });
       }
 
-      const numero = await this.proximoNumeroRequisicao(tx, input.companyId);
-      const req = await tx.requisicaoMaterial.create({
-        data: {
-          companyId: input.companyId,
-          numero,
-          serviceOrderId: input.serviceOrderId,
-          depositoId: input.depositoId,
-          solicitanteCompanyUserId: input.autorCompanyUserId,
-        },
-        select: { id: true, numero: true },
+      resultado.push({
+        linhaId: item.linhaId, pecaId: item.pecaId, descricao: item.descricao,
+        unidade: item.unidade,
+        quantidadeSolicitada: item.quantidade, quantidadeReservada: reservar,
+        quantidadeFaltante: faltante, impeditivo: item.impeditivo,
+        status: faltante > 0 ? 'faltante' : 'reservada',
       });
+    }
 
-      for (const r of resultado) {
-        if (!r.pecaId) continue;
-        await tx.requisicaoMaterialItem.create({
-          data: {
-            requisicaoId: req.id,
-            pecaId: r.pecaId,
-            planoLinhaId: r.linhaId,
-            quantidadeSolicitada: r.quantidadeSolicitada,
-            quantidadeReservada: r.quantidadeReservada,
-            impeditivo: r.impeditivo,
-            status: r.status,
-          },
-        });
-      }
-
-      const statusMateriais = statusAposConsulta(
-        resultado
-          .filter((r) => r.pecaId)
-          .map((r) => ({ impeditivo: r.impeditivo, status: r.status })),
-      );
-
-      await tx.serviceOrder.update({
-        where: { id: input.serviceOrderId },
-        data: { statusMateriais },
-      });
-
-      return { requisicaoId: req.id, numero: req.numero, statusMateriais, itens: resultado };
+    const numero = await this.proximoNumeroRequisicao(tx, input.companyId);
+    const req = await tx.requisicaoMaterial.create({
+      data: {
+        companyId: input.companyId,
+        numero,
+        serviceOrderId: input.serviceOrderId,
+        depositoId: input.depositoId,
+        solicitanteCompanyUserId: input.autorCompanyUserId,
+      },
+      select: { id: true, numero: true },
     });
+
+    for (const r of resultado) {
+      if (!r.pecaId) continue;
+      await tx.requisicaoMaterialItem.create({
+        data: {
+          requisicaoId: req.id,
+          pecaId: r.pecaId,
+          planoLinhaId: r.linhaId,
+          quantidadeSolicitada: r.quantidadeSolicitada,
+          quantidadeReservada: r.quantidadeReservada,
+          impeditivo: r.impeditivo,
+          status: r.status,
+        },
+      });
+    }
+
+    const statusMateriais = statusAposConsulta(
+      resultado
+        .filter((r) => r.pecaId)
+        .map((r) => ({ impeditivo: r.impeditivo, status: r.status })),
+    );
+
+    await tx.serviceOrder.update({
+      where: { id: input.serviceOrderId },
+      data: { statusMateriais },
+    });
+
+    return { requisicaoId: req.id, numero: req.numero, statusMateriais, itens: resultado };
   }
 
   /**
@@ -236,8 +303,9 @@ export class AlmoxarifadoService {
   }
 
   /**
-   * `REQ-2026-001`. Mesma geração do protocolo de OS: MAX+1 por empresa, e o
-   * unique de `(company_id, numero)` absorve a concorrência.
+   * `REQ-2026-001`. MAX+1 por empresa, igual ao protocolo de OS. NÃO evita
+   * colisão sozinho — o `@@unique([companyId, numero])` só a DETECTA; quem
+   * absorve é o retry em `reservarParaOs` (`MAX_TENTATIVAS_NUMERO`).
    */
   private async proximoNumeroRequisicao(
     tx: Prisma.TransactionClient,
