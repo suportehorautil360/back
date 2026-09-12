@@ -38,6 +38,16 @@ export type RequisicaoMaterialMinAggregateOutputType = {
   atendidaPorCompanyUserId: string | null
   atendidaEm: Date | null
   observacao: string | null
+  liberadaEm: Date | null
+  liberadaPorCompanyUserId: string | null
+  entregueEm: Date | null
+  entreguePorCompanyUserId: string | null
+  recebedorOperatorId: string | null
+  confirmacaoTipo: string | null
+  assinatura: string | null
+  canceladaEm: Date | null
+  canceladaPorCompanyUserId: string | null
+  motivoCancelamento: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -53,6 +63,16 @@ export type RequisicaoMaterialMaxAggregateOutputType = {
   atendidaPorCompanyUserId: string | null
   atendidaEm: Date | null
   observacao: string | null
+  liberadaEm: Date | null
+  liberadaPorCompanyUserId: string | null
+  entregueEm: Date | null
+  entreguePorCompanyUserId: string | null
+  recebedorOperatorId: string | null
+  confirmacaoTipo: string | null
+  assinatura: string | null
+  canceladaEm: Date | null
+  canceladaPorCompanyUserId: string | null
+  motivoCancelamento: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -68,6 +88,16 @@ export type RequisicaoMaterialCountAggregateOutputType = {
   atendidaPorCompanyUserId: number
   atendidaEm: number
   observacao: number
+  liberadaEm: number
+  liberadaPorCompanyUserId: number
+  entregueEm: number
+  entreguePorCompanyUserId: number
+  recebedorOperatorId: number
+  confirmacaoTipo: number
+  assinatura: number
+  canceladaEm: number
+  canceladaPorCompanyUserId: number
+  motivoCancelamento: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -85,6 +115,16 @@ export type RequisicaoMaterialMinAggregateInputType = {
   atendidaPorCompanyUserId?: true
   atendidaEm?: true
   observacao?: true
+  liberadaEm?: true
+  liberadaPorCompanyUserId?: true
+  entregueEm?: true
+  entreguePorCompanyUserId?: true
+  recebedorOperatorId?: true
+  confirmacaoTipo?: true
+  assinatura?: true
+  canceladaEm?: true
+  canceladaPorCompanyUserId?: true
+  motivoCancelamento?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -100,6 +140,16 @@ export type RequisicaoMaterialMaxAggregateInputType = {
   atendidaPorCompanyUserId?: true
   atendidaEm?: true
   observacao?: true
+  liberadaEm?: true
+  liberadaPorCompanyUserId?: true
+  entregueEm?: true
+  entreguePorCompanyUserId?: true
+  recebedorOperatorId?: true
+  confirmacaoTipo?: true
+  assinatura?: true
+  canceladaEm?: true
+  canceladaPorCompanyUserId?: true
+  motivoCancelamento?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -115,6 +165,16 @@ export type RequisicaoMaterialCountAggregateInputType = {
   atendidaPorCompanyUserId?: true
   atendidaEm?: true
   observacao?: true
+  liberadaEm?: true
+  liberadaPorCompanyUserId?: true
+  entregueEm?: true
+  entreguePorCompanyUserId?: true
+  recebedorOperatorId?: true
+  confirmacaoTipo?: true
+  assinatura?: true
+  canceladaEm?: true
+  canceladaPorCompanyUserId?: true
+  motivoCancelamento?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -203,6 +263,16 @@ export type RequisicaoMaterialGroupByOutputType = {
   atendidaPorCompanyUserId: string | null
   atendidaEm: Date | null
   observacao: string | null
+  liberadaEm: Date | null
+  liberadaPorCompanyUserId: string | null
+  entregueEm: Date | null
+  entreguePorCompanyUserId: string | null
+  recebedorOperatorId: string | null
+  confirmacaoTipo: string | null
+  assinatura: string | null
+  canceladaEm: Date | null
+  canceladaPorCompanyUserId: string | null
+  motivoCancelamento: string | null
   createdAt: Date
   updatedAt: Date
   _count: RequisicaoMaterialCountAggregateOutputType | null
@@ -239,12 +309,23 @@ export type RequisicaoMaterialWhereInput = {
   atendidaPorCompanyUserId?: Prisma.UuidNullableFilter<"RequisicaoMaterial"> | string | null
   atendidaEm?: Prisma.DateTimeNullableFilter<"RequisicaoMaterial"> | Date | string | null
   observacao?: Prisma.StringNullableFilter<"RequisicaoMaterial"> | string | null
+  liberadaEm?: Prisma.DateTimeNullableFilter<"RequisicaoMaterial"> | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.UuidNullableFilter<"RequisicaoMaterial"> | string | null
+  entregueEm?: Prisma.DateTimeNullableFilter<"RequisicaoMaterial"> | Date | string | null
+  entreguePorCompanyUserId?: Prisma.UuidNullableFilter<"RequisicaoMaterial"> | string | null
+  recebedorOperatorId?: Prisma.UuidNullableFilter<"RequisicaoMaterial"> | string | null
+  confirmacaoTipo?: Prisma.StringNullableFilter<"RequisicaoMaterial"> | string | null
+  assinatura?: Prisma.StringNullableFilter<"RequisicaoMaterial"> | string | null
+  canceladaEm?: Prisma.DateTimeNullableFilter<"RequisicaoMaterial"> | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.UuidNullableFilter<"RequisicaoMaterial"> | string | null
+  motivoCancelamento?: Prisma.StringNullableFilter<"RequisicaoMaterial"> | string | null
   createdAt?: Prisma.DateTimeFilter<"RequisicaoMaterial"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"RequisicaoMaterial"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   serviceOrder?: Prisma.XOR<Prisma.ServiceOrderScalarRelationFilter, Prisma.ServiceOrderWhereInput>
   deposito?: Prisma.XOR<Prisma.DepositoScalarRelationFilter, Prisma.DepositoWhereInput>
   itens?: Prisma.RequisicaoMaterialItemListRelationFilter
+  recebedor?: Prisma.XOR<Prisma.OperatorNullableScalarRelationFilter, Prisma.OperatorWhereInput> | null
 }
 
 export type RequisicaoMaterialOrderByWithRelationInput = {
@@ -258,12 +339,23 @@ export type RequisicaoMaterialOrderByWithRelationInput = {
   atendidaPorCompanyUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   atendidaEm?: Prisma.SortOrderInput | Prisma.SortOrder
   observacao?: Prisma.SortOrderInput | Prisma.SortOrder
+  liberadaEm?: Prisma.SortOrderInput | Prisma.SortOrder
+  liberadaPorCompanyUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  entregueEm?: Prisma.SortOrderInput | Prisma.SortOrder
+  entreguePorCompanyUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  recebedorOperatorId?: Prisma.SortOrderInput | Prisma.SortOrder
+  confirmacaoTipo?: Prisma.SortOrderInput | Prisma.SortOrder
+  assinatura?: Prisma.SortOrderInput | Prisma.SortOrder
+  canceladaEm?: Prisma.SortOrderInput | Prisma.SortOrder
+  canceladaPorCompanyUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  motivoCancelamento?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   company?: Prisma.CompanyOrderByWithRelationInput
   serviceOrder?: Prisma.ServiceOrderOrderByWithRelationInput
   deposito?: Prisma.DepositoOrderByWithRelationInput
   itens?: Prisma.RequisicaoMaterialItemOrderByRelationAggregateInput
+  recebedor?: Prisma.OperatorOrderByWithRelationInput
 }
 
 export type RequisicaoMaterialWhereUniqueInput = Prisma.AtLeast<{
@@ -281,12 +373,23 @@ export type RequisicaoMaterialWhereUniqueInput = Prisma.AtLeast<{
   atendidaPorCompanyUserId?: Prisma.UuidNullableFilter<"RequisicaoMaterial"> | string | null
   atendidaEm?: Prisma.DateTimeNullableFilter<"RequisicaoMaterial"> | Date | string | null
   observacao?: Prisma.StringNullableFilter<"RequisicaoMaterial"> | string | null
+  liberadaEm?: Prisma.DateTimeNullableFilter<"RequisicaoMaterial"> | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.UuidNullableFilter<"RequisicaoMaterial"> | string | null
+  entregueEm?: Prisma.DateTimeNullableFilter<"RequisicaoMaterial"> | Date | string | null
+  entreguePorCompanyUserId?: Prisma.UuidNullableFilter<"RequisicaoMaterial"> | string | null
+  recebedorOperatorId?: Prisma.UuidNullableFilter<"RequisicaoMaterial"> | string | null
+  confirmacaoTipo?: Prisma.StringNullableFilter<"RequisicaoMaterial"> | string | null
+  assinatura?: Prisma.StringNullableFilter<"RequisicaoMaterial"> | string | null
+  canceladaEm?: Prisma.DateTimeNullableFilter<"RequisicaoMaterial"> | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.UuidNullableFilter<"RequisicaoMaterial"> | string | null
+  motivoCancelamento?: Prisma.StringNullableFilter<"RequisicaoMaterial"> | string | null
   createdAt?: Prisma.DateTimeFilter<"RequisicaoMaterial"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"RequisicaoMaterial"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   serviceOrder?: Prisma.XOR<Prisma.ServiceOrderScalarRelationFilter, Prisma.ServiceOrderWhereInput>
   deposito?: Prisma.XOR<Prisma.DepositoScalarRelationFilter, Prisma.DepositoWhereInput>
   itens?: Prisma.RequisicaoMaterialItemListRelationFilter
+  recebedor?: Prisma.XOR<Prisma.OperatorNullableScalarRelationFilter, Prisma.OperatorWhereInput> | null
 }, "id" | "companyId_numero">
 
 export type RequisicaoMaterialOrderByWithAggregationInput = {
@@ -300,6 +403,16 @@ export type RequisicaoMaterialOrderByWithAggregationInput = {
   atendidaPorCompanyUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   atendidaEm?: Prisma.SortOrderInput | Prisma.SortOrder
   observacao?: Prisma.SortOrderInput | Prisma.SortOrder
+  liberadaEm?: Prisma.SortOrderInput | Prisma.SortOrder
+  liberadaPorCompanyUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  entregueEm?: Prisma.SortOrderInput | Prisma.SortOrder
+  entreguePorCompanyUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  recebedorOperatorId?: Prisma.SortOrderInput | Prisma.SortOrder
+  confirmacaoTipo?: Prisma.SortOrderInput | Prisma.SortOrder
+  assinatura?: Prisma.SortOrderInput | Prisma.SortOrder
+  canceladaEm?: Prisma.SortOrderInput | Prisma.SortOrder
+  canceladaPorCompanyUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  motivoCancelamento?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.RequisicaoMaterialCountOrderByAggregateInput
@@ -321,6 +434,16 @@ export type RequisicaoMaterialScalarWhereWithAggregatesInput = {
   atendidaPorCompanyUserId?: Prisma.UuidNullableWithAggregatesFilter<"RequisicaoMaterial"> | string | null
   atendidaEm?: Prisma.DateTimeNullableWithAggregatesFilter<"RequisicaoMaterial"> | Date | string | null
   observacao?: Prisma.StringNullableWithAggregatesFilter<"RequisicaoMaterial"> | string | null
+  liberadaEm?: Prisma.DateTimeNullableWithAggregatesFilter<"RequisicaoMaterial"> | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.UuidNullableWithAggregatesFilter<"RequisicaoMaterial"> | string | null
+  entregueEm?: Prisma.DateTimeNullableWithAggregatesFilter<"RequisicaoMaterial"> | Date | string | null
+  entreguePorCompanyUserId?: Prisma.UuidNullableWithAggregatesFilter<"RequisicaoMaterial"> | string | null
+  recebedorOperatorId?: Prisma.UuidNullableWithAggregatesFilter<"RequisicaoMaterial"> | string | null
+  confirmacaoTipo?: Prisma.StringNullableWithAggregatesFilter<"RequisicaoMaterial"> | string | null
+  assinatura?: Prisma.StringNullableWithAggregatesFilter<"RequisicaoMaterial"> | string | null
+  canceladaEm?: Prisma.DateTimeNullableWithAggregatesFilter<"RequisicaoMaterial"> | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.UuidNullableWithAggregatesFilter<"RequisicaoMaterial"> | string | null
+  motivoCancelamento?: Prisma.StringNullableWithAggregatesFilter<"RequisicaoMaterial"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"RequisicaoMaterial"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"RequisicaoMaterial"> | Date | string
 }
@@ -333,12 +456,22 @@ export type RequisicaoMaterialCreateInput = {
   atendidaPorCompanyUserId?: string | null
   atendidaEm?: Date | string | null
   observacao?: string | null
+  liberadaEm?: Date | string | null
+  liberadaPorCompanyUserId?: string | null
+  entregueEm?: Date | string | null
+  entreguePorCompanyUserId?: string | null
+  confirmacaoTipo?: string | null
+  assinatura?: string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutRequisicoesMaterialInput
   serviceOrder: Prisma.ServiceOrderCreateNestedOneWithoutRequisicoesInput
   deposito: Prisma.DepositoCreateNestedOneWithoutRequisicoesInput
   itens?: Prisma.RequisicaoMaterialItemCreateNestedManyWithoutRequisicaoInput
+  recebedor?: Prisma.OperatorCreateNestedOneWithoutRequisicoesRecebidasInput
 }
 
 export type RequisicaoMaterialUncheckedCreateInput = {
@@ -352,6 +485,16 @@ export type RequisicaoMaterialUncheckedCreateInput = {
   atendidaPorCompanyUserId?: string | null
   atendidaEm?: Date | string | null
   observacao?: string | null
+  liberadaEm?: Date | string | null
+  liberadaPorCompanyUserId?: string | null
+  entregueEm?: Date | string | null
+  entreguePorCompanyUserId?: string | null
+  recebedorOperatorId?: string | null
+  confirmacaoTipo?: string | null
+  assinatura?: string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   itens?: Prisma.RequisicaoMaterialItemUncheckedCreateNestedManyWithoutRequisicaoInput
@@ -365,12 +508,22 @@ export type RequisicaoMaterialUpdateInput = {
   atendidaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   atendidaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  liberadaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entregueEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  entreguePorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmacaoTipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assinatura?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutRequisicoesMaterialNestedInput
   serviceOrder?: Prisma.ServiceOrderUpdateOneRequiredWithoutRequisicoesNestedInput
   deposito?: Prisma.DepositoUpdateOneRequiredWithoutRequisicoesNestedInput
   itens?: Prisma.RequisicaoMaterialItemUpdateManyWithoutRequisicaoNestedInput
+  recebedor?: Prisma.OperatorUpdateOneWithoutRequisicoesRecebidasNestedInput
 }
 
 export type RequisicaoMaterialUncheckedUpdateInput = {
@@ -384,6 +537,16 @@ export type RequisicaoMaterialUncheckedUpdateInput = {
   atendidaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   atendidaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  liberadaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entregueEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  entreguePorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recebedorOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmacaoTipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assinatura?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   itens?: Prisma.RequisicaoMaterialItemUncheckedUpdateManyWithoutRequisicaoNestedInput
@@ -400,6 +563,16 @@ export type RequisicaoMaterialCreateManyInput = {
   atendidaPorCompanyUserId?: string | null
   atendidaEm?: Date | string | null
   observacao?: string | null
+  liberadaEm?: Date | string | null
+  liberadaPorCompanyUserId?: string | null
+  entregueEm?: Date | string | null
+  entreguePorCompanyUserId?: string | null
+  recebedorOperatorId?: string | null
+  confirmacaoTipo?: string | null
+  assinatura?: string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -412,6 +585,15 @@ export type RequisicaoMaterialUpdateManyMutationInput = {
   atendidaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   atendidaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  liberadaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entregueEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  entreguePorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmacaoTipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assinatura?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -427,6 +609,16 @@ export type RequisicaoMaterialUncheckedUpdateManyInput = {
   atendidaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   atendidaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  liberadaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entregueEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  entreguePorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recebedorOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmacaoTipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assinatura?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -457,6 +649,16 @@ export type RequisicaoMaterialCountOrderByAggregateInput = {
   atendidaPorCompanyUserId?: Prisma.SortOrder
   atendidaEm?: Prisma.SortOrder
   observacao?: Prisma.SortOrder
+  liberadaEm?: Prisma.SortOrder
+  liberadaPorCompanyUserId?: Prisma.SortOrder
+  entregueEm?: Prisma.SortOrder
+  entreguePorCompanyUserId?: Prisma.SortOrder
+  recebedorOperatorId?: Prisma.SortOrder
+  confirmacaoTipo?: Prisma.SortOrder
+  assinatura?: Prisma.SortOrder
+  canceladaEm?: Prisma.SortOrder
+  canceladaPorCompanyUserId?: Prisma.SortOrder
+  motivoCancelamento?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -472,6 +674,16 @@ export type RequisicaoMaterialMaxOrderByAggregateInput = {
   atendidaPorCompanyUserId?: Prisma.SortOrder
   atendidaEm?: Prisma.SortOrder
   observacao?: Prisma.SortOrder
+  liberadaEm?: Prisma.SortOrder
+  liberadaPorCompanyUserId?: Prisma.SortOrder
+  entregueEm?: Prisma.SortOrder
+  entreguePorCompanyUserId?: Prisma.SortOrder
+  recebedorOperatorId?: Prisma.SortOrder
+  confirmacaoTipo?: Prisma.SortOrder
+  assinatura?: Prisma.SortOrder
+  canceladaEm?: Prisma.SortOrder
+  canceladaPorCompanyUserId?: Prisma.SortOrder
+  motivoCancelamento?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -487,6 +699,16 @@ export type RequisicaoMaterialMinOrderByAggregateInput = {
   atendidaPorCompanyUserId?: Prisma.SortOrder
   atendidaEm?: Prisma.SortOrder
   observacao?: Prisma.SortOrder
+  liberadaEm?: Prisma.SortOrder
+  liberadaPorCompanyUserId?: Prisma.SortOrder
+  entregueEm?: Prisma.SortOrder
+  entreguePorCompanyUserId?: Prisma.SortOrder
+  recebedorOperatorId?: Prisma.SortOrder
+  confirmacaoTipo?: Prisma.SortOrder
+  assinatura?: Prisma.SortOrder
+  canceladaEm?: Prisma.SortOrder
+  canceladaPorCompanyUserId?: Prisma.SortOrder
+  motivoCancelamento?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -580,6 +802,48 @@ export type RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput 
   deleteMany?: Prisma.RequisicaoMaterialScalarWhereInput | Prisma.RequisicaoMaterialScalarWhereInput[]
 }
 
+export type RequisicaoMaterialCreateNestedManyWithoutRecebedorInput = {
+  create?: Prisma.XOR<Prisma.RequisicaoMaterialCreateWithoutRecebedorInput, Prisma.RequisicaoMaterialUncheckedCreateWithoutRecebedorInput> | Prisma.RequisicaoMaterialCreateWithoutRecebedorInput[] | Prisma.RequisicaoMaterialUncheckedCreateWithoutRecebedorInput[]
+  connectOrCreate?: Prisma.RequisicaoMaterialCreateOrConnectWithoutRecebedorInput | Prisma.RequisicaoMaterialCreateOrConnectWithoutRecebedorInput[]
+  createMany?: Prisma.RequisicaoMaterialCreateManyRecebedorInputEnvelope
+  connect?: Prisma.RequisicaoMaterialWhereUniqueInput | Prisma.RequisicaoMaterialWhereUniqueInput[]
+}
+
+export type RequisicaoMaterialUncheckedCreateNestedManyWithoutRecebedorInput = {
+  create?: Prisma.XOR<Prisma.RequisicaoMaterialCreateWithoutRecebedorInput, Prisma.RequisicaoMaterialUncheckedCreateWithoutRecebedorInput> | Prisma.RequisicaoMaterialCreateWithoutRecebedorInput[] | Prisma.RequisicaoMaterialUncheckedCreateWithoutRecebedorInput[]
+  connectOrCreate?: Prisma.RequisicaoMaterialCreateOrConnectWithoutRecebedorInput | Prisma.RequisicaoMaterialCreateOrConnectWithoutRecebedorInput[]
+  createMany?: Prisma.RequisicaoMaterialCreateManyRecebedorInputEnvelope
+  connect?: Prisma.RequisicaoMaterialWhereUniqueInput | Prisma.RequisicaoMaterialWhereUniqueInput[]
+}
+
+export type RequisicaoMaterialUpdateManyWithoutRecebedorNestedInput = {
+  create?: Prisma.XOR<Prisma.RequisicaoMaterialCreateWithoutRecebedorInput, Prisma.RequisicaoMaterialUncheckedCreateWithoutRecebedorInput> | Prisma.RequisicaoMaterialCreateWithoutRecebedorInput[] | Prisma.RequisicaoMaterialUncheckedCreateWithoutRecebedorInput[]
+  connectOrCreate?: Prisma.RequisicaoMaterialCreateOrConnectWithoutRecebedorInput | Prisma.RequisicaoMaterialCreateOrConnectWithoutRecebedorInput[]
+  upsert?: Prisma.RequisicaoMaterialUpsertWithWhereUniqueWithoutRecebedorInput | Prisma.RequisicaoMaterialUpsertWithWhereUniqueWithoutRecebedorInput[]
+  createMany?: Prisma.RequisicaoMaterialCreateManyRecebedorInputEnvelope
+  set?: Prisma.RequisicaoMaterialWhereUniqueInput | Prisma.RequisicaoMaterialWhereUniqueInput[]
+  disconnect?: Prisma.RequisicaoMaterialWhereUniqueInput | Prisma.RequisicaoMaterialWhereUniqueInput[]
+  delete?: Prisma.RequisicaoMaterialWhereUniqueInput | Prisma.RequisicaoMaterialWhereUniqueInput[]
+  connect?: Prisma.RequisicaoMaterialWhereUniqueInput | Prisma.RequisicaoMaterialWhereUniqueInput[]
+  update?: Prisma.RequisicaoMaterialUpdateWithWhereUniqueWithoutRecebedorInput | Prisma.RequisicaoMaterialUpdateWithWhereUniqueWithoutRecebedorInput[]
+  updateMany?: Prisma.RequisicaoMaterialUpdateManyWithWhereWithoutRecebedorInput | Prisma.RequisicaoMaterialUpdateManyWithWhereWithoutRecebedorInput[]
+  deleteMany?: Prisma.RequisicaoMaterialScalarWhereInput | Prisma.RequisicaoMaterialScalarWhereInput[]
+}
+
+export type RequisicaoMaterialUncheckedUpdateManyWithoutRecebedorNestedInput = {
+  create?: Prisma.XOR<Prisma.RequisicaoMaterialCreateWithoutRecebedorInput, Prisma.RequisicaoMaterialUncheckedCreateWithoutRecebedorInput> | Prisma.RequisicaoMaterialCreateWithoutRecebedorInput[] | Prisma.RequisicaoMaterialUncheckedCreateWithoutRecebedorInput[]
+  connectOrCreate?: Prisma.RequisicaoMaterialCreateOrConnectWithoutRecebedorInput | Prisma.RequisicaoMaterialCreateOrConnectWithoutRecebedorInput[]
+  upsert?: Prisma.RequisicaoMaterialUpsertWithWhereUniqueWithoutRecebedorInput | Prisma.RequisicaoMaterialUpsertWithWhereUniqueWithoutRecebedorInput[]
+  createMany?: Prisma.RequisicaoMaterialCreateManyRecebedorInputEnvelope
+  set?: Prisma.RequisicaoMaterialWhereUniqueInput | Prisma.RequisicaoMaterialWhereUniqueInput[]
+  disconnect?: Prisma.RequisicaoMaterialWhereUniqueInput | Prisma.RequisicaoMaterialWhereUniqueInput[]
+  delete?: Prisma.RequisicaoMaterialWhereUniqueInput | Prisma.RequisicaoMaterialWhereUniqueInput[]
+  connect?: Prisma.RequisicaoMaterialWhereUniqueInput | Prisma.RequisicaoMaterialWhereUniqueInput[]
+  update?: Prisma.RequisicaoMaterialUpdateWithWhereUniqueWithoutRecebedorInput | Prisma.RequisicaoMaterialUpdateWithWhereUniqueWithoutRecebedorInput[]
+  updateMany?: Prisma.RequisicaoMaterialUpdateManyWithWhereWithoutRecebedorInput | Prisma.RequisicaoMaterialUpdateManyWithWhereWithoutRecebedorInput[]
+  deleteMany?: Prisma.RequisicaoMaterialScalarWhereInput | Prisma.RequisicaoMaterialScalarWhereInput[]
+}
+
 export type RequisicaoMaterialCreateNestedManyWithoutDepositoInput = {
   create?: Prisma.XOR<Prisma.RequisicaoMaterialCreateWithoutDepositoInput, Prisma.RequisicaoMaterialUncheckedCreateWithoutDepositoInput> | Prisma.RequisicaoMaterialCreateWithoutDepositoInput[] | Prisma.RequisicaoMaterialUncheckedCreateWithoutDepositoInput[]
   connectOrCreate?: Prisma.RequisicaoMaterialCreateOrConnectWithoutDepositoInput | Prisma.RequisicaoMaterialCreateOrConnectWithoutDepositoInput[]
@@ -644,11 +908,21 @@ export type RequisicaoMaterialCreateWithoutCompanyInput = {
   atendidaPorCompanyUserId?: string | null
   atendidaEm?: Date | string | null
   observacao?: string | null
+  liberadaEm?: Date | string | null
+  liberadaPorCompanyUserId?: string | null
+  entregueEm?: Date | string | null
+  entreguePorCompanyUserId?: string | null
+  confirmacaoTipo?: string | null
+  assinatura?: string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   serviceOrder: Prisma.ServiceOrderCreateNestedOneWithoutRequisicoesInput
   deposito: Prisma.DepositoCreateNestedOneWithoutRequisicoesInput
   itens?: Prisma.RequisicaoMaterialItemCreateNestedManyWithoutRequisicaoInput
+  recebedor?: Prisma.OperatorCreateNestedOneWithoutRequisicoesRecebidasInput
 }
 
 export type RequisicaoMaterialUncheckedCreateWithoutCompanyInput = {
@@ -661,6 +935,16 @@ export type RequisicaoMaterialUncheckedCreateWithoutCompanyInput = {
   atendidaPorCompanyUserId?: string | null
   atendidaEm?: Date | string | null
   observacao?: string | null
+  liberadaEm?: Date | string | null
+  liberadaPorCompanyUserId?: string | null
+  entregueEm?: Date | string | null
+  entreguePorCompanyUserId?: string | null
+  recebedorOperatorId?: string | null
+  confirmacaoTipo?: string | null
+  assinatura?: string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   itens?: Prisma.RequisicaoMaterialItemUncheckedCreateNestedManyWithoutRequisicaoInput
@@ -706,6 +990,16 @@ export type RequisicaoMaterialScalarWhereInput = {
   atendidaPorCompanyUserId?: Prisma.UuidNullableFilter<"RequisicaoMaterial"> | string | null
   atendidaEm?: Prisma.DateTimeNullableFilter<"RequisicaoMaterial"> | Date | string | null
   observacao?: Prisma.StringNullableFilter<"RequisicaoMaterial"> | string | null
+  liberadaEm?: Prisma.DateTimeNullableFilter<"RequisicaoMaterial"> | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.UuidNullableFilter<"RequisicaoMaterial"> | string | null
+  entregueEm?: Prisma.DateTimeNullableFilter<"RequisicaoMaterial"> | Date | string | null
+  entreguePorCompanyUserId?: Prisma.UuidNullableFilter<"RequisicaoMaterial"> | string | null
+  recebedorOperatorId?: Prisma.UuidNullableFilter<"RequisicaoMaterial"> | string | null
+  confirmacaoTipo?: Prisma.StringNullableFilter<"RequisicaoMaterial"> | string | null
+  assinatura?: Prisma.StringNullableFilter<"RequisicaoMaterial"> | string | null
+  canceladaEm?: Prisma.DateTimeNullableFilter<"RequisicaoMaterial"> | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.UuidNullableFilter<"RequisicaoMaterial"> | string | null
+  motivoCancelamento?: Prisma.StringNullableFilter<"RequisicaoMaterial"> | string | null
   createdAt?: Prisma.DateTimeFilter<"RequisicaoMaterial"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"RequisicaoMaterial"> | Date | string
 }
@@ -718,11 +1012,21 @@ export type RequisicaoMaterialCreateWithoutServiceOrderInput = {
   atendidaPorCompanyUserId?: string | null
   atendidaEm?: Date | string | null
   observacao?: string | null
+  liberadaEm?: Date | string | null
+  liberadaPorCompanyUserId?: string | null
+  entregueEm?: Date | string | null
+  entreguePorCompanyUserId?: string | null
+  confirmacaoTipo?: string | null
+  assinatura?: string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutRequisicoesMaterialInput
   deposito: Prisma.DepositoCreateNestedOneWithoutRequisicoesInput
   itens?: Prisma.RequisicaoMaterialItemCreateNestedManyWithoutRequisicaoInput
+  recebedor?: Prisma.OperatorCreateNestedOneWithoutRequisicoesRecebidasInput
 }
 
 export type RequisicaoMaterialUncheckedCreateWithoutServiceOrderInput = {
@@ -735,6 +1039,16 @@ export type RequisicaoMaterialUncheckedCreateWithoutServiceOrderInput = {
   atendidaPorCompanyUserId?: string | null
   atendidaEm?: Date | string | null
   observacao?: string | null
+  liberadaEm?: Date | string | null
+  liberadaPorCompanyUserId?: string | null
+  entregueEm?: Date | string | null
+  entreguePorCompanyUserId?: string | null
+  recebedorOperatorId?: string | null
+  confirmacaoTipo?: string | null
+  assinatura?: string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   itens?: Prisma.RequisicaoMaterialItemUncheckedCreateNestedManyWithoutRequisicaoInput
@@ -766,6 +1080,82 @@ export type RequisicaoMaterialUpdateManyWithWhereWithoutServiceOrderInput = {
   data: Prisma.XOR<Prisma.RequisicaoMaterialUpdateManyMutationInput, Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderInput>
 }
 
+export type RequisicaoMaterialCreateWithoutRecebedorInput = {
+  id?: string
+  numero: string
+  status?: string
+  solicitanteCompanyUserId: string
+  atendidaPorCompanyUserId?: string | null
+  atendidaEm?: Date | string | null
+  observacao?: string | null
+  liberadaEm?: Date | string | null
+  liberadaPorCompanyUserId?: string | null
+  entregueEm?: Date | string | null
+  entreguePorCompanyUserId?: string | null
+  confirmacaoTipo?: string | null
+  assinatura?: string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutRequisicoesMaterialInput
+  serviceOrder: Prisma.ServiceOrderCreateNestedOneWithoutRequisicoesInput
+  deposito: Prisma.DepositoCreateNestedOneWithoutRequisicoesInput
+  itens?: Prisma.RequisicaoMaterialItemCreateNestedManyWithoutRequisicaoInput
+}
+
+export type RequisicaoMaterialUncheckedCreateWithoutRecebedorInput = {
+  id?: string
+  companyId: string
+  numero: string
+  serviceOrderId: string
+  depositoId: string
+  status?: string
+  solicitanteCompanyUserId: string
+  atendidaPorCompanyUserId?: string | null
+  atendidaEm?: Date | string | null
+  observacao?: string | null
+  liberadaEm?: Date | string | null
+  liberadaPorCompanyUserId?: string | null
+  entregueEm?: Date | string | null
+  entreguePorCompanyUserId?: string | null
+  confirmacaoTipo?: string | null
+  assinatura?: string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  itens?: Prisma.RequisicaoMaterialItemUncheckedCreateNestedManyWithoutRequisicaoInput
+}
+
+export type RequisicaoMaterialCreateOrConnectWithoutRecebedorInput = {
+  where: Prisma.RequisicaoMaterialWhereUniqueInput
+  create: Prisma.XOR<Prisma.RequisicaoMaterialCreateWithoutRecebedorInput, Prisma.RequisicaoMaterialUncheckedCreateWithoutRecebedorInput>
+}
+
+export type RequisicaoMaterialCreateManyRecebedorInputEnvelope = {
+  data: Prisma.RequisicaoMaterialCreateManyRecebedorInput | Prisma.RequisicaoMaterialCreateManyRecebedorInput[]
+  skipDuplicates?: boolean
+}
+
+export type RequisicaoMaterialUpsertWithWhereUniqueWithoutRecebedorInput = {
+  where: Prisma.RequisicaoMaterialWhereUniqueInput
+  update: Prisma.XOR<Prisma.RequisicaoMaterialUpdateWithoutRecebedorInput, Prisma.RequisicaoMaterialUncheckedUpdateWithoutRecebedorInput>
+  create: Prisma.XOR<Prisma.RequisicaoMaterialCreateWithoutRecebedorInput, Prisma.RequisicaoMaterialUncheckedCreateWithoutRecebedorInput>
+}
+
+export type RequisicaoMaterialUpdateWithWhereUniqueWithoutRecebedorInput = {
+  where: Prisma.RequisicaoMaterialWhereUniqueInput
+  data: Prisma.XOR<Prisma.RequisicaoMaterialUpdateWithoutRecebedorInput, Prisma.RequisicaoMaterialUncheckedUpdateWithoutRecebedorInput>
+}
+
+export type RequisicaoMaterialUpdateManyWithWhereWithoutRecebedorInput = {
+  where: Prisma.RequisicaoMaterialScalarWhereInput
+  data: Prisma.XOR<Prisma.RequisicaoMaterialUpdateManyMutationInput, Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutRecebedorInput>
+}
+
 export type RequisicaoMaterialCreateWithoutDepositoInput = {
   id?: string
   numero: string
@@ -774,11 +1164,21 @@ export type RequisicaoMaterialCreateWithoutDepositoInput = {
   atendidaPorCompanyUserId?: string | null
   atendidaEm?: Date | string | null
   observacao?: string | null
+  liberadaEm?: Date | string | null
+  liberadaPorCompanyUserId?: string | null
+  entregueEm?: Date | string | null
+  entreguePorCompanyUserId?: string | null
+  confirmacaoTipo?: string | null
+  assinatura?: string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutRequisicoesMaterialInput
   serviceOrder: Prisma.ServiceOrderCreateNestedOneWithoutRequisicoesInput
   itens?: Prisma.RequisicaoMaterialItemCreateNestedManyWithoutRequisicaoInput
+  recebedor?: Prisma.OperatorCreateNestedOneWithoutRequisicoesRecebidasInput
 }
 
 export type RequisicaoMaterialUncheckedCreateWithoutDepositoInput = {
@@ -791,6 +1191,16 @@ export type RequisicaoMaterialUncheckedCreateWithoutDepositoInput = {
   atendidaPorCompanyUserId?: string | null
   atendidaEm?: Date | string | null
   observacao?: string | null
+  liberadaEm?: Date | string | null
+  liberadaPorCompanyUserId?: string | null
+  entregueEm?: Date | string | null
+  entreguePorCompanyUserId?: string | null
+  recebedorOperatorId?: string | null
+  confirmacaoTipo?: string | null
+  assinatura?: string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   itens?: Prisma.RequisicaoMaterialItemUncheckedCreateNestedManyWithoutRequisicaoInput
@@ -830,11 +1240,21 @@ export type RequisicaoMaterialCreateWithoutItensInput = {
   atendidaPorCompanyUserId?: string | null
   atendidaEm?: Date | string | null
   observacao?: string | null
+  liberadaEm?: Date | string | null
+  liberadaPorCompanyUserId?: string | null
+  entregueEm?: Date | string | null
+  entreguePorCompanyUserId?: string | null
+  confirmacaoTipo?: string | null
+  assinatura?: string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutRequisicoesMaterialInput
   serviceOrder: Prisma.ServiceOrderCreateNestedOneWithoutRequisicoesInput
   deposito: Prisma.DepositoCreateNestedOneWithoutRequisicoesInput
+  recebedor?: Prisma.OperatorCreateNestedOneWithoutRequisicoesRecebidasInput
 }
 
 export type RequisicaoMaterialUncheckedCreateWithoutItensInput = {
@@ -848,6 +1268,16 @@ export type RequisicaoMaterialUncheckedCreateWithoutItensInput = {
   atendidaPorCompanyUserId?: string | null
   atendidaEm?: Date | string | null
   observacao?: string | null
+  liberadaEm?: Date | string | null
+  liberadaPorCompanyUserId?: string | null
+  entregueEm?: Date | string | null
+  entreguePorCompanyUserId?: string | null
+  recebedorOperatorId?: string | null
+  confirmacaoTipo?: string | null
+  assinatura?: string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -876,11 +1306,21 @@ export type RequisicaoMaterialUpdateWithoutItensInput = {
   atendidaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   atendidaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  liberadaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entregueEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  entreguePorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmacaoTipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assinatura?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutRequisicoesMaterialNestedInput
   serviceOrder?: Prisma.ServiceOrderUpdateOneRequiredWithoutRequisicoesNestedInput
   deposito?: Prisma.DepositoUpdateOneRequiredWithoutRequisicoesNestedInput
+  recebedor?: Prisma.OperatorUpdateOneWithoutRequisicoesRecebidasNestedInput
 }
 
 export type RequisicaoMaterialUncheckedUpdateWithoutItensInput = {
@@ -894,6 +1334,16 @@ export type RequisicaoMaterialUncheckedUpdateWithoutItensInput = {
   atendidaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   atendidaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  liberadaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entregueEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  entreguePorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recebedorOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmacaoTipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assinatura?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -908,6 +1358,16 @@ export type RequisicaoMaterialCreateManyCompanyInput = {
   atendidaPorCompanyUserId?: string | null
   atendidaEm?: Date | string | null
   observacao?: string | null
+  liberadaEm?: Date | string | null
+  liberadaPorCompanyUserId?: string | null
+  entregueEm?: Date | string | null
+  entreguePorCompanyUserId?: string | null
+  recebedorOperatorId?: string | null
+  confirmacaoTipo?: string | null
+  assinatura?: string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -920,11 +1380,21 @@ export type RequisicaoMaterialUpdateWithoutCompanyInput = {
   atendidaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   atendidaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  liberadaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entregueEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  entreguePorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmacaoTipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assinatura?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   serviceOrder?: Prisma.ServiceOrderUpdateOneRequiredWithoutRequisicoesNestedInput
   deposito?: Prisma.DepositoUpdateOneRequiredWithoutRequisicoesNestedInput
   itens?: Prisma.RequisicaoMaterialItemUpdateManyWithoutRequisicaoNestedInput
+  recebedor?: Prisma.OperatorUpdateOneWithoutRequisicoesRecebidasNestedInput
 }
 
 export type RequisicaoMaterialUncheckedUpdateWithoutCompanyInput = {
@@ -937,6 +1407,16 @@ export type RequisicaoMaterialUncheckedUpdateWithoutCompanyInput = {
   atendidaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   atendidaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  liberadaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entregueEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  entreguePorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recebedorOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmacaoTipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assinatura?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   itens?: Prisma.RequisicaoMaterialItemUncheckedUpdateManyWithoutRequisicaoNestedInput
@@ -952,6 +1432,16 @@ export type RequisicaoMaterialUncheckedUpdateManyWithoutCompanyInput = {
   atendidaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   atendidaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  liberadaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entregueEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  entreguePorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recebedorOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmacaoTipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assinatura?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -966,6 +1456,16 @@ export type RequisicaoMaterialCreateManyServiceOrderInput = {
   atendidaPorCompanyUserId?: string | null
   atendidaEm?: Date | string | null
   observacao?: string | null
+  liberadaEm?: Date | string | null
+  liberadaPorCompanyUserId?: string | null
+  entregueEm?: Date | string | null
+  entreguePorCompanyUserId?: string | null
+  recebedorOperatorId?: string | null
+  confirmacaoTipo?: string | null
+  assinatura?: string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -978,11 +1478,21 @@ export type RequisicaoMaterialUpdateWithoutServiceOrderInput = {
   atendidaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   atendidaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  liberadaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entregueEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  entreguePorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmacaoTipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assinatura?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutRequisicoesMaterialNestedInput
   deposito?: Prisma.DepositoUpdateOneRequiredWithoutRequisicoesNestedInput
   itens?: Prisma.RequisicaoMaterialItemUpdateManyWithoutRequisicaoNestedInput
+  recebedor?: Prisma.OperatorUpdateOneWithoutRequisicoesRecebidasNestedInput
 }
 
 export type RequisicaoMaterialUncheckedUpdateWithoutServiceOrderInput = {
@@ -995,6 +1505,16 @@ export type RequisicaoMaterialUncheckedUpdateWithoutServiceOrderInput = {
   atendidaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   atendidaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  liberadaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entregueEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  entreguePorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recebedorOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmacaoTipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assinatura?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   itens?: Prisma.RequisicaoMaterialItemUncheckedUpdateManyWithoutRequisicaoNestedInput
@@ -1010,6 +1530,114 @@ export type RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderInput = {
   atendidaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   atendidaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  liberadaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entregueEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  entreguePorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recebedorOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmacaoTipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assinatura?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type RequisicaoMaterialCreateManyRecebedorInput = {
+  id?: string
+  companyId: string
+  numero: string
+  serviceOrderId: string
+  depositoId: string
+  status?: string
+  solicitanteCompanyUserId: string
+  atendidaPorCompanyUserId?: string | null
+  atendidaEm?: Date | string | null
+  observacao?: string | null
+  liberadaEm?: Date | string | null
+  liberadaPorCompanyUserId?: string | null
+  entregueEm?: Date | string | null
+  entreguePorCompanyUserId?: string | null
+  confirmacaoTipo?: string | null
+  assinatura?: string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type RequisicaoMaterialUpdateWithoutRecebedorInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  numero?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  solicitanteCompanyUserId?: Prisma.StringFieldUpdateOperationsInput | string
+  atendidaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  atendidaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  liberadaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entregueEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  entreguePorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmacaoTipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assinatura?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutRequisicoesMaterialNestedInput
+  serviceOrder?: Prisma.ServiceOrderUpdateOneRequiredWithoutRequisicoesNestedInput
+  deposito?: Prisma.DepositoUpdateOneRequiredWithoutRequisicoesNestedInput
+  itens?: Prisma.RequisicaoMaterialItemUpdateManyWithoutRequisicaoNestedInput
+}
+
+export type RequisicaoMaterialUncheckedUpdateWithoutRecebedorInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  numero?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceOrderId?: Prisma.StringFieldUpdateOperationsInput | string
+  depositoId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  solicitanteCompanyUserId?: Prisma.StringFieldUpdateOperationsInput | string
+  atendidaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  atendidaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  liberadaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entregueEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  entreguePorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmacaoTipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assinatura?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  itens?: Prisma.RequisicaoMaterialItemUncheckedUpdateManyWithoutRequisicaoNestedInput
+}
+
+export type RequisicaoMaterialUncheckedUpdateManyWithoutRecebedorInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  numero?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceOrderId?: Prisma.StringFieldUpdateOperationsInput | string
+  depositoId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  solicitanteCompanyUserId?: Prisma.StringFieldUpdateOperationsInput | string
+  atendidaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  atendidaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  liberadaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entregueEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  entreguePorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmacaoTipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assinatura?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1024,6 +1652,16 @@ export type RequisicaoMaterialCreateManyDepositoInput = {
   atendidaPorCompanyUserId?: string | null
   atendidaEm?: Date | string | null
   observacao?: string | null
+  liberadaEm?: Date | string | null
+  liberadaPorCompanyUserId?: string | null
+  entregueEm?: Date | string | null
+  entreguePorCompanyUserId?: string | null
+  recebedorOperatorId?: string | null
+  confirmacaoTipo?: string | null
+  assinatura?: string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1036,11 +1674,21 @@ export type RequisicaoMaterialUpdateWithoutDepositoInput = {
   atendidaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   atendidaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  liberadaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entregueEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  entreguePorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmacaoTipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assinatura?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutRequisicoesMaterialNestedInput
   serviceOrder?: Prisma.ServiceOrderUpdateOneRequiredWithoutRequisicoesNestedInput
   itens?: Prisma.RequisicaoMaterialItemUpdateManyWithoutRequisicaoNestedInput
+  recebedor?: Prisma.OperatorUpdateOneWithoutRequisicoesRecebidasNestedInput
 }
 
 export type RequisicaoMaterialUncheckedUpdateWithoutDepositoInput = {
@@ -1053,6 +1701,16 @@ export type RequisicaoMaterialUncheckedUpdateWithoutDepositoInput = {
   atendidaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   atendidaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  liberadaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entregueEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  entreguePorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recebedorOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmacaoTipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assinatura?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   itens?: Prisma.RequisicaoMaterialItemUncheckedUpdateManyWithoutRequisicaoNestedInput
@@ -1068,6 +1726,16 @@ export type RequisicaoMaterialUncheckedUpdateManyWithoutDepositoInput = {
   atendidaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   atendidaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  liberadaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  liberadaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entregueEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  entreguePorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recebedorOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confirmacaoTipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assinatura?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1114,12 +1782,23 @@ export type RequisicaoMaterialSelect<ExtArgs extends runtime.Types.Extensions.In
   atendidaPorCompanyUserId?: boolean
   atendidaEm?: boolean
   observacao?: boolean
+  liberadaEm?: boolean
+  liberadaPorCompanyUserId?: boolean
+  entregueEm?: boolean
+  entreguePorCompanyUserId?: boolean
+  recebedorOperatorId?: boolean
+  confirmacaoTipo?: boolean
+  assinatura?: boolean
+  canceladaEm?: boolean
+  canceladaPorCompanyUserId?: boolean
+  motivoCancelamento?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   serviceOrder?: boolean | Prisma.ServiceOrderDefaultArgs<ExtArgs>
   deposito?: boolean | Prisma.DepositoDefaultArgs<ExtArgs>
   itens?: boolean | Prisma.RequisicaoMaterial$itensArgs<ExtArgs>
+  recebedor?: boolean | Prisma.RequisicaoMaterial$recebedorArgs<ExtArgs>
   _count?: boolean | Prisma.RequisicaoMaterialCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["requisicaoMaterial"]>
 
@@ -1134,11 +1813,22 @@ export type RequisicaoMaterialSelectCreateManyAndReturn<ExtArgs extends runtime.
   atendidaPorCompanyUserId?: boolean
   atendidaEm?: boolean
   observacao?: boolean
+  liberadaEm?: boolean
+  liberadaPorCompanyUserId?: boolean
+  entregueEm?: boolean
+  entreguePorCompanyUserId?: boolean
+  recebedorOperatorId?: boolean
+  confirmacaoTipo?: boolean
+  assinatura?: boolean
+  canceladaEm?: boolean
+  canceladaPorCompanyUserId?: boolean
+  motivoCancelamento?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   serviceOrder?: boolean | Prisma.ServiceOrderDefaultArgs<ExtArgs>
   deposito?: boolean | Prisma.DepositoDefaultArgs<ExtArgs>
+  recebedor?: boolean | Prisma.RequisicaoMaterial$recebedorArgs<ExtArgs>
 }, ExtArgs["result"]["requisicaoMaterial"]>
 
 export type RequisicaoMaterialSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1152,11 +1842,22 @@ export type RequisicaoMaterialSelectUpdateManyAndReturn<ExtArgs extends runtime.
   atendidaPorCompanyUserId?: boolean
   atendidaEm?: boolean
   observacao?: boolean
+  liberadaEm?: boolean
+  liberadaPorCompanyUserId?: boolean
+  entregueEm?: boolean
+  entreguePorCompanyUserId?: boolean
+  recebedorOperatorId?: boolean
+  confirmacaoTipo?: boolean
+  assinatura?: boolean
+  canceladaEm?: boolean
+  canceladaPorCompanyUserId?: boolean
+  motivoCancelamento?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   serviceOrder?: boolean | Prisma.ServiceOrderDefaultArgs<ExtArgs>
   deposito?: boolean | Prisma.DepositoDefaultArgs<ExtArgs>
+  recebedor?: boolean | Prisma.RequisicaoMaterial$recebedorArgs<ExtArgs>
 }, ExtArgs["result"]["requisicaoMaterial"]>
 
 export type RequisicaoMaterialSelectScalar = {
@@ -1170,27 +1871,40 @@ export type RequisicaoMaterialSelectScalar = {
   atendidaPorCompanyUserId?: boolean
   atendidaEm?: boolean
   observacao?: boolean
+  liberadaEm?: boolean
+  liberadaPorCompanyUserId?: boolean
+  entregueEm?: boolean
+  entreguePorCompanyUserId?: boolean
+  recebedorOperatorId?: boolean
+  confirmacaoTipo?: boolean
+  assinatura?: boolean
+  canceladaEm?: boolean
+  canceladaPorCompanyUserId?: boolean
+  motivoCancelamento?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type RequisicaoMaterialOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "companyId" | "numero" | "serviceOrderId" | "depositoId" | "status" | "solicitanteCompanyUserId" | "atendidaPorCompanyUserId" | "atendidaEm" | "observacao" | "createdAt" | "updatedAt", ExtArgs["result"]["requisicaoMaterial"]>
+export type RequisicaoMaterialOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "companyId" | "numero" | "serviceOrderId" | "depositoId" | "status" | "solicitanteCompanyUserId" | "atendidaPorCompanyUserId" | "atendidaEm" | "observacao" | "liberadaEm" | "liberadaPorCompanyUserId" | "entregueEm" | "entreguePorCompanyUserId" | "recebedorOperatorId" | "confirmacaoTipo" | "assinatura" | "canceladaEm" | "canceladaPorCompanyUserId" | "motivoCancelamento" | "createdAt" | "updatedAt", ExtArgs["result"]["requisicaoMaterial"]>
 export type RequisicaoMaterialInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   serviceOrder?: boolean | Prisma.ServiceOrderDefaultArgs<ExtArgs>
   deposito?: boolean | Prisma.DepositoDefaultArgs<ExtArgs>
   itens?: boolean | Prisma.RequisicaoMaterial$itensArgs<ExtArgs>
+  recebedor?: boolean | Prisma.RequisicaoMaterial$recebedorArgs<ExtArgs>
   _count?: boolean | Prisma.RequisicaoMaterialCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type RequisicaoMaterialIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   serviceOrder?: boolean | Prisma.ServiceOrderDefaultArgs<ExtArgs>
   deposito?: boolean | Prisma.DepositoDefaultArgs<ExtArgs>
+  recebedor?: boolean | Prisma.RequisicaoMaterial$recebedorArgs<ExtArgs>
 }
 export type RequisicaoMaterialIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   serviceOrder?: boolean | Prisma.ServiceOrderDefaultArgs<ExtArgs>
   deposito?: boolean | Prisma.DepositoDefaultArgs<ExtArgs>
+  recebedor?: boolean | Prisma.RequisicaoMaterial$recebedorArgs<ExtArgs>
 }
 
 export type $RequisicaoMaterialPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1204,6 +1918,10 @@ export type $RequisicaoMaterialPayload<ExtArgs extends runtime.Types.Extensions.
      */
     deposito: Prisma.$DepositoPayload<ExtArgs>
     itens: Prisma.$RequisicaoMaterialItemPayload<ExtArgs>[]
+    /**
+     * Quem RECEBEU — ver comentário do campo acima.
+     */
+    recebedor: Prisma.$OperatorPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1224,6 +1942,29 @@ export type $RequisicaoMaterialPayload<ExtArgs extends runtime.Types.Extensions.
     atendidaPorCompanyUserId: string | null
     atendidaEm: Date | null
     observacao: string | null
+    /**
+     * Os três atos que fecham a requisição, cada um com autor e instante.
+     */
+    liberadaEm: Date | null
+    liberadaPorCompanyUserId: string | null
+    entregueEm: Date | null
+    entreguePorCompanyUserId: string | null
+    /**
+     * Quem RECEBEU — o mecânico, que é funcionário e não usuário de painel.
+     */
+    recebedorOperatorId: string | null
+    /**
+     * "qr" | "codigo_barras" | "pin" | "assinatura"
+     */
+    confirmacaoTipo: string | null
+    /**
+     * Traço da assinatura. NÃO tem validade jurídica — mesma postura de
+     * `ChecklistExecucao.assinaturaExecutante`.
+     */
+    assinatura: string | null
+    canceladaEm: Date | null
+    canceladaPorCompanyUserId: string | null
+    motivoCancelamento: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["requisicaoMaterial"]>
@@ -1624,6 +2365,7 @@ export interface Prisma__RequisicaoMaterialClient<T, Null = never, ExtArgs exten
   serviceOrder<T extends Prisma.ServiceOrderDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ServiceOrderDefaultArgs<ExtArgs>>): Prisma.Prisma__ServiceOrderClient<runtime.Types.Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   deposito<T extends Prisma.DepositoDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DepositoDefaultArgs<ExtArgs>>): Prisma.Prisma__DepositoClient<runtime.Types.Result.GetResult<Prisma.$DepositoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   itens<T extends Prisma.RequisicaoMaterial$itensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RequisicaoMaterial$itensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RequisicaoMaterialItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  recebedor<T extends Prisma.RequisicaoMaterial$recebedorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RequisicaoMaterial$recebedorArgs<ExtArgs>>): Prisma.Prisma__OperatorClient<runtime.Types.Result.GetResult<Prisma.$OperatorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1663,6 +2405,16 @@ export interface RequisicaoMaterialFieldRefs {
   readonly atendidaPorCompanyUserId: Prisma.FieldRef<"RequisicaoMaterial", 'String'>
   readonly atendidaEm: Prisma.FieldRef<"RequisicaoMaterial", 'DateTime'>
   readonly observacao: Prisma.FieldRef<"RequisicaoMaterial", 'String'>
+  readonly liberadaEm: Prisma.FieldRef<"RequisicaoMaterial", 'DateTime'>
+  readonly liberadaPorCompanyUserId: Prisma.FieldRef<"RequisicaoMaterial", 'String'>
+  readonly entregueEm: Prisma.FieldRef<"RequisicaoMaterial", 'DateTime'>
+  readonly entreguePorCompanyUserId: Prisma.FieldRef<"RequisicaoMaterial", 'String'>
+  readonly recebedorOperatorId: Prisma.FieldRef<"RequisicaoMaterial", 'String'>
+  readonly confirmacaoTipo: Prisma.FieldRef<"RequisicaoMaterial", 'String'>
+  readonly assinatura: Prisma.FieldRef<"RequisicaoMaterial", 'String'>
+  readonly canceladaEm: Prisma.FieldRef<"RequisicaoMaterial", 'DateTime'>
+  readonly canceladaPorCompanyUserId: Prisma.FieldRef<"RequisicaoMaterial", 'String'>
+  readonly motivoCancelamento: Prisma.FieldRef<"RequisicaoMaterial", 'String'>
   readonly createdAt: Prisma.FieldRef<"RequisicaoMaterial", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"RequisicaoMaterial", 'DateTime'>
 }
@@ -2087,6 +2839,25 @@ export type RequisicaoMaterial$itensArgs<ExtArgs extends runtime.Types.Extension
   take?: number
   skip?: number
   distinct?: Prisma.RequisicaoMaterialItemScalarFieldEnum | Prisma.RequisicaoMaterialItemScalarFieldEnum[]
+}
+
+/**
+ * RequisicaoMaterial.recebedor
+ */
+export type RequisicaoMaterial$recebedorArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Operator
+   */
+  select?: Prisma.OperatorSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Operator
+   */
+  omit?: Prisma.OperatorOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OperatorInclude<ExtArgs> | null
+  where?: Prisma.OperatorWhereInput
 }
 
 /**

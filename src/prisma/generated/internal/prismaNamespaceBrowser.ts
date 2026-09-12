@@ -1345,6 +1345,16 @@ export const RequisicaoMaterialScalarFieldEnum = {
   atendidaPorCompanyUserId: 'atendidaPorCompanyUserId',
   atendidaEm: 'atendidaEm',
   observacao: 'observacao',
+  liberadaEm: 'liberadaEm',
+  liberadaPorCompanyUserId: 'liberadaPorCompanyUserId',
+  entregueEm: 'entregueEm',
+  entreguePorCompanyUserId: 'entreguePorCompanyUserId',
+  recebedorOperatorId: 'recebedorOperatorId',
+  confirmacaoTipo: 'confirmacaoTipo',
+  assinatura: 'assinatura',
+  canceladaEm: 'canceladaEm',
+  canceladaPorCompanyUserId: 'canceladaPorCompanyUserId',
+  motivoCancelamento: 'motivoCancelamento',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1369,6 +1379,7 @@ export const RequisicaoMaterialItemScalarFieldEnum = {
   dataNecessidade: 'dataNecessidade',
   equivalenteDePecaId: 'equivalenteDePecaId',
   status: 'status',
+  divergencia: 'divergencia',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

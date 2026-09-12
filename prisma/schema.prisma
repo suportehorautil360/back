@@ -838,6 +838,7 @@ model Operator {
   apontamentos                 ServiceOrderApontamento[]
   checklistExecucoes           ChecklistExecucao[]
   depositosSobResponsabilidade Deposito[]                @relation("DepositoResponsavel")
+  requisicoesRecebidas         RequisicaoMaterial[]      @relation("RequisicaoRecebedor")
 
   programadoresAtendidos ProgramadorMecanico[] @relation("ProgramadorMecanicoOperator")
 
@@ -2322,6 +2323,22 @@ model RequisicaoMaterial {
   atendidaEm               DateTime? @map("atendida_em")
   observacao               String?
 
+  /// Os três atos que fecham a requisição, cada um com autor e instante.
+  liberadaEm                  DateTime? @map("liberada_em")
+  liberadaPorCompanyUserId    String?   @map("liberada_por_company_user_id") @db.Uuid
+  entregueEm                  DateTime? @map("entregue_em")
+  entreguePorCompanyUserId    String?   @map("entregue_por_company_user_id") @db.Uuid
+  /// Quem RECEBEU — o mecânico, que é funcionário e não usuário de painel.
+  recebedorOperatorId         String?   @map("recebedor_operator_id") @db.Uuid
+  /// "qr" | "codigo_barras" | "pin" | "assinatura"
+  confirmacaoTipo             String?   @map("confirmacao_tipo")
+  /// Traço da assinatura. NÃO tem validade jurídica — mesma postura de
+  /// `ChecklistExecucao.assinaturaExecutante`.
+  assinatura                  String?
+  canceladaEm                 DateTime? @map("cancelada_em")
+  canceladaPorCompanyUserId   String?   @map("cancelada_por_company_user_id") @db.Uuid
+  motivoCancelamento          String?   @map("motivo_cancelamento")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -2331,6 +2348,8 @@ model RequisicaoMaterial {
   /// de requisição que saiu dele — mesmo raciocínio de `PecaSaldo.deposito`.
   deposito     Deposito                 @relation(fields: [depositoId], references: [id], onDelete: Restrict)
   itens        RequisicaoMaterialItem[]
+  /// Quem RECEBEU — ver comentário do campo acima.
+  recebedor    Operator?                @relation("RequisicaoRecebedor", fields: [recebedorOperatorId], references: [id], onDelete: SetNull)
 
   @@unique([companyId, numero])
   @@index([companyId, status, createdAt])
@@ -2384,6 +2403,10 @@ model RequisicaoMaterialItem {
   /// "faltante" | "reservada" | "separada" | "entregue" | "devolvida" |
   /// "cancelada" | "nao_vinculado"
   status String @default("faltante")
+
+  /// O que o almoxarife achou de errado ao conferir: peça errada, avariada,
+  /// quantidade a menos. Divergência impede a liberação.
+  divergencia String?
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

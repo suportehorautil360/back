@@ -59,6 +59,7 @@ export type RequisicaoMaterialItemMinAggregateOutputType = {
   dataNecessidade: Date | null
   equivalenteDePecaId: string | null
   status: string | null
+  divergencia: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -80,6 +81,7 @@ export type RequisicaoMaterialItemMaxAggregateOutputType = {
   dataNecessidade: Date | null
   equivalenteDePecaId: string | null
   status: string | null
+  divergencia: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -101,6 +103,7 @@ export type RequisicaoMaterialItemCountAggregateOutputType = {
   dataNecessidade: number
   equivalenteDePecaId: number
   status: number
+  divergencia: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -140,6 +143,7 @@ export type RequisicaoMaterialItemMinAggregateInputType = {
   dataNecessidade?: true
   equivalenteDePecaId?: true
   status?: true
+  divergencia?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -161,6 +165,7 @@ export type RequisicaoMaterialItemMaxAggregateInputType = {
   dataNecessidade?: true
   equivalenteDePecaId?: true
   status?: true
+  divergencia?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -182,6 +187,7 @@ export type RequisicaoMaterialItemCountAggregateInputType = {
   dataNecessidade?: true
   equivalenteDePecaId?: true
   status?: true
+  divergencia?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -290,6 +296,7 @@ export type RequisicaoMaterialItemGroupByOutputType = {
   dataNecessidade: Date | null
   equivalenteDePecaId: string | null
   status: string
+  divergencia: string | null
   createdAt: Date
   updatedAt: Date
   _count: RequisicaoMaterialItemCountAggregateOutputType | null
@@ -334,6 +341,7 @@ export type RequisicaoMaterialItemWhereInput = {
   dataNecessidade?: Prisma.DateTimeNullableFilter<"RequisicaoMaterialItem"> | Date | string | null
   equivalenteDePecaId?: Prisma.UuidNullableFilter<"RequisicaoMaterialItem"> | string | null
   status?: Prisma.StringFilter<"RequisicaoMaterialItem"> | string
+  divergencia?: Prisma.StringNullableFilter<"RequisicaoMaterialItem"> | string | null
   createdAt?: Prisma.DateTimeFilter<"RequisicaoMaterialItem"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"RequisicaoMaterialItem"> | Date | string
   requisicao?: Prisma.XOR<Prisma.RequisicaoMaterialScalarRelationFilter, Prisma.RequisicaoMaterialWhereInput>
@@ -358,6 +366,7 @@ export type RequisicaoMaterialItemOrderByWithRelationInput = {
   dataNecessidade?: Prisma.SortOrderInput | Prisma.SortOrder
   equivalenteDePecaId?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  divergencia?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   requisicao?: Prisma.RequisicaoMaterialOrderByWithRelationInput
@@ -385,6 +394,7 @@ export type RequisicaoMaterialItemWhereUniqueInput = Prisma.AtLeast<{
   dataNecessidade?: Prisma.DateTimeNullableFilter<"RequisicaoMaterialItem"> | Date | string | null
   equivalenteDePecaId?: Prisma.UuidNullableFilter<"RequisicaoMaterialItem"> | string | null
   status?: Prisma.StringFilter<"RequisicaoMaterialItem"> | string
+  divergencia?: Prisma.StringNullableFilter<"RequisicaoMaterialItem"> | string | null
   createdAt?: Prisma.DateTimeFilter<"RequisicaoMaterialItem"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"RequisicaoMaterialItem"> | Date | string
   requisicao?: Prisma.XOR<Prisma.RequisicaoMaterialScalarRelationFilter, Prisma.RequisicaoMaterialWhereInput>
@@ -409,6 +419,7 @@ export type RequisicaoMaterialItemOrderByWithAggregationInput = {
   dataNecessidade?: Prisma.SortOrderInput | Prisma.SortOrder
   equivalenteDePecaId?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  divergencia?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.RequisicaoMaterialItemCountOrderByAggregateInput
@@ -438,6 +449,7 @@ export type RequisicaoMaterialItemScalarWhereWithAggregatesInput = {
   dataNecessidade?: Prisma.DateTimeNullableWithAggregatesFilter<"RequisicaoMaterialItem"> | Date | string | null
   equivalenteDePecaId?: Prisma.UuidNullableWithAggregatesFilter<"RequisicaoMaterialItem"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"RequisicaoMaterialItem"> | string
+  divergencia?: Prisma.StringNullableWithAggregatesFilter<"RequisicaoMaterialItem"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"RequisicaoMaterialItem"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"RequisicaoMaterialItem"> | Date | string
 }
@@ -456,6 +468,7 @@ export type RequisicaoMaterialItemCreateInput = {
   prioridade?: string
   dataNecessidade?: Date | string | null
   status?: string
+  divergencia?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   requisicao: Prisma.RequisicaoMaterialCreateNestedOneWithoutItensInput
@@ -480,6 +493,7 @@ export type RequisicaoMaterialItemUncheckedCreateInput = {
   dataNecessidade?: Date | string | null
   equivalenteDePecaId?: string | null
   status?: string
+  divergencia?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -498,6 +512,7 @@ export type RequisicaoMaterialItemUpdateInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  divergencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   requisicao?: Prisma.RequisicaoMaterialUpdateOneRequiredWithoutItensNestedInput
@@ -522,6 +537,7 @@ export type RequisicaoMaterialItemUncheckedUpdateInput = {
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   equivalenteDePecaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  divergencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -543,6 +559,7 @@ export type RequisicaoMaterialItemCreateManyInput = {
   dataNecessidade?: Date | string | null
   equivalenteDePecaId?: string | null
   status?: string
+  divergencia?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -561,6 +578,7 @@ export type RequisicaoMaterialItemUpdateManyMutationInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  divergencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -582,6 +600,7 @@ export type RequisicaoMaterialItemUncheckedUpdateManyInput = {
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   equivalenteDePecaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  divergencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -613,6 +632,7 @@ export type RequisicaoMaterialItemCountOrderByAggregateInput = {
   dataNecessidade?: Prisma.SortOrder
   equivalenteDePecaId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  divergencia?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -642,6 +662,7 @@ export type RequisicaoMaterialItemMaxOrderByAggregateInput = {
   dataNecessidade?: Prisma.SortOrder
   equivalenteDePecaId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  divergencia?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -663,6 +684,7 @@ export type RequisicaoMaterialItemMinOrderByAggregateInput = {
   dataNecessidade?: Prisma.SortOrder
   equivalenteDePecaId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  divergencia?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -815,6 +837,7 @@ export type RequisicaoMaterialItemCreateWithoutPecaInput = {
   prioridade?: string
   dataNecessidade?: Date | string | null
   status?: string
+  divergencia?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   requisicao: Prisma.RequisicaoMaterialCreateNestedOneWithoutItensInput
@@ -837,6 +860,7 @@ export type RequisicaoMaterialItemUncheckedCreateWithoutPecaInput = {
   dataNecessidade?: Date | string | null
   equivalenteDePecaId?: string | null
   status?: string
+  divergencia?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -865,6 +889,7 @@ export type RequisicaoMaterialItemCreateWithoutEquivalenteDeInput = {
   prioridade?: string
   dataNecessidade?: Date | string | null
   status?: string
+  divergencia?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   requisicao: Prisma.RequisicaoMaterialCreateNestedOneWithoutItensInput
@@ -887,6 +912,7 @@ export type RequisicaoMaterialItemUncheckedCreateWithoutEquivalenteDeInput = {
   prioridade?: string
   dataNecessidade?: Date | string | null
   status?: string
+  divergencia?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -937,6 +963,7 @@ export type RequisicaoMaterialItemScalarWhereInput = {
   dataNecessidade?: Prisma.DateTimeNullableFilter<"RequisicaoMaterialItem"> | Date | string | null
   equivalenteDePecaId?: Prisma.UuidNullableFilter<"RequisicaoMaterialItem"> | string | null
   status?: Prisma.StringFilter<"RequisicaoMaterialItem"> | string
+  divergencia?: Prisma.StringNullableFilter<"RequisicaoMaterialItem"> | string | null
   createdAt?: Prisma.DateTimeFilter<"RequisicaoMaterialItem"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"RequisicaoMaterialItem"> | Date | string
 }
@@ -971,6 +998,7 @@ export type RequisicaoMaterialItemCreateWithoutRequisicaoInput = {
   prioridade?: string
   dataNecessidade?: Date | string | null
   status?: string
+  divergencia?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   peca?: Prisma.PecaCreateNestedOneWithoutRequisicaoItensInput
@@ -993,6 +1021,7 @@ export type RequisicaoMaterialItemUncheckedCreateWithoutRequisicaoInput = {
   dataNecessidade?: Date | string | null
   equivalenteDePecaId?: string | null
   status?: string
+  divergencia?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1039,6 +1068,7 @@ export type RequisicaoMaterialItemCreateManyPecaInput = {
   dataNecessidade?: Date | string | null
   equivalenteDePecaId?: string | null
   status?: string
+  divergencia?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1059,6 +1089,7 @@ export type RequisicaoMaterialItemCreateManyEquivalenteDeInput = {
   prioridade?: string
   dataNecessidade?: Date | string | null
   status?: string
+  divergencia?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1077,6 +1108,7 @@ export type RequisicaoMaterialItemUpdateWithoutPecaInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  divergencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   requisicao?: Prisma.RequisicaoMaterialUpdateOneRequiredWithoutItensNestedInput
@@ -1099,6 +1131,7 @@ export type RequisicaoMaterialItemUncheckedUpdateWithoutPecaInput = {
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   equivalenteDePecaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  divergencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1119,6 +1152,7 @@ export type RequisicaoMaterialItemUncheckedUpdateManyWithoutPecaInput = {
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   equivalenteDePecaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  divergencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1137,6 +1171,7 @@ export type RequisicaoMaterialItemUpdateWithoutEquivalenteDeInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  divergencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   requisicao?: Prisma.RequisicaoMaterialUpdateOneRequiredWithoutItensNestedInput
@@ -1159,6 +1194,7 @@ export type RequisicaoMaterialItemUncheckedUpdateWithoutEquivalenteDeInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  divergencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1179,6 +1215,7 @@ export type RequisicaoMaterialItemUncheckedUpdateManyWithoutEquivalenteDeInput =
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  divergencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1199,6 +1236,7 @@ export type RequisicaoMaterialItemCreateManyRequisicaoInput = {
   dataNecessidade?: Date | string | null
   equivalenteDePecaId?: string | null
   status?: string
+  divergencia?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1217,6 +1255,7 @@ export type RequisicaoMaterialItemUpdateWithoutRequisicaoInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  divergencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   peca?: Prisma.PecaUpdateOneWithoutRequisicaoItensNestedInput
@@ -1239,6 +1278,7 @@ export type RequisicaoMaterialItemUncheckedUpdateWithoutRequisicaoInput = {
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   equivalenteDePecaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  divergencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1259,6 +1299,7 @@ export type RequisicaoMaterialItemUncheckedUpdateManyWithoutRequisicaoInput = {
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   equivalenteDePecaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  divergencia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1282,6 +1323,7 @@ export type RequisicaoMaterialItemSelect<ExtArgs extends runtime.Types.Extension
   dataNecessidade?: boolean
   equivalenteDePecaId?: boolean
   status?: boolean
+  divergencia?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   requisicao?: boolean | Prisma.RequisicaoMaterialDefaultArgs<ExtArgs>
@@ -1306,6 +1348,7 @@ export type RequisicaoMaterialItemSelectCreateManyAndReturn<ExtArgs extends runt
   dataNecessidade?: boolean
   equivalenteDePecaId?: boolean
   status?: boolean
+  divergencia?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   requisicao?: boolean | Prisma.RequisicaoMaterialDefaultArgs<ExtArgs>
@@ -1330,6 +1373,7 @@ export type RequisicaoMaterialItemSelectUpdateManyAndReturn<ExtArgs extends runt
   dataNecessidade?: boolean
   equivalenteDePecaId?: boolean
   status?: boolean
+  divergencia?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   requisicao?: boolean | Prisma.RequisicaoMaterialDefaultArgs<ExtArgs>
@@ -1354,11 +1398,12 @@ export type RequisicaoMaterialItemSelectScalar = {
   dataNecessidade?: boolean
   equivalenteDePecaId?: boolean
   status?: boolean
+  divergencia?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type RequisicaoMaterialItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "requisicaoId" | "pecaId" | "descricao" | "codigoPeca" | "planoLinhaId" | "quantidadeSolicitada" | "quantidadeReservada" | "quantidadeSeparada" | "quantidadeEntregue" | "quantidadeDevolvida" | "impeditivo" | "prioridade" | "dataNecessidade" | "equivalenteDePecaId" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["requisicaoMaterialItem"]>
+export type RequisicaoMaterialItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "requisicaoId" | "pecaId" | "descricao" | "codigoPeca" | "planoLinhaId" | "quantidadeSolicitada" | "quantidadeReservada" | "quantidadeSeparada" | "quantidadeEntregue" | "quantidadeDevolvida" | "impeditivo" | "prioridade" | "dataNecessidade" | "equivalenteDePecaId" | "status" | "divergencia" | "createdAt" | "updatedAt", ExtArgs["result"]["requisicaoMaterialItem"]>
 export type RequisicaoMaterialItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   requisicao?: boolean | Prisma.RequisicaoMaterialDefaultArgs<ExtArgs>
   peca?: boolean | Prisma.RequisicaoMaterialItem$pecaArgs<ExtArgs>
@@ -1427,6 +1472,11 @@ export type $RequisicaoMaterialItemPayload<ExtArgs extends runtime.Types.Extensi
      * "cancelada" | "nao_vinculado"
      */
     status: string
+    /**
+     * O que o almoxarife achou de errado ao conferir: peça errada, avariada,
+     * quantidade a menos. Divergência impede a liberação.
+     */
+    divergencia: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["requisicaoMaterialItem"]>
@@ -1871,6 +1921,7 @@ export interface RequisicaoMaterialItemFieldRefs {
   readonly dataNecessidade: Prisma.FieldRef<"RequisicaoMaterialItem", 'DateTime'>
   readonly equivalenteDePecaId: Prisma.FieldRef<"RequisicaoMaterialItem", 'String'>
   readonly status: Prisma.FieldRef<"RequisicaoMaterialItem", 'String'>
+  readonly divergencia: Prisma.FieldRef<"RequisicaoMaterialItem", 'String'>
   readonly createdAt: Prisma.FieldRef<"RequisicaoMaterialItem", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"RequisicaoMaterialItem", 'DateTime'>
 }
