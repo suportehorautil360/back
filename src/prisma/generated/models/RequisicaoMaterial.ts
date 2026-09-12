@@ -1209,7 +1209,9 @@ export type $RequisicaoMaterialPayload<ExtArgs extends runtime.Types.Extensions.
     id: string
     companyId: string
     /**
-     * "REQ-2026-001". MAX+1 por empresa; o unique absorve a concorrência.
+     * "REQ-2026-001". MAX+1 por empresa; o `@@unique` abaixo DETECTA colisão
+     * (duas transações calculando o mesmo próximo número), não a evita — quem
+     * evita é o retry no Nest (`AlmoxarifadoService.reservarParaOs`).
      */
     numero: string
     serviceOrderId: string

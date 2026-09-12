@@ -2306,7 +2306,9 @@ model EstoqueMovimento {
 model RequisicaoMaterial {
   id        String @id @default(uuid()) @db.Uuid
   companyId String @map("company_id") @db.Uuid
-  /// "REQ-2026-001". MAX+1 por empresa; o unique absorve a concorrência.
+  /// "REQ-2026-001". MAX+1 por empresa; o `@@unique` abaixo DETECTA colisão
+  /// (duas transações calculando o mesmo próximo número), não a evita — quem
+  /// evita é o retry no Nest (`AlmoxarifadoService.reservarParaOs`).
   numero    String
 
   serviceOrderId String @map("service_order_id") @db.Uuid
@@ -2333,6 +2335,13 @@ model RequisicaoMaterial {
   @@unique([companyId, numero])
   @@index([companyId, status, createdAt])
   @@index([serviceOrderId])
+  /// No máximo UMA requisição ABERTA (status <> 'cancelada') por OS — índice
+  /// único PARCIAL aplicado em SQL puro (Prisma não expressa índice
+  /// parcial), mesmo recurso de `operator_salario_vigente_key`
+  /// (`OperatorSalario`): ver a migration
+  /// `20260912195000_requisicao_unica_por_os`. Existe porque a checagem em
+  /// código (`findFirst` antes de criar) é TOCTOU sob READ COMMITTED — só o
+  /// índice fecha a corrida entre dois cliques simultâneos de verdade.
   @@map("requisicoes_material")
 }
 
