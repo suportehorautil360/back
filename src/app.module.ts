@@ -46,6 +46,7 @@ import { ChecklistAuthModule } from './modules/checklist-auth/checklist-auth.mod
 import { SyncModule } from './modules/sync/sync.module';
 import { PontoModule } from './modules/ponto/ponto.module';
 import { MecanicaModule } from './modules/mecanica/mecanica.module';
+import { AlmoxarifadoModule } from './modules/almoxarifado/almoxarifado.module';
 
 @Module({
   imports: [
@@ -102,6 +103,7 @@ import { MecanicaModule } from './modules/mecanica/mecanica.module';
     SyncModule,
     PontoModule,
     MecanicaModule,
+    AlmoxarifadoModule,
     // ... outros módulos
   ],
   controllers: [],
