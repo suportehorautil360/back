@@ -5,7 +5,12 @@ import { Prisma } from '../../prisma/generated/client';
 import { disponivel } from './regras/disponibilidade';
 import { novoCustoMedio } from './regras/movimento';
 import { statusAposConsulta, type StatusMateriais } from './regras/status-materiais';
-import { itensDeTrocaDoCiclo, resolverPeca, type ItemDeTroca } from './regras/plano-pecas';
+import {
+  categoriaECicloExistem,
+  itensDeTrocaDoCiclo,
+  resolverPeca,
+  type ItemDeTroca,
+} from './regras/plano-pecas';
 import { formatNumeroRequisicao, parseNumeroRequisicaoSeq } from './helpers/numero-requisicao.helper';
 
 export interface ItemReservado {
@@ -44,11 +49,66 @@ export interface ResultadoDaReserva {
 const MAX_TENTATIVAS_CONCORRENCIA = 5;
 
 /**
+ * Nome do índice único parcial que garante NO MÁXIMO uma requisição aberta
+ * por OS (migration `20260912195000_requisicao_unica_por_os`). Não existe
+ * em `schema.prisma` — Prisma não expressa índice parcial (`WHERE`), mesma
+ * situação de `operator_salario_vigente_key` em `OperatorSalario`.
+ */
+const INDICE_REQUISICAO_UNICA_POR_OS = 'requisicoes_material_uma_aberta_por_os';
+
+/**
+ * O alvo de uma violação de unique, normalizado pra uma string só.
+ *
+ * `meta.target` varia de formato: às vezes um array de CAMPOS DO SCHEMA
+ * (quando o Prisma reconhece a constraint por vir do `@@unique` declarado —
+ * é o caso de `RequisicaoMaterial.@@unique([companyId, numero])`), às vezes
+ * o NOME CRU do índice/constraint (quando o Prisma não tem de onde tirar os
+ * campos — é o caso do índice único parcial acima, que só existe em SQL,
+ * nunca em `schema.prisma`). Não achei confirmação de qual das duas formas
+ * o Prisma 7 com `@prisma/adapter-pg` usa para um índice fora do schema
+ * neste ambiente (sem Postgres acessível aos testes para reproduzir de
+ * verdade) — por isso a função aceita as duas, em vez de supor uma.
+ */
+function alvoDaViolacao(erro: Prisma.PrismaClientKnownRequestError): string {
+  const target = (erro.meta as { target?: unknown } | undefined)?.target;
+  if (Array.isArray(target)) return target.join(',');
+  if (typeof target === 'string') return target;
+  return '';
+}
+
+/**
+ * Achado Important R1 (residual da revisão): a colisão no índice
+ * `requisicoes_material_uma_aberta_por_os` NÃO é contenção — é a mesma regra
+ * de negócio do achado I3 (uma OS não pode ter duas requisições abertas),
+ * só que pega no banco em vez de na checagem de aplicação (que é TOCTOU sob
+ * READ COMMITTED: duas transações em voo ao mesmo tempo leem "não existe" as
+ * duas e as duas tentam inserir — só o INSERT que perde a corrida encontra o
+ * índice). Tentar de novo não resolveria nada (a OS SEMPRE vai ter a
+ * requisição da outra transação), e gastaria `MAX_TENTATIVAS_CONCORRENCIA`
+ * tentativas travando `peca_saldos` à toa antes de desistir com uma
+ * mensagem de "contenção" que estaria mentindo sobre o que aconteceu.
+ */
+function colisaoDeRequisicaoJaAberta(erro: unknown): boolean {
+  if (!(erro instanceof Prisma.PrismaClientKnownRequestError) || erro.code !== 'P2002') {
+    return false;
+  }
+  const alvo = alvoDaViolacao(erro);
+  return (
+    alvo.includes(INDICE_REQUISICAO_UNICA_POR_OS) ||
+    alvo.includes('serviceOrderId') ||
+    alvo.includes('service_order_id')
+  );
+}
+
+/**
  * Verdadeiro para os erros de CONTENÇÃO que vale a pena tentar de novo com a
  * transação inteira do zero:
  *
- * - `P2002`: colisão no número da requisição (duas transações calculando o
- *   mesmo MAX+1 ao mesmo tempo).
+ * - `P2002` no índice de NÚMERO (`companyId, numero`) — duas transações
+ *   calculando o mesmo MAX+1 ao mesmo tempo. Não confundir com o `P2002` do
+ *   índice de requisição-única-por-OS (`colisaoDeRequisicaoJaAberta`, achado
+ *   R1): aquele não é retentável, e por isso o chamador confere
+ *   `colisaoDeRequisicaoJaAberta` ANTES desta função.
  * - `P2010` com `meta.code` `40P01` (deadlock) ou `40001` (falha de
  *   serialização) — os dois só existem em erro de `$queryRaw`/`$executeRaw`
  *   (as raw queries do `SELECT … FOR UPDATE`): é assim que o Prisma expõe o
@@ -57,14 +117,21 @@ const MAX_TENTATIVAS_CONCORRENCIA = 5;
  *   a maior parte dos deadlocks ENTRE duas chamadas deste método, mas não
  *   os elimina por completo (pooler de conexão, outra rota tocando a mesma
  *   linha), então o retry continua sendo a rede de segurança.
+ * - `P2034`: "Transaction failed due to a write conflict or a deadlock" —
+ *   achado Important R2, o equivalente do `40P01`/`40001` para operações
+ *   NÃO-raw (`create`, `updateMany`, etc.) dentro de uma transação
+ *   interativa. `40P01`/`40001` só chegam como `P2010`, e só em raw query;
+ *   um deadlock no `requisicaoMaterial.create` ou no `serviceOrder.updateMany`
+ *   chega como `P2034`, sem precisar olhar `meta` — o código já é inequívoco.
  */
 function erroDeContencaoTransitoria(erro: unknown): boolean {
   if (!(erro instanceof Prisma.PrismaClientKnownRequestError)) return false;
-  if (erro.code === 'P2002') return true;
+  if (erro.code === 'P2002') return !colisaoDeRequisicaoJaAberta(erro) && alvoDaViolacao(erro).includes('numero');
   if (erro.code === 'P2010') {
     const sqlstate = (erro.meta as { code?: string } | undefined)?.code;
     return sqlstate === '40P01' || sqlstate === '40001';
   }
+  if (erro.code === 'P2034') return true;
   return false;
 }
 
@@ -162,6 +229,18 @@ export class AlmoxarifadoService {
           this.executarReserva(tx, input, itens),
         );
       } catch (erro) {
+        // Achado Important R1: a colisão no índice de requisição-única-por-OS
+        // não é contenção transitória — é a MESMA regra de negócio do achado
+        // I3 (a checagem de aplicação, que é TOCTOU sob concorrência de
+        // verdade), só que pega no banco. Propaga na hora, ANTES de checar
+        // `erroDeContencaoTransitoria`: tentar de novo não resolveria nada
+        // (a OS sempre vai ter a requisição da outra transação) e gastaria
+        // as `MAX_TENTATIVAS_CONCORRENCIA` travando `peca_saldos` à toa.
+        if (colisaoDeRequisicaoJaAberta(erro)) {
+          throw new ConflictException(
+            'Esta OS já tem uma requisição de material em aberto — a reserva não pode ser repetida.',
+          );
+        }
         if (!erroDeContencaoTransitoria(erro) || tentativa === MAX_TENTATIVAS_CONCORRENCIA) {
           if (erroDeContencaoTransitoria(erro)) {
             throw new ConflictException(
@@ -403,10 +482,35 @@ export class AlmoxarifadoService {
       where: { companyId: input.companyId, modelo: os.equipment?.modelo ?? 'Geral' },
       select: { categorias: true },
     });
+
+    // Achado Important R3: `itensDeTrocaDoCiclo` devolve `[]` tanto para
+    // "ciclo existe e não tem item de troca" (legítimo — ciclo só de
+    // inspeção, segue para liberar) quanto para "categoria ou ciclo não
+    // existem no plano" (erro de quem chamou — um id com typo). Sem esta
+    // checagem, o segundo caso caía no mesmo caminho do I6 (retorno cedo,
+    // sem transação) e carimbava a OS como `liberada_para_execucao` em
+    // silêncio — um `cicloId` errado liberava a ordem para a bancada. A
+    // distinção mora aqui (quem orquestra), não em `regras/plano-pecas.ts`
+    // (módulo puro — devolver `[]` para entrada inválida é o comportamento
+    // CORRETO dele).
+    const { categoriaExiste, cicloExiste } = categoriaECicloExistem(
+      plano?.categorias, input.categoriaPlanoId, input.cicloId,
+    );
+    if (!categoriaExiste) {
+      throw new BadRequestException(
+        `Categoria "${input.categoriaPlanoId}" não encontrada no plano preventivo.`,
+      );
+    }
+    if (!cicloExiste) {
+      throw new BadRequestException(
+        `Ciclo "${input.cicloId}" não encontrado no plano preventivo.`,
+      );
+    }
+
     const brutos = itensDeTrocaDoCiclo(
       plano?.categorias, input.categoriaPlanoId, input.cicloId,
     );
-    if (brutos.length === 0) return [];
+    if (brutos.length === 0) return []; // ciclo existe, sem item de troca — legítimo (I6 libera direto)
 
     const catalogo = await this.prisma.peca.findMany({
       where: { companyId: input.companyId, ativo: true },

@@ -1,4 +1,5 @@
 import {
+  categoriaECicloExistem,
   itensDeTrocaDoCiclo,
   parseQuantidade,
   resolverPeca,
@@ -8,7 +9,10 @@ const categorias = [
   {
     id: 'cat-filtros',
     nome: 'Filtros',
-    ciclos: [{ id: 'c1', titulo: 'Ciclo 1' }],
+    // `c2` existe mas nenhuma linha tem ação pra ele — ciclo só de inspeção,
+    // usado no teste de `categoriaECicloExistem` que distingue "existe e não
+    // tem item de troca" (legítimo) de "não existe" (erro de digitação).
+    ciclos: [{ id: 'c1', titulo: 'Ciclo 1' }, { id: 'c2', titulo: 'Ciclo 2 (só inspeção)' }],
     linhas: [
       { id: 'l1', item: 'Filtro de óleo', codigoPeca: '32925682', quantidade: '1', pecaId: 'p-1', acoes: { c1: 'trocar' } },
       { id: 'l2', item: 'Óleo 15W-40', codigoPeca: 'CQM20136', quantidade: '15L', acoes: { c1: 'medir_trocar' } },
@@ -34,6 +38,39 @@ describe('itensDeTrocaDoCiclo', () => {
   it('categorias que não são array devolvem vazio', () => {
     // `PlanoPreventivo.categorias` é coluna Json: o banco não garante nada.
     expect(itensDeTrocaDoCiclo(null, 'cat-filtros', 'c1')).toEqual([]);
+  });
+});
+
+describe('categoriaECicloExistem', () => {
+  // Achado Important R3 da revisão da Task 9: `itensDeTrocaDoCiclo` devolve
+  // `[]` tanto para "ciclo existe, sem item de troca" quanto para "categoria
+  // ou ciclo não existem" — e quem orquestra precisa saber QUAL dos dois
+  // aconteceu pra não liberar a OS por causa de um id com typo.
+  it('categoria e ciclo existentes: os dois true', () => {
+    expect(categoriaECicloExistem(categorias, 'cat-filtros', 'c1'))
+      .toEqual({ categoriaExiste: true, cicloExiste: true });
+  });
+
+  it('categoria existe, ciclo existe mas não tem linha de troca nenhuma: os dois true mesmo assim', () => {
+    // O caso legítimo: ciclo só de inspeção. `categoriaECicloExistem` não
+    // olha linha nenhuma — só se o ciclo está cadastrado.
+    expect(categoriaECicloExistem(categorias, 'cat-filtros', 'c2'))
+      .toEqual({ categoriaExiste: true, cicloExiste: true });
+  });
+
+  it('categoria existe, ciclo não existe: cicloExiste false', () => {
+    expect(categoriaECicloExistem(categorias, 'cat-filtros', 'c-nao-existe'))
+      .toEqual({ categoriaExiste: true, cicloExiste: false });
+  });
+
+  it('categoria não existe: os dois false (não dá pra saber do ciclo sem achar a categoria antes)', () => {
+    expect(categoriaECicloExistem(categorias, 'cat-nao-existe', 'c1'))
+      .toEqual({ categoriaExiste: false, cicloExiste: false });
+  });
+
+  it('categorias que não são array: os dois false', () => {
+    expect(categoriaECicloExistem(null, 'cat-filtros', 'c1'))
+      .toEqual({ categoriaExiste: false, cicloExiste: false });
   });
 });
 

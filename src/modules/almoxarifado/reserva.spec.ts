@@ -23,6 +23,35 @@ function erroDeContencaoPg(sqlstate: '40P01' | '40001'): Prisma.PrismaClientKnow
   );
 }
 
+/**
+ * Fabrica o erro de colisão no índice único parcial
+ * `requisicoes_material_uma_aberta_por_os` (migration
+ * `20260912195000_requisicao_unica_por_os`) — achado Important R1. O nome
+ * do índice em `meta.target` é o formato PROVÁVEL para uma constraint fora
+ * do schema Prisma (ver comentário de `alvoDaViolacao` no serviço); o teste
+ * cobre esse formato E o alternativo (array com `serviceOrderId`).
+ */
+function erroDeRequisicaoJaAberta(target: string | string[] = 'requisicoes_material_uma_aberta_por_os'): Prisma.PrismaClientKnownRequestError {
+  return new Prisma.PrismaClientKnownRequestError(
+    'Unique constraint failed',
+    { code: 'P2002', clientVersion: '7.9.1', meta: { target } },
+  );
+}
+
+/**
+ * Fabrica o erro que o Prisma devolve para deadlock/conflito de escrita numa
+ * operação NÃO-raw (`create`, `updateMany`, etc.) dentro de uma transação
+ * interativa — achado Important R2. Diferente de `40P01`/`40001` (que só
+ * aparecem em `$queryRaw`/`$executeRaw`, como `P2010`), este já vem com
+ * código próprio e inequívoco.
+ */
+function erroDeDeadlockNaoRaw(): Prisma.PrismaClientKnownRequestError {
+  return new Prisma.PrismaClientKnownRequestError(
+    'Transaction failed due to a write conflict or a deadlock. Please retry your transaction',
+    { code: 'P2034', clientVersion: '7.9.1' },
+  );
+}
+
 const COMPANY = '11111111-1111-1111-1111-111111111111';
 const DEPOSITO = '22222222-2222-2222-2222-222222222222';
 const OS = '33333333-3333-3333-3333-333333333333';
@@ -410,6 +439,133 @@ describe('reservarParaOs', () => {
     expect(tx.$queryRaw).toHaveBeenCalledTimes(2);
     expect(r.numero).toBe('REQ-2026-002');
     expect(r.itens[0]).toMatchObject({ status: 'reservada', quantidadeReservada: 1 });
+  });
+
+  it('colisão no índice de requisição-única-por-OS vira ConflictException IMEDIATA, sem retry (achado R1)', async () => {
+    // O residual do achado I3: a checagem de aplicação (`findFirst` no topo
+    // de `executarReserva`) é TOCTOU sob concorrência de verdade — duas
+    // transações em voo ao mesmo tempo leem "não existe" as duas. Quem
+    // fecha a corrida de verdade é o índice único parcial
+    // `requisicoes_material_uma_aberta_por_os` (migration
+    // `20260912195000_requisicao_unica_por_os`), e a colisão nele NÃO pode
+    // ser tratada como a mesma "contenção" do número — tentar de novo não
+    // resolveria nada (a OS sempre vai ter a requisição da outra transação).
+    const { prisma, tx } = prismaFalso(5, 0);
+    tx.requisicaoMaterial.create = jest.fn(async () => {
+      throw erroDeRequisicaoJaAberta();
+    });
+    const servico = new AlmoxarifadoService(prisma as never);
+
+    await expect(
+      servico.reservarParaOs({
+        companyId: COMPANY, serviceOrderId: OS, depositoId: DEPOSITO,
+        autorCompanyUserId: AUTOR, categoriaPlanoId: 'cat-1', cicloId: 'c1',
+      }),
+    ).rejects.toThrow(ConflictException);
+    // NÃO retentado — uma tentativa só, sem gastar as
+    // MAX_TENTATIVAS_CONCORRENCIA travando peca_saldos à toa.
+    expect(tx.requisicaoMaterial.create).toHaveBeenCalledTimes(1);
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('mesma colisão, com meta.target em array (formato alternativo) — também vira ConflictException imediata', async () => {
+    const { prisma, tx } = prismaFalso(5, 0);
+    tx.requisicaoMaterial.create = jest.fn(async () => {
+      throw erroDeRequisicaoJaAberta(['serviceOrderId']);
+    });
+    const servico = new AlmoxarifadoService(prisma as never);
+
+    await expect(
+      servico.reservarParaOs({
+        companyId: COMPANY, serviceOrderId: OS, depositoId: DEPOSITO,
+        autorCompanyUserId: AUTOR, categoriaPlanoId: 'cat-1', cicloId: 'c1',
+      }),
+    ).rejects.toThrow(ConflictException);
+    expect(tx.requisicaoMaterial.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('deadlock em operação NÃO-raw (P2034) também aciona o retry da transação inteira (achado R2)', async () => {
+    // 40P01/40001 só chegam como P2010, e só em raw query (SELECT FOR
+    // UPDATE). Um deadlock no `requisicaoMaterialItem.create` chega como
+    // P2034 — sem meta para olhar, o código já é inequívoco.
+    const { prisma, tx } = prismaFalso(5, 0);
+    let tentativas = 0;
+    tx.requisicaoMaterialItem.create = jest.fn(async () => {
+      tentativas++;
+      if (tentativas === 1) throw erroDeDeadlockNaoRaw();
+      return {};
+    });
+    const servico = new AlmoxarifadoService(prisma as never);
+
+    await servico.reservarParaOs({
+      companyId: COMPANY, serviceOrderId: OS, depositoId: DEPOSITO,
+      autorCompanyUserId: AUTOR, categoriaPlanoId: 'cat-1', cicloId: 'c1',
+    });
+
+    expect(tentativas).toBe(2);
+    expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+  });
+
+  it('categoriaPlanoId que não existe no plano: BadRequestException dizendo qual (achado R3)', async () => {
+    // Antes desta correção, um id de categoria com typo caía no mesmo
+    // caminho do achado I6 (retorno cedo, sem transação) e carimbava a OS
+    // como `liberada_para_execucao` em silêncio.
+    const { prisma } = prismaFalso(5, 0);
+    const servico = new AlmoxarifadoService(prisma as never);
+
+    await expect(
+      servico.reservarParaOs({
+        companyId: COMPANY, serviceOrderId: OS, depositoId: DEPOSITO,
+        autorCompanyUserId: AUTOR, categoriaPlanoId: 'cat-nao-existe', cicloId: 'c1',
+      }),
+    ).rejects.toThrow(BadRequestException);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('cicloId que não existe no plano: BadRequestException dizendo qual (achado R3)', async () => {
+    const { prisma } = prismaFalso(5, 0);
+    const servico = new AlmoxarifadoService(prisma as never);
+
+    await expect(
+      servico.reservarParaOs({
+        companyId: COMPANY, serviceOrderId: OS, depositoId: DEPOSITO,
+        autorCompanyUserId: AUTOR, categoriaPlanoId: 'cat-1', cicloId: 'c-nao-existe',
+      }),
+    ).rejects.toThrow(BadRequestException);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('ciclo existe mas sem item de troca nenhum: continua liberando direto — caso LEGÍTIMO (achado R3)', async () => {
+    // Distingue do teste anterior: aqui a categoria e o ciclo EXISTEM no
+    // plano (é um ciclo só de inspeção), então não é erro de digitação —
+    // é exatamente o caso que `regras/status-materiais.ts` já descrevia
+    // ("pôr um kit vazio na fila do almoxarife é ruído").
+    const { prisma } = prismaFalso(5, 0);
+    prisma.planoPreventivo.findFirst.mockResolvedValue({
+      categorias: [
+        {
+          id: 'cat-1',
+          nome: 'Filtros',
+          ciclos: [{ id: 'c1', titulo: 'Ciclo 1' }, { id: 'c-inspecao', titulo: 'Só inspeção' }],
+          linhas: [
+            { id: 'l1', item: 'Filtro de óleo', codigoPeca: '32925682',
+              quantidade: '1', pecaId: 'p-1', impeditivo: true,
+              acoes: { c1: 'trocar' } }, // nenhuma ação para 'c-inspecao'
+          ],
+        },
+      ],
+    });
+    const servico = new AlmoxarifadoService(prisma as never);
+
+    const r = await servico.reservarParaOs({
+      companyId: COMPANY, serviceOrderId: OS, depositoId: DEPOSITO,
+      autorCompanyUserId: AUTOR, categoriaPlanoId: 'cat-1', cicloId: 'c-inspecao',
+    });
+
+    expect(r).toEqual({
+      requisicaoId: null, numero: null, statusMateriais: 'liberada_para_execucao', itens: [],
+    });
+    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
   it('desiste depois do teto de tentativas e propaga um erro que explica o que houve', async () => {

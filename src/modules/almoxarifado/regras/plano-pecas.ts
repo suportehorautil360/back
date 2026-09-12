@@ -88,6 +88,34 @@ export function resolverPeca(
   return casam.length === 1 ? casam[0].id : null;
 }
 
+/**
+ * Se a CATEGORIA e o CICLO existem no plano — separado de `itensDeTrocaDoCiclo`
+ * de propósito (achado Important R3 da revisão da Task 9).
+ *
+ * `itensDeTrocaDoCiclo` devolve `[]` em dois casos bem diferentes: "este
+ * ciclo existe e não tem linha de troca" (legítimo — ciclo só de inspeção) e
+ * "esta categoria ou este ciclo não existem no plano" (erro de quem chamou,
+ * ex.: um id com typo). Esse `[]` ambíguo é o comportamento CORRETO de
+ * `itensDeTrocaDoCiclo` — um módulo puro não inventa validação para quem o
+ * chama. A distinção é de quem orquestra, e este helper existe pra dar a ele
+ * o que precisa pra decidir.
+ */
+export function categoriaECicloExistem(
+  categorias: unknown,
+  categoriaId: string,
+  cicloId: string,
+): { categoriaExiste: boolean; cicloExiste: boolean } {
+  const cat = lista<{ id?: string; ciclos?: unknown }>(categorias).find(
+    (c) => texto(c.id) === categoriaId.trim(),
+  );
+  if (!cat) return { categoriaExiste: false, cicloExiste: false };
+
+  const ciclo = lista<{ id?: string }>(cat.ciclos).find(
+    (c) => texto(c.id) === cicloId.trim(),
+  );
+  return { categoriaExiste: true, cicloExiste: Boolean(ciclo) };
+}
+
 export function itensDeTrocaDoCiclo(
   categorias: unknown,
   categoriaId: string,
