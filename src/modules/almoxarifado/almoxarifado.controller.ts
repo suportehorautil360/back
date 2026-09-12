@@ -7,6 +7,7 @@ import { AlmoxarifadoService } from './almoxarifado.service';
 import { ReservarDto } from './dto/reserva.dto';
 import { EntradaDto } from './dto/entrada.dto';
 import { SepararDto } from './dto/separacao.dto';
+import { EntregarDto } from './dto/entrega.dto';
 
 @ApiTags('almoxarifado')
 @Controller('almoxarifado')
@@ -96,6 +97,42 @@ export class AlmoxarifadoController {
       requisicaoId: id,
       autorCompanyUserId: req.painel.companyUserId,
       itens: dto.itens,
+    });
+  }
+
+  @Post('requisicoes/:id/liberar')
+  // Sem lock de saldo nenhum aqui (ver comentário do serviço), mas o
+  // duplo clique ainda vale a mesma cautela das outras rotas de escrita —
+  // não há razão para tratar esta diferente.
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Libera a OS para execução' })
+  async liberar(@Req() req: RequestComPainel, @Param('id') id: string) {
+    return this.servico.liberarRequisicao({
+      companyId: req.painel.companyId,
+      requisicaoId: id,
+      autorCompanyUserId: req.painel.companyUserId,
+    });
+  }
+
+  @Post('requisicoes/:id/entregar')
+  // Entregar duas vezes tiraria a peça do estoque duas vezes — mesma razão
+  // das rotas de reservar/entrada/separar, só que aqui o preço do reenvio
+  // duplicado é decrementar `saldo_reservado` sem ter saído peça nenhuma a
+  // mais do depósito.
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Entrega o kit ao mecânico' })
+  async entregar(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: EntregarDto,
+  ) {
+    return this.servico.entregarRequisicao({
+      companyId: req.painel.companyId,
+      requisicaoId: id,
+      autorCompanyUserId: req.painel.companyUserId,
+      recebedorOperatorId: dto.recebedorOperatorId,
+      confirmacaoTipo: dto.confirmacaoTipo,
+      assinatura: dto.assinatura ?? null,
     });
   }
 }

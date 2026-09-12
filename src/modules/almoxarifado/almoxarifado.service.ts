@@ -4,7 +4,12 @@ import { normalizarCodigo } from './regras/codigo';
 import { Prisma } from '../../prisma/generated/client';
 import { disponivel } from './regras/disponibilidade';
 import { novoCustoMedio } from './regras/movimento';
-import { statusAposConsulta, statusAposSeparacao, type StatusMateriais } from './regras/status-materiais';
+import {
+  statusAposConsulta,
+  statusAposEntrega,
+  statusAposSeparacao,
+  type StatusMateriais,
+} from './regras/status-materiais';
 import {
   requisicaoEstaSeparada,
   statusDoItemAposSeparacao,
@@ -951,6 +956,316 @@ export class AlmoxarifadoService {
     // chamada a `notificarKitCompleto` — o kit acabou de fechar.
 
     return { statusRequisicao, statusMateriais };
+  }
+
+  /**
+   * O almoxarife diz que o kit está pronto e a OS pode andar.
+   *
+   * Ato EXPLÍCITO, e não consequência automática da conferência: separar é
+   * trabalho de prateleira, liberar é a pessoa assumindo que o kit confere. O
+   * spec funcional separa os dois passos (7 e 8) pela mesma razão.
+   *
+   * Não mexe em `peca_saldos` nem no razão do estoque — por isso, ao
+   * contrário de `entregarRequisicao`, não há laço de retry por contenção
+   * aqui: sem `SELECT … FOR UPDATE`, não existe o `40001`/`40P01` que só
+   * aparece em raw query (ver `erroDeContencaoTransitoria`). As únicas
+   * escritas são no próprio registro da requisição e no `statusMateriais` da
+   * OS — sem disputa por linha de saldo.
+   */
+  async liberarRequisicao(input: {
+    companyId: string;
+    requisicaoId: string;
+    autorCompanyUserId: string;
+  }): Promise<{ statusMateriais: StatusMateriais }> {
+    const req = await this.prisma.requisicaoMaterial.findFirst({
+      where: { id: input.requisicaoId, companyId: input.companyId },
+      include: {
+        itens: true,
+        deposito: { select: { nome: true } },
+        // A notificação da Task 8 precisa destes quatro campos. Carregar
+        // aqui, numa consulta que já acontece de qualquer forma, evita uma
+        // segunda ida ao banco DENTRO da transação — onde ela seguraria a
+        // trava por mais tempo à toa.
+        serviceOrder: {
+          select: {
+            protocolo: true,
+            equipmentId: true,
+            equipmentNome: true,
+            responsavelOperatorId: true,
+          },
+        },
+      },
+    });
+    if (!req) throw new NotFoundException('Requisição não encontrada para esta empresa.');
+    if (req.status !== 'separada') {
+      throw new ConflictException(
+        `Só requisição com kit conferido é liberada — esta está "${req.status}".`,
+      );
+    }
+
+    // `statusAposEntrega` responde à MESMA pergunta aqui que na entrega:
+    // sobrou pendência de material? Os itens estão `separada`, não
+    // `entregue` — mas a função dá a resposta certa do mesmo jeito, porque
+    // só distingue `nao_vinculado`/`faltante` do resto. É deliberado (ver o
+    // comentário dela em `regras/status-materiais.ts`), não um empréstimo
+    // por acaso.
+    const paraRegra = req.itens.map((i) => ({ impeditivo: i.impeditivo, status: i.status }));
+    const statusMateriais = statusAposEntrega(paraRegra);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.requisicaoMaterial.update({
+        where: { id: req.id },
+        data: { liberadaEm: new Date(), liberadaPorCompanyUserId: input.autorCompanyUserId },
+      });
+      await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
+
+      // TODO(Task 8): notificar que a OS foi liberada. `notificarOsLiberada`
+      // ainda não existe neste módulo — quem escreve é a Task 8. A chamada
+      // tem de ficar NA MESMA transação (a liberação dar rollback é pior que
+      // não avisar), por isso o lugar já está aqui, comentado, com os dados
+      // já carregados acima (req.serviceOrder.*, req.deposito.nome) — sem
+      // implementação provisória no meio tempo.
+      // await notificarOsLiberada(tx, {
+      //   companyId: input.companyId,
+      //   serviceOrderId: req.serviceOrderId,
+      //   protocolo: req.serviceOrder.protocolo,
+      //   equipmentNome: req.serviceOrder.equipmentNome,
+      //   equipmentId: req.serviceOrder.equipmentId,
+      //   responsavelOperatorId: req.serviceOrder.responsavelOperatorId,
+      //   local: req.deposito.nome,
+      // });
+    });
+
+    return { statusMateriais };
+  }
+
+  /**
+   * A peça troca de mãos. É a PRIMEIRA operação deste módulo que decrementa
+   * `saldo_reservado` — até aqui o sistema só sabia reservar, e é por isso
+   * que a feature `suprimentos` está desligada em produção.
+   *
+   * Três coisas na MESMA transação: o saldo cai, o razão ganha a saída com
+   * sinal NEGATIVO, e a OS ganha o `ServiceOrderInsumo` — a tabela que a
+   * auditoria de OS já lê. Gravar uma sem as outras é o começo de um estoque
+   * que não bate.
+   */
+  async entregarRequisicao(input: {
+    companyId: string;
+    requisicaoId: string;
+    autorCompanyUserId: string;
+    recebedorOperatorId: string;
+    confirmacaoTipo: string;
+    assinatura?: string | null;
+  }): Promise<{ statusMateriais: StatusMateriais }> {
+    const req = await this.prisma.requisicaoMaterial.findFirst({
+      where: { id: input.requisicaoId, companyId: input.companyId },
+      include: { itens: true },
+    });
+    if (!req) throw new NotFoundException('Requisição não encontrada para esta empresa.');
+    if (req.status === 'entregue') {
+      throw new ConflictException('Esta requisição já foi entregue.');
+    }
+    if (req.status !== 'separada') {
+      throw new ConflictException(
+        `Só requisição com kit conferido é entregue — esta está "${req.status}".`,
+      );
+    }
+
+    // Só o CONJUNTO de itens candidatos (quais têm peça vinculada e estavam
+    // separados) vem da leitura de fora da transação — decide QUAIS linhas
+    // de saldo travar, nunca QUANTO tirar delas. O quanto é sempre relido
+    // FRESCO lá dentro, depois da trava (`executarEntrega`): usar
+    // `quantidadeSeparada` de `req.itens` para a aritmética do saldo seria o
+    // mesmo defeito de "leu fora da transação, decidiu o valor com o que
+    // leu" que já apareceu na entrada de estoque (Critical C2) e na
+    // conferência do kit (Critical C1) — pela quarta vez.
+    const candidatos = req.itens.filter((i) => i.status === 'separada' && i.pecaId);
+
+    // Mesma rede de contenção da reserva e da separação
+    // (`erroDeContencaoTransitoria` já existe no arquivo): sem isto, um
+    // `40001`/`P2034` na trava de `peca_saldos` chegaria ao cliente como 500
+    // cru.
+    for (let tentativa = 1; tentativa <= MAX_TENTATIVAS_CONCORRENCIA; tentativa++) {
+      try {
+        return await this.prisma.$transaction((tx) => this.executarEntrega(tx, input, req, candidatos));
+      } catch (erro) {
+        if (!erroDeContencaoTransitoria(erro) || tentativa === MAX_TENTATIVAS_CONCORRENCIA) {
+          if (erroDeContencaoTransitoria(erro)) {
+            throw new ConflictException(
+              `Não foi possível concluir a entrega após ` +
+                `${MAX_TENTATIVAS_CONCORRENCIA} tentativas por contenção — tente novamente.`,
+            );
+          }
+          throw erro;
+        }
+        // volta pro topo do for: a próxima tentativa relê tudo do zero
+        // dentro de `executarEntrega` — inclusive o estado dos itens.
+      }
+    }
+    // Inalcançável: o loop acima sempre retorna ou lança. Só aqui pro TS
+    // aceitar que a função tem um valor de retorno em todo caminho.
+    throw new ConflictException('Não foi possível concluir a entrega.');
+  }
+
+  /**
+   * O corpo da transação de `entregarRequisicao`, isolado para poder ser
+   * chamado de novo em caso de retry (ver `MAX_TENTATIVAS_CONCORRENCIA`).
+   */
+  private async executarEntrega(
+    tx: Prisma.TransactionClient,
+    input: {
+      companyId: string;
+      autorCompanyUserId: string;
+      recebedorOperatorId: string;
+      confirmacaoTipo: string;
+      assinatura?: string | null;
+    },
+    req: RequisicaoComItens,
+    candidatos: RequisicaoComItens['itens'],
+  ): Promise<{ statusMateriais: StatusMateriais }> {
+    // Mesma ordem ascendente por `pecaId` de `executarReserva` e
+    // `executarSeparacao`: travar `peca_saldos` sempre na mesma direção
+    // entre chamadas concorrentes evita deadlock (`40P01`) em vez de só
+    // detectá-lo depois.
+    const ordemDeTrava = [...candidatos].sort((a, b) => {
+      const pa = a.pecaId ?? '';
+      const pb = b.pecaId ?? '';
+      return pa < pb ? -1 : pa > pb ? 1 : 0;
+    });
+
+    const entregues = new Set<string>();
+
+    for (const item of ordemDeTrava) {
+      if (!item.pecaId) continue; // inalcançável — `candidatos` já filtra por `pecaId`
+
+      // Trava a linha do saldo ANTES de decidir quanto tirar dela — mesma
+      // regra de `executarReserva`/`executarSeparacao`.
+      const linhas = await tx.$queryRaw<
+        { saldo_fisico: string; saldo_reservado: string; saldo_separado: string }[]
+      >(Prisma.sql`
+        SELECT saldo_fisico, saldo_reservado, saldo_separado FROM peca_saldos
+         WHERE peca_id = ${item.pecaId}::uuid
+           AND deposito_id = ${req.depositoId}::uuid
+           FOR UPDATE
+      `);
+      // Achado M1 de `executarSeparacao`, válido aqui pela mesma razão:
+      // `FOR UPDATE` não trava linha que não existe. Deveria ser impossível
+      // (o item só chega a `status: 'separada'` se a linha de saldo já
+      // existisse desde a reserva) — falhar alto é melhor que silenciar:
+      // tratar como zero deixaria o `UPDATE` abaixo casar zero linhas sem
+      // erro nenhum, enquanto o item já teria sido marcado como entregue.
+      if (!linhas[0]) {
+        throw new Error(
+          `Saldo não encontrado para peça ${item.pecaId} no depósito ${req.depositoId} ` +
+            `ao entregar — estado inconsistente com a separação.`,
+        );
+      }
+
+      // Relê o item AQUI, depois da trava — nunca o retrato de fora da
+      // transação (`item`, vindo de `candidatos`/`req.itens`). Mesma razão
+      // de `executarSeparacao`: sob READ COMMITTED este `findUniqueOrThrow`
+      // enxerga o último commit, inclusive de uma reconferência que tenha
+      // mudado `quantidadeSeparada` enquanto esta transação esperava a
+      // trava. É este valor — não o de fora — que decide quanto sai do
+      // saldo.
+      const itemFresco = await tx.requisicaoMaterialItem.findUniqueOrThrow({
+        where: { id: item.id },
+      });
+      const qtd = Number(itemFresco.quantidadeSeparada);
+      if (itemFresco.status !== 'separada' || qtd <= 0) {
+        // Já entregue (ou zerado) por outra chamada enquanto esperávamos a
+        // trava — nada a fazer com este item nesta passada.
+        continue;
+      }
+
+      // Aritmética RELATIVA no banco para as TRÊS colunas — não "leia, some
+      // em JS, grave absoluto" (é a mesma classe do Critical C2 de
+      // `darEntrada`, só que nas três colunas de uma vez). `fisicoDepois`
+      // abaixo é só o retrato para o razão: como a trava é contínua entre
+      // este SELECT e este UPDATE, nenhuma outra transação altera a linha
+      // nesse meio-tempo, e o valor que o Postgres vai gravar é exatamente
+      // este.
+      const fisicoDepois = Number(linhas[0].saldo_fisico) - qtd;
+      await tx.$executeRaw(Prisma.sql`
+        UPDATE peca_saldos
+           SET saldo_fisico    = saldo_fisico - ${qtd},
+               saldo_reservado = saldo_reservado - ${qtd},
+               saldo_separado  = saldo_separado  - ${qtd},
+               updated_at = now()
+         WHERE peca_id = ${item.pecaId}::uuid
+           AND deposito_id = ${req.depositoId}::uuid
+      `);
+
+      const peca = await tx.peca.findFirstOrThrow({
+        where: { id: item.pecaId, companyId: input.companyId },
+        select: { custoMedio: true, descricao: true, codigoInterno: true, marca: true, unidade: true },
+      });
+
+      await tx.estoqueMovimento.create({
+        data: {
+          companyId: input.companyId,
+          pecaId: item.pecaId,
+          depositoId: req.depositoId,
+          tipo: 'saida',
+          // NEGATIVO: `quantidade` em `estoque_movimentos` é com sinal, e
+          // conferir o saldo é um SUM.
+          quantidade: -qtd,
+          saldoApos: fisicoDepois,
+          custoUnit: peca.custoMedio,
+          origemTipo: 'requisicao',
+          origemId: req.id,
+          autorCompanyUserId: input.autorCompanyUserId,
+        },
+      });
+
+      await tx.serviceOrderInsumo.create({
+        data: {
+          serviceOrderId: req.serviceOrderId,
+          codigo: peca.codigoInterno,
+          descricao: peca.descricao,
+          marca: peca.marca,
+          quantidade: qtd,
+          unidade: peca.unidade,
+          valorUnit: peca.custoMedio,
+        },
+      });
+
+      await tx.requisicaoMaterialItem.update({
+        where: { id: item.id },
+        data: { quantidadeEntregue: qtd, status: 'entregue' },
+      });
+
+      entregues.add(item.id);
+    }
+
+    await tx.requisicaoMaterial.update({
+      where: { id: req.id },
+      data: {
+        status: 'entregue',
+        entregueEm: new Date(),
+        entreguePorCompanyUserId: input.autorCompanyUserId,
+        recebedorOperatorId: input.recebedorOperatorId,
+        confirmacaoTipo: input.confirmacaoTipo,
+        assinatura: input.assinatura ?? null,
+      },
+    });
+
+    // `statusAposEntrega` é usada nos DOIS métodos deste arquivo — ver o
+    // comentário dela em `regras/status-materiais.ts`. Itens fora de
+    // `entregues` mantêm o `status` de `req.itens` (o retrato de fora da
+    // transação): aceitável aqui porque só decide o rótulo de MATERIAIS da
+    // OS, e o conjunto de status que importa para essa decisão
+    // (`nao_vinculado`/`faltante` vs. o resto) não muda por causa desta
+    // entrega.
+    const depois = req.itens.map((i) =>
+      entregues.has(i.id)
+        ? { impeditivo: i.impeditivo, status: 'entregue' }
+        : { impeditivo: i.impeditivo, status: i.status },
+    );
+    const statusMateriais = statusAposEntrega(depois);
+    await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
+
+    return { statusMateriais };
   }
 
   /**
