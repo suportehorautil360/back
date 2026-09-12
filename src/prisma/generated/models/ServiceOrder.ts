@@ -67,6 +67,9 @@ export type ServiceOrderMinAggregateOutputType = {
   ordemServicoAprovadaId: string | null
   execucao: string | null
   responsavelOperatorId: string | null
+  statusMateriais: string | null
+  execucaoParcialAutorizadaPor: string | null
+  execucaoParcialMotivo: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -98,6 +101,9 @@ export type ServiceOrderMaxAggregateOutputType = {
   ordemServicoAprovadaId: string | null
   execucao: string | null
   responsavelOperatorId: string | null
+  statusMateriais: string | null
+  execucaoParcialAutorizadaPor: string | null
+  execucaoParcialMotivo: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -133,6 +139,9 @@ export type ServiceOrderCountAggregateOutputType = {
   ordemServicoAprovadaId: number
   execucao: number
   responsavelOperatorId: number
+  statusMateriais: number
+  execucaoParcialAutorizadaPor: number
+  execucaoParcialMotivo: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -174,6 +183,9 @@ export type ServiceOrderMinAggregateInputType = {
   ordemServicoAprovadaId?: true
   execucao?: true
   responsavelOperatorId?: true
+  statusMateriais?: true
+  execucaoParcialAutorizadaPor?: true
+  execucaoParcialMotivo?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -205,6 +217,9 @@ export type ServiceOrderMaxAggregateInputType = {
   ordemServicoAprovadaId?: true
   execucao?: true
   responsavelOperatorId?: true
+  statusMateriais?: true
+  execucaoParcialAutorizadaPor?: true
+  execucaoParcialMotivo?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -240,6 +255,9 @@ export type ServiceOrderCountAggregateInputType = {
   ordemServicoAprovadaId?: true
   execucao?: true
   responsavelOperatorId?: true
+  statusMateriais?: true
+  execucaoParcialAutorizadaPor?: true
+  execucaoParcialMotivo?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -362,6 +380,9 @@ export type ServiceOrderGroupByOutputType = {
   ordemServicoAprovadaId: string | null
   execucao: string
   responsavelOperatorId: string | null
+  statusMateriais: string
+  execucaoParcialAutorizadaPor: string | null
+  execucaoParcialMotivo: string | null
   createdAt: Date
   updatedAt: Date
   _count: ServiceOrderCountAggregateOutputType | null
@@ -420,6 +441,9 @@ export type ServiceOrderWhereInput = {
   ordemServicoAprovadaId?: Prisma.StringNullableFilter<"ServiceOrder"> | string | null
   execucao?: Prisma.StringFilter<"ServiceOrder"> | string
   responsavelOperatorId?: Prisma.UuidNullableFilter<"ServiceOrder"> | string | null
+  statusMateriais?: Prisma.StringFilter<"ServiceOrder"> | string
+  execucaoParcialAutorizadaPor?: Prisma.UuidNullableFilter<"ServiceOrder"> | string | null
+  execucaoParcialMotivo?: Prisma.StringNullableFilter<"ServiceOrder"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ServiceOrder"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ServiceOrder"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
@@ -436,6 +460,7 @@ export type ServiceOrderWhereInput = {
   laudo?: Prisma.XOR<Prisma.ServiceOrderLaudoNullableScalarRelationFilter, Prisma.ServiceOrderLaudoWhereInput> | null
   auditoria?: Prisma.XOR<Prisma.ServiceOrderAuditoriaNullableScalarRelationFilter, Prisma.ServiceOrderAuditoriaWhereInput> | null
   checklistExecucoes?: Prisma.ChecklistExecucaoListRelationFilter
+  requisicoes?: Prisma.RequisicaoMaterialListRelationFilter
 }
 
 export type ServiceOrderOrderByWithRelationInput = {
@@ -469,6 +494,9 @@ export type ServiceOrderOrderByWithRelationInput = {
   ordemServicoAprovadaId?: Prisma.SortOrderInput | Prisma.SortOrder
   execucao?: Prisma.SortOrder
   responsavelOperatorId?: Prisma.SortOrderInput | Prisma.SortOrder
+  statusMateriais?: Prisma.SortOrder
+  execucaoParcialAutorizadaPor?: Prisma.SortOrderInput | Prisma.SortOrder
+  execucaoParcialMotivo?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   company?: Prisma.CompanyOrderByWithRelationInput
@@ -485,6 +513,7 @@ export type ServiceOrderOrderByWithRelationInput = {
   laudo?: Prisma.ServiceOrderLaudoOrderByWithRelationInput
   auditoria?: Prisma.ServiceOrderAuditoriaOrderByWithRelationInput
   checklistExecucoes?: Prisma.ChecklistExecucaoOrderByRelationAggregateInput
+  requisicoes?: Prisma.RequisicaoMaterialOrderByRelationAggregateInput
 }
 
 export type ServiceOrderWhereUniqueInput = Prisma.AtLeast<{
@@ -522,6 +551,9 @@ export type ServiceOrderWhereUniqueInput = Prisma.AtLeast<{
   ordemServicoAprovadaId?: Prisma.StringNullableFilter<"ServiceOrder"> | string | null
   execucao?: Prisma.StringFilter<"ServiceOrder"> | string
   responsavelOperatorId?: Prisma.UuidNullableFilter<"ServiceOrder"> | string | null
+  statusMateriais?: Prisma.StringFilter<"ServiceOrder"> | string
+  execucaoParcialAutorizadaPor?: Prisma.UuidNullableFilter<"ServiceOrder"> | string | null
+  execucaoParcialMotivo?: Prisma.StringNullableFilter<"ServiceOrder"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ServiceOrder"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ServiceOrder"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
@@ -538,6 +570,7 @@ export type ServiceOrderWhereUniqueInput = Prisma.AtLeast<{
   laudo?: Prisma.XOR<Prisma.ServiceOrderLaudoNullableScalarRelationFilter, Prisma.ServiceOrderLaudoWhereInput> | null
   auditoria?: Prisma.XOR<Prisma.ServiceOrderAuditoriaNullableScalarRelationFilter, Prisma.ServiceOrderAuditoriaWhereInput> | null
   checklistExecucoes?: Prisma.ChecklistExecucaoListRelationFilter
+  requisicoes?: Prisma.RequisicaoMaterialListRelationFilter
 }, "id" | "legacyId" | "companyId_protocolo">
 
 export type ServiceOrderOrderByWithAggregationInput = {
@@ -571,6 +604,9 @@ export type ServiceOrderOrderByWithAggregationInput = {
   ordemServicoAprovadaId?: Prisma.SortOrderInput | Prisma.SortOrder
   execucao?: Prisma.SortOrder
   responsavelOperatorId?: Prisma.SortOrderInput | Prisma.SortOrder
+  statusMateriais?: Prisma.SortOrder
+  execucaoParcialAutorizadaPor?: Prisma.SortOrderInput | Prisma.SortOrder
+  execucaoParcialMotivo?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.ServiceOrderCountOrderByAggregateInput
@@ -614,6 +650,9 @@ export type ServiceOrderScalarWhereWithAggregatesInput = {
   ordemServicoAprovadaId?: Prisma.StringNullableWithAggregatesFilter<"ServiceOrder"> | string | null
   execucao?: Prisma.StringWithAggregatesFilter<"ServiceOrder"> | string
   responsavelOperatorId?: Prisma.UuidNullableWithAggregatesFilter<"ServiceOrder"> | string | null
+  statusMateriais?: Prisma.StringWithAggregatesFilter<"ServiceOrder"> | string
+  execucaoParcialAutorizadaPor?: Prisma.UuidNullableWithAggregatesFilter<"ServiceOrder"> | string | null
+  execucaoParcialMotivo?: Prisma.StringNullableWithAggregatesFilter<"ServiceOrder"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ServiceOrder"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ServiceOrder"> | Date | string
 }
@@ -646,6 +685,9 @@ export type ServiceOrderCreateInput = {
   oficinaVencedoraId?: string | null
   ordemServicoAprovadaId?: string | null
   execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutServiceOrdersInput
@@ -662,6 +704,7 @@ export type ServiceOrderCreateInput = {
   laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateInput = {
@@ -695,6 +738,9 @@ export type ServiceOrderUncheckedCreateInput = {
   ordemServicoAprovadaId?: string | null
   execucao?: string
   responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedCreateNestedManyWithoutServiceOrderInput
@@ -708,6 +754,7 @@ export type ServiceOrderUncheckedCreateInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUpdateInput = {
@@ -738,6 +785,9 @@ export type ServiceOrderUpdateInput = {
   oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutServiceOrdersNestedInput
@@ -754,6 +804,7 @@ export type ServiceOrderUpdateInput = {
   laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateInput = {
@@ -787,6 +838,9 @@ export type ServiceOrderUncheckedUpdateInput = {
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
   responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedUpdateManyWithoutServiceOrderNestedInput
@@ -800,6 +854,7 @@ export type ServiceOrderUncheckedUpdateInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateManyInput = {
@@ -833,6 +888,9 @@ export type ServiceOrderCreateManyInput = {
   ordemServicoAprovadaId?: string | null
   execucao?: string
   responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -865,6 +923,9 @@ export type ServiceOrderUpdateManyMutationInput = {
   oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -900,6 +961,9 @@ export type ServiceOrderUncheckedUpdateManyInput = {
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
   responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -950,6 +1014,9 @@ export type ServiceOrderCountOrderByAggregateInput = {
   ordemServicoAprovadaId?: Prisma.SortOrder
   execucao?: Prisma.SortOrder
   responsavelOperatorId?: Prisma.SortOrder
+  statusMateriais?: Prisma.SortOrder
+  execucaoParcialAutorizadaPor?: Prisma.SortOrder
+  execucaoParcialMotivo?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -985,6 +1052,9 @@ export type ServiceOrderMaxOrderByAggregateInput = {
   ordemServicoAprovadaId?: Prisma.SortOrder
   execucao?: Prisma.SortOrder
   responsavelOperatorId?: Prisma.SortOrder
+  statusMateriais?: Prisma.SortOrder
+  execucaoParcialAutorizadaPor?: Prisma.SortOrder
+  execucaoParcialMotivo?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -1016,6 +1086,9 @@ export type ServiceOrderMinOrderByAggregateInput = {
   ordemServicoAprovadaId?: Prisma.SortOrder
   execucao?: Prisma.SortOrder
   responsavelOperatorId?: Prisma.SortOrder
+  statusMateriais?: Prisma.SortOrder
+  execucaoParcialAutorizadaPor?: Prisma.SortOrder
+  execucaoParcialMotivo?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -1318,6 +1391,20 @@ export type ServiceOrderUpdateOneRequiredWithoutAuditoriaNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ServiceOrderUpdateToOneWithWhereWithoutAuditoriaInput, Prisma.ServiceOrderUpdateWithoutAuditoriaInput>, Prisma.ServiceOrderUncheckedUpdateWithoutAuditoriaInput>
 }
 
+export type ServiceOrderCreateNestedOneWithoutRequisicoesInput = {
+  create?: Prisma.XOR<Prisma.ServiceOrderCreateWithoutRequisicoesInput, Prisma.ServiceOrderUncheckedCreateWithoutRequisicoesInput>
+  connectOrCreate?: Prisma.ServiceOrderCreateOrConnectWithoutRequisicoesInput
+  connect?: Prisma.ServiceOrderWhereUniqueInput
+}
+
+export type ServiceOrderUpdateOneRequiredWithoutRequisicoesNestedInput = {
+  create?: Prisma.XOR<Prisma.ServiceOrderCreateWithoutRequisicoesInput, Prisma.ServiceOrderUncheckedCreateWithoutRequisicoesInput>
+  connectOrCreate?: Prisma.ServiceOrderCreateOrConnectWithoutRequisicoesInput
+  upsert?: Prisma.ServiceOrderUpsertWithoutRequisicoesInput
+  connect?: Prisma.ServiceOrderWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ServiceOrderUpdateToOneWithWhereWithoutRequisicoesInput, Prisma.ServiceOrderUpdateWithoutRequisicoesInput>, Prisma.ServiceOrderUncheckedUpdateWithoutRequisicoesInput>
+}
+
 export type ServiceOrderCreateWithoutCompanyInput = {
   id?: string
   legacyId?: string | null
@@ -1346,6 +1433,9 @@ export type ServiceOrderCreateWithoutCompanyInput = {
   oficinaVencedoraId?: string | null
   ordemServicoAprovadaId?: string | null
   execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   equipment?: Prisma.EquipmentCreateNestedOneWithoutServiceOrdersInput
@@ -1361,6 +1451,7 @@ export type ServiceOrderCreateWithoutCompanyInput = {
   laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutCompanyInput = {
@@ -1393,6 +1484,9 @@ export type ServiceOrderUncheckedCreateWithoutCompanyInput = {
   ordemServicoAprovadaId?: string | null
   execucao?: string
   responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedCreateNestedManyWithoutServiceOrderInput
@@ -1406,6 +1500,7 @@ export type ServiceOrderUncheckedCreateWithoutCompanyInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutCompanyInput = {
@@ -1468,6 +1563,9 @@ export type ServiceOrderScalarWhereInput = {
   ordemServicoAprovadaId?: Prisma.StringNullableFilter<"ServiceOrder"> | string | null
   execucao?: Prisma.StringFilter<"ServiceOrder"> | string
   responsavelOperatorId?: Prisma.UuidNullableFilter<"ServiceOrder"> | string | null
+  statusMateriais?: Prisma.StringFilter<"ServiceOrder"> | string
+  execucaoParcialAutorizadaPor?: Prisma.UuidNullableFilter<"ServiceOrder"> | string | null
+  execucaoParcialMotivo?: Prisma.StringNullableFilter<"ServiceOrder"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ServiceOrder"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ServiceOrder"> | Date | string
 }
@@ -1500,6 +1598,9 @@ export type ServiceOrderCreateWithoutEquipmentInput = {
   oficinaVencedoraId?: string | null
   ordemServicoAprovadaId?: string | null
   execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutServiceOrdersInput
@@ -1515,6 +1616,7 @@ export type ServiceOrderCreateWithoutEquipmentInput = {
   laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutEquipmentInput = {
@@ -1547,6 +1649,9 @@ export type ServiceOrderUncheckedCreateWithoutEquipmentInput = {
   ordemServicoAprovadaId?: string | null
   execucao?: string
   responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedCreateNestedManyWithoutServiceOrderInput
@@ -1560,6 +1665,7 @@ export type ServiceOrderUncheckedCreateWithoutEquipmentInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutEquipmentInput = {
@@ -1616,6 +1722,9 @@ export type ServiceOrderCreateWithoutInsumosInput = {
   oficinaVencedoraId?: string | null
   ordemServicoAprovadaId?: string | null
   execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutServiceOrdersInput
@@ -1631,6 +1740,7 @@ export type ServiceOrderCreateWithoutInsumosInput = {
   laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutInsumosInput = {
@@ -1664,6 +1774,9 @@ export type ServiceOrderUncheckedCreateWithoutInsumosInput = {
   ordemServicoAprovadaId?: string | null
   execucao?: string
   responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   etapas?: Prisma.ServiceOrderEtapaUncheckedCreateNestedManyWithoutServiceOrderInput
@@ -1676,6 +1789,7 @@ export type ServiceOrderUncheckedCreateWithoutInsumosInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutInsumosInput = {
@@ -1722,6 +1836,9 @@ export type ServiceOrderUpdateWithoutInsumosInput = {
   oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutServiceOrdersNestedInput
@@ -1737,6 +1854,7 @@ export type ServiceOrderUpdateWithoutInsumosInput = {
   laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutInsumosInput = {
@@ -1770,6 +1888,9 @@ export type ServiceOrderUncheckedUpdateWithoutInsumosInput = {
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
   responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   etapas?: Prisma.ServiceOrderEtapaUncheckedUpdateManyWithoutServiceOrderNestedInput
@@ -1782,6 +1903,7 @@ export type ServiceOrderUncheckedUpdateWithoutInsumosInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutEtapasInput = {
@@ -1812,6 +1934,9 @@ export type ServiceOrderCreateWithoutEtapasInput = {
   oficinaVencedoraId?: string | null
   ordemServicoAprovadaId?: string | null
   execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutServiceOrdersInput
@@ -1827,6 +1952,7 @@ export type ServiceOrderCreateWithoutEtapasInput = {
   laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutEtapasInput = {
@@ -1860,6 +1986,9 @@ export type ServiceOrderUncheckedCreateWithoutEtapasInput = {
   ordemServicoAprovadaId?: string | null
   execucao?: string
   responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedCreateNestedManyWithoutServiceOrderInput
@@ -1872,6 +2001,7 @@ export type ServiceOrderUncheckedCreateWithoutEtapasInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutEtapasInput = {
@@ -1918,6 +2048,9 @@ export type ServiceOrderUpdateWithoutEtapasInput = {
   oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutServiceOrdersNestedInput
@@ -1933,6 +2066,7 @@ export type ServiceOrderUpdateWithoutEtapasInput = {
   laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutEtapasInput = {
@@ -1966,6 +2100,9 @@ export type ServiceOrderUncheckedUpdateWithoutEtapasInput = {
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
   responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedUpdateManyWithoutServiceOrderNestedInput
@@ -1978,6 +2115,7 @@ export type ServiceOrderUncheckedUpdateWithoutEtapasInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutSintomasInput = {
@@ -2008,6 +2146,9 @@ export type ServiceOrderCreateWithoutSintomasInput = {
   oficinaVencedoraId?: string | null
   ordemServicoAprovadaId?: string | null
   execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutServiceOrdersInput
@@ -2023,6 +2164,7 @@ export type ServiceOrderCreateWithoutSintomasInput = {
   laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutSintomasInput = {
@@ -2056,6 +2198,9 @@ export type ServiceOrderUncheckedCreateWithoutSintomasInput = {
   ordemServicoAprovadaId?: string | null
   execucao?: string
   responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedCreateNestedManyWithoutServiceOrderInput
@@ -2068,6 +2213,7 @@ export type ServiceOrderUncheckedCreateWithoutSintomasInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutSintomasInput = {
@@ -2114,6 +2260,9 @@ export type ServiceOrderUpdateWithoutSintomasInput = {
   oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutServiceOrdersNestedInput
@@ -2129,6 +2278,7 @@ export type ServiceOrderUpdateWithoutSintomasInput = {
   laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutSintomasInput = {
@@ -2162,6 +2312,9 @@ export type ServiceOrderUncheckedUpdateWithoutSintomasInput = {
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
   responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedUpdateManyWithoutServiceOrderNestedInput
@@ -2174,6 +2327,7 @@ export type ServiceOrderUncheckedUpdateWithoutSintomasInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutOcorrenciasInput = {
@@ -2204,6 +2358,9 @@ export type ServiceOrderCreateWithoutOcorrenciasInput = {
   oficinaVencedoraId?: string | null
   ordemServicoAprovadaId?: string | null
   execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutServiceOrdersInput
@@ -2219,6 +2376,7 @@ export type ServiceOrderCreateWithoutOcorrenciasInput = {
   laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutOcorrenciasInput = {
@@ -2252,6 +2410,9 @@ export type ServiceOrderUncheckedCreateWithoutOcorrenciasInput = {
   ordemServicoAprovadaId?: string | null
   execucao?: string
   responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedCreateNestedManyWithoutServiceOrderInput
@@ -2264,6 +2425,7 @@ export type ServiceOrderUncheckedCreateWithoutOcorrenciasInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutOcorrenciasInput = {
@@ -2310,6 +2472,9 @@ export type ServiceOrderUpdateWithoutOcorrenciasInput = {
   oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutServiceOrdersNestedInput
@@ -2325,6 +2490,7 @@ export type ServiceOrderUpdateWithoutOcorrenciasInput = {
   laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutOcorrenciasInput = {
@@ -2358,6 +2524,9 @@ export type ServiceOrderUncheckedUpdateWithoutOcorrenciasInput = {
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
   responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedUpdateManyWithoutServiceOrderNestedInput
@@ -2370,6 +2539,7 @@ export type ServiceOrderUncheckedUpdateWithoutOcorrenciasInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutApontamentosInput = {
@@ -2400,6 +2570,9 @@ export type ServiceOrderCreateWithoutApontamentosInput = {
   oficinaVencedoraId?: string | null
   ordemServicoAprovadaId?: string | null
   execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutServiceOrdersInput
@@ -2415,6 +2588,7 @@ export type ServiceOrderCreateWithoutApontamentosInput = {
   laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutApontamentosInput = {
@@ -2448,6 +2622,9 @@ export type ServiceOrderUncheckedCreateWithoutApontamentosInput = {
   ordemServicoAprovadaId?: string | null
   execucao?: string
   responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedCreateNestedManyWithoutServiceOrderInput
@@ -2460,6 +2637,7 @@ export type ServiceOrderUncheckedCreateWithoutApontamentosInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutApontamentosInput = {
@@ -2506,6 +2684,9 @@ export type ServiceOrderUpdateWithoutApontamentosInput = {
   oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutServiceOrdersNestedInput
@@ -2521,6 +2702,7 @@ export type ServiceOrderUpdateWithoutApontamentosInput = {
   laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutApontamentosInput = {
@@ -2554,6 +2736,9 @@ export type ServiceOrderUncheckedUpdateWithoutApontamentosInput = {
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
   responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedUpdateManyWithoutServiceOrderNestedInput
@@ -2566,6 +2751,7 @@ export type ServiceOrderUncheckedUpdateWithoutApontamentosInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutFotosInput = {
@@ -2596,6 +2782,9 @@ export type ServiceOrderCreateWithoutFotosInput = {
   oficinaVencedoraId?: string | null
   ordemServicoAprovadaId?: string | null
   execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutServiceOrdersInput
@@ -2611,6 +2800,7 @@ export type ServiceOrderCreateWithoutFotosInput = {
   laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutFotosInput = {
@@ -2644,6 +2834,9 @@ export type ServiceOrderUncheckedCreateWithoutFotosInput = {
   ordemServicoAprovadaId?: string | null
   execucao?: string
   responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedCreateNestedManyWithoutServiceOrderInput
@@ -2656,6 +2849,7 @@ export type ServiceOrderUncheckedCreateWithoutFotosInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutFotosInput = {
@@ -2702,6 +2896,9 @@ export type ServiceOrderUpdateWithoutFotosInput = {
   oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutServiceOrdersNestedInput
@@ -2717,6 +2914,7 @@ export type ServiceOrderUpdateWithoutFotosInput = {
   laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutFotosInput = {
@@ -2750,6 +2948,9 @@ export type ServiceOrderUncheckedUpdateWithoutFotosInput = {
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
   responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedUpdateManyWithoutServiceOrderNestedInput
@@ -2762,6 +2963,7 @@ export type ServiceOrderUncheckedUpdateWithoutFotosInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutLaudoInput = {
@@ -2792,6 +2994,9 @@ export type ServiceOrderCreateWithoutLaudoInput = {
   oficinaVencedoraId?: string | null
   ordemServicoAprovadaId?: string | null
   execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutServiceOrdersInput
@@ -2807,6 +3012,7 @@ export type ServiceOrderCreateWithoutLaudoInput = {
   fotos?: Prisma.ServiceOrderFotoCreateNestedManyWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutLaudoInput = {
@@ -2840,6 +3046,9 @@ export type ServiceOrderUncheckedCreateWithoutLaudoInput = {
   ordemServicoAprovadaId?: string | null
   execucao?: string
   responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedCreateNestedManyWithoutServiceOrderInput
@@ -2852,6 +3061,7 @@ export type ServiceOrderUncheckedCreateWithoutLaudoInput = {
   fotos?: Prisma.ServiceOrderFotoUncheckedCreateNestedManyWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutLaudoInput = {
@@ -2898,6 +3108,9 @@ export type ServiceOrderUpdateWithoutLaudoInput = {
   oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutServiceOrdersNestedInput
@@ -2913,6 +3126,7 @@ export type ServiceOrderUpdateWithoutLaudoInput = {
   fotos?: Prisma.ServiceOrderFotoUpdateManyWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutLaudoInput = {
@@ -2946,6 +3160,9 @@ export type ServiceOrderUncheckedUpdateWithoutLaudoInput = {
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
   responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedUpdateManyWithoutServiceOrderNestedInput
@@ -2958,6 +3175,7 @@ export type ServiceOrderUncheckedUpdateWithoutLaudoInput = {
   fotos?: Prisma.ServiceOrderFotoUncheckedUpdateManyWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutResponsavelInput = {
@@ -2988,6 +3206,9 @@ export type ServiceOrderCreateWithoutResponsavelInput = {
   oficinaVencedoraId?: string | null
   ordemServicoAprovadaId?: string | null
   execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutServiceOrdersInput
@@ -3003,6 +3224,7 @@ export type ServiceOrderCreateWithoutResponsavelInput = {
   laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutResponsavelInput = {
@@ -3035,6 +3257,9 @@ export type ServiceOrderUncheckedCreateWithoutResponsavelInput = {
   oficinaVencedoraId?: string | null
   ordemServicoAprovadaId?: string | null
   execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedCreateNestedManyWithoutServiceOrderInput
@@ -3048,6 +3273,7 @@ export type ServiceOrderUncheckedCreateWithoutResponsavelInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutResponsavelInput = {
@@ -3104,6 +3330,9 @@ export type ServiceOrderCreateWithoutOrcamentosInput = {
   oficinaVencedoraId?: string | null
   ordemServicoAprovadaId?: string | null
   execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutServiceOrdersInput
@@ -3119,6 +3348,7 @@ export type ServiceOrderCreateWithoutOrcamentosInput = {
   laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutOrcamentosInput = {
@@ -3152,6 +3382,9 @@ export type ServiceOrderUncheckedCreateWithoutOrcamentosInput = {
   ordemServicoAprovadaId?: string | null
   execucao?: string
   responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedCreateNestedManyWithoutServiceOrderInput
@@ -3164,6 +3397,7 @@ export type ServiceOrderUncheckedCreateWithoutOrcamentosInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutOrcamentosInput = {
@@ -3210,6 +3444,9 @@ export type ServiceOrderUpdateWithoutOrcamentosInput = {
   oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutServiceOrdersNestedInput
@@ -3225,6 +3462,7 @@ export type ServiceOrderUpdateWithoutOrcamentosInput = {
   laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutOrcamentosInput = {
@@ -3258,6 +3496,9 @@ export type ServiceOrderUncheckedUpdateWithoutOrcamentosInput = {
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
   responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedUpdateManyWithoutServiceOrderNestedInput
@@ -3270,6 +3511,7 @@ export type ServiceOrderUncheckedUpdateWithoutOrcamentosInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutEmergenciesInput = {
@@ -3300,6 +3542,9 @@ export type ServiceOrderCreateWithoutEmergenciesInput = {
   oficinaVencedoraId?: string | null
   ordemServicoAprovadaId?: string | null
   execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutServiceOrdersInput
@@ -3315,6 +3560,7 @@ export type ServiceOrderCreateWithoutEmergenciesInput = {
   laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutEmergenciesInput = {
@@ -3348,6 +3594,9 @@ export type ServiceOrderUncheckedCreateWithoutEmergenciesInput = {
   ordemServicoAprovadaId?: string | null
   execucao?: string
   responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedCreateNestedManyWithoutServiceOrderInput
@@ -3360,6 +3609,7 @@ export type ServiceOrderUncheckedCreateWithoutEmergenciesInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutEmergenciesInput = {
@@ -3406,6 +3656,9 @@ export type ServiceOrderUpdateWithoutEmergenciesInput = {
   oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutServiceOrdersNestedInput
@@ -3421,6 +3674,7 @@ export type ServiceOrderUpdateWithoutEmergenciesInput = {
   laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutEmergenciesInput = {
@@ -3454,6 +3708,9 @@ export type ServiceOrderUncheckedUpdateWithoutEmergenciesInput = {
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
   responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedUpdateManyWithoutServiceOrderNestedInput
@@ -3466,6 +3723,7 @@ export type ServiceOrderUncheckedUpdateWithoutEmergenciesInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutChecklistExecucoesInput = {
@@ -3496,6 +3754,9 @@ export type ServiceOrderCreateWithoutChecklistExecucoesInput = {
   oficinaVencedoraId?: string | null
   ordemServicoAprovadaId?: string | null
   execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutServiceOrdersInput
@@ -3511,6 +3772,7 @@ export type ServiceOrderCreateWithoutChecklistExecucoesInput = {
   fotos?: Prisma.ServiceOrderFotoCreateNestedManyWithoutServiceOrderInput
   laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutChecklistExecucoesInput = {
@@ -3544,6 +3806,9 @@ export type ServiceOrderUncheckedCreateWithoutChecklistExecucoesInput = {
   ordemServicoAprovadaId?: string | null
   execucao?: string
   responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedCreateNestedManyWithoutServiceOrderInput
@@ -3556,6 +3821,7 @@ export type ServiceOrderUncheckedCreateWithoutChecklistExecucoesInput = {
   fotos?: Prisma.ServiceOrderFotoUncheckedCreateNestedManyWithoutServiceOrderInput
   laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutChecklistExecucoesInput = {
@@ -3602,6 +3868,9 @@ export type ServiceOrderUpdateWithoutChecklistExecucoesInput = {
   oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutServiceOrdersNestedInput
@@ -3617,6 +3886,7 @@ export type ServiceOrderUpdateWithoutChecklistExecucoesInput = {
   fotos?: Prisma.ServiceOrderFotoUpdateManyWithoutServiceOrderNestedInput
   laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutChecklistExecucoesInput = {
@@ -3650,6 +3920,9 @@ export type ServiceOrderUncheckedUpdateWithoutChecklistExecucoesInput = {
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
   responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedUpdateManyWithoutServiceOrderNestedInput
@@ -3662,6 +3935,7 @@ export type ServiceOrderUncheckedUpdateWithoutChecklistExecucoesInput = {
   fotos?: Prisma.ServiceOrderFotoUncheckedUpdateManyWithoutServiceOrderNestedInput
   laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutAuditoriaInput = {
@@ -3692,6 +3966,9 @@ export type ServiceOrderCreateWithoutAuditoriaInput = {
   oficinaVencedoraId?: string | null
   ordemServicoAprovadaId?: string | null
   execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutServiceOrdersInput
@@ -3707,6 +3984,7 @@ export type ServiceOrderCreateWithoutAuditoriaInput = {
   fotos?: Prisma.ServiceOrderFotoCreateNestedManyWithoutServiceOrderInput
   laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutAuditoriaInput = {
@@ -3740,6 +4018,9 @@ export type ServiceOrderUncheckedCreateWithoutAuditoriaInput = {
   ordemServicoAprovadaId?: string | null
   execucao?: string
   responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedCreateNestedManyWithoutServiceOrderInput
@@ -3752,6 +4033,7 @@ export type ServiceOrderUncheckedCreateWithoutAuditoriaInput = {
   fotos?: Prisma.ServiceOrderFotoUncheckedCreateNestedManyWithoutServiceOrderInput
   laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutAuditoriaInput = {
@@ -3798,6 +4080,9 @@ export type ServiceOrderUpdateWithoutAuditoriaInput = {
   oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutServiceOrdersNestedInput
@@ -3813,6 +4098,7 @@ export type ServiceOrderUpdateWithoutAuditoriaInput = {
   fotos?: Prisma.ServiceOrderFotoUpdateManyWithoutServiceOrderNestedInput
   laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutAuditoriaInput = {
@@ -3846,6 +4132,9 @@ export type ServiceOrderUncheckedUpdateWithoutAuditoriaInput = {
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
   responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedUpdateManyWithoutServiceOrderNestedInput
@@ -3857,6 +4146,219 @@ export type ServiceOrderUncheckedUpdateWithoutAuditoriaInput = {
   apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutServiceOrderNestedInput
   fotos?: Prisma.ServiceOrderFotoUncheckedUpdateManyWithoutServiceOrderNestedInput
   laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
+}
+
+export type ServiceOrderCreateWithoutRequisicoesInput = {
+  id?: string
+  legacyId?: string | null
+  protocolo: string
+  tipoOs: string
+  serviceType?: string | null
+  equipmentNome?: string | null
+  equipmentPlaca?: string | null
+  linha?: string | null
+  segmento?: string | null
+  horimetro?: string | null
+  operadorLegacyId?: string | null
+  operadorNome?: string | null
+  relato: string
+  dataAgendamento?: Date | string | null
+  situacao?: string
+  status?: string
+  categoriaPlanoId?: string | null
+  cicloId?: string | null
+  oficinasIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasNomes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasResponderam?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lances?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  aprovadoEm?: Date | string | null
+  valorAprovado?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  oficinaVencedoraId?: string | null
+  ordemServicoAprovadaId?: string | null
+  execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutServiceOrdersInput
+  equipment?: Prisma.EquipmentCreateNestedOneWithoutServiceOrdersInput
+  insumos?: Prisma.ServiceOrderInsumoCreateNestedManyWithoutServiceOrderInput
+  etapas?: Prisma.ServiceOrderEtapaCreateNestedManyWithoutServiceOrderInput
+  sintomas?: Prisma.ServiceOrderSintomaCreateNestedManyWithoutServiceOrderInput
+  ocorrencias?: Prisma.ServiceOrderOcorrenciaCreateNestedManyWithoutServiceOrderInput
+  orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyCreateNestedManyWithoutServiceOrderInput
+  responsavel?: Prisma.OperatorCreateNestedOneWithoutOsComoResponsavelInput
+  apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutServiceOrderInput
+  fotos?: Prisma.ServiceOrderFotoCreateNestedManyWithoutServiceOrderInput
+  laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
+  auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
+}
+
+export type ServiceOrderUncheckedCreateWithoutRequisicoesInput = {
+  id?: string
+  legacyId?: string | null
+  companyId: string
+  protocolo: string
+  tipoOs: string
+  serviceType?: string | null
+  equipmentId?: string | null
+  equipmentNome?: string | null
+  equipmentPlaca?: string | null
+  linha?: string | null
+  segmento?: string | null
+  horimetro?: string | null
+  operadorLegacyId?: string | null
+  operadorNome?: string | null
+  relato: string
+  dataAgendamento?: Date | string | null
+  situacao?: string
+  status?: string
+  categoriaPlanoId?: string | null
+  cicloId?: string | null
+  oficinasIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasNomes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasResponderam?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lances?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  aprovadoEm?: Date | string | null
+  valorAprovado?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  oficinaVencedoraId?: string | null
+  ordemServicoAprovadaId?: string | null
+  execucao?: string
+  responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  insumos?: Prisma.ServiceOrderInsumoUncheckedCreateNestedManyWithoutServiceOrderInput
+  etapas?: Prisma.ServiceOrderEtapaUncheckedCreateNestedManyWithoutServiceOrderInput
+  sintomas?: Prisma.ServiceOrderSintomaUncheckedCreateNestedManyWithoutServiceOrderInput
+  ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedCreateNestedManyWithoutServiceOrderInput
+  orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyUncheckedCreateNestedManyWithoutServiceOrderInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutServiceOrderInput
+  fotos?: Prisma.ServiceOrderFotoUncheckedCreateNestedManyWithoutServiceOrderInput
+  laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
+  auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
+}
+
+export type ServiceOrderCreateOrConnectWithoutRequisicoesInput = {
+  where: Prisma.ServiceOrderWhereUniqueInput
+  create: Prisma.XOR<Prisma.ServiceOrderCreateWithoutRequisicoesInput, Prisma.ServiceOrderUncheckedCreateWithoutRequisicoesInput>
+}
+
+export type ServiceOrderUpsertWithoutRequisicoesInput = {
+  update: Prisma.XOR<Prisma.ServiceOrderUpdateWithoutRequisicoesInput, Prisma.ServiceOrderUncheckedUpdateWithoutRequisicoesInput>
+  create: Prisma.XOR<Prisma.ServiceOrderCreateWithoutRequisicoesInput, Prisma.ServiceOrderUncheckedCreateWithoutRequisicoesInput>
+  where?: Prisma.ServiceOrderWhereInput
+}
+
+export type ServiceOrderUpdateToOneWithWhereWithoutRequisicoesInput = {
+  where?: Prisma.ServiceOrderWhereInput
+  data: Prisma.XOR<Prisma.ServiceOrderUpdateWithoutRequisicoesInput, Prisma.ServiceOrderUncheckedUpdateWithoutRequisicoesInput>
+}
+
+export type ServiceOrderUpdateWithoutRequisicoesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  protocolo?: Prisma.StringFieldUpdateOperationsInput | string
+  tipoOs?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentPlaca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linha?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  segmento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  horimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  relato?: Prisma.StringFieldUpdateOperationsInput | string
+  dataAgendamento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  situacao?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  categoriaPlanoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cicloId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  oficinasIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasNomes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasResponderam?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lances?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  aprovadoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  valorAprovado?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutServiceOrdersNestedInput
+  equipment?: Prisma.EquipmentUpdateOneWithoutServiceOrdersNestedInput
+  insumos?: Prisma.ServiceOrderInsumoUpdateManyWithoutServiceOrderNestedInput
+  etapas?: Prisma.ServiceOrderEtapaUpdateManyWithoutServiceOrderNestedInput
+  sintomas?: Prisma.ServiceOrderSintomaUpdateManyWithoutServiceOrderNestedInput
+  ocorrencias?: Prisma.ServiceOrderOcorrenciaUpdateManyWithoutServiceOrderNestedInput
+  orcamentos?: Prisma.OrcamentoUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUpdateManyWithoutServiceOrderNestedInput
+  responsavel?: Prisma.OperatorUpdateOneWithoutOsComoResponsavelNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutServiceOrderNestedInput
+  fotos?: Prisma.ServiceOrderFotoUpdateManyWithoutServiceOrderNestedInput
+  laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
+  auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
+}
+
+export type ServiceOrderUncheckedUpdateWithoutRequisicoesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  protocolo?: Prisma.StringFieldUpdateOperationsInput | string
+  tipoOs?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentPlaca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linha?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  segmento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  horimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  relato?: Prisma.StringFieldUpdateOperationsInput | string
+  dataAgendamento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  situacao?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  categoriaPlanoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cicloId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  oficinasIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasNomes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasResponderam?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lances?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  aprovadoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  valorAprovado?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  insumos?: Prisma.ServiceOrderInsumoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  etapas?: Prisma.ServiceOrderEtapaUncheckedUpdateManyWithoutServiceOrderNestedInput
+  sintomas?: Prisma.ServiceOrderSintomaUncheckedUpdateManyWithoutServiceOrderNestedInput
+  ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedUpdateManyWithoutServiceOrderNestedInput
+  orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUncheckedUpdateManyWithoutServiceOrderNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  fotos?: Prisma.ServiceOrderFotoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
+  auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
@@ -3890,6 +4392,9 @@ export type ServiceOrderCreateManyCompanyInput = {
   ordemServicoAprovadaId?: string | null
   execucao?: string
   responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -3922,6 +4427,9 @@ export type ServiceOrderUpdateWithoutCompanyInput = {
   oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   equipment?: Prisma.EquipmentUpdateOneWithoutServiceOrdersNestedInput
@@ -3937,6 +4445,7 @@ export type ServiceOrderUpdateWithoutCompanyInput = {
   laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutCompanyInput = {
@@ -3969,6 +4478,9 @@ export type ServiceOrderUncheckedUpdateWithoutCompanyInput = {
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
   responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedUpdateManyWithoutServiceOrderNestedInput
@@ -3982,6 +4494,7 @@ export type ServiceOrderUncheckedUpdateWithoutCompanyInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateManyWithoutCompanyInput = {
@@ -4014,6 +4527,9 @@ export type ServiceOrderUncheckedUpdateManyWithoutCompanyInput = {
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
   responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -4048,6 +4564,9 @@ export type ServiceOrderCreateManyEquipmentInput = {
   ordemServicoAprovadaId?: string | null
   execucao?: string
   responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -4080,6 +4599,9 @@ export type ServiceOrderUpdateWithoutEquipmentInput = {
   oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutServiceOrdersNestedInput
@@ -4095,6 +4617,7 @@ export type ServiceOrderUpdateWithoutEquipmentInput = {
   laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutEquipmentInput = {
@@ -4127,6 +4650,9 @@ export type ServiceOrderUncheckedUpdateWithoutEquipmentInput = {
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
   responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedUpdateManyWithoutServiceOrderNestedInput
@@ -4140,6 +4666,7 @@ export type ServiceOrderUncheckedUpdateWithoutEquipmentInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateManyWithoutEquipmentInput = {
@@ -4172,6 +4699,9 @@ export type ServiceOrderUncheckedUpdateManyWithoutEquipmentInput = {
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
   responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -4206,6 +4736,9 @@ export type ServiceOrderCreateManyResponsavelInput = {
   oficinaVencedoraId?: string | null
   ordemServicoAprovadaId?: string | null
   execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -4238,6 +4771,9 @@ export type ServiceOrderUpdateWithoutResponsavelInput = {
   oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutServiceOrdersNestedInput
@@ -4253,6 +4789,7 @@ export type ServiceOrderUpdateWithoutResponsavelInput = {
   laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutResponsavelInput = {
@@ -4285,6 +4822,9 @@ export type ServiceOrderUncheckedUpdateWithoutResponsavelInput = {
   oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   insumos?: Prisma.ServiceOrderInsumoUncheckedUpdateManyWithoutServiceOrderNestedInput
@@ -4298,6 +4838,7 @@ export type ServiceOrderUncheckedUpdateWithoutResponsavelInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateManyWithoutResponsavelInput = {
@@ -4330,6 +4871,9 @@ export type ServiceOrderUncheckedUpdateManyWithoutResponsavelInput = {
   oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -4349,6 +4893,7 @@ export type ServiceOrderCountOutputType = {
   apontamentos: number
   fotos: number
   checklistExecucoes: number
+  requisicoes: number
 }
 
 export type ServiceOrderCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -4361,6 +4906,7 @@ export type ServiceOrderCountOutputTypeSelect<ExtArgs extends runtime.Types.Exte
   apontamentos?: boolean | ServiceOrderCountOutputTypeCountApontamentosArgs
   fotos?: boolean | ServiceOrderCountOutputTypeCountFotosArgs
   checklistExecucoes?: boolean | ServiceOrderCountOutputTypeCountChecklistExecucoesArgs
+  requisicoes?: boolean | ServiceOrderCountOutputTypeCountRequisicoesArgs
 }
 
 /**
@@ -4436,6 +4982,13 @@ export type ServiceOrderCountOutputTypeCountChecklistExecucoesArgs<ExtArgs exten
   where?: Prisma.ChecklistExecucaoWhereInput
 }
 
+/**
+ * ServiceOrderCountOutputType without action
+ */
+export type ServiceOrderCountOutputTypeCountRequisicoesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RequisicaoMaterialWhereInput
+}
+
 
 export type ServiceOrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -4468,6 +5021,9 @@ export type ServiceOrderSelect<ExtArgs extends runtime.Types.Extensions.Internal
   ordemServicoAprovadaId?: boolean
   execucao?: boolean
   responsavelOperatorId?: boolean
+  statusMateriais?: boolean
+  execucaoParcialAutorizadaPor?: boolean
+  execucaoParcialMotivo?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
@@ -4484,6 +5040,7 @@ export type ServiceOrderSelect<ExtArgs extends runtime.Types.Extensions.Internal
   laudo?: boolean | Prisma.ServiceOrder$laudoArgs<ExtArgs>
   auditoria?: boolean | Prisma.ServiceOrder$auditoriaArgs<ExtArgs>
   checklistExecucoes?: boolean | Prisma.ServiceOrder$checklistExecucoesArgs<ExtArgs>
+  requisicoes?: boolean | Prisma.ServiceOrder$requisicoesArgs<ExtArgs>
   _count?: boolean | Prisma.ServiceOrderCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["serviceOrder"]>
 
@@ -4518,6 +5075,9 @@ export type ServiceOrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   ordemServicoAprovadaId?: boolean
   execucao?: boolean
   responsavelOperatorId?: boolean
+  statusMateriais?: boolean
+  execucaoParcialAutorizadaPor?: boolean
+  execucaoParcialMotivo?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
@@ -4556,6 +5116,9 @@ export type ServiceOrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   ordemServicoAprovadaId?: boolean
   execucao?: boolean
   responsavelOperatorId?: boolean
+  statusMateriais?: boolean
+  execucaoParcialAutorizadaPor?: boolean
+  execucaoParcialMotivo?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
@@ -4594,11 +5157,14 @@ export type ServiceOrderSelectScalar = {
   ordemServicoAprovadaId?: boolean
   execucao?: boolean
   responsavelOperatorId?: boolean
+  statusMateriais?: boolean
+  execucaoParcialAutorizadaPor?: boolean
+  execucaoParcialMotivo?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ServiceOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "protocolo" | "tipoOs" | "serviceType" | "equipmentId" | "equipmentNome" | "equipmentPlaca" | "linha" | "segmento" | "horimetro" | "operadorLegacyId" | "operadorNome" | "relato" | "dataAgendamento" | "situacao" | "status" | "categoriaPlanoId" | "cicloId" | "oficinasIds" | "oficinasNomes" | "oficinasResponderam" | "lances" | "aprovadoEm" | "valorAprovado" | "oficinaVencedoraId" | "ordemServicoAprovadaId" | "execucao" | "responsavelOperatorId" | "createdAt" | "updatedAt", ExtArgs["result"]["serviceOrder"]>
+export type ServiceOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "legacyId" | "companyId" | "protocolo" | "tipoOs" | "serviceType" | "equipmentId" | "equipmentNome" | "equipmentPlaca" | "linha" | "segmento" | "horimetro" | "operadorLegacyId" | "operadorNome" | "relato" | "dataAgendamento" | "situacao" | "status" | "categoriaPlanoId" | "cicloId" | "oficinasIds" | "oficinasNomes" | "oficinasResponderam" | "lances" | "aprovadoEm" | "valorAprovado" | "oficinaVencedoraId" | "ordemServicoAprovadaId" | "execucao" | "responsavelOperatorId" | "statusMateriais" | "execucaoParcialAutorizadaPor" | "execucaoParcialMotivo" | "createdAt" | "updatedAt", ExtArgs["result"]["serviceOrder"]>
 export type ServiceOrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.ServiceOrder$equipmentArgs<ExtArgs>
@@ -4614,6 +5180,7 @@ export type ServiceOrderInclude<ExtArgs extends runtime.Types.Extensions.Interna
   laudo?: boolean | Prisma.ServiceOrder$laudoArgs<ExtArgs>
   auditoria?: boolean | Prisma.ServiceOrder$auditoriaArgs<ExtArgs>
   checklistExecucoes?: boolean | Prisma.ServiceOrder$checklistExecucoesArgs<ExtArgs>
+  requisicoes?: boolean | Prisma.ServiceOrder$requisicoesArgs<ExtArgs>
   _count?: boolean | Prisma.ServiceOrderCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ServiceOrderIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -4644,6 +5211,7 @@ export type $ServiceOrderPayload<ExtArgs extends runtime.Types.Extensions.Intern
     laudo: Prisma.$ServiceOrderLaudoPayload<ExtArgs> | null
     auditoria: Prisma.$ServiceOrderAuditoriaPayload<ExtArgs> | null
     checklistExecucoes: Prisma.$ChecklistExecucaoPayload<ExtArgs>[]
+    requisicoes: Prisma.$RequisicaoMaterialPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -4728,6 +5296,18 @@ export type $ServiceOrderPayload<ExtArgs extends runtime.Types.Extensions.Intern
      * Mecânico responsável, definido quando ele ASSUME a OS na Bancada.
      */
     responsavelOperatorId: string | null
+    /**
+     * Estado dos MATERIAIS. Coluna própria, e não um valor novo em `situacao`:
+     * aquela é lida pelo painel, pelo app e pelo portal legado, cada um com o
+     * próprio mapa e o mesmo fallback ("Aberta") — um valor novo lá faria a OS
+     * reaparecer na bancada do mecânico nos três.
+     */
+    statusMateriais: string
+    /**
+     * Quem autorizou seguir sem um item NÃO impeditivo, e por quê.
+     */
+    execucaoParcialAutorizadaPor: string | null
+    execucaoParcialMotivo: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["serviceOrder"]>
@@ -5138,6 +5718,7 @@ export interface Prisma__ServiceOrderClient<T, Null = never, ExtArgs extends run
   laudo<T extends Prisma.ServiceOrder$laudoArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ServiceOrder$laudoArgs<ExtArgs>>): Prisma.Prisma__ServiceOrderLaudoClient<runtime.Types.Result.GetResult<Prisma.$ServiceOrderLaudoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   auditoria<T extends Prisma.ServiceOrder$auditoriaArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ServiceOrder$auditoriaArgs<ExtArgs>>): Prisma.Prisma__ServiceOrderAuditoriaClient<runtime.Types.Result.GetResult<Prisma.$ServiceOrderAuditoriaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   checklistExecucoes<T extends Prisma.ServiceOrder$checklistExecucoesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ServiceOrder$checklistExecucoesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChecklistExecucaoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  requisicoes<T extends Prisma.ServiceOrder$requisicoesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ServiceOrder$requisicoesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RequisicaoMaterialPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5197,6 +5778,9 @@ export interface ServiceOrderFieldRefs {
   readonly ordemServicoAprovadaId: Prisma.FieldRef<"ServiceOrder", 'String'>
   readonly execucao: Prisma.FieldRef<"ServiceOrder", 'String'>
   readonly responsavelOperatorId: Prisma.FieldRef<"ServiceOrder", 'String'>
+  readonly statusMateriais: Prisma.FieldRef<"ServiceOrder", 'String'>
+  readonly execucaoParcialAutorizadaPor: Prisma.FieldRef<"ServiceOrder", 'String'>
+  readonly execucaoParcialMotivo: Prisma.FieldRef<"ServiceOrder", 'String'>
   readonly createdAt: Prisma.FieldRef<"ServiceOrder", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ServiceOrder", 'DateTime'>
 }
@@ -5889,6 +6473,30 @@ export type ServiceOrder$checklistExecucoesArgs<ExtArgs extends runtime.Types.Ex
   take?: number
   skip?: number
   distinct?: Prisma.ChecklistExecucaoScalarFieldEnum | Prisma.ChecklistExecucaoScalarFieldEnum[]
+}
+
+/**
+ * ServiceOrder.requisicoes
+ */
+export type ServiceOrder$requisicoesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RequisicaoMaterial
+   */
+  select?: Prisma.RequisicaoMaterialSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RequisicaoMaterial
+   */
+  omit?: Prisma.RequisicaoMaterialOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RequisicaoMaterialInclude<ExtArgs> | null
+  where?: Prisma.RequisicaoMaterialWhereInput
+  orderBy?: Prisma.RequisicaoMaterialOrderByWithRelationInput | Prisma.RequisicaoMaterialOrderByWithRelationInput[]
+  cursor?: Prisma.RequisicaoMaterialWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RequisicaoMaterialScalarFieldEnum | Prisma.RequisicaoMaterialScalarFieldEnum[]
 }
 
 /**

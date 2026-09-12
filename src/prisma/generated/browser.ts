@@ -490,3 +490,16 @@ export type PecaSaldo = Prisma.PecaSaldoModel
  * "quanto tinha em cada instante" sem confiar em nada além da soma da linha.
  */
 export type EstoqueMovimento = Prisma.EstoqueMovimentoModel
+/**
+ * Model RequisicaoMaterial
+ * O trabalho do almoxarife. NÃO é uma `ServiceOrder`: OS é conserto de
+ * máquina, e sobrecarregar aquele modelo com "separe três filtros" faria a
+ * bancada, o portal da oficina e a auditoria herdarem um documento que não é
+ * conserto nenhum.
+ */
+export type RequisicaoMaterial = Prisma.RequisicaoMaterialModel
+/**
+ * Model RequisicaoMaterialItem
+ * 
+ */
+export type RequisicaoMaterialItem = Prisma.RequisicaoMaterialItemModel

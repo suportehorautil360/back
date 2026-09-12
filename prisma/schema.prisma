@@ -122,6 +122,7 @@ model Company {
   depositos               Deposito[]
   pecas                   Peca[]
   estoqueMovimentos       EstoqueMovimento[]
+  requisicoesMaterial     RequisicaoMaterial[]
 
   @@map("clients")
 }
@@ -537,6 +538,15 @@ model ServiceOrder {
   /// Mecânico responsável, definido quando ele ASSUME a OS na Bancada.
   responsavelOperatorId String? @map("responsavel_operator_id") @db.Uuid
 
+  /// Estado dos MATERIAIS. Coluna própria, e não um valor novo em `situacao`:
+  /// aquela é lida pelo painel, pelo app e pelo portal legado, cada um com o
+  /// próprio mapa e o mesmo fallback ("Aberta") — um valor novo lá faria a OS
+  /// reaparecer na bancada do mecânico nos três.
+  statusMateriais String @default("planejada") @map("status_materiais")
+  /// Quem autorizou seguir sem um item NÃO impeditivo, e por quê.
+  execucaoParcialAutorizadaPor String? @map("execucao_parcial_autorizada_por") @db.Uuid
+  execucaoParcialMotivo        String? @map("execucao_parcial_motivo")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -554,6 +564,7 @@ model ServiceOrder {
   laudo              ServiceOrderLaudo?
   auditoria          ServiceOrderAuditoria?
   checklistExecucoes ChecklistExecucao[]
+  requisicoes        RequisicaoMaterial[]
 
   @@unique([companyId, protocolo])
   @@index([companyId, status])
@@ -561,6 +572,7 @@ model ServiceOrder {
   @@index([companyId, tipoOs])
   @@index([equipmentId])
   @@index([companyId, execucao, situacao])
+  @@index([companyId, statusMateriais])
   @@map("service_orders")
 }
 
@@ -2163,10 +2175,11 @@ model Deposito {
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
 
-  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  responsavel Operator?          @relation("DepositoResponsavel", fields: [responsavelOperatorId], references: [id], onDelete: SetNull)
+  company     Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  responsavel Operator?            @relation("DepositoResponsavel", fields: [responsavelOperatorId], references: [id], onDelete: SetNull)
   saldos      PecaSaldo[]
   movimentos  EstoqueMovimento[]
+  requisicoes RequisicaoMaterial[]
 
   @@unique([companyId, nome])
   @@map("depositos")
@@ -2204,6 +2217,11 @@ model Peca {
   company    Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
   saldos     PecaSaldo[]
   movimentos EstoqueMovimento[]
+  /// Linhas de requisição que pedem esta peça.
+  requisicaoItens   RequisicaoMaterialItem[]
+  /// Linhas de requisição em que esta peça entrou como EQUIVALENTE de outra
+  /// (`equivalenteDePecaId`) — relação nomeada porque já existe a acima.
+  pecasEquivalentes RequisicaoMaterialItem[] @relation("PecaEquivalente")
 
   @@unique([companyId, codigoInterno])
   @@index([companyId, codigoFabricante])
@@ -2279,4 +2297,80 @@ model EstoqueMovimento {
   @@index([companyId, createdAt])
   @@index([origemTipo, origemId])
   @@map("estoque_movimentos")
+}
+
+/// O trabalho do almoxarife. NÃO é uma `ServiceOrder`: OS é conserto de
+/// máquina, e sobrecarregar aquele modelo com "separe três filtros" faria a
+/// bancada, o portal da oficina e a auditoria herdarem um documento que não é
+/// conserto nenhum.
+model RequisicaoMaterial {
+  id        String @id @default(uuid()) @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+  /// "REQ-2026-001". MAX+1 por empresa; o unique absorve a concorrência.
+  numero    String
+
+  serviceOrderId String @map("service_order_id") @db.Uuid
+  depositoId     String @map("deposito_id") @db.Uuid
+
+  /// "pendente" | "em_separacao" | "separada" | "entregue" | "cancelada"
+  status String @default("pendente")
+
+  solicitanteCompanyUserId String    @map("solicitante_company_user_id") @db.Uuid
+  atendidaPorCompanyUserId String?   @map("atendida_por_company_user_id") @db.Uuid
+  atendidaEm               DateTime? @map("atendida_em")
+  observacao               String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company      Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  serviceOrder ServiceOrder             @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+  /// Restrict e não Cascade: apagar um depósito não pode apagar o histórico
+  /// de requisição que saiu dele — mesmo raciocínio de `PecaSaldo.deposito`.
+  deposito     Deposito                 @relation(fields: [depositoId], references: [id], onDelete: Restrict)
+  itens        RequisicaoMaterialItem[]
+
+  @@unique([companyId, numero])
+  @@index([companyId, status, createdAt])
+  @@index([serviceOrderId])
+  @@map("requisicoes_material")
+}
+
+model RequisicaoMaterialItem {
+  id           String @id @default(uuid()) @db.Uuid
+  requisicaoId String @map("requisicao_id") @db.Uuid
+  pecaId       String @map("peca_id") @db.Uuid
+
+  /// `PlanoLinha.id` de onde o item veio — é o que liga a peça de volta à
+  /// linha da lista que o mecânico executa, mesmo que a ordem mude no plano.
+  planoLinhaId String? @map("plano_linha_id")
+
+  quantidadeSolicitada Decimal @map("quantidade_solicitada") @db.Decimal(12, 3)
+  quantidadeReservada  Decimal @default(0) @map("quantidade_reservada") @db.Decimal(12, 3)
+  quantidadeSeparada   Decimal @default(0) @map("quantidade_separada") @db.Decimal(12, 3)
+  quantidadeEntregue   Decimal @default(0) @map("quantidade_entregue") @db.Decimal(12, 3)
+  quantidadeDevolvida  Decimal @default(0) @map("quantidade_devolvida") @db.Decimal(12, 3)
+
+  /// Se a falta desta linha impede começar o serviço. Vem do plano e é
+  /// sobrescrevível na OS: a máquina real desmente o plano.
+  impeditivo Boolean @default(false)
+  /// "critica" | "alta" | "normal" | "reposicao"
+  prioridade String  @default("normal")
+  dataNecessidade DateTime? @map("data_necessidade") @db.Date
+
+  equivalenteDePecaId String? @map("equivalente_de_peca_id") @db.Uuid
+
+  /// "faltante" | "reservada" | "separada" | "entregue" | "devolvida" | "cancelada"
+  status String @default("faltante")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  requisicao     RequisicaoMaterial @relation(fields: [requisicaoId], references: [id], onDelete: Cascade)
+  peca           Peca               @relation(fields: [pecaId], references: [id], onDelete: Restrict)
+  equivalenteDe  Peca?              @relation("PecaEquivalente", fields: [equivalenteDePecaId], references: [id], onDelete: SetNull)
+
+  @@index([requisicaoId])
+  @@index([pecaId, status])
+  @@map("requisicao_material_itens")
 }

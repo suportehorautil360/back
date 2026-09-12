@@ -112,7 +112,9 @@ export const ModelName = {
   Deposito: 'Deposito',
   Peca: 'Peca',
   PecaSaldo: 'PecaSaldo',
-  EstoqueMovimento: 'EstoqueMovimento'
+  EstoqueMovimento: 'EstoqueMovimento',
+  RequisicaoMaterial: 'RequisicaoMaterial',
+  RequisicaoMaterialItem: 'RequisicaoMaterialItem'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -386,6 +388,9 @@ export const ServiceOrderScalarFieldEnum = {
   ordemServicoAprovadaId: 'ordemServicoAprovadaId',
   execucao: 'execucao',
   responsavelOperatorId: 'responsavelOperatorId',
+  statusMateriais: 'statusMateriais',
+  execucaoParcialAutorizadaPor: 'execucaoParcialAutorizadaPor',
+  execucaoParcialMotivo: 'execucaoParcialMotivo',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1327,6 +1332,46 @@ export const EstoqueMovimentoScalarFieldEnum = {
 } as const
 
 export type EstoqueMovimentoScalarFieldEnum = (typeof EstoqueMovimentoScalarFieldEnum)[keyof typeof EstoqueMovimentoScalarFieldEnum]
+
+
+export const RequisicaoMaterialScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  numero: 'numero',
+  serviceOrderId: 'serviceOrderId',
+  depositoId: 'depositoId',
+  status: 'status',
+  solicitanteCompanyUserId: 'solicitanteCompanyUserId',
+  atendidaPorCompanyUserId: 'atendidaPorCompanyUserId',
+  atendidaEm: 'atendidaEm',
+  observacao: 'observacao',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RequisicaoMaterialScalarFieldEnum = (typeof RequisicaoMaterialScalarFieldEnum)[keyof typeof RequisicaoMaterialScalarFieldEnum]
+
+
+export const RequisicaoMaterialItemScalarFieldEnum = {
+  id: 'id',
+  requisicaoId: 'requisicaoId',
+  pecaId: 'pecaId',
+  planoLinhaId: 'planoLinhaId',
+  quantidadeSolicitada: 'quantidadeSolicitada',
+  quantidadeReservada: 'quantidadeReservada',
+  quantidadeSeparada: 'quantidadeSeparada',
+  quantidadeEntregue: 'quantidadeEntregue',
+  quantidadeDevolvida: 'quantidadeDevolvida',
+  impeditivo: 'impeditivo',
+  prioridade: 'prioridade',
+  dataNecessidade: 'dataNecessidade',
+  equivalenteDePecaId: 'equivalenteDePecaId',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RequisicaoMaterialItemScalarFieldEnum = (typeof RequisicaoMaterialItemScalarFieldEnum)[keyof typeof RequisicaoMaterialItemScalarFieldEnum]
 
 
 export const SortOrder = {

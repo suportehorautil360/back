@@ -219,6 +219,7 @@ export type DepositoWhereInput = {
   responsavel?: Prisma.XOR<Prisma.OperatorNullableScalarRelationFilter, Prisma.OperatorWhereInput> | null
   saldos?: Prisma.PecaSaldoListRelationFilter
   movimentos?: Prisma.EstoqueMovimentoListRelationFilter
+  requisicoes?: Prisma.RequisicaoMaterialListRelationFilter
 }
 
 export type DepositoOrderByWithRelationInput = {
@@ -235,6 +236,7 @@ export type DepositoOrderByWithRelationInput = {
   responsavel?: Prisma.OperatorOrderByWithRelationInput
   saldos?: Prisma.PecaSaldoOrderByRelationAggregateInput
   movimentos?: Prisma.EstoqueMovimentoOrderByRelationAggregateInput
+  requisicoes?: Prisma.RequisicaoMaterialOrderByRelationAggregateInput
 }
 
 export type DepositoWhereUniqueInput = Prisma.AtLeast<{
@@ -255,6 +257,7 @@ export type DepositoWhereUniqueInput = Prisma.AtLeast<{
   responsavel?: Prisma.XOR<Prisma.OperatorNullableScalarRelationFilter, Prisma.OperatorWhereInput> | null
   saldos?: Prisma.PecaSaldoListRelationFilter
   movimentos?: Prisma.EstoqueMovimentoListRelationFilter
+  requisicoes?: Prisma.RequisicaoMaterialListRelationFilter
 }, "id" | "companyId_nome">
 
 export type DepositoOrderByWithAggregationInput = {
@@ -299,6 +302,7 @@ export type DepositoCreateInput = {
   responsavel?: Prisma.OperatorCreateNestedOneWithoutDepositosSobResponsabilidadeInput
   saldos?: Prisma.PecaSaldoCreateNestedManyWithoutDepositoInput
   movimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutDepositoInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoUncheckedCreateInput = {
@@ -313,6 +317,7 @@ export type DepositoUncheckedCreateInput = {
   updatedAt?: Date | string
   saldos?: Prisma.PecaSaldoUncheckedCreateNestedManyWithoutDepositoInput
   movimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutDepositoInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoUpdateInput = {
@@ -327,6 +332,7 @@ export type DepositoUpdateInput = {
   responsavel?: Prisma.OperatorUpdateOneWithoutDepositosSobResponsabilidadeNestedInput
   saldos?: Prisma.PecaSaldoUpdateManyWithoutDepositoNestedInput
   movimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutDepositoNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoUncheckedUpdateInput = {
@@ -341,6 +347,7 @@ export type DepositoUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   saldos?: Prisma.PecaSaldoUncheckedUpdateManyWithoutDepositoNestedInput
   movimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutDepositoNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoCreateManyInput = {
@@ -545,6 +552,20 @@ export type DepositoUpdateOneRequiredWithoutMovimentosNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.DepositoUpdateToOneWithWhereWithoutMovimentosInput, Prisma.DepositoUpdateWithoutMovimentosInput>, Prisma.DepositoUncheckedUpdateWithoutMovimentosInput>
 }
 
+export type DepositoCreateNestedOneWithoutRequisicoesInput = {
+  create?: Prisma.XOR<Prisma.DepositoCreateWithoutRequisicoesInput, Prisma.DepositoUncheckedCreateWithoutRequisicoesInput>
+  connectOrCreate?: Prisma.DepositoCreateOrConnectWithoutRequisicoesInput
+  connect?: Prisma.DepositoWhereUniqueInput
+}
+
+export type DepositoUpdateOneRequiredWithoutRequisicoesNestedInput = {
+  create?: Prisma.XOR<Prisma.DepositoCreateWithoutRequisicoesInput, Prisma.DepositoUncheckedCreateWithoutRequisicoesInput>
+  connectOrCreate?: Prisma.DepositoCreateOrConnectWithoutRequisicoesInput
+  upsert?: Prisma.DepositoUpsertWithoutRequisicoesInput
+  connect?: Prisma.DepositoWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DepositoUpdateToOneWithWhereWithoutRequisicoesInput, Prisma.DepositoUpdateWithoutRequisicoesInput>, Prisma.DepositoUncheckedUpdateWithoutRequisicoesInput>
+}
+
 export type DepositoCreateWithoutCompanyInput = {
   id?: string
   nome: string
@@ -556,6 +577,7 @@ export type DepositoCreateWithoutCompanyInput = {
   responsavel?: Prisma.OperatorCreateNestedOneWithoutDepositosSobResponsabilidadeInput
   saldos?: Prisma.PecaSaldoCreateNestedManyWithoutDepositoInput
   movimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutDepositoInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoUncheckedCreateWithoutCompanyInput = {
@@ -569,6 +591,7 @@ export type DepositoUncheckedCreateWithoutCompanyInput = {
   updatedAt?: Date | string
   saldos?: Prisma.PecaSaldoUncheckedCreateNestedManyWithoutDepositoInput
   movimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutDepositoInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoCreateOrConnectWithoutCompanyInput = {
@@ -623,6 +646,7 @@ export type DepositoCreateWithoutResponsavelInput = {
   company: Prisma.CompanyCreateNestedOneWithoutDepositosInput
   saldos?: Prisma.PecaSaldoCreateNestedManyWithoutDepositoInput
   movimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutDepositoInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoUncheckedCreateWithoutResponsavelInput = {
@@ -636,6 +660,7 @@ export type DepositoUncheckedCreateWithoutResponsavelInput = {
   updatedAt?: Date | string
   saldos?: Prisma.PecaSaldoUncheckedCreateNestedManyWithoutDepositoInput
   movimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutDepositoInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoCreateOrConnectWithoutResponsavelInput = {
@@ -675,6 +700,7 @@ export type DepositoCreateWithoutSaldosInput = {
   company: Prisma.CompanyCreateNestedOneWithoutDepositosInput
   responsavel?: Prisma.OperatorCreateNestedOneWithoutDepositosSobResponsabilidadeInput
   movimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutDepositoInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoUncheckedCreateWithoutSaldosInput = {
@@ -688,6 +714,7 @@ export type DepositoUncheckedCreateWithoutSaldosInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   movimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutDepositoInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoCreateOrConnectWithoutSaldosInput = {
@@ -717,6 +744,7 @@ export type DepositoUpdateWithoutSaldosInput = {
   company?: Prisma.CompanyUpdateOneRequiredWithoutDepositosNestedInput
   responsavel?: Prisma.OperatorUpdateOneWithoutDepositosSobResponsabilidadeNestedInput
   movimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutDepositoNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoUncheckedUpdateWithoutSaldosInput = {
@@ -730,6 +758,7 @@ export type DepositoUncheckedUpdateWithoutSaldosInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   movimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutDepositoNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoCreateWithoutMovimentosInput = {
@@ -743,6 +772,7 @@ export type DepositoCreateWithoutMovimentosInput = {
   company: Prisma.CompanyCreateNestedOneWithoutDepositosInput
   responsavel?: Prisma.OperatorCreateNestedOneWithoutDepositosSobResponsabilidadeInput
   saldos?: Prisma.PecaSaldoCreateNestedManyWithoutDepositoInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoUncheckedCreateWithoutMovimentosInput = {
@@ -756,6 +786,7 @@ export type DepositoUncheckedCreateWithoutMovimentosInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   saldos?: Prisma.PecaSaldoUncheckedCreateNestedManyWithoutDepositoInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoCreateOrConnectWithoutMovimentosInput = {
@@ -785,6 +816,7 @@ export type DepositoUpdateWithoutMovimentosInput = {
   company?: Prisma.CompanyUpdateOneRequiredWithoutDepositosNestedInput
   responsavel?: Prisma.OperatorUpdateOneWithoutDepositosSobResponsabilidadeNestedInput
   saldos?: Prisma.PecaSaldoUpdateManyWithoutDepositoNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoUncheckedUpdateWithoutMovimentosInput = {
@@ -798,6 +830,79 @@ export type DepositoUncheckedUpdateWithoutMovimentosInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   saldos?: Prisma.PecaSaldoUncheckedUpdateManyWithoutDepositoNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutDepositoNestedInput
+}
+
+export type DepositoCreateWithoutRequisicoesInput = {
+  id?: string
+  nome: string
+  unidadeObra?: string | null
+  endereco?: string | null
+  ativo?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutDepositosInput
+  responsavel?: Prisma.OperatorCreateNestedOneWithoutDepositosSobResponsabilidadeInput
+  saldos?: Prisma.PecaSaldoCreateNestedManyWithoutDepositoInput
+  movimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutDepositoInput
+}
+
+export type DepositoUncheckedCreateWithoutRequisicoesInput = {
+  id?: string
+  companyId: string
+  nome: string
+  unidadeObra?: string | null
+  endereco?: string | null
+  responsavelOperatorId?: string | null
+  ativo?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  saldos?: Prisma.PecaSaldoUncheckedCreateNestedManyWithoutDepositoInput
+  movimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutDepositoInput
+}
+
+export type DepositoCreateOrConnectWithoutRequisicoesInput = {
+  where: Prisma.DepositoWhereUniqueInput
+  create: Prisma.XOR<Prisma.DepositoCreateWithoutRequisicoesInput, Prisma.DepositoUncheckedCreateWithoutRequisicoesInput>
+}
+
+export type DepositoUpsertWithoutRequisicoesInput = {
+  update: Prisma.XOR<Prisma.DepositoUpdateWithoutRequisicoesInput, Prisma.DepositoUncheckedUpdateWithoutRequisicoesInput>
+  create: Prisma.XOR<Prisma.DepositoCreateWithoutRequisicoesInput, Prisma.DepositoUncheckedCreateWithoutRequisicoesInput>
+  where?: Prisma.DepositoWhereInput
+}
+
+export type DepositoUpdateToOneWithWhereWithoutRequisicoesInput = {
+  where?: Prisma.DepositoWhereInput
+  data: Prisma.XOR<Prisma.DepositoUpdateWithoutRequisicoesInput, Prisma.DepositoUncheckedUpdateWithoutRequisicoesInput>
+}
+
+export type DepositoUpdateWithoutRequisicoesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  unidadeObra?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  endereco?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutDepositosNestedInput
+  responsavel?: Prisma.OperatorUpdateOneWithoutDepositosSobResponsabilidadeNestedInput
+  saldos?: Prisma.PecaSaldoUpdateManyWithoutDepositoNestedInput
+  movimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutDepositoNestedInput
+}
+
+export type DepositoUncheckedUpdateWithoutRequisicoesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  unidadeObra?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  endereco?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  saldos?: Prisma.PecaSaldoUncheckedUpdateManyWithoutDepositoNestedInput
+  movimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoCreateManyCompanyInput = {
@@ -822,6 +927,7 @@ export type DepositoUpdateWithoutCompanyInput = {
   responsavel?: Prisma.OperatorUpdateOneWithoutDepositosSobResponsabilidadeNestedInput
   saldos?: Prisma.PecaSaldoUpdateManyWithoutDepositoNestedInput
   movimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutDepositoNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoUncheckedUpdateWithoutCompanyInput = {
@@ -835,6 +941,7 @@ export type DepositoUncheckedUpdateWithoutCompanyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   saldos?: Prisma.PecaSaldoUncheckedUpdateManyWithoutDepositoNestedInput
   movimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutDepositoNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoUncheckedUpdateManyWithoutCompanyInput = {
@@ -870,6 +977,7 @@ export type DepositoUpdateWithoutResponsavelInput = {
   company?: Prisma.CompanyUpdateOneRequiredWithoutDepositosNestedInput
   saldos?: Prisma.PecaSaldoUpdateManyWithoutDepositoNestedInput
   movimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutDepositoNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoUncheckedUpdateWithoutResponsavelInput = {
@@ -883,6 +991,7 @@ export type DepositoUncheckedUpdateWithoutResponsavelInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   saldos?: Prisma.PecaSaldoUncheckedUpdateManyWithoutDepositoNestedInput
   movimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutDepositoNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoUncheckedUpdateManyWithoutResponsavelInput = {
@@ -904,11 +1013,13 @@ export type DepositoUncheckedUpdateManyWithoutResponsavelInput = {
 export type DepositoCountOutputType = {
   saldos: number
   movimentos: number
+  requisicoes: number
 }
 
 export type DepositoCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   saldos?: boolean | DepositoCountOutputTypeCountSaldosArgs
   movimentos?: boolean | DepositoCountOutputTypeCountMovimentosArgs
+  requisicoes?: boolean | DepositoCountOutputTypeCountRequisicoesArgs
 }
 
 /**
@@ -935,6 +1046,13 @@ export type DepositoCountOutputTypeCountMovimentosArgs<ExtArgs extends runtime.T
   where?: Prisma.EstoqueMovimentoWhereInput
 }
 
+/**
+ * DepositoCountOutputType without action
+ */
+export type DepositoCountOutputTypeCountRequisicoesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RequisicaoMaterialWhereInput
+}
+
 
 export type DepositoSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -950,6 +1068,7 @@ export type DepositoSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   responsavel?: boolean | Prisma.Deposito$responsavelArgs<ExtArgs>
   saldos?: boolean | Prisma.Deposito$saldosArgs<ExtArgs>
   movimentos?: boolean | Prisma.Deposito$movimentosArgs<ExtArgs>
+  requisicoes?: boolean | Prisma.Deposito$requisicoesArgs<ExtArgs>
   _count?: boolean | Prisma.DepositoCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["deposito"]>
 
@@ -999,6 +1118,7 @@ export type DepositoInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   responsavel?: boolean | Prisma.Deposito$responsavelArgs<ExtArgs>
   saldos?: boolean | Prisma.Deposito$saldosArgs<ExtArgs>
   movimentos?: boolean | Prisma.Deposito$movimentosArgs<ExtArgs>
+  requisicoes?: boolean | Prisma.Deposito$requisicoesArgs<ExtArgs>
   _count?: boolean | Prisma.DepositoCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type DepositoIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1017,6 +1137,7 @@ export type $DepositoPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     responsavel: Prisma.$OperatorPayload<ExtArgs> | null
     saldos: Prisma.$PecaSaldoPayload<ExtArgs>[]
     movimentos: Prisma.$EstoqueMovimentoPayload<ExtArgs>[]
+    requisicoes: Prisma.$RequisicaoMaterialPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1426,6 +1547,7 @@ export interface Prisma__DepositoClient<T, Null = never, ExtArgs extends runtime
   responsavel<T extends Prisma.Deposito$responsavelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Deposito$responsavelArgs<ExtArgs>>): Prisma.Prisma__OperatorClient<runtime.Types.Result.GetResult<Prisma.$OperatorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   saldos<T extends Prisma.Deposito$saldosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Deposito$saldosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PecaSaldoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   movimentos<T extends Prisma.Deposito$movimentosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Deposito$movimentosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EstoqueMovimentoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  requisicoes<T extends Prisma.Deposito$requisicoesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Deposito$requisicoesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RequisicaoMaterialPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1929,6 +2051,30 @@ export type Deposito$movimentosArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.EstoqueMovimentoScalarFieldEnum | Prisma.EstoqueMovimentoScalarFieldEnum[]
+}
+
+/**
+ * Deposito.requisicoes
+ */
+export type Deposito$requisicoesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RequisicaoMaterial
+   */
+  select?: Prisma.RequisicaoMaterialSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RequisicaoMaterial
+   */
+  omit?: Prisma.RequisicaoMaterialOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RequisicaoMaterialInclude<ExtArgs> | null
+  where?: Prisma.RequisicaoMaterialWhereInput
+  orderBy?: Prisma.RequisicaoMaterialOrderByWithRelationInput | Prisma.RequisicaoMaterialOrderByWithRelationInput[]
+  cursor?: Prisma.RequisicaoMaterialWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RequisicaoMaterialScalarFieldEnum | Prisma.RequisicaoMaterialScalarFieldEnum[]
 }
 
 /**

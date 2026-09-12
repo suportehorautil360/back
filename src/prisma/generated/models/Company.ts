@@ -307,6 +307,7 @@ export type CompanyWhereInput = {
   depositos?: Prisma.DepositoListRelationFilter
   pecas?: Prisma.PecaListRelationFilter
   estoqueMovimentos?: Prisma.EstoqueMovimentoListRelationFilter
+  requisicoesMaterial?: Prisma.RequisicaoMaterialListRelationFilter
 }
 
 export type CompanyOrderByWithRelationInput = {
@@ -364,6 +365,7 @@ export type CompanyOrderByWithRelationInput = {
   depositos?: Prisma.DepositoOrderByRelationAggregateInput
   pecas?: Prisma.PecaOrderByRelationAggregateInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoOrderByRelationAggregateInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialOrderByRelationAggregateInput
 }
 
 export type CompanyWhereUniqueInput = Prisma.AtLeast<{
@@ -424,6 +426,7 @@ export type CompanyWhereUniqueInput = Prisma.AtLeast<{
   depositos?: Prisma.DepositoListRelationFilter
   pecas?: Prisma.PecaListRelationFilter
   estoqueMovimentos?: Prisma.EstoqueMovimentoListRelationFilter
+  requisicoesMaterial?: Prisma.RequisicaoMaterialListRelationFilter
 }, "id" | "legacyId" | "slug">
 
 export type CompanyOrderByWithAggregationInput = {
@@ -527,6 +530,7 @@ export type CompanyCreateInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateInput = {
@@ -584,6 +588,7 @@ export type CompanyUncheckedCreateInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUpdateInput = {
@@ -641,6 +646,7 @@ export type CompanyUpdateInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateInput = {
@@ -698,6 +704,7 @@ export type CompanyUncheckedUpdateInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateManyInput = {
@@ -1343,6 +1350,20 @@ export type CompanyUpdateOneRequiredWithoutEstoqueMovimentosNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.CompanyUpdateToOneWithWhereWithoutEstoqueMovimentosInput, Prisma.CompanyUpdateWithoutEstoqueMovimentosInput>, Prisma.CompanyUncheckedUpdateWithoutEstoqueMovimentosInput>
 }
 
+export type CompanyCreateNestedOneWithoutRequisicoesMaterialInput = {
+  create?: Prisma.XOR<Prisma.CompanyCreateWithoutRequisicoesMaterialInput, Prisma.CompanyUncheckedCreateWithoutRequisicoesMaterialInput>
+  connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutRequisicoesMaterialInput
+  connect?: Prisma.CompanyWhereUniqueInput
+}
+
+export type CompanyUpdateOneRequiredWithoutRequisicoesMaterialNestedInput = {
+  create?: Prisma.XOR<Prisma.CompanyCreateWithoutRequisicoesMaterialInput, Prisma.CompanyUncheckedCreateWithoutRequisicoesMaterialInput>
+  connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutRequisicoesMaterialInput
+  upsert?: Prisma.CompanyUpsertWithoutRequisicoesMaterialInput
+  connect?: Prisma.CompanyWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CompanyUpdateToOneWithWhereWithoutRequisicoesMaterialInput, Prisma.CompanyUpdateWithoutRequisicoesMaterialInput>, Prisma.CompanyUncheckedUpdateWithoutRequisicoesMaterialInput>
+}
+
 export type CompanyCreateWithoutWhatsappRecipientsInput = {
   id?: string
   legacyId?: string | null
@@ -1397,6 +1418,7 @@ export type CompanyCreateWithoutWhatsappRecipientsInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutWhatsappRecipientsInput = {
@@ -1453,6 +1475,7 @@ export type CompanyUncheckedCreateWithoutWhatsappRecipientsInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutWhatsappRecipientsInput = {
@@ -1525,6 +1548,7 @@ export type CompanyUpdateWithoutWhatsappRecipientsInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutWhatsappRecipientsInput = {
@@ -1581,6 +1605,7 @@ export type CompanyUncheckedUpdateWithoutWhatsappRecipientsInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutSettingsInput = {
@@ -1637,6 +1662,7 @@ export type CompanyCreateWithoutSettingsInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutSettingsInput = {
@@ -1693,6 +1719,7 @@ export type CompanyUncheckedCreateWithoutSettingsInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutSettingsInput = {
@@ -1765,6 +1792,7 @@ export type CompanyUpdateWithoutSettingsInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutSettingsInput = {
@@ -1821,6 +1849,7 @@ export type CompanyUncheckedUpdateWithoutSettingsInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutEquipmentsInput = {
@@ -1877,6 +1906,7 @@ export type CompanyCreateWithoutEquipmentsInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutEquipmentsInput = {
@@ -1933,6 +1963,7 @@ export type CompanyUncheckedCreateWithoutEquipmentsInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutEquipmentsInput = {
@@ -2005,6 +2036,7 @@ export type CompanyUpdateWithoutEquipmentsInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutEquipmentsInput = {
@@ -2061,6 +2093,7 @@ export type CompanyUncheckedUpdateWithoutEquipmentsInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutWorkFrontsInput = {
@@ -2117,6 +2150,7 @@ export type CompanyCreateWithoutWorkFrontsInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutWorkFrontsInput = {
@@ -2173,6 +2207,7 @@ export type CompanyUncheckedCreateWithoutWorkFrontsInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutWorkFrontsInput = {
@@ -2245,6 +2280,7 @@ export type CompanyUpdateWithoutWorkFrontsInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutWorkFrontsInput = {
@@ -2301,6 +2337,7 @@ export type CompanyUncheckedUpdateWithoutWorkFrontsInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutChecklistRunsInput = {
@@ -2357,6 +2394,7 @@ export type CompanyCreateWithoutChecklistRunsInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutChecklistRunsInput = {
@@ -2413,6 +2451,7 @@ export type CompanyUncheckedCreateWithoutChecklistRunsInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutChecklistRunsInput = {
@@ -2485,6 +2524,7 @@ export type CompanyUpdateWithoutChecklistRunsInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutChecklistRunsInput = {
@@ -2541,6 +2581,7 @@ export type CompanyUncheckedUpdateWithoutChecklistRunsInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutServiceOrdersInput = {
@@ -2597,6 +2638,7 @@ export type CompanyCreateWithoutServiceOrdersInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutServiceOrdersInput = {
@@ -2653,6 +2695,7 @@ export type CompanyUncheckedCreateWithoutServiceOrdersInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutServiceOrdersInput = {
@@ -2725,6 +2768,7 @@ export type CompanyUpdateWithoutServiceOrdersInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutServiceOrdersInput = {
@@ -2781,6 +2825,7 @@ export type CompanyUncheckedUpdateWithoutServiceOrdersInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutPlanosPreventivosInput = {
@@ -2837,6 +2882,7 @@ export type CompanyCreateWithoutPlanosPreventivosInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutPlanosPreventivosInput = {
@@ -2893,6 +2939,7 @@ export type CompanyUncheckedCreateWithoutPlanosPreventivosInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutPlanosPreventivosInput = {
@@ -2965,6 +3012,7 @@ export type CompanyUpdateWithoutPlanosPreventivosInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutPlanosPreventivosInput = {
@@ -3021,6 +3069,7 @@ export type CompanyUncheckedUpdateWithoutPlanosPreventivosInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutOperatorsInput = {
@@ -3077,6 +3126,7 @@ export type CompanyCreateWithoutOperatorsInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutOperatorsInput = {
@@ -3133,6 +3183,7 @@ export type CompanyUncheckedCreateWithoutOperatorsInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutOperatorsInput = {
@@ -3205,6 +3256,7 @@ export type CompanyUpdateWithoutOperatorsInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutOperatorsInput = {
@@ -3261,6 +3313,7 @@ export type CompanyUncheckedUpdateWithoutOperatorsInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutAbastecimentosInput = {
@@ -3317,6 +3370,7 @@ export type CompanyCreateWithoutAbastecimentosInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutAbastecimentosInput = {
@@ -3373,6 +3427,7 @@ export type CompanyUncheckedCreateWithoutAbastecimentosInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutAbastecimentosInput = {
@@ -3445,6 +3500,7 @@ export type CompanyUpdateWithoutAbastecimentosInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutAbastecimentosInput = {
@@ -3501,6 +3557,7 @@ export type CompanyUncheckedUpdateWithoutAbastecimentosInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutFleetfuelIntencoesInput = {
@@ -3557,6 +3614,7 @@ export type CompanyCreateWithoutFleetfuelIntencoesInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutFleetfuelIntencoesInput = {
@@ -3613,6 +3671,7 @@ export type CompanyUncheckedCreateWithoutFleetfuelIntencoesInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutFleetfuelIntencoesInput = {
@@ -3685,6 +3744,7 @@ export type CompanyUpdateWithoutFleetfuelIntencoesInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutFleetfuelIntencoesInput = {
@@ -3741,6 +3801,7 @@ export type CompanyUncheckedUpdateWithoutFleetfuelIntencoesInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutPartnersInput = {
@@ -3797,6 +3858,7 @@ export type CompanyCreateWithoutPartnersInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutPartnersInput = {
@@ -3853,6 +3915,7 @@ export type CompanyUncheckedCreateWithoutPartnersInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutPartnersInput = {
@@ -3925,6 +3988,7 @@ export type CompanyUpdateWithoutPartnersInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutPartnersInput = {
@@ -3981,6 +4045,7 @@ export type CompanyUncheckedUpdateWithoutPartnersInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutPartnerPortalUsersInput = {
@@ -4037,6 +4102,7 @@ export type CompanyCreateWithoutPartnerPortalUsersInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutPartnerPortalUsersInput = {
@@ -4093,6 +4159,7 @@ export type CompanyUncheckedCreateWithoutPartnerPortalUsersInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutPartnerPortalUsersInput = {
@@ -4165,6 +4232,7 @@ export type CompanyUpdateWithoutPartnerPortalUsersInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutPartnerPortalUsersInput = {
@@ -4221,6 +4289,7 @@ export type CompanyUncheckedUpdateWithoutPartnerPortalUsersInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutPontoRegistrosInput = {
@@ -4277,6 +4346,7 @@ export type CompanyCreateWithoutPontoRegistrosInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutPontoRegistrosInput = {
@@ -4333,6 +4403,7 @@ export type CompanyUncheckedCreateWithoutPontoRegistrosInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutPontoRegistrosInput = {
@@ -4405,6 +4476,7 @@ export type CompanyUpdateWithoutPontoRegistrosInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutPontoRegistrosInput = {
@@ -4461,6 +4533,7 @@ export type CompanyUncheckedUpdateWithoutPontoRegistrosInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutPontoNsrCounterInput = {
@@ -4517,6 +4590,7 @@ export type CompanyCreateWithoutPontoNsrCounterInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutPontoNsrCounterInput = {
@@ -4573,6 +4647,7 @@ export type CompanyUncheckedCreateWithoutPontoNsrCounterInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutPontoNsrCounterInput = {
@@ -4645,6 +4720,7 @@ export type CompanyUpdateWithoutPontoNsrCounterInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutPontoNsrCounterInput = {
@@ -4701,6 +4777,7 @@ export type CompanyUncheckedUpdateWithoutPontoNsrCounterInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutPontoSolicitacoesInput = {
@@ -4757,6 +4834,7 @@ export type CompanyCreateWithoutPontoSolicitacoesInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutPontoSolicitacoesInput = {
@@ -4813,6 +4891,7 @@ export type CompanyUncheckedCreateWithoutPontoSolicitacoesInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutPontoSolicitacoesInput = {
@@ -4885,6 +4964,7 @@ export type CompanyUpdateWithoutPontoSolicitacoesInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutPontoSolicitacoesInput = {
@@ -4941,6 +5021,7 @@ export type CompanyUncheckedUpdateWithoutPontoSolicitacoesInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutPontoAbonosInput = {
@@ -4997,6 +5078,7 @@ export type CompanyCreateWithoutPontoAbonosInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutPontoAbonosInput = {
@@ -5053,6 +5135,7 @@ export type CompanyUncheckedCreateWithoutPontoAbonosInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutPontoAbonosInput = {
@@ -5125,6 +5208,7 @@ export type CompanyUpdateWithoutPontoAbonosInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutPontoAbonosInput = {
@@ -5181,6 +5265,7 @@ export type CompanyUncheckedUpdateWithoutPontoAbonosInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutChecklistsDevolucaoInput = {
@@ -5237,6 +5322,7 @@ export type CompanyCreateWithoutChecklistsDevolucaoInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutChecklistsDevolucaoInput = {
@@ -5293,6 +5379,7 @@ export type CompanyUncheckedCreateWithoutChecklistsDevolucaoInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutChecklistsDevolucaoInput = {
@@ -5365,6 +5452,7 @@ export type CompanyUpdateWithoutChecklistsDevolucaoInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutChecklistsDevolucaoInput = {
@@ -5421,6 +5509,7 @@ export type CompanyUncheckedUpdateWithoutChecklistsDevolucaoInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutChecklistsChegadaInput = {
@@ -5477,6 +5566,7 @@ export type CompanyCreateWithoutChecklistsChegadaInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutChecklistsChegadaInput = {
@@ -5533,6 +5623,7 @@ export type CompanyUncheckedCreateWithoutChecklistsChegadaInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutChecklistsChegadaInput = {
@@ -5605,6 +5696,7 @@ export type CompanyUpdateWithoutChecklistsChegadaInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutChecklistsChegadaInput = {
@@ -5661,6 +5753,7 @@ export type CompanyUncheckedUpdateWithoutChecklistsChegadaInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutGarantiasInput = {
@@ -5717,6 +5810,7 @@ export type CompanyCreateWithoutGarantiasInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutGarantiasInput = {
@@ -5773,6 +5867,7 @@ export type CompanyUncheckedCreateWithoutGarantiasInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutGarantiasInput = {
@@ -5845,6 +5940,7 @@ export type CompanyUpdateWithoutGarantiasInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutGarantiasInput = {
@@ -5901,6 +5997,7 @@ export type CompanyUncheckedUpdateWithoutGarantiasInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutOrcamentosInput = {
@@ -5957,6 +6054,7 @@ export type CompanyCreateWithoutOrcamentosInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutOrcamentosInput = {
@@ -6013,6 +6111,7 @@ export type CompanyUncheckedCreateWithoutOrcamentosInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutOrcamentosInput = {
@@ -6085,6 +6184,7 @@ export type CompanyUpdateWithoutOrcamentosInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutOrcamentosInput = {
@@ -6141,6 +6241,7 @@ export type CompanyUncheckedUpdateWithoutOrcamentosInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutRolesInput = {
@@ -6197,6 +6298,7 @@ export type CompanyCreateWithoutRolesInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutRolesInput = {
@@ -6253,6 +6355,7 @@ export type CompanyUncheckedCreateWithoutRolesInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutRolesInput = {
@@ -6325,6 +6428,7 @@ export type CompanyUpdateWithoutRolesInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutRolesInput = {
@@ -6381,6 +6485,7 @@ export type CompanyUncheckedUpdateWithoutRolesInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutFeaturesInput = {
@@ -6437,6 +6542,7 @@ export type CompanyCreateWithoutFeaturesInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutFeaturesInput = {
@@ -6493,6 +6599,7 @@ export type CompanyUncheckedCreateWithoutFeaturesInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutFeaturesInput = {
@@ -6565,6 +6672,7 @@ export type CompanyUpdateWithoutFeaturesInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutFeaturesInput = {
@@ -6621,6 +6729,7 @@ export type CompanyUncheckedUpdateWithoutFeaturesInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutFeatureChangesInput = {
@@ -6677,6 +6786,7 @@ export type CompanyCreateWithoutFeatureChangesInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutFeatureChangesInput = {
@@ -6733,6 +6843,7 @@ export type CompanyUncheckedCreateWithoutFeatureChangesInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutFeatureChangesInput = {
@@ -6805,6 +6916,7 @@ export type CompanyUpdateWithoutFeatureChangesInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutFeatureChangesInput = {
@@ -6861,6 +6973,7 @@ export type CompanyUncheckedUpdateWithoutFeatureChangesInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutUsersInput = {
@@ -6917,6 +7030,7 @@ export type CompanyCreateWithoutUsersInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutUsersInput = {
@@ -6973,6 +7087,7 @@ export type CompanyUncheckedCreateWithoutUsersInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutUsersInput = {
@@ -7045,6 +7160,7 @@ export type CompanyUpdateWithoutUsersInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutUsersInput = {
@@ -7101,6 +7217,7 @@ export type CompanyUncheckedUpdateWithoutUsersInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutEmergenciesInput = {
@@ -7157,6 +7274,7 @@ export type CompanyCreateWithoutEmergenciesInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutEmergenciesInput = {
@@ -7213,6 +7331,7 @@ export type CompanyUncheckedCreateWithoutEmergenciesInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutEmergenciesInput = {
@@ -7285,6 +7404,7 @@ export type CompanyUpdateWithoutEmergenciesInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutEmergenciesInput = {
@@ -7341,6 +7461,7 @@ export type CompanyUncheckedUpdateWithoutEmergenciesInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutCreditosInput = {
@@ -7397,6 +7518,7 @@ export type CompanyCreateWithoutCreditosInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutCreditosInput = {
@@ -7453,6 +7575,7 @@ export type CompanyUncheckedCreateWithoutCreditosInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutCreditosInput = {
@@ -7525,6 +7648,7 @@ export type CompanyUpdateWithoutCreditosInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutCreditosInput = {
@@ -7581,6 +7705,7 @@ export type CompanyUncheckedUpdateWithoutCreditosInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutLubrificacoesInput = {
@@ -7637,6 +7762,7 @@ export type CompanyCreateWithoutLubrificacoesInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutLubrificacoesInput = {
@@ -7693,6 +7819,7 @@ export type CompanyUncheckedCreateWithoutLubrificacoesInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutLubrificacoesInput = {
@@ -7765,6 +7892,7 @@ export type CompanyUpdateWithoutLubrificacoesInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutLubrificacoesInput = {
@@ -7821,6 +7949,7 @@ export type CompanyUncheckedUpdateWithoutLubrificacoesInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutReabastecimentosComboioInput = {
@@ -7877,6 +8006,7 @@ export type CompanyCreateWithoutReabastecimentosComboioInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutReabastecimentosComboioInput = {
@@ -7933,6 +8063,7 @@ export type CompanyUncheckedCreateWithoutReabastecimentosComboioInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutReabastecimentosComboioInput = {
@@ -8005,6 +8136,7 @@ export type CompanyUpdateWithoutReabastecimentosComboioInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutReabastecimentosComboioInput = {
@@ -8061,6 +8193,7 @@ export type CompanyUncheckedUpdateWithoutReabastecimentosComboioInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutNotasFiscaisInput = {
@@ -8117,6 +8250,7 @@ export type CompanyCreateWithoutNotasFiscaisInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutNotasFiscaisInput = {
@@ -8173,6 +8307,7 @@ export type CompanyUncheckedCreateWithoutNotasFiscaisInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutNotasFiscaisInput = {
@@ -8245,6 +8380,7 @@ export type CompanyUpdateWithoutNotasFiscaisInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutNotasFiscaisInput = {
@@ -8301,6 +8437,7 @@ export type CompanyUncheckedUpdateWithoutNotasFiscaisInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutNotificacoesInput = {
@@ -8357,6 +8494,7 @@ export type CompanyCreateWithoutNotificacoesInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutNotificacoesInput = {
@@ -8413,6 +8551,7 @@ export type CompanyUncheckedCreateWithoutNotificacoesInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutNotificacoesInput = {
@@ -8485,6 +8624,7 @@ export type CompanyUpdateWithoutNotificacoesInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutNotificacoesInput = {
@@ -8541,6 +8681,7 @@ export type CompanyUncheckedUpdateWithoutNotificacoesInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutChecklistModelosInput = {
@@ -8597,6 +8738,7 @@ export type CompanyCreateWithoutChecklistModelosInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutChecklistModelosInput = {
@@ -8653,6 +8795,7 @@ export type CompanyUncheckedCreateWithoutChecklistModelosInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutChecklistModelosInput = {
@@ -8725,6 +8868,7 @@ export type CompanyUpdateWithoutChecklistModelosInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutChecklistModelosInput = {
@@ -8781,6 +8925,7 @@ export type CompanyUncheckedUpdateWithoutChecklistModelosInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutManuaisInput = {
@@ -8837,6 +8982,7 @@ export type CompanyCreateWithoutManuaisInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutManuaisInput = {
@@ -8893,6 +9039,7 @@ export type CompanyUncheckedCreateWithoutManuaisInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutManuaisInput = {
@@ -8965,6 +9112,7 @@ export type CompanyUpdateWithoutManuaisInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutManuaisInput = {
@@ -9021,6 +9169,7 @@ export type CompanyUncheckedUpdateWithoutManuaisInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutChecklistExecucoesInput = {
@@ -9077,6 +9226,7 @@ export type CompanyCreateWithoutChecklistExecucoesInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutChecklistExecucoesInput = {
@@ -9133,6 +9283,7 @@ export type CompanyUncheckedCreateWithoutChecklistExecucoesInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutChecklistExecucoesInput = {
@@ -9205,6 +9356,7 @@ export type CompanyUpdateWithoutChecklistExecucoesInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutChecklistExecucoesInput = {
@@ -9261,6 +9413,7 @@ export type CompanyUncheckedUpdateWithoutChecklistExecucoesInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutProgramadorMecanicosInput = {
@@ -9317,6 +9470,7 @@ export type CompanyCreateWithoutProgramadorMecanicosInput = {
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutProgramadorMecanicosInput = {
@@ -9373,6 +9527,7 @@ export type CompanyUncheckedCreateWithoutProgramadorMecanicosInput = {
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutProgramadorMecanicosInput = {
@@ -9445,6 +9600,7 @@ export type CompanyUpdateWithoutProgramadorMecanicosInput = {
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutProgramadorMecanicosInput = {
@@ -9501,6 +9657,7 @@ export type CompanyUncheckedUpdateWithoutProgramadorMecanicosInput = {
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutDepositosInput = {
@@ -9557,6 +9714,7 @@ export type CompanyCreateWithoutDepositosInput = {
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutDepositosInput = {
@@ -9613,6 +9771,7 @@ export type CompanyUncheckedCreateWithoutDepositosInput = {
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutDepositosInput = {
@@ -9685,6 +9844,7 @@ export type CompanyUpdateWithoutDepositosInput = {
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutDepositosInput = {
@@ -9741,6 +9901,7 @@ export type CompanyUncheckedUpdateWithoutDepositosInput = {
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutPecasInput = {
@@ -9797,6 +9958,7 @@ export type CompanyCreateWithoutPecasInput = {
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutCompanyInput
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutPecasInput = {
@@ -9853,6 +10015,7 @@ export type CompanyUncheckedCreateWithoutPecasInput = {
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutCompanyInput
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutPecasInput = {
@@ -9925,6 +10088,7 @@ export type CompanyUpdateWithoutPecasInput = {
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutCompanyNestedInput
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutPecasInput = {
@@ -9981,6 +10145,7 @@ export type CompanyUncheckedUpdateWithoutPecasInput = {
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutCompanyNestedInput
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutEstoqueMovimentosInput = {
@@ -10037,6 +10202,7 @@ export type CompanyCreateWithoutEstoqueMovimentosInput = {
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutCompanyInput
   depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutEstoqueMovimentosInput = {
@@ -10093,6 +10259,7 @@ export type CompanyUncheckedCreateWithoutEstoqueMovimentosInput = {
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutCompanyInput
   depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
   pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutEstoqueMovimentosInput = {
@@ -10165,6 +10332,7 @@ export type CompanyUpdateWithoutEstoqueMovimentosInput = {
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutCompanyNestedInput
   depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutEstoqueMovimentosInput = {
@@ -10221,6 +10389,251 @@ export type CompanyUncheckedUpdateWithoutEstoqueMovimentosInput = {
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutCompanyNestedInput
   depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
   pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
+  requisicoesMaterial?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutCompanyNestedInput
+}
+
+export type CompanyCreateWithoutRequisicoesMaterialInput = {
+  id?: string
+  legacyId?: string | null
+  name: string
+  slug: string
+  type?: $Enums.CompanyType
+  status?: $Enums.Status
+  uf?: string | null
+  cidade?: string | null
+  email?: string | null
+  cnpj?: string | null
+  caepf?: string | null
+  whatsapp?: string | null
+  razaoSocial?: string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.CompanyUserCreateNestedManyWithoutCompanyInput
+  roles?: Prisma.CompanyRoleCreateNestedManyWithoutCompanyInput
+  pontoRegistros?: Prisma.PontoRegistroCreateNestedManyWithoutCompanyInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoCreateNestedManyWithoutCompanyInput
+  pontoAbonos?: Prisma.PontoAbonoCreateNestedManyWithoutCompanyInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterCreateNestedOneWithoutCompanyInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaCreateNestedManyWithoutCompanyInput
+  orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutCompanyInput
+  features?: Prisma.CompanyFeatureCreateNestedManyWithoutCompanyInput
+  featureChanges?: Prisma.CompanyFeatureChangeCreateNestedManyWithoutCompanyInput
+  partners?: Prisma.PartnerCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutCompanyInput
+  equipments?: Prisma.EquipmentCreateNestedManyWithoutCompanyInput
+  checklistRuns?: Prisma.ChecklistRunCreateNestedManyWithoutCompanyInput
+  serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutCompanyInput
+  operators?: Prisma.OperatorCreateNestedManyWithoutCompanyInput
+  abastecimentos?: Prisma.AbastecimentoCreateNestedManyWithoutCompanyInput
+  workFronts?: Prisma.WorkFrontCreateNestedManyWithoutCompanyInput
+  settings?: Prisma.CompanySettingsCreateNestedOneWithoutCompanyInput
+  emergencies?: Prisma.EmergencyCreateNestedManyWithoutCompanyInput
+  creditos?: Prisma.CreditoCreateNestedManyWithoutCompanyInput
+  lubrificacoes?: Prisma.LubrificacaoCreateNestedManyWithoutCompanyInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutCompanyInput
+  notasFiscais?: Prisma.NotaFiscalCreateNestedManyWithoutCompanyInput
+  planosPreventivos?: Prisma.PlanoPreventivoCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoCreateNestedManyWithoutCompanyInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutCompanyInput
+  notificacoes?: Prisma.NotificacaoCreateNestedManyWithoutCompanyInput
+  whatsappRecipients?: Prisma.CompanyWhatsappRecipientCreateNestedManyWithoutCompanyInput
+  checklistModelos?: Prisma.ChecklistModeloCreateNestedManyWithoutCompanyInput
+  manuais?: Prisma.ManualEquipamentoCreateNestedManyWithoutCompanyInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutCompanyInput
+  depositos?: Prisma.DepositoCreateNestedManyWithoutCompanyInput
+  pecas?: Prisma.PecaCreateNestedManyWithoutCompanyInput
+  estoqueMovimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutCompanyInput
+}
+
+export type CompanyUncheckedCreateWithoutRequisicoesMaterialInput = {
+  id?: string
+  legacyId?: string | null
+  name: string
+  slug: string
+  type?: $Enums.CompanyType
+  status?: $Enums.Status
+  uf?: string | null
+  cidade?: string | null
+  email?: string | null
+  cnpj?: string | null
+  caepf?: string | null
+  whatsapp?: string | null
+  razaoSocial?: string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.CompanyUserUncheckedCreateNestedManyWithoutCompanyInput
+  roles?: Prisma.CompanyRoleUncheckedCreateNestedManyWithoutCompanyInput
+  pontoRegistros?: Prisma.PontoRegistroUncheckedCreateNestedManyWithoutCompanyInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedCreateNestedManyWithoutCompanyInput
+  pontoAbonos?: Prisma.PontoAbonoUncheckedCreateNestedManyWithoutCompanyInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedCreateNestedOneWithoutCompanyInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedCreateNestedManyWithoutCompanyInput
+  garantias?: Prisma.GarantiaUncheckedCreateNestedManyWithoutCompanyInput
+  orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutCompanyInput
+  features?: Prisma.CompanyFeatureUncheckedCreateNestedManyWithoutCompanyInput
+  featureChanges?: Prisma.CompanyFeatureChangeUncheckedCreateNestedManyWithoutCompanyInput
+  partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutCompanyInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutCompanyInput
+  equipments?: Prisma.EquipmentUncheckedCreateNestedManyWithoutCompanyInput
+  checklistRuns?: Prisma.ChecklistRunUncheckedCreateNestedManyWithoutCompanyInput
+  serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutCompanyInput
+  operators?: Prisma.OperatorUncheckedCreateNestedManyWithoutCompanyInput
+  abastecimentos?: Prisma.AbastecimentoUncheckedCreateNestedManyWithoutCompanyInput
+  workFronts?: Prisma.WorkFrontUncheckedCreateNestedManyWithoutCompanyInput
+  settings?: Prisma.CompanySettingsUncheckedCreateNestedOneWithoutCompanyInput
+  emergencies?: Prisma.EmergencyUncheckedCreateNestedManyWithoutCompanyInput
+  creditos?: Prisma.CreditoUncheckedCreateNestedManyWithoutCompanyInput
+  lubrificacoes?: Prisma.LubrificacaoUncheckedCreateNestedManyWithoutCompanyInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutCompanyInput
+  notasFiscais?: Prisma.NotaFiscalUncheckedCreateNestedManyWithoutCompanyInput
+  planosPreventivos?: Prisma.PlanoPreventivoUncheckedCreateNestedManyWithoutCompanyInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedCreateNestedManyWithoutCompanyInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutCompanyInput
+  notificacoes?: Prisma.NotificacaoUncheckedCreateNestedManyWithoutCompanyInput
+  whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedCreateNestedManyWithoutCompanyInput
+  checklistModelos?: Prisma.ChecklistModeloUncheckedCreateNestedManyWithoutCompanyInput
+  manuais?: Prisma.ManualEquipamentoUncheckedCreateNestedManyWithoutCompanyInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutCompanyInput
+  depositos?: Prisma.DepositoUncheckedCreateNestedManyWithoutCompanyInput
+  pecas?: Prisma.PecaUncheckedCreateNestedManyWithoutCompanyInput
+  estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutCompanyInput
+}
+
+export type CompanyCreateOrConnectWithoutRequisicoesMaterialInput = {
+  where: Prisma.CompanyWhereUniqueInput
+  create: Prisma.XOR<Prisma.CompanyCreateWithoutRequisicoesMaterialInput, Prisma.CompanyUncheckedCreateWithoutRequisicoesMaterialInput>
+}
+
+export type CompanyUpsertWithoutRequisicoesMaterialInput = {
+  update: Prisma.XOR<Prisma.CompanyUpdateWithoutRequisicoesMaterialInput, Prisma.CompanyUncheckedUpdateWithoutRequisicoesMaterialInput>
+  create: Prisma.XOR<Prisma.CompanyCreateWithoutRequisicoesMaterialInput, Prisma.CompanyUncheckedCreateWithoutRequisicoesMaterialInput>
+  where?: Prisma.CompanyWhereInput
+}
+
+export type CompanyUpdateToOneWithWhereWithoutRequisicoesMaterialInput = {
+  where?: Prisma.CompanyWhereInput
+  data: Prisma.XOR<Prisma.CompanyUpdateWithoutRequisicoesMaterialInput, Prisma.CompanyUncheckedUpdateWithoutRequisicoesMaterialInput>
+}
+
+export type CompanyUpdateWithoutRequisicoesMaterialInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumCompanyTypeFieldUpdateOperationsInput | $Enums.CompanyType
+  status?: Prisma.EnumStatusFieldUpdateOperationsInput | $Enums.Status
+  uf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnpj?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caepf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razaoSocial?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.CompanyUserUpdateManyWithoutCompanyNestedInput
+  roles?: Prisma.CompanyRoleUpdateManyWithoutCompanyNestedInput
+  pontoRegistros?: Prisma.PontoRegistroUpdateManyWithoutCompanyNestedInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUpdateManyWithoutCompanyNestedInput
+  pontoAbonos?: Prisma.PontoAbonoUpdateManyWithoutCompanyNestedInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterUpdateOneWithoutCompanyNestedInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUpdateManyWithoutCompanyNestedInput
+  orcamentos?: Prisma.OrcamentoUpdateManyWithoutCompanyNestedInput
+  features?: Prisma.CompanyFeatureUpdateManyWithoutCompanyNestedInput
+  featureChanges?: Prisma.CompanyFeatureChangeUpdateManyWithoutCompanyNestedInput
+  partners?: Prisma.PartnerUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutCompanyNestedInput
+  equipments?: Prisma.EquipmentUpdateManyWithoutCompanyNestedInput
+  checklistRuns?: Prisma.ChecklistRunUpdateManyWithoutCompanyNestedInput
+  serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutCompanyNestedInput
+  operators?: Prisma.OperatorUpdateManyWithoutCompanyNestedInput
+  abastecimentos?: Prisma.AbastecimentoUpdateManyWithoutCompanyNestedInput
+  workFronts?: Prisma.WorkFrontUpdateManyWithoutCompanyNestedInput
+  settings?: Prisma.CompanySettingsUpdateOneWithoutCompanyNestedInput
+  emergencies?: Prisma.EmergencyUpdateManyWithoutCompanyNestedInput
+  creditos?: Prisma.CreditoUpdateManyWithoutCompanyNestedInput
+  lubrificacoes?: Prisma.LubrificacaoUpdateManyWithoutCompanyNestedInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutCompanyNestedInput
+  notasFiscais?: Prisma.NotaFiscalUpdateManyWithoutCompanyNestedInput
+  planosPreventivos?: Prisma.PlanoPreventivoUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUpdateManyWithoutCompanyNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutCompanyNestedInput
+  notificacoes?: Prisma.NotificacaoUpdateManyWithoutCompanyNestedInput
+  whatsappRecipients?: Prisma.CompanyWhatsappRecipientUpdateManyWithoutCompanyNestedInput
+  checklistModelos?: Prisma.ChecklistModeloUpdateManyWithoutCompanyNestedInput
+  manuais?: Prisma.ManualEquipamentoUpdateManyWithoutCompanyNestedInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutCompanyNestedInput
+  depositos?: Prisma.DepositoUpdateManyWithoutCompanyNestedInput
+  pecas?: Prisma.PecaUpdateManyWithoutCompanyNestedInput
+  estoqueMovimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutCompanyNestedInput
+}
+
+export type CompanyUncheckedUpdateWithoutRequisicoesMaterialInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumCompanyTypeFieldUpdateOperationsInput | $Enums.CompanyType
+  status?: Prisma.EnumStatusFieldUpdateOperationsInput | $Enums.Status
+  uf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnpj?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caepf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  razaoSocial?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  checklistLogin?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contract?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.CompanyUserUncheckedUpdateManyWithoutCompanyNestedInput
+  roles?: Prisma.CompanyRoleUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoRegistros?: Prisma.PontoRegistroUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoSolicitacoes?: Prisma.PontoSolicitacaoUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoAbonos?: Prisma.PontoAbonoUncheckedUpdateManyWithoutCompanyNestedInput
+  pontoNsrCounter?: Prisma.PontoNsrCounterUncheckedUpdateOneWithoutCompanyNestedInput
+  checklistsDevolucao?: Prisma.ChecklistDevolucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistsChegada?: Prisma.ChecklistChegadaUncheckedUpdateManyWithoutCompanyNestedInput
+  garantias?: Prisma.GarantiaUncheckedUpdateManyWithoutCompanyNestedInput
+  orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutCompanyNestedInput
+  features?: Prisma.CompanyFeatureUncheckedUpdateManyWithoutCompanyNestedInput
+  featureChanges?: Prisma.CompanyFeatureChangeUncheckedUpdateManyWithoutCompanyNestedInput
+  partners?: Prisma.PartnerUncheckedUpdateManyWithoutCompanyNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutCompanyNestedInput
+  equipments?: Prisma.EquipmentUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistRuns?: Prisma.ChecklistRunUncheckedUpdateManyWithoutCompanyNestedInput
+  serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutCompanyNestedInput
+  operators?: Prisma.OperatorUncheckedUpdateManyWithoutCompanyNestedInput
+  abastecimentos?: Prisma.AbastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  workFronts?: Prisma.WorkFrontUncheckedUpdateManyWithoutCompanyNestedInput
+  settings?: Prisma.CompanySettingsUncheckedUpdateOneWithoutCompanyNestedInput
+  emergencies?: Prisma.EmergencyUncheckedUpdateManyWithoutCompanyNestedInput
+  creditos?: Prisma.CreditoUncheckedUpdateManyWithoutCompanyNestedInput
+  lubrificacoes?: Prisma.LubrificacaoUncheckedUpdateManyWithoutCompanyNestedInput
+  reabastecimentosComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutCompanyNestedInput
+  notasFiscais?: Prisma.NotaFiscalUncheckedUpdateManyWithoutCompanyNestedInput
+  planosPreventivos?: Prisma.PlanoPreventivoUncheckedUpdateManyWithoutCompanyNestedInput
+  programadorMecanicos?: Prisma.ProgramadorMecanicoUncheckedUpdateManyWithoutCompanyNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutCompanyNestedInput
+  notificacoes?: Prisma.NotificacaoUncheckedUpdateManyWithoutCompanyNestedInput
+  whatsappRecipients?: Prisma.CompanyWhatsappRecipientUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistModelos?: Prisma.ChecklistModeloUncheckedUpdateManyWithoutCompanyNestedInput
+  manuais?: Prisma.ManualEquipamentoUncheckedUpdateManyWithoutCompanyNestedInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutCompanyNestedInput
+  depositos?: Prisma.DepositoUncheckedUpdateManyWithoutCompanyNestedInput
+  pecas?: Prisma.PecaUncheckedUpdateManyWithoutCompanyNestedInput
+  estoqueMovimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 
@@ -10264,6 +10677,7 @@ export type CompanyCountOutputType = {
   depositos: number
   pecas: number
   estoqueMovimentos: number
+  requisicoesMaterial: number
 }
 
 export type CompanyCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -10302,6 +10716,7 @@ export type CompanyCountOutputTypeSelect<ExtArgs extends runtime.Types.Extension
   depositos?: boolean | CompanyCountOutputTypeCountDepositosArgs
   pecas?: boolean | CompanyCountOutputTypeCountPecasArgs
   estoqueMovimentos?: boolean | CompanyCountOutputTypeCountEstoqueMovimentosArgs
+  requisicoesMaterial?: boolean | CompanyCountOutputTypeCountRequisicoesMaterialArgs
 }
 
 /**
@@ -10559,6 +10974,13 @@ export type CompanyCountOutputTypeCountEstoqueMovimentosArgs<ExtArgs extends run
   where?: Prisma.EstoqueMovimentoWhereInput
 }
 
+/**
+ * CompanyCountOutputType without action
+ */
+export type CompanyCountOutputTypeCountRequisicoesMaterialArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RequisicaoMaterialWhereInput
+}
+
 
 export type CompanySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -10615,6 +11037,7 @@ export type CompanySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   depositos?: boolean | Prisma.Company$depositosArgs<ExtArgs>
   pecas?: boolean | Prisma.Company$pecasArgs<ExtArgs>
   estoqueMovimentos?: boolean | Prisma.Company$estoqueMovimentosArgs<ExtArgs>
+  requisicoesMaterial?: boolean | Prisma.Company$requisicoesMaterialArgs<ExtArgs>
   _count?: boolean | Prisma.CompanyCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["company"]>
 
@@ -10717,6 +11140,7 @@ export type CompanyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   depositos?: boolean | Prisma.Company$depositosArgs<ExtArgs>
   pecas?: boolean | Prisma.Company$pecasArgs<ExtArgs>
   estoqueMovimentos?: boolean | Prisma.Company$estoqueMovimentosArgs<ExtArgs>
+  requisicoesMaterial?: boolean | Prisma.Company$requisicoesMaterialArgs<ExtArgs>
   _count?: boolean | Prisma.CompanyCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type CompanyIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -10762,6 +11186,7 @@ export type $CompanyPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     depositos: Prisma.$DepositoPayload<ExtArgs>[]
     pecas: Prisma.$PecaPayload<ExtArgs>[]
     estoqueMovimentos: Prisma.$EstoqueMovimentoPayload<ExtArgs>[]
+    requisicoesMaterial: Prisma.$RequisicaoMaterialPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -11227,6 +11652,7 @@ export interface Prisma__CompanyClient<T, Null = never, ExtArgs extends runtime.
   depositos<T extends Prisma.Company$depositosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$depositosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DepositoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   pecas<T extends Prisma.Company$pecasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$pecasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PecaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   estoqueMovimentos<T extends Prisma.Company$estoqueMovimentosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$estoqueMovimentosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EstoqueMovimentoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  requisicoesMaterial<T extends Prisma.Company$requisicoesMaterialArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$requisicoesMaterialArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RequisicaoMaterialPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -12541,6 +12967,30 @@ export type Company$estoqueMovimentosArgs<ExtArgs extends runtime.Types.Extensio
   take?: number
   skip?: number
   distinct?: Prisma.EstoqueMovimentoScalarFieldEnum | Prisma.EstoqueMovimentoScalarFieldEnum[]
+}
+
+/**
+ * Company.requisicoesMaterial
+ */
+export type Company$requisicoesMaterialArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RequisicaoMaterial
+   */
+  select?: Prisma.RequisicaoMaterialSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RequisicaoMaterial
+   */
+  omit?: Prisma.RequisicaoMaterialOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RequisicaoMaterialInclude<ExtArgs> | null
+  where?: Prisma.RequisicaoMaterialWhereInput
+  orderBy?: Prisma.RequisicaoMaterialOrderByWithRelationInput | Prisma.RequisicaoMaterialOrderByWithRelationInput[]
+  cursor?: Prisma.RequisicaoMaterialWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RequisicaoMaterialScalarFieldEnum | Prisma.RequisicaoMaterialScalarFieldEnum[]
 }
 
 /**

@@ -458,7 +458,9 @@ export const ModelName = {
   Deposito: 'Deposito',
   Peca: 'Peca',
   PecaSaldo: 'PecaSaldo',
-  EstoqueMovimento: 'EstoqueMovimento'
+  EstoqueMovimento: 'EstoqueMovimento',
+  RequisicaoMaterial: 'RequisicaoMaterial',
+  RequisicaoMaterialItem: 'RequisicaoMaterialItem'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -474,7 +476,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken" | "checklistModelo" | "manualEquipamento" | "checklistExecucao" | "programadorMecanico" | "serviceOrderAuditoria" | "deposito" | "peca" | "pecaSaldo" | "estoqueMovimento"
+    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken" | "checklistModelo" | "manualEquipamento" | "checklistExecucao" | "programadorMecanico" | "serviceOrderAuditoria" | "deposito" | "peca" | "pecaSaldo" | "estoqueMovimento" | "requisicaoMaterial" | "requisicaoMaterialItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -5066,6 +5068,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    RequisicaoMaterial: {
+      payload: Prisma.$RequisicaoMaterialPayload<ExtArgs>
+      fields: Prisma.RequisicaoMaterialFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RequisicaoMaterialFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RequisicaoMaterialFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialPayload>
+        }
+        findFirst: {
+          args: Prisma.RequisicaoMaterialFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RequisicaoMaterialFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialPayload>
+        }
+        findMany: {
+          args: Prisma.RequisicaoMaterialFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialPayload>[]
+        }
+        create: {
+          args: Prisma.RequisicaoMaterialCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialPayload>
+        }
+        createMany: {
+          args: Prisma.RequisicaoMaterialCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RequisicaoMaterialCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialPayload>[]
+        }
+        delete: {
+          args: Prisma.RequisicaoMaterialDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialPayload>
+        }
+        update: {
+          args: Prisma.RequisicaoMaterialUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialPayload>
+        }
+        deleteMany: {
+          args: Prisma.RequisicaoMaterialDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RequisicaoMaterialUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RequisicaoMaterialUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialPayload>[]
+        }
+        upsert: {
+          args: Prisma.RequisicaoMaterialUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialPayload>
+        }
+        aggregate: {
+          args: Prisma.RequisicaoMaterialAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRequisicaoMaterial>
+        }
+        groupBy: {
+          args: Prisma.RequisicaoMaterialGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RequisicaoMaterialGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RequisicaoMaterialCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RequisicaoMaterialCountAggregateOutputType> | number
+        }
+      }
+    }
+    RequisicaoMaterialItem: {
+      payload: Prisma.$RequisicaoMaterialItemPayload<ExtArgs>
+      fields: Prisma.RequisicaoMaterialItemFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RequisicaoMaterialItemFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialItemPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RequisicaoMaterialItemFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialItemPayload>
+        }
+        findFirst: {
+          args: Prisma.RequisicaoMaterialItemFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialItemPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RequisicaoMaterialItemFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialItemPayload>
+        }
+        findMany: {
+          args: Prisma.RequisicaoMaterialItemFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialItemPayload>[]
+        }
+        create: {
+          args: Prisma.RequisicaoMaterialItemCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialItemPayload>
+        }
+        createMany: {
+          args: Prisma.RequisicaoMaterialItemCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RequisicaoMaterialItemCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialItemPayload>[]
+        }
+        delete: {
+          args: Prisma.RequisicaoMaterialItemDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialItemPayload>
+        }
+        update: {
+          args: Prisma.RequisicaoMaterialItemUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialItemPayload>
+        }
+        deleteMany: {
+          args: Prisma.RequisicaoMaterialItemDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RequisicaoMaterialItemUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RequisicaoMaterialItemUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialItemPayload>[]
+        }
+        upsert: {
+          args: Prisma.RequisicaoMaterialItemUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RequisicaoMaterialItemPayload>
+        }
+        aggregate: {
+          args: Prisma.RequisicaoMaterialItemAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRequisicaoMaterialItem>
+        }
+        groupBy: {
+          args: Prisma.RequisicaoMaterialItemGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RequisicaoMaterialItemGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RequisicaoMaterialItemCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RequisicaoMaterialItemCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -5360,6 +5510,9 @@ export const ServiceOrderScalarFieldEnum = {
   ordemServicoAprovadaId: 'ordemServicoAprovadaId',
   execucao: 'execucao',
   responsavelOperatorId: 'responsavelOperatorId',
+  statusMateriais: 'statusMateriais',
+  execucaoParcialAutorizadaPor: 'execucaoParcialAutorizadaPor',
+  execucaoParcialMotivo: 'execucaoParcialMotivo',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -6303,6 +6456,46 @@ export const EstoqueMovimentoScalarFieldEnum = {
 export type EstoqueMovimentoScalarFieldEnum = (typeof EstoqueMovimentoScalarFieldEnum)[keyof typeof EstoqueMovimentoScalarFieldEnum]
 
 
+export const RequisicaoMaterialScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  numero: 'numero',
+  serviceOrderId: 'serviceOrderId',
+  depositoId: 'depositoId',
+  status: 'status',
+  solicitanteCompanyUserId: 'solicitanteCompanyUserId',
+  atendidaPorCompanyUserId: 'atendidaPorCompanyUserId',
+  atendidaEm: 'atendidaEm',
+  observacao: 'observacao',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RequisicaoMaterialScalarFieldEnum = (typeof RequisicaoMaterialScalarFieldEnum)[keyof typeof RequisicaoMaterialScalarFieldEnum]
+
+
+export const RequisicaoMaterialItemScalarFieldEnum = {
+  id: 'id',
+  requisicaoId: 'requisicaoId',
+  pecaId: 'pecaId',
+  planoLinhaId: 'planoLinhaId',
+  quantidadeSolicitada: 'quantidadeSolicitada',
+  quantidadeReservada: 'quantidadeReservada',
+  quantidadeSeparada: 'quantidadeSeparada',
+  quantidadeEntregue: 'quantidadeEntregue',
+  quantidadeDevolvida: 'quantidadeDevolvida',
+  impeditivo: 'impeditivo',
+  prioridade: 'prioridade',
+  dataNecessidade: 'dataNecessidade',
+  equivalenteDePecaId: 'equivalenteDePecaId',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RequisicaoMaterialItemScalarFieldEnum = (typeof RequisicaoMaterialItemScalarFieldEnum)[keyof typeof RequisicaoMaterialItemScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -6772,6 +6965,8 @@ export type GlobalOmitConfig = {
   peca?: Prisma.PecaOmit
   pecaSaldo?: Prisma.PecaSaldoOmit
   estoqueMovimento?: Prisma.EstoqueMovimentoOmit
+  requisicaoMaterial?: Prisma.RequisicaoMaterialOmit
+  requisicaoMaterialItem?: Prisma.RequisicaoMaterialItemOmit
 }
 
 /* Types for Logging */
