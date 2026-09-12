@@ -61,6 +61,11 @@ function montar(status: string, itens: Array<Record<string, unknown>>, opts: { s
         itensDb.set(id, atualizado);
         return atualizado;
       }),
+      // A releitura FRESCA que `liberarRequisicao` faz para decidir
+      // `statusMateriais` — mesma razão de `findUniqueOrThrow` acima: sem
+      // isto, o serviço teria de decidir com `req.itens` (o retrato de fora
+      // da transação), o mesmo defeito pela QUINTA vez nesta frente.
+      findMany: jest.fn(async () => [...itensDb.values()].map((i) => ({ ...i }))),
     },
     estoqueMovimento: {
       create: jest.fn(async (a: { data: { quantidade: number; tipo: string } }) => {
@@ -145,6 +150,29 @@ describe('liberarRequisicao', () => {
     expect(chamada.include.serviceOrder.select).toEqual({
       protocolo: true, equipmentId: true, equipmentNome: true, responsavelOperatorId: true,
     });
+  });
+
+  it('recalcula statusMateriais a partir dos itens RELIDOS na transação, não do retrato de fora dela', async () => {
+    // Quinta ocorrência do mesmo defeito nesta frente: simula uma
+    // reconferência concorrente (`separarItens` aceita chamadas mesmo com
+    // `status: 'separada'`) que mudou o item de `separada` para `faltante`
+    // ENQUANTO a liberação estava em voo. O retrato de fora (`itens`, o que
+    // `requisicaoMaterial.findFirst` devolveu) ainda mostra `separada`; o
+    // "banco" (`itensDb`, relido por `findMany` dentro da transação) já
+    // reflete a mudança. Os dois valores DIVERGEM de propósito — é essa
+    // divergência que prova que o teste discrimina entre ler de fora e ler
+    // de dentro.
+    const { servico, itensDb } = montar('separada', [separado()]);
+    itensDb.set('it-1', { ...separado(), status: 'faltante' });
+
+    const r = await servico.liberarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+    });
+
+    // Lendo de FORA (o retrato antigo, `separada`): `statusAposEntrega`
+    // devolveria `liberada_para_execucao`. Lendo de DENTRO (o item fresco,
+    // `faltante`): devolve `aguardando_compra`. O valor correto é o segundo.
+    expect(r.statusMateriais).toBe('aguardando_compra');
   });
 });
 

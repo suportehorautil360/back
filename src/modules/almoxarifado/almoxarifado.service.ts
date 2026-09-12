@@ -1003,20 +1003,34 @@ export class AlmoxarifadoService {
       );
     }
 
-    // `statusAposEntrega` responde à MESMA pergunta aqui que na entrega:
-    // sobrou pendência de material? Os itens estão `separada`, não
-    // `entregue` — mas a função dá a resposta certa do mesmo jeito, porque
-    // só distingue `nao_vinculado`/`faltante` do resto. É deliberado (ver o
-    // comentário dela em `regras/status-materiais.ts`), não um empréstimo
-    // por acaso.
-    const paraRegra = req.itens.map((i) => ({ impeditivo: i.impeditivo, status: i.status }));
-    const statusMateriais = statusAposEntrega(paraRegra);
-
-    await this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx) => {
       await tx.requisicaoMaterial.update({
         where: { id: req.id },
         data: { liberadaEm: new Date(), liberadaPorCompanyUserId: input.autorCompanyUserId },
       });
+
+      // Relê os itens AQUI, dentro da transação — nunca o retrato de fora
+      // dela (`req.itens`). É a QUINTA vez que "leu fora da transação,
+      // decidiu com o que leu" apareceria nesta frente (entrada de estoque,
+      // conferência do kit, duas vezes na entrega, e esta): uma conferência
+      // concorrente (`separarItens` aceita chamadas mesmo com
+      // `status: 'separada'`) pode mudar o status de um item entre a
+      // leitura de fora e o commit desta transação. O que sai daqui não é
+      // saldo, mas é o que a bancada do mecânico mostra — `statusMateriais`
+      // errado manda buscar um kit que não está pronto.
+      const itensFrescos = await tx.requisicaoMaterialItem.findMany({
+        where: { requisicaoId: req.id },
+      });
+
+      // `statusAposEntrega` responde à MESMA pergunta aqui que na entrega:
+      // sobrou pendência de material? Os itens estão `separada`, não
+      // `entregue` — mas a função dá a resposta certa do mesmo jeito, porque
+      // só distingue `nao_vinculado`/`faltante` do resto. É deliberado (ver o
+      // comentário dela em `regras/status-materiais.ts`), não um empréstimo
+      // por acaso.
+      const paraRegra = itensFrescos.map((i) => ({ impeditivo: i.impeditivo, status: i.status }));
+      const statusMateriais = statusAposEntrega(paraRegra);
+
       await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
 
       // TODO(Task 8): notificar que a OS foi liberada. `notificarOsLiberada`
@@ -1034,9 +1048,9 @@ export class AlmoxarifadoService {
       //   responsavelOperatorId: req.serviceOrder.responsavelOperatorId,
       //   local: req.deposito.nome,
       // });
-    });
 
-    return { statusMateriais };
+      return { statusMateriais };
+    });
   }
 
   /**
