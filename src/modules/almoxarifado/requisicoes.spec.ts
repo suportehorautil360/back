@@ -45,8 +45,11 @@ describe('listarRequisicoes', () => {
 
   it('status desconhecido não vira filtro silencioso', async () => {
     // Sem isto, `?status=qualquercoisa` devolveria lista vazia sem dizer por quê.
-    const { servico } = montar([]);
+    const { servico, prisma } = montar([]);
     await expect(servico.listarRequisicoes(COMPANY, 'inventado')).rejects.toThrow();
+    // A validação acontece antes da consulta ao banco: sem isto, a asserção acima
+    // só prova que alguma exceção sobe, não que o banco não foi consultado.
+    expect(prisma.requisicaoMaterial.findMany).not.toHaveBeenCalled();
   });
 });
 

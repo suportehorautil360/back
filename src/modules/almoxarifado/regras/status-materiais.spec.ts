@@ -108,4 +108,12 @@ describe('statusAposEntrega', () => {
   it('impeditivo que voltou a faltar derruba a liberação', () => {
     expect(statusAposEntrega([it_(), it_({ status: 'faltante' })])).toBe('aguardando_compra');
   });
+
+  it('item não vinculado ganha de tudo e volta para análise', () => {
+    // Mesma precedência de `statusAposConsulta` e `statusAposSeparacao`: não dá
+    // para comprar nem para entregar o que o sistema não sabe qual é. A branch
+    // passa a decidir liberação de OS quando a Task 6 reusar esta função.
+    expect(statusAposEntrega([it_(), it_({ status: 'nao_vinculado' })]))
+      .toBe('em_analise_materiais');
+  });
 });
