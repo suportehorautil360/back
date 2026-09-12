@@ -23,9 +23,10 @@ describe('novoCustoMedio', () => {
   });
 
   it('pondera pela quantidade, não pela média das médias', () => {
-    // 10 a 20 + 30 a 40 = 400 + 1200 em 40 unidades = 40.
-    // Média simples daria 30 e subvalorizaria o estoque em 25%.
-    expect(novoCustoMedio(20, 10, 30, 40)).toBe(40);
+    // 10 unidades a 20 são 200; 30 a 40 são 1200. Somam 1400 em 40 unidades,
+    // que dá 35. Média simples de 20 e 40 daria 30 e subvalorizaria o estoque
+    // em 14% — é por isso que a ponderação existe.
+    expect(novoCustoMedio(20, 10, 30, 40)).toBe(35);
   });
 
   it('entrada sem custo informado não estraga a média', () => {
