@@ -141,6 +141,40 @@ function erroDeContencaoTransitoria(erro: unknown): boolean {
   return false;
 }
 
+/** A requisição com seus itens — o que `separarItens` lê antes de decidir. */
+type RequisicaoComItens = Prisma.RequisicaoMaterialGetPayload<{ include: { itens: true } }>;
+
+/** Um item já validado (`validarConferencia`) e pronto para a transação. */
+interface PlanoDeSeparacao {
+  item: RequisicaoComItens['itens'][number];
+  quantidade: number;
+  /**
+   * O valor CRU do pedido — `undefined` quando o campo não veio no corpo.
+   * Resolvido contra o item FRESCO só dentro da transação, por
+   * `resolverDivergencia` (achado Important I2 da revisão da Task 5).
+   */
+  divergenciaInformada: string | null | undefined;
+}
+
+/**
+ * Achado Important I2 da revisão da Task 5: campo ausente no pedido tem que
+ * significar "não mexer", não "apagar". `divergencia?: string | null` no
+ * DTO existe justamente para essa distinção: sem o campo (`undefined`), uma
+ * reconferência (ex.: só ajustando quantidade) não pode zerar uma
+ * divergência já registrada por engano — isso tornaria "divergência impede
+ * a liberação" contornável por omissão. Para apagar de propósito, o corpo
+ * tem que mandar `divergencia: null` explicitamente.
+ */
+function resolverDivergencia(
+  atual: string | null,
+  informada: string | null | undefined,
+): string | null {
+  if (informada === undefined) return atual;
+  if (informada === null) return null;
+  const limpa = informada.trim();
+  return limpa.length > 0 ? limpa : null;
+}
+
 /** Os status que ainda dão trabalho ao almoxarife. */
 const STATUS_NA_FILA = ['pendente', 'em_separacao', 'separada'] as const;
 const STATUS_REQUISICAO = [...STATUS_NA_FILA, 'entregue', 'cancelada'] as const;
@@ -700,14 +734,27 @@ export class AlmoxarifadoService {
       throw new ConflictException(`Requisição ${req.status} não aceita conferência.`);
     }
 
+    // Achado Critical C1 da revisão: item repetido no MESMO pedido não é uma
+    // questão de concorrência entre duas chamadas — é o mesmo defeito de
+    // "delta contra leitura obsoleta" (ver `executarSeparacao`), só que
+    // disparável com um único POST (`itens: [{it-1,4},{it-1,4}]` dobra
+    // `saldo_separado`). Rejeitar aqui é a defesa primária, e roda antes de
+    // abrir transação; a releitura dentro dela (mais abaixo) é a segunda
+    // camada, para quando duas chamadas DIFERENTES conferem o mesmo item.
+    const idsVistos = new Set<string>();
+    for (const conferido of input.itens) {
+      if (idsVistos.has(conferido.itemId)) {
+        throw new BadRequestException(
+          `Item ${conferido.itemId} repetido no mesmo pedido de conferência.`,
+        );
+      }
+      idsVistos.add(conferido.itemId);
+    }
+
     // Valida TUDO antes de abrir transação: recusar no meio deixaria metade
     // do kit conferido e metade não, e o almoxarife não saberia onde parou.
     const porId = new Map(req.itens.map((i) => [i.id, i]));
-    const planejado: Array<{
-      item: (typeof req.itens)[number];
-      quantidade: number;
-      divergencia: string | null;
-    }> = [];
+    const planejado: PlanoDeSeparacao[] = [];
     for (const conferido of input.itens) {
       const item = porId.get(conferido.itemId);
       if (!item) {
@@ -725,128 +772,185 @@ export class AlmoxarifadoService {
         { quantidade: conferido.quantidade },
       );
       if (!v.ok) throw new BadRequestException(v.erro);
-      planejado.push({
-        item,
-        quantidade: v.quantidade,
-        divergencia: conferido.divergencia?.trim() || null,
-      });
+      // Achado Important I2: `divergencia` do pedido só é resolvida DENTRO
+      // da transação (`resolverDivergencia`), contra o valor FRESCO do item —
+      // aqui só carregamos o que veio informado, sem decidir nada ainda.
+      planejado.push({ item, quantidade: v.quantidade, divergenciaInformada: conferido.divergencia });
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      // Achado I1 da reserva, válido aqui pela mesma razão: trava
-      // `peca_saldos` SEMPRE na mesma ordem — por `pecaId` — entre chamadas
-      // concorrentes. Duas conferências simultâneas travando as mesmas
-      // linhas em ordens opostas dão deadlock (`40P01`), que não é `P2002`.
-      const ordemDeTrava = [...planejado].sort((a, b) => {
-        const pa = a.item.pecaId ?? '';
-        const pb = b.item.pecaId ?? '';
-        return pa < pb ? -1 : pa > pb ? 1 : 0;
-      });
-
-      for (const p of ordemDeTrava) {
-        // Item `nao_vinculado` não tem `pecaId` — nenhuma linha de saldo
-        // para travar ou mexer; só o status do item muda, mais abaixo.
-        if (!p.item.pecaId) continue;
-
-        const linhas = await tx.$queryRaw<{ saldo_separado: string }[]>(Prisma.sql`
-          SELECT saldo_separado FROM peca_saldos
-           WHERE peca_id = ${p.item.pecaId}::uuid
-             AND deposito_id = ${req.depositoId}::uuid
-             FOR UPDATE
-        `);
-        // `FOR UPDATE` não trava linha que não existe — se não houver linha,
-        // `linhas[0]` vem vazio. Isso só é inofensivo aqui porque um item só
-        // chega a `status: 'reservada'` (a única porta que passa em
-        // `validarConferencia`) quando `reservarParaOs` conseguiu gravar
-        // `saldo_reservado > 0`, e isso exige a linha de `peca_saldos` já
-        // existir naquele momento — ou seja, todo item conferível TEM linha.
-        // Tratar como zero é só a rede: se esse invariante um dia quebrar, o
-        // `UPDATE` abaixo casa zero linhas (silencioso, sem erro — o CHECK
-        // só vale para linha que É escrita) enquanto o item já teria sido
-        // marcado como separado, um estado inconsistente que pediria alerta
-        // próprio, não um try/catch aqui.
-        const separadoAtual = linhas[0] ? Number(linhas[0].saldo_separado) : 0;
-        const delta = p.quantidade - Number(p.item.quantidadeSeparada);
-
-        if (delta !== 0) {
-          await tx.$executeRaw(Prisma.sql`
-            UPDATE peca_saldos
-               SET saldo_separado = ${separadoAtual + delta}, updated_at = now()
-             WHERE peca_id = ${p.item.pecaId}::uuid
-               AND deposito_id = ${req.depositoId}::uuid
-          `);
+    // Achado Important I4: mesma rede de contenção da reserva
+    // (`erroDeContencaoTransitoria` já existe no arquivo, para retry de
+    // deadlock/serialização). Sem isto, um `40001`/`P2034` na trava de
+    // `peca_saldos` chegava ao cliente como 500 cru.
+    for (let tentativa = 1; tentativa <= MAX_TENTATIVAS_CONCORRENCIA; tentativa++) {
+      try {
+        return await this.prisma.$transaction((tx) => this.executarSeparacao(tx, input, req, planejado));
+      } catch (erro) {
+        if (!erroDeContencaoTransitoria(erro) || tentativa === MAX_TENTATIVAS_CONCORRENCIA) {
+          if (erroDeContencaoTransitoria(erro)) {
+            throw new ConflictException(
+              `Não foi possível concluir a separação após ` +
+                `${MAX_TENTATIVAS_CONCORRENCIA} tentativas por contenção — tente novamente.`,
+            );
+          }
+          throw erro;
         }
+        // volta pro topo do for: a próxima tentativa releva tudo do zero
+        // dentro de `executarSeparacao` — inclusive o estado dos itens.
+      }
+    }
+    // Inalcançável: o loop acima sempre retorna ou lança. Só aqui pro TS
+    // aceitar que a função tem um valor de retorno em todo caminho.
+    throw new ConflictException('Não foi possível concluir a separação.');
+  }
 
-        await tx.requisicaoMaterialItem.update({
-          where: { id: p.item.id },
-          data: {
-            quantidadeSeparada: p.quantidade,
-            divergencia: p.divergencia,
-            status: statusDoItemAposSeparacao(
-              {
-                quantidadeReservada: Number(p.item.quantidadeReservada),
-                status: p.item.status,
-                impeditivo: p.item.impeditivo,
-                divergencia: p.divergencia,
-              },
-              { quantidade: p.quantidade },
-            ),
-          },
-        });
+  /**
+   * O corpo da transação de `separarItens`, isolado para poder ser chamado
+   * de novo em caso de retry (ver `MAX_TENTATIVAS_CONCORRENCIA`).
+   */
+  private async executarSeparacao(
+    tx: Prisma.TransactionClient,
+    input: { companyId: string; autorCompanyUserId: string },
+    req: RequisicaoComItens,
+    planejado: PlanoDeSeparacao[],
+  ): Promise<{ statusRequisicao: string; statusMateriais: StatusMateriais }> {
+    // Achado Important I1 da reserva, válido aqui pela mesma razão: trava
+    // `peca_saldos` SEMPRE na mesma ordem — por `pecaId` — entre chamadas
+    // concorrentes. Duas conferências simultâneas travando as mesmas linhas
+    // em ordens opostas dão deadlock (`40P01`), que não é `P2002`.
+    const ordemDeTrava = [...planejado].sort((a, b) => {
+      const pa = a.item.pecaId ?? '';
+      const pb = b.item.pecaId ?? '';
+      return pa < pb ? -1 : pa > pb ? 1 : 0;
+    });
+
+    for (const p of ordemDeTrava) {
+      // Item `nao_vinculado` não tem `pecaId` — nenhuma linha de saldo para
+      // travar ou mexer. Na prática é inalcançável (`validarConferencia`
+      // recusa `nao_vinculado` antes de chegar aqui, e só item sem `pecaId`
+      // fica `nao_vinculado`), mas o `continue` documenta a decisão.
+      if (!p.item.pecaId) continue;
+
+      const linhas = await tx.$queryRaw<{ saldo_separado: string }[]>(Prisma.sql`
+        SELECT saldo_separado FROM peca_saldos
+         WHERE peca_id = ${p.item.pecaId}::uuid
+           AND deposito_id = ${req.depositoId}::uuid
+           FOR UPDATE
+      `);
+      // Achado Important M1: `FOR UPDATE` não trava linha que não existe —
+      // sem linha, `linhas[0]` vem vazio. Isso deveria ser impossível (um
+      // item só chega a `status: 'reservada'`, a única porta que passa em
+      // `validarConferencia`, quando `reservarParaOs` conseguiu gravar
+      // `saldo_reservado > 0`, o que exige a linha já existir naquele
+      // momento). Falhar alto é melhor que silenciar: tratar como zero
+      // deixaria o `UPDATE` abaixo casar zero linhas (sem erro nenhum — o
+      // CHECK só vale para linha que É escrita) enquanto o item já teria
+      // sido marcado como separado, um estado inconsistente sem alerta.
+      if (!linhas[0]) {
+        throw new Error(
+          `Saldo não encontrado para peça ${p.item.pecaId} no depósito ${req.depositoId} ` +
+            `ao separar — estado inconsistente com a reserva.`,
+        );
       }
 
-      const depois = req.itens.map((i) => {
-        const p = planejado.find((x) => x.item.id === i.id);
-        if (!p) return i;
-        return {
-          ...i,
+      // Achado Critical C1: relê o item AQUI, depois da trava — nunca o
+      // retrato de fora da transação (`p.item`). Em READ COMMITTED, este
+      // `findUniqueOrThrow` enxerga o último commit, inclusive de uma
+      // segunda chamada que já tenha separado este mesmo item enquanto
+      // esta transação esperava a trava de `peca_saldos`.
+      const itemFresco = await tx.requisicaoMaterialItem.findUniqueOrThrow({
+        where: { id: p.item.id },
+      });
+      const delta = p.quantidade - Number(itemFresco.quantidadeSeparada);
+
+      if (delta !== 0) {
+        // Aritmética RELATIVA no banco — não "leia, some em JS, grave
+        // absoluto". É a mesma classe do Critical C2 de `darEntrada`
+        // (lá era `saldo_fisico`, aqui é `saldo_separado`): somar no
+        // Postgres, sob a trava, é atômico mesmo que a leitura anterior não
+        // tivesse sido a mais recente possível — a soma nunca se perde.
+        await tx.$executeRaw(Prisma.sql`
+          UPDATE peca_saldos
+             SET saldo_separado = saldo_separado + ${delta}, updated_at = now()
+           WHERE peca_id = ${p.item.pecaId}::uuid
+             AND deposito_id = ${req.depositoId}::uuid
+        `);
+      }
+
+      // Achado Important I2: campo ausente no pedido ("não mexer") é
+      // diferente de `divergencia: null` explícito ("apagar") — decidido
+      // aqui contra o valor FRESCO (`itemFresco.divergencia`), não o de
+      // fora da transação.
+      const divergencia = resolverDivergencia(itemFresco.divergencia, p.divergenciaInformada);
+
+      await tx.requisicaoMaterialItem.update({
+        where: { id: p.item.id },
+        data: {
           quantidadeSeparada: p.quantidade,
-          divergencia: p.divergencia,
+          divergencia,
           status: statusDoItemAposSeparacao(
             {
-              quantidadeReservada: Number(i.quantidadeReservada),
-              status: i.status,
-              impeditivo: i.impeditivo,
-              divergencia: p.divergencia,
+              quantidadeReservada: Number(p.item.quantidadeReservada),
+              status: itemFresco.status,
+              impeditivo: p.item.impeditivo,
+              divergencia,
             },
             { quantidade: p.quantidade },
           ),
-        };
+        },
       });
+    }
 
-      const paraRegra = depois.map((i) => ({
-        quantidadeReservada: Number(i.quantidadeReservada),
-        status: i.status,
-        impeditivo: i.impeditivo,
-        divergencia: i.divergencia,
-      }));
-
-      // Divergência impede o kit de fechar, mesmo com tudo conferido (spec
-      // funcional, pág. 6: "divergência impede a liberação").
-      const fechado = requisicaoEstaSeparada(paraRegra) && !temDivergencia(paraRegra);
-      const statusRequisicao = fechado ? 'separada' : 'em_separacao';
-
-      await tx.requisicaoMaterial.update({
-        where: { id: req.id },
-        data: { status: statusRequisicao, atendidaPorCompanyUserId: input.autorCompanyUserId },
-      });
-
-      // `statusAposSeparacao` decide o estado dos MATERIAIS da OS — inclusive
-      // os casos em que um item virou `faltante` ou `nao_vinculado` entre a
-      // reserva e a conferência. Só a DIVERGÊNCIA é tratada aqui por fora,
-      // porque ela não é um estado do item: é uma observação do almoxarife
-      // que segura a liberação mesmo com tudo separado.
-      const statusMateriais = temDivergencia(paraRegra)
-        ? 'aguardando_separacao'
-        : statusAposSeparacao(paraRegra.map((i) => ({ impeditivo: i.impeditivo, status: i.status })));
-
-      await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
-
-      // Task 8: quando `statusRequisicao === 'separada'`, é aqui que entra a
-      // chamada a `notificarKitCompleto` — o kit acabou de fechar.
-
-      return { statusRequisicao, statusMateriais };
+    // Achado Critical C1 (consequência secundária): decide o fechamento com
+    // uma releitura de TODOS os itens da requisição — não com `req.itens`,
+    // o retrato de fora da transação. Sem isto, duas conferências fechando
+    // metades diferentes do mesmo kit cada uma veem a outra metade como
+    // ainda `reservada`, e nenhuma das duas chamadas encerra a requisição
+    // mesmo com tudo separado no banco.
+    const itensFinal = await tx.requisicaoMaterialItem.findMany({
+      where: { requisicaoId: req.id },
     });
+    const paraRegra = itensFinal.map((i) => ({
+      quantidadeReservada: Number(i.quantidadeReservada),
+      status: i.status,
+      impeditivo: i.impeditivo,
+      divergencia: i.divergencia,
+    }));
+
+    // Divergência impede o kit de fechar, mesmo com tudo conferido (spec
+    // funcional, pág. 6: "divergência impede a liberação").
+    const fechado = requisicaoEstaSeparada(paraRegra) && !temDivergencia(paraRegra);
+    const statusRequisicao = fechado ? 'separada' : 'em_separacao';
+
+    await tx.requisicaoMaterial.update({
+      where: { id: req.id },
+      data: {
+        status: statusRequisicao,
+        atendidaPorCompanyUserId: input.autorCompanyUserId,
+        // Achado Important M2: autor sem carimbo de tempo é meia auditoria.
+        // Gravado em toda chamada (parcial ou não) — é "quem/quando mexeu
+        // por último", não um dos três atos que FECHAM a requisição
+        // (aqueles são `liberadaEm`/`entregueEm`/`canceladaEm`, de outras
+        // tasks).
+        atendidaEm: new Date(),
+      },
+    });
+
+    // Achado Important I1 (deste review — nome repetido, achado diferente
+    // do I1 da reserva citado acima): o override de divergência só pode
+    // valer quando `statusAposSeparacao` JÁ fecharia o kit. Sem o `base ===
+    // 'materiais_separados'`, uma OS com item FALTANTE mais uma divergência
+    // qualquer reportaria `aguardando_separacao` em vez de
+    // `aguardando_compra`, e o fluxo de compra nunca seria acionado.
+    const base = statusAposSeparacao(paraRegra.map((i) => ({ impeditivo: i.impeditivo, status: i.status })));
+    const statusMateriais = temDivergencia(paraRegra) && base === 'materiais_separados' ? 'aguardando_separacao' : base;
+
+    await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
+
+    // Task 8: quando `statusRequisicao === 'separada'`, é aqui que entra a
+    // chamada a `notificarKitCompleto` — o kit acabou de fechar.
+
+    return { statusRequisicao, statusMateriais };
   }
 
   /**

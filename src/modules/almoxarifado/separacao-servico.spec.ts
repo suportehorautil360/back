@@ -1,15 +1,38 @@
+import { ConflictException } from '@nestjs/common';
 import { AlmoxarifadoService } from './almoxarifado.service';
+import { Prisma } from '../../prisma/generated/client';
 
 const COMPANY = '11111111-1111-1111-1111-111111111111';
 const REQ = '33333333-3333-3333-3333-333333333333';
 const AUTOR = '44444444-4444-4444-4444-444444444444';
 
-function montar(itens: unknown[]) {
+/** Fabrica o erro de deadlock/conflito de escrita que aciona o retry (`erroDeContencaoTransitoria`). */
+function erroDeContencao(): Prisma.PrismaClientKnownRequestError {
+  return new Prisma.PrismaClientKnownRequestError(
+    'Transaction failed due to a write conflict or a deadlock. Please retry your transaction',
+    { code: 'P2034', clientVersion: '7.9.1' },
+  );
+}
+
+/**
+ * Um "banco" falso, chave por id de item, que simula o que uma transação
+ * real veria: `update` muda o estado que a PRÓXIMA leitura (`findUniqueOrThrow`,
+ * `findMany`) enxerga — é o que prova que o código relê DENTRO da transação
+ * em vez de carregar o retrato de fora dela (achado Critical C1 da revisão).
+ *
+ * Simplificação deliberada: `findMany` devolve TODOS os itens do banco falso,
+ * sem filtrar por `requisicaoId` — em todo teste deste arquivo há uma única
+ * requisição, então filtrar não mudaria resultado nenhum.
+ */
+function montar(itensIniciais: Array<Record<string, unknown>>, opts: { semSaldo?: boolean } = {}) {
   const chamadas: string[] = [];
+  const itensDb = new Map(itensIniciais.map((i) => [i.id as string, { ...i }]));
+
   const tx = {
     $queryRaw: jest.fn(async () => {
       chamadas.push('LOCK');
-      return [{ saldo_fisico: '10', saldo_reservado: '4', saldo_separado: '0' }];
+      if (opts.semSaldo) return [];
+      return [{ saldo_separado: '0' }];
     }),
     $executeRaw: jest.fn(async () => {
       chamadas.push('UPDATE saldo');
@@ -17,16 +40,37 @@ function montar(itens: unknown[]) {
     }),
     requisicaoMaterial: {
       findFirst: jest.fn().mockResolvedValue({
-        id: REQ, companyId: COMPANY, status: 'pendente',
-        serviceOrderId: 'os-1', depositoId: 'dep-1', itens,
+        id: REQ,
+        companyId: COMPANY,
+        status: 'pendente',
+        serviceOrderId: 'os-1',
+        depositoId: 'dep-1',
+        itens: itensIniciais,
       }),
-      update: jest.fn(async () => { chamadas.push('UPDATE requisicao'); return {}; }),
+      update: jest.fn(async () => {
+        chamadas.push('UPDATE requisicao');
+        return {};
+      }),
     },
     requisicaoMaterialItem: {
-      update: jest.fn(async () => { chamadas.push('UPDATE item'); return {}; }),
+      findUniqueOrThrow: jest.fn(async ({ where: { id } }: { where: { id: string } }) => {
+        const atual = itensDb.get(id);
+        if (!atual) throw new Error(`item ${id} não existe (mock)`);
+        return { ...atual };
+      }),
+      update: jest.fn(async ({ where: { id }, data }: { where: { id: string }; data: Record<string, unknown> }) => {
+        chamadas.push('UPDATE item');
+        const atualizado = { ...(itensDb.get(id) ?? {}), ...data };
+        itensDb.set(id, atualizado);
+        return atualizado;
+      }),
+      findMany: jest.fn(async () => [...itensDb.values()].map((i) => ({ ...i }))),
     },
     serviceOrder: {
-      updateMany: jest.fn(async () => { chamadas.push('UPDATE os'); return { count: 1 }; }),
+      updateMany: jest.fn(async () => {
+        chamadas.push('UPDATE os');
+        return { count: 1 };
+      }),
     },
   };
   const prisma = {
@@ -34,16 +78,20 @@ function montar(itens: unknown[]) {
     // A leitura da requisição (para validar TUDO antes de abrir a transação)
     // usa `this.prisma`, não `tx` — igual a um `PrismaService` de verdade, em
     // que o mesmo delegate de modelo atende fora e dentro de `$transaction`.
-    // Sem isto o mock não tem como responder a essa chamada, e o serviço
-    // nunca chega a decidir se abre transação ou recusa antes dela.
     requisicaoMaterial: tx.requisicaoMaterial,
   };
-  return { servico: new AlmoxarifadoService(prisma as never), prisma, tx, chamadas };
+  return { servico: new AlmoxarifadoService(prisma as never), prisma, tx, chamadas, itensDb };
 }
 
 const item = (p = {}) => ({
-  id: 'it-1', pecaId: 'p-1', quantidadeReservada: 4, quantidadeSeparada: 0,
-  status: 'reservada', impeditivo: true, divergencia: null, ...p,
+  id: 'it-1',
+  pecaId: 'p-1',
+  quantidadeReservada: 4,
+  quantidadeSeparada: 0,
+  status: 'reservada',
+  impeditivo: true,
+  divergencia: null,
+  ...p,
 });
 
 describe('separarItens', () => {
@@ -103,5 +151,173 @@ describe('separarItens', () => {
       itens: [{ itemId: 'it-1', quantidade: 4, divergencia: 'veio avariada' }],
     });
     expect(r.statusRequisicao).toBe('em_separacao');
+  });
+
+  // --- Achados da revisão desta task -------------------------------------
+
+  it('Critical C1: item repetido no mesmo pedido é recusado antes de abrir transação', async () => {
+    // O vetor mais simples do achado: um POST só com o mesmo itemId duas
+    // vezes dobraria o delta gravado em `saldo_separado` se isto não existisse.
+    const { servico, prisma } = montar([item()]);
+    await expect(servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [
+        { itemId: 'it-1', quantidade: 4 },
+        { itemId: 'it-1', quantidade: 4 },
+      ],
+    })).rejects.toThrow(/repetido/);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('Critical C1: o delta usa a quantidade JÁ separada relida na transação, não o retrato de fora dela', async () => {
+    // Item que já tinha 2 no kit; confere fechando em 4. Delta tem que ser
+    // 2 (4 novo − 2 já separado), nunca 4 — que é o que uma leitura estale
+    // (fora da transação) produziria e dobraria o saldo.
+    const { servico, tx } = montar([item({ quantidadeSeparada: 2 })]);
+    await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4 }],
+    });
+    const chamadaUpdate = tx.$executeRaw.mock.calls[0][0] as { values: unknown[] };
+    expect(Number(chamadaUpdate.values[0])).toBe(2);
+  });
+
+  it('Critical C1: reconferir a MESMA quantidade não escreve em saldo_separado de novo', async () => {
+    // Delta 0 não deveria gerar UPDATE nenhum — nem redundante, quanto mais dobrado.
+    const { servico, tx } = montar([item({ quantidadeSeparada: 4 })]);
+    await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4 }],
+    });
+    expect(tx.$executeRaw).not.toHaveBeenCalled();
+  });
+
+  it('Critical C1: trava peca_saldos em ordem por pecaId, não pela ordem do pedido', async () => {
+    const { servico, tx } = montar([
+      item({ id: 'it-2', pecaId: 'p-2' }),
+      item({ id: 'it-1', pecaId: 'p-1' }),
+    ]);
+    await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [
+        { itemId: 'it-2', quantidade: 4 },
+        { itemId: 'it-1', quantidade: 4 },
+      ],
+    });
+    // Se a ordenação por pecaId for removida num refactor futuro, este teste
+    // falha: sem ela, duas conferências simultâneas travando as mesmas
+    // linhas em ordens opostas dão deadlock (40P01), não P2002.
+    const ordem = tx.requisicaoMaterialItem.update.mock.calls.map(
+      (c: [{ where: { id: string } }]) => c[0].where.id,
+    );
+    expect(ordem).toEqual(['it-1', 'it-2']);
+  });
+
+  it('Important I3: mexe em saldo_separado, nunca em saldo_fisico — e a trava usa FOR UPDATE', async () => {
+    const { servico, tx } = montar([item({ quantidadeSeparada: 2 })]);
+    await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4 }],
+    });
+    const consultaLock = tx.$queryRaw.mock.calls[0][0] as { text: string };
+    expect(consultaLock.text).toMatch(/FOR UPDATE/i);
+    expect(consultaLock.text).toContain('saldo_separado');
+
+    const atualizaSaldo = tx.$executeRaw.mock.calls[0][0] as { text: string };
+    expect(atualizaSaldo.text).toContain('saldo_separado');
+    expect(atualizaSaldo.text).not.toContain('saldo_fisico');
+  });
+
+  it('Important I2: omitir divergencia mantém a que já estava registrada', async () => {
+    const { servico, itensDb } = montar([
+      item({ quantidadeSeparada: 4, status: 'separada', divergencia: 'veio errada' }),
+    ]);
+    const r = await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4 }], // sem `divergencia`: não é pra mexer
+    });
+    expect(itensDb.get('it-1')?.divergencia).toBe('veio errada');
+    // "divergência impede a liberação" continua valendo — omissão não é uma
+    // forma de contornar a regra.
+    expect(r.statusRequisicao).toBe('em_separacao');
+  });
+
+  it('Important I2: divergencia: null explícito apaga a divergência registrada', async () => {
+    const { servico, itensDb } = montar([
+      item({ quantidadeSeparada: 4, status: 'separada', divergencia: 'veio errada' }),
+    ]);
+    const r = await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4, divergencia: null }],
+    });
+    expect(itensDb.get('it-1')?.divergencia).toBeNull();
+    expect(r.statusRequisicao).toBe('separada');
+  });
+
+  it('Important I1: divergência ao lado de um item FALTANTE ainda manda comprar, não trava em aguardando_separacao', async () => {
+    // O override de divergência só pode valer quando o kit JÁ fecharia —
+    // senão uma OS com peça faltante nunca aciona o fluxo de compra.
+    const { servico } = montar([
+      item({ id: 'it-1', pecaId: 'p-1' }),
+      item({ id: 'it-2', pecaId: 'p-2', status: 'faltante', quantidadeSeparada: 0 }),
+    ]);
+    const r = await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4, divergencia: 'avariada' }],
+    });
+    expect(r.statusMateriais).toBe('aguardando_compra');
+  });
+
+  it('Important M1: sem linha de saldo falha alto, em vez de assumir zero', async () => {
+    const { servico } = montar([item()], { semSaldo: true });
+    await expect(servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4 }],
+    })).rejects.toThrow(/inconsistente/);
+  });
+
+  it('Important M2: grava atendidaEm junto com atendidaPorCompanyUserId', async () => {
+    const { servico, tx } = montar([item()]);
+    await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4 }],
+    });
+    const dadosGravados = tx.requisicaoMaterial.update.mock.calls[0][0].data as {
+      atendidaPorCompanyUserId: string;
+      atendidaEm: Date;
+    };
+    expect(dadosGravados.atendidaPorCompanyUserId).toBe(AUTOR);
+    expect(dadosGravados.atendidaEm).toBeInstanceOf(Date);
+  });
+
+  it('Important I4: contenção transitória aciona o retry da transação inteira', async () => {
+    const { servico, tx, prisma } = montar([item()]);
+    let tentativas = 0;
+    const lockOriginal = tx.$queryRaw.getMockImplementation()!;
+    tx.$queryRaw = jest.fn(async (...args: unknown[]) => {
+      tentativas++;
+      if (tentativas === 1) throw erroDeContencao();
+      return lockOriginal(...(args as []));
+    });
+    const r = await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4 }],
+    });
+    expect(tentativas).toBe(2);
+    expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+    expect(r.statusRequisicao).toBe('separada');
+  });
+
+  it('Important I4: esgotar as tentativas por contenção vira ConflictException, não 500 cru', async () => {
+    const { servico, tx, prisma } = montar([item()]);
+    tx.$queryRaw = jest.fn(async () => {
+      throw erroDeContencao();
+    });
+    await expect(servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4 }],
+    })).rejects.toThrow(ConflictException);
+    // MAX_TENTATIVAS_CONCORRENCIA no serviço é 5 — mesmo teto usado pela reserva.
+    expect(prisma.$transaction).toHaveBeenCalledTimes(5);
   });
 });
