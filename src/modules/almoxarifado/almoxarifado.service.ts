@@ -6,11 +6,14 @@ import { disponivel } from './regras/disponibilidade';
 import { novoCustoMedio } from './regras/movimento';
 import { statusAposConsulta, type StatusMateriais } from './regras/status-materiais';
 import { itensDeTrocaDoCiclo, resolverPeca, type ItemDeTroca } from './regras/plano-pecas';
+import { formatNumeroRequisicao, parseNumeroRequisicaoSeq } from './helpers/numero-requisicao.helper';
 
 export interface ItemReservado {
   linhaId: string;
   pecaId: string | null;
   descricao: string;
+  /** Retrato do plano; persistido mesmo quando `pecaId` é nulo (achado C3). */
+  codigoPeca: string | null;
   /** Vem do plano ("L", "un"). O painel usa no rótulo "8 de 15 L". */
   unidade: string | null;
   quantidadeSolicitada: number;
@@ -157,7 +160,7 @@ export class AlmoxarifadoService {
       if (!item.pecaId) {
         resultado.push({
           linhaId: item.linhaId, pecaId: null, descricao: item.descricao,
-          unidade: item.unidade,
+          codigoPeca: item.codigoPeca, unidade: item.unidade,
           quantidadeSolicitada: item.quantidade, quantidadeReservada: 0,
           quantidadeFaltante: item.quantidade, impeditivo: item.impeditivo,
           status: 'nao_vinculado',
@@ -200,7 +203,7 @@ export class AlmoxarifadoService {
 
       resultado.push({
         linhaId: item.linhaId, pecaId: item.pecaId, descricao: item.descricao,
-        unidade: item.unidade,
+        codigoPeca: item.codigoPeca, unidade: item.unidade,
         quantidadeSolicitada: item.quantidade, quantidadeReservada: reservar,
         quantidadeFaltante: faltante, impeditivo: item.impeditivo,
         status: faltante > 0 ? 'faltante' : 'reservada',
@@ -219,12 +222,22 @@ export class AlmoxarifadoService {
       select: { id: true, numero: true },
     });
 
+    // Achado Critical C3 da revisão: item `nao_vinculado` (pecaId nulo) É
+    // GRAVADO, não pulado. Antes, `if (!r.pecaId) continue` fazia a linha
+    // cuja peça o sistema não conseguiu resolver contra o catálogo nunca
+    // existir na tabela — sumia da lista, e um plano cuja ÚNICA linha de
+    // troca ficasse assim liberava a OS para execução como se estivesse
+    // tudo certo. `descricao`/`codigoPeca` (migration
+    // `20260912185000_item_sem_peca_vinculada`) são o retrato do que o
+    // plano sabia sobre a linha — sem eles, o item não vinculado não teria
+    // rótulo nenhum para aparecer na tela do almoxarife.
     for (const r of resultado) {
-      if (!r.pecaId) continue;
       await tx.requisicaoMaterialItem.create({
         data: {
           requisicaoId: req.id,
           pecaId: r.pecaId,
+          descricao: r.descricao,
+          codigoPeca: r.codigoPeca,
           planoLinhaId: r.linhaId,
           quantidadeSolicitada: r.quantidadeSolicitada,
           quantidadeReservada: r.quantidadeReservada,
@@ -234,10 +247,11 @@ export class AlmoxarifadoService {
       });
     }
 
+    // TODOS os itens, inclusive `nao_vinculado` — filtrar por `pecaId` antes
+    // de chegar aqui é o que fazia `statusAposConsulta` nunca ver o item sem
+    // peça resolvida e devolver `liberada_para_execucao` por engano.
     const statusMateriais = statusAposConsulta(
-      resultado
-        .filter((r) => r.pecaId)
-        .map((r) => ({ impeditivo: r.impeditivo, status: r.status })),
+      resultado.map((r) => ({ impeditivo: r.impeditivo, status: r.status })),
     );
 
     await tx.serviceOrder.update({
@@ -306,19 +320,38 @@ export class AlmoxarifadoService {
    * `REQ-2026-001`. MAX+1 por empresa, igual ao protocolo de OS. NÃO evita
    * colisão sozinho — o `@@unique([companyId, numero])` só a DETECTA; quem
    * absorve é o retry em `reservarParaOs` (`MAX_TENTATIVAS_NUMERO`).
+   *
+   * Achado Critical C1 da revisão: a versão anterior achava "o último" com
+   * `orderBy: { numero: 'desc' }` — MAX **lexicográfico** numa coluna TEXT.
+   * A partir de `REQ-2026-999`, `REQ-2026-1000` (que só existe DEPOIS de
+   * `n = 1000` ser calculado e a requisição criada) fica ATRÁS de `999`
+   * nessa ordem (`'9' > '1'`), então o "último" aparente trava em `999` para
+   * sempre, `n` volta a ser `1000` em toda chamada seguinte, e o
+   * `@@unique([companyId, numero])` rejeita a mesma string repetidamente —
+   * um `P2002` ETERNO que nem o retry de `reservarParaOs` resolve (esgota as
+   * `MAX_TENTATIVAS_NUMERO` tentativas sempre computando o mesmo número).
+   * Mesmo caminho de `nextProtocoloOsPg`
+   * (`common/prisma/gerar-protocolo-os-prisma.helper.ts`): busca TODOS os
+   * números do ano e tira o maior em NÚMERO, nunca por `ORDER BY` em texto.
    */
   private async proximoNumeroRequisicao(
     tx: Prisma.TransactionClient,
     companyId: string,
   ): Promise<string> {
-    const prefixo = `REQ-${new Date().getUTCFullYear()}-`;
-    const ultima = await tx.requisicaoMaterial.findFirst({
+    const ano = new Date().getUTCFullYear();
+    const prefixo = `REQ-${ano}-`;
+    const existentes = await tx.requisicaoMaterial.findMany({
       where: { companyId, numero: { startsWith: prefixo } },
-      orderBy: { numero: 'desc' },
       select: { numero: true },
     });
-    const n = ultima ? Number(ultima.numero.replace(prefixo, '')) + 1 : 1;
-    return `${prefixo}${String(Number.isFinite(n) ? n : 1).padStart(3, '0')}`;
+
+    let maxSeq = 0;
+    for (const { numero } of existentes) {
+      const seq = parseNumeroRequisicaoSeq(numero, ano);
+      if (seq !== null && seq > maxSeq) maxSeq = seq;
+    }
+
+    return formatNumeroRequisicao(ano, maxSeq + 1);
   }
 
   /**
@@ -329,6 +362,19 @@ export class AlmoxarifadoService {
    *
    * `custoUnit` nulo mantém o custo médio: devolução de sobra volta sem nota, e
    * tratá-la como entrada a custo zero achataria o valor do estoque.
+   *
+   * Achado Critical C2 da revisão: `FOR UPDATE` não trava linha que NÃO
+   * existe. Na primeira carga da prateleira (peça/depósito sem linha de
+   * saldo ainda), a versão anterior lia `anterior = 0` em duas entradas
+   * simultâneas, as duas calculavam `depois = quantidade`, e o `upsert`
+   * gravava um valor ABSOLUTO — a segunda sobrescrevia a primeira, com os
+   * DOIS `estoque_movimentos` gravados (razão append-only) e o saldo físico
+   * batendo com só uma das duas entradas. Ordem corrigida, no molde de
+   * `selarRegistroPostgres` (`common/prisma/ponto-selo.helper.ts`): 1) UPSERT
+   * primeiro com `update: {}` — garante a linha (saldo em 0 se for nova) SEM
+   * alterar o que já existe; 2) SÓ ENTÃO `SELECT … FOR UPDATE`, que agora
+   * trava uma linha garantidamente existente; 3) leitura tipada da linha já
+   * travada. Isso serializa a segunda entrada atrás da primeira de verdade.
    */
   async darEntrada(input: {
     companyId: string;
@@ -344,16 +390,23 @@ export class AlmoxarifadoService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      // Trava a linha antes de ler: duas entradas simultâneas da mesma peça
-      // somariam sobre o mesmo saldo lido e uma das duas sumiria.
-      const linhas = await tx.$queryRaw<{ saldo_fisico: string }[]>(Prisma.sql`
-        SELECT saldo_fisico FROM peca_saldos
+      await tx.pecaSaldo.upsert({
+        where: { pecaId_depositoId: { pecaId: input.pecaId, depositoId: input.depositoId } },
+        create: { pecaId: input.pecaId, depositoId: input.depositoId },
+        update: {},
+      });
+      await tx.$executeRaw(Prisma.sql`
+        SELECT 1 FROM peca_saldos
          WHERE peca_id = ${input.pecaId}::uuid
            AND deposito_id = ${input.depositoId}::uuid
            FOR UPDATE
       `);
 
-      const anterior = linhas[0] ? Number(linhas[0].saldo_fisico) : 0;
+      const saldo = await tx.pecaSaldo.findUniqueOrThrow({
+        where: { pecaId_depositoId: { pecaId: input.pecaId, depositoId: input.depositoId } },
+        select: { saldoFisico: true },
+      });
+      const anterior = Number(saldo.saldoFisico);
       const depois = anterior + input.quantidade;
 
       const peca = await tx.peca.findFirstOrThrow({
@@ -364,10 +417,9 @@ export class AlmoxarifadoService {
         Number(peca.custoMedio), anterior, input.quantidade, input.custoUnit,
       );
 
-      await tx.pecaSaldo.upsert({
+      await tx.pecaSaldo.update({
         where: { pecaId_depositoId: { pecaId: input.pecaId, depositoId: input.depositoId } },
-        create: { pecaId: input.pecaId, depositoId: input.depositoId, saldoFisico: depois },
-        update: { saldoFisico: depois },
+        data: { saldoFisico: depois },
       });
       await tx.peca.update({
         where: { id: input.pecaId },

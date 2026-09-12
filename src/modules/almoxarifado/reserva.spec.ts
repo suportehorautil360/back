@@ -33,7 +33,9 @@ function prismaFalso(saldoFisico: number, saldoReservado: number) {
       return 1;
     }),
     requisicaoMaterial: {
-      findFirst: jest.fn().mockResolvedValue(null),
+      // `findMany`, não `findFirst` + `orderBy: 'desc'`: o número precisa do
+      // MAX numérico (achado C1), não do maior em ordem de texto.
+      findMany: jest.fn().mockResolvedValue([]),
       create: jest.fn(async () => {
         chamadas.push('INSERT requisicao');
         return { id: 'req-1', numero: 'REQ-2026-001' };
@@ -133,6 +135,29 @@ describe('reservarParaOs', () => {
     expect(r.statusMateriais).toBe('aguardando_compra');
   });
 
+  it('peça sem NENHUMA linha de saldo (nunca recebeu entrada) marca falta e não escreve', async () => {
+    // Confirma o pedido da revisão (achado C2): a reserva NÃO tem o buraco
+    // de `darEntrada` (que fazia UPSERT — logo, criava a linha em cima de
+    // uma corrida). A reserva NUNCA cria `peca_saldos`; se a linha não
+    // existe (`$queryRaw` devolve array vazio), `saldo` fica `null`,
+    // `livre = 0`, `reservar = Math.min(0, quantidade) = 0`, e
+    // `if (reservar > 0)` pula o `$executeRaw` inteiro. Duas OS concorrentes
+    // pedindo a mesma peça nunca vista pelo almoxarifado recebem "falta" as
+    // DUAS, e nenhuma delas escreve nada — resultado conservador, sem
+    // escrita para colidir.
+    const { prisma, tx } = prismaFalso(5, 0); // saldoFisico/saldoReservado ignorados pelo override abaixo
+    tx.$queryRaw = jest.fn(async () => []);
+    const servico = new AlmoxarifadoService(prisma as never);
+
+    const r = await servico.reservarParaOs({
+      companyId: COMPANY, serviceOrderId: OS, depositoId: DEPOSITO,
+      autorCompanyUserId: AUTOR, categoriaPlanoId: 'cat-1', cicloId: 'c1',
+    });
+
+    expect(r.itens[0]).toMatchObject({ status: 'faltante', quantidadeReservada: 0 });
+    expect(tx.$executeRaw).not.toHaveBeenCalled();
+  });
+
   it('saldo parcial reserva o que existe e marca a diferença como falta', async () => {
     // Critério de aceite 2: "reserva o disponível e solicita somente a diferença".
     const { prisma } = prismaFalso(3, 0);
@@ -194,6 +219,28 @@ describe('reservarParaOs', () => {
       }),
     ).rejects.toThrow(NotFoundException);
     expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('depois de REQ-2026-999, o próximo número é 1000 — não repete 999 (achado C1)', async () => {
+    // O bug do MAX lexicográfico: `orderBy: { numero: 'desc' }` numa coluna
+    // TEXT compara caractere a caractere, e "999" > "1000" nessa ordem. Sem
+    // a correção, este teste travaria pedindo "REQ-2026-999" de novo (que já
+    // existe) em vez de "REQ-2026-1000".
+    const { prisma, tx } = prismaFalso(5, 0);
+    tx.requisicaoMaterial.findMany.mockResolvedValue([
+      { numero: 'REQ-2026-001' },
+      { numero: 'REQ-2026-999' },
+    ]);
+    const servico = new AlmoxarifadoService(prisma as never);
+
+    await servico.reservarParaOs({
+      companyId: COMPANY, serviceOrderId: OS, depositoId: DEPOSITO,
+      autorCompanyUserId: AUTOR, categoriaPlanoId: 'cat-1', cicloId: 'c1',
+    });
+
+    // O número CALCULADO e passado para o `create` — não o que o mock de
+    // `create` devolve (esse é canned e não ecoa o input).
+    expect(tx.requisicaoMaterial.create.mock.calls[0][0].data.numero).toBe('REQ-2026-1000');
   });
 
   it('recalcula o número e tenta de novo quando duas reservas colidem no mesmo REQ-... (P2002)', async () => {
@@ -263,17 +310,18 @@ describe('reservarParaOs', () => {
 
 describe('darEntrada', () => {
   /**
-   * Mesmo molde de `prismaFalso`: o `tx` falso registra a ordem das chamadas
-   * para provar que a trava (`SELECT FOR UPDATE`) acontece antes de somar e
-   * gravar — duas entradas simultâneas da mesma peça não podem somar sobre o
-   * mesmo saldo lido.
+   * Mesmo molde de `prismaFalso`: o `tx` falso registra a ordem das chamadas.
+   * Prova o achado C2: `UPSERT` (garante a linha) tem que vir ANTES do
+   * `SELECT … FOR UPDATE` (trava), que tem que vir antes da LEITURA — porque
+   * `FOR UPDATE` não trava linha que ainda não existe, e travar uma linha que
+   * não existe não protege nada.
    */
   function prismaFalsoEntrada(saldoFisico: number) {
     const chamadas: string[] = [];
     const tx = {
-      $queryRaw: jest.fn(async () => {
+      $executeRaw: jest.fn(async () => {
         chamadas.push('SELECT FOR UPDATE');
-        return [{ saldo_fisico: saldoFisico }];
+        return 1;
       }),
       peca: {
         findFirstOrThrow: jest.fn(async () => ({ custoMedio: 10 })),
@@ -284,7 +332,15 @@ describe('darEntrada', () => {
       },
       pecaSaldo: {
         upsert: jest.fn(async () => {
-          chamadas.push('UPSERT saldo');
+          chamadas.push('UPSERT garante linha');
+          return {};
+        }),
+        findUniqueOrThrow: jest.fn(async () => {
+          chamadas.push('READ saldo travado');
+          return { saldoFisico };
+        }),
+        update: jest.fn(async () => {
+          chamadas.push('UPDATE saldo');
           return {};
         }),
       },
@@ -301,7 +357,7 @@ describe('darEntrada', () => {
     return { prisma, tx, chamadas };
   }
 
-  it('trava a linha do saldo ANTES de somar a entrada', async () => {
+  it('garante a linha (UPSERT) ANTES de travar — FOR UPDATE não trava linha inexistente', async () => {
     const { prisma, chamadas } = prismaFalsoEntrada(10);
     const servico = new AlmoxarifadoService(prisma as never);
 
@@ -310,10 +366,52 @@ describe('darEntrada', () => {
       quantidade: 5, custoUnit: 20, autorCompanyUserId: AUTOR,
     });
 
-    expect(chamadas[0]).toBe('SELECT FOR UPDATE');
-    expect(chamadas).toContain('UPSERT saldo');
-    expect(chamadas).toContain('INSERT movimento');
+    expect(chamadas.indexOf('UPSERT garante linha')).toBeLessThan(chamadas.indexOf('SELECT FOR UPDATE'));
+    expect(chamadas.indexOf('SELECT FOR UPDATE')).toBeLessThan(chamadas.indexOf('READ saldo travado'));
+    expect(chamadas.indexOf('READ saldo travado')).toBeLessThan(chamadas.indexOf('UPDATE saldo'));
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('duas entradas na MESMA peça/depósito somam — não sobrescrevem (achado C2)', async () => {
+    // Simula a serialização que `FOR UPDATE` garante em produção: a segunda
+    // transação só lê depois que a primeira terminou. Um `tx` só, com um
+    // "banco" compartilhado por trás de `pecaSaldo` — se o código somasse
+    // errado (lesse sempre 0, ou sobrescrevesse com valor absoluto sem somar
+    // o que já estava lá), a segunda chamada não chegaria em 8.
+    let saldoNoBanco: number | undefined; // undefined = linha não existe ainda
+    const tx = {
+      $executeRaw: jest.fn(async () => 1),
+      peca: {
+        findFirstOrThrow: jest.fn(async () => ({ custoMedio: 10 })),
+        update: jest.fn(async () => ({})),
+      },
+      pecaSaldo: {
+        upsert: jest.fn(async () => {
+          if (saldoNoBanco === undefined) saldoNoBanco = 0; // create, saldo default 0
+          return {}; // já existia: update: {} não muda nada
+        }),
+        findUniqueOrThrow: jest.fn(async () => ({ saldoFisico: saldoNoBanco })),
+        update: jest.fn(async ({ data }: { data: { saldoFisico: number } }) => {
+          saldoNoBanco = data.saldoFisico;
+          return {};
+        }),
+      },
+      estoqueMovimento: { create: jest.fn(async () => ({})) },
+    };
+    const prisma = { $transaction: jest.fn(async (fn: (t: typeof tx) => Promise<unknown>) => fn(tx)) };
+    const servico = new AlmoxarifadoService(prisma as never);
+
+    const primeira = await servico.darEntrada({
+      companyId: COMPANY, pecaId: PECA, depositoId: DEPOSITO,
+      quantidade: 5, custoUnit: 20, autorCompanyUserId: AUTOR,
+    });
+    expect(primeira.saldoFisico).toBe(5); // 0 (linha nova) + 5
+
+    const segunda = await servico.darEntrada({
+      companyId: COMPANY, pecaId: PECA, depositoId: DEPOSITO,
+      quantidade: 3, custoUnit: 20, autorCompanyUserId: AUTOR,
+    });
+    expect(segunda.saldoFisico).toBe(8); // 5 (o que a primeira deixou) + 3, NUNCA 3
   });
 
   it('quantidade zero é rejeitada antes de abrir a transação', async () => {
