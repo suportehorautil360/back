@@ -24,14 +24,15 @@ export interface ItemReservado {
 }
 
 export interface ResultadoDaReserva {
-  requisicaoId: string;
-  numero: string;
+  /** `null` quando o ciclo não tem item de troca nenhum (achado I6: nada é gravado). */
+  requisicaoId: string | null;
+  numero: string | null;
   statusMateriais: StatusMateriais;
   itens: ItemReservado[];
 }
 
 /**
- * Quantas vezes recalcular `numero` antes de desistir.
+ * Quantas vezes recalcular `numero`/reler o saldo antes de desistir.
  *
  * O brief original dizia "o unique de (company_id, numero) absorve a
  * concorrência" — mas um `@@unique` DETECTA colisão, não a absorve: sem
@@ -40,18 +41,31 @@ export interface ResultadoDaReserva {
  * inteira, sem requisição nenhuma. `nextProtocoloOsPg` (protocolo de OS)
  * tem o mesmo problema hoje e fica fora desta frente — aqui, resolvido.
  */
-const MAX_TENTATIVAS_NUMERO = 5;
+const MAX_TENTATIVAS_CONCORRENCIA = 5;
 
 /**
- * Verdadeiro só para a colisão que sabemos que pode acontecer aqui: duas
- * transações calculando o mesmo `numero` (MAX+1) ao mesmo tempo — a única
- * constraint de unicidade não-PK escrita dentro de `reservarParaOs` é
- * `RequisicaoMaterial.@@unique([companyId, numero])`. Não inspeciona
- * `meta.target` porque o formato exato varia por driver/versão do Prisma;
- * `code === 'P2002'` já é inequívoco neste método.
+ * Verdadeiro para os erros de CONTENÇÃO que vale a pena tentar de novo com a
+ * transação inteira do zero:
+ *
+ * - `P2002`: colisão no número da requisição (duas transações calculando o
+ *   mesmo MAX+1 ao mesmo tempo).
+ * - `P2010` com `meta.code` `40P01` (deadlock) ou `40001` (falha de
+ *   serialização) — os dois só existem em erro de `$queryRaw`/`$executeRaw`
+ *   (as raw queries do `SELECT … FOR UPDATE`): é assim que o Prisma expõe o
+ *   SQLSTATE cru do Postgres quando uma raw query falha. Achado Important
+ *   I1: o laço de travas ordenado por `pecaId` (ver `executarReserva`) evita
+ *   a maior parte dos deadlocks ENTRE duas chamadas deste método, mas não
+ *   os elimina por completo (pooler de conexão, outra rota tocando a mesma
+ *   linha), então o retry continua sendo a rede de segurança.
  */
-function colisaoDeNumeroDaRequisicao(erro: unknown): boolean {
-  return erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === 'P2002';
+function erroDeContencaoTransitoria(erro: unknown): boolean {
+  if (!(erro instanceof Prisma.PrismaClientKnownRequestError)) return false;
+  if (erro.code === 'P2002') return true;
+  if (erro.code === 'P2010') {
+    const sqlstate = (erro.meta as { code?: string } | undefined)?.code;
+    return sqlstate === '40P01' || sqlstate === '40001';
+  }
+  return false;
 }
 
 @Injectable()
@@ -107,32 +121,57 @@ export class AlmoxarifadoService {
      */
     override?: { itensDoPlano: ItemDeTroca[] },
   ): Promise<ResultadoDaReserva> {
+    // Achado Important I2: confere posse do depósito ANTES de qualquer
+    // leitura de plano ou abertura de transação. Sem isso, um `depositoId`
+    // de outra empresa fazia a reserva não achar linha de saldo nenhuma
+    // (tudo virava "falta") e AINDA criava a requisição apontando pra lá —
+    // `requisicoes_material` não tem o gatilho de mesma-empresa que
+    // `peca_saldos` tem; e um `depositoId` inexistente estourava `P2003`
+    // (FK) no meio da transação, um 500 cru sem explicação nenhuma.
+    await this.validarDeposito(input.companyId, input.depositoId);
+
     const itens = override?.itensDoPlano ?? (await this.itensDoPlanoDaOs(input));
 
+    if (itens.length === 0) {
+      // Achado Important I6: ciclo sem NENHUM item de troca não cria
+      // requisição vazia. `regras/status-materiais.ts` já diz em voz alta
+      // que "pôr um kit vazio na fila do almoxarife é ruído" — mas antes
+      // desta correção o método gerava número, criava a linha em
+      // `requisicoes_material` com zero itens e status `pendente` mesmo
+      // assim, entrando na fila do almoxarife enquanto a OS ia para
+      // liberada. Sem transação: não há `peca_saldos` para travar nem
+      // número de requisição para gastar à toa.
+      const statusMateriais = statusAposConsulta([]);
+      await this.atualizarStatusMateriaisDaOs(
+        this.prisma, input.serviceOrderId, input.companyId, statusMateriais,
+      );
+      return { requisicaoId: null, numero: null, statusMateriais, itens: [] };
+    }
+
     // A transação inteira é a unidade de retry, não só o INSERT do número.
-    // Depois de um P2002 o Postgres marca a transação como abortada (todo
+    // Depois de um erro o Postgres marca a transação como abortada (todo
     // comando seguinte, mesmo um novo INSERT, falharia com "current
-    // transaction is aborted") — não dá para só tentar de novo o create
+    // transaction is aborted") — não dá para só tentar de novo uma parte
     // dentro do mesmo `tx`. Refazer a transação do zero é seguro: o rollback
-    // automático do Prisma já liberou o lock de `peca_saldos`, e a nova
+    // automático do Prisma já liberou os locks de `peca_saldos`, e a nova
     // tentativa relê o saldo (possivelmente mudado por quem venceu a
     // corrida) e recalcula tudo — inclusive o próximo número — do zero.
-    for (let tentativa = 1; tentativa <= MAX_TENTATIVAS_NUMERO; tentativa++) {
+    for (let tentativa = 1; tentativa <= MAX_TENTATIVAS_CONCORRENCIA; tentativa++) {
       try {
         return await this.prisma.$transaction((tx) =>
           this.executarReserva(tx, input, itens),
         );
       } catch (erro) {
-        if (!colisaoDeNumeroDaRequisicao(erro) || tentativa === MAX_TENTATIVAS_NUMERO) {
-          if (colisaoDeNumeroDaRequisicao(erro)) {
+        if (!erroDeContencaoTransitoria(erro) || tentativa === MAX_TENTATIVAS_CONCORRENCIA) {
+          if (erroDeContencaoTransitoria(erro)) {
             throw new ConflictException(
-              `Não foi possível gerar um número de requisição único após ` +
-                `${MAX_TENTATIVAS_NUMERO} tentativas — tente novamente.`,
+              `Não foi possível concluir a reserva após ` +
+                `${MAX_TENTATIVAS_CONCORRENCIA} tentativas por contenção — tente novamente.`,
             );
           }
           throw erro;
         }
-        // volta pro topo do for: recalcula `numero` do zero na próxima tentativa.
+        // volta pro topo do for: recalcula número e relê saldo do zero.
       }
     }
     // Inalcançável: o loop acima sempre retorna ou lança. Só aqui pro TS
@@ -142,7 +181,9 @@ export class AlmoxarifadoService {
 
   /**
    * O corpo da transação de `reservarParaOs`, isolado para poder ser
-   * chamado de novo em caso de retry (ver `MAX_TENTATIVAS_NUMERO`).
+   * chamado de novo em caso de retry (ver `MAX_TENTATIVAS_CONCORRENCIA`).
+   * Só é chamado com `itens` não-vazio — o caso vazio retorna cedo antes de
+   * abrir transação (achado I6).
    */
   private async executarReserva(
     tx: Prisma.TransactionClient,
@@ -154,17 +195,53 @@ export class AlmoxarifadoService {
     },
     itens: ItemDeTroca[],
   ): Promise<ResultadoDaReserva> {
-    const resultado: ItemReservado[] = [];
+    // Achado Important I3: clique repetido DEPOIS que a resposta já chegou
+    // (o `IdempotencyInterceptor` nas rotas cobre o retry de rede da MESMA
+    // requisição HTTP; isto cobre uma SEGUNDA requisição distinta pedindo
+    // reserva de novo para a mesma OS). Sem isto, nada impedia chamar de
+    // novo: criava-se uma segunda requisição e reservava-se o saldo outra
+    // vez — a MESMA OS ficando com o dobro comprometido, e a OS seguinte
+    // recebendo falta por saldo que na verdade não foi consumido duas vezes
+    // de verdade. `cancelada` não conta: uma requisição cancelada não pode
+    // travar uma nova tentativa legítima.
+    const existente = await tx.requisicaoMaterial.findFirst({
+      where: { serviceOrderId: input.serviceOrderId, status: { not: 'cancelada' } },
+      select: { id: true },
+    });
+    if (existente) {
+      throw new ConflictException(
+        'Esta OS já tem uma requisição de material em aberto — a reserva não pode ser repetida.',
+      );
+    }
 
-    for (const item of itens) {
+    // Achado Important I1: trava `peca_saldos` SEMPRE na mesma ordem — por
+    // `pecaId` — entre chamadas concorrentes. O laço original travava na
+    // ordem do PLANO; duas OS de categorias diferentes que compartilhem uma
+    // peça (um filtro de óleo comum a duas listas) em ordens opostas do
+    // plano se travavam mutuamente, e o Postgres mata uma delas com
+    // `40P01` (deadlock) — que não é `P2002`, e sem tratamento propagava
+    // como 500 cru: sem falta, sem reserva, sem explicação. A ordem do
+    // PLANO é preservada na RESPOSTA (é o que a tela mostra) via
+    // `indiceOriginal`.
+    const ordemDeTrava = itens
+      .map((item, indiceOriginal) => ({ item, indiceOriginal }))
+      .sort((a, b) => {
+        const pa = a.item.pecaId ?? '';
+        const pb = b.item.pecaId ?? '';
+        return pa < pb ? -1 : pa > pb ? 1 : 0;
+      });
+
+    const resultado: ItemReservado[] = new Array(itens.length);
+
+    for (const { item, indiceOriginal } of ordemDeTrava) {
       if (!item.pecaId) {
-        resultado.push({
+        resultado[indiceOriginal] = {
           linhaId: item.linhaId, pecaId: null, descricao: item.descricao,
           codigoPeca: item.codigoPeca, unidade: item.unidade,
           quantidadeSolicitada: item.quantidade, quantidadeReservada: 0,
           quantidadeFaltante: item.quantidade, impeditivo: item.impeditivo,
           status: 'nao_vinculado',
-        });
+        };
         continue;
       }
 
@@ -201,13 +278,13 @@ export class AlmoxarifadoService {
         `);
       }
 
-      resultado.push({
+      resultado[indiceOriginal] = {
         linhaId: item.linhaId, pecaId: item.pecaId, descricao: item.descricao,
         codigoPeca: item.codigoPeca, unidade: item.unidade,
         quantidadeSolicitada: item.quantidade, quantidadeReservada: reservar,
         quantidadeFaltante: faltante, impeditivo: item.impeditivo,
         status: faltante > 0 ? 'faltante' : 'reservada',
-      });
+      };
     }
 
     const numero = await this.proximoNumeroRequisicao(tx, input.companyId);
@@ -223,14 +300,14 @@ export class AlmoxarifadoService {
     });
 
     // Achado Critical C3 da revisão: item `nao_vinculado` (pecaId nulo) É
-    // GRAVADO, não pulado. Antes, `if (!r.pecaId) continue` fazia a linha
-    // cuja peça o sistema não conseguiu resolver contra o catálogo nunca
-    // existir na tabela — sumia da lista, e um plano cuja ÚNICA linha de
-    // troca ficasse assim liberava a OS para execução como se estivesse
-    // tudo certo. `descricao`/`codigoPeca` (migration
-    // `20260912185000_item_sem_peca_vinculada`) são o retrato do que o
-    // plano sabia sobre a linha — sem eles, o item não vinculado não teria
-    // rótulo nenhum para aparecer na tela do almoxarife.
+    // GRAVADO, não pulado — sumir da tabela é o que fazia um plano cuja
+    // ÚNICA linha de troca ficasse sem peça resolvida liberar a OS para
+    // execução como se estivesse tudo certo. `descricao`/`codigoPeca`
+    // (migration `20260912185000_item_sem_peca_vinculada`) são o retrato do
+    // que o PLANO sabia sobre a linha no momento da reserva, gravado para
+    // TODO item (não só o não vinculado): o catálogo muda depois, o retrato
+    // da reserva não deveria — mesma razão de `ServiceOrder.equipmentNome`/
+    // `equipmentPlaca` guardarem o snapshot do equipamento.
     for (const r of resultado) {
       await tx.requisicaoMaterialItem.create({
         data: {
@@ -254,12 +331,45 @@ export class AlmoxarifadoService {
       resultado.map((r) => ({ impeditivo: r.impeditivo, status: r.status })),
     );
 
-    await tx.serviceOrder.update({
-      where: { id: input.serviceOrderId },
-      data: { statusMateriais },
-    });
+    await this.atualizarStatusMateriaisDaOs(tx, input.serviceOrderId, input.companyId, statusMateriais);
 
     return { requisicaoId: req.id, numero: req.numero, statusMateriais, itens: resultado };
+  }
+
+  /**
+   * Confere que o depósito existe, pertence à empresa e está ativo — ANTES
+   * de qualquer leitura de plano ou abertura de transação (achado Important
+   * I2). Chamado pelos dois métodos que recebem `depositoId` do corpo.
+   */
+  private async validarDeposito(companyId: string, depositoId: string): Promise<void> {
+    const deposito = await this.prisma.deposito.findFirst({
+      where: { id: depositoId, companyId, ativo: true },
+      select: { id: true },
+    });
+    if (!deposito) throw new NotFoundException('Depósito não encontrado.');
+  }
+
+  /**
+   * Grava `statusMateriais` só se a OS pertencer à empresa — achado
+   * Important I4. `update({ where: { id } })` grava por id GLOBAL; a
+   * validação de posse que `itensDoPlanoDaOs` faz é comportamental (mora
+   * numa função que `override` pula inteira). `updateMany` com `companyId`
+   * no `where` torna a escrita cruzando empresa ESTRUTURALMENTE impossível,
+   * por qualquer caminho de chamada — `count` fica 0 e nada é escrito.
+   */
+  private async atualizarStatusMateriaisDaOs(
+    client: PrismaService | Prisma.TransactionClient,
+    serviceOrderId: string,
+    companyId: string,
+    statusMateriais: StatusMateriais,
+  ): Promise<void> {
+    const atualizado = await client.serviceOrder.updateMany({
+      where: { id: serviceOrderId, companyId },
+      data: { statusMateriais },
+    });
+    if (atualizado.count === 0) {
+      throw new NotFoundException('OS não encontrada para esta empresa.');
+    }
   }
 
   /**
@@ -271,10 +381,11 @@ export class AlmoxarifadoService {
    *
    * A checagem de posse (`companyId` no `findFirst` + `NotFoundException` se
    * vier vazio) segue o padrão de `mecanica.service.ts`
-   * (`relatosDoOperador`, entre outros): sem ela, um `serviceOrderId` de outra
-   * empresa passaria batido até `tx.serviceOrder.update`, que grava por `id`
-   * sozinho — a única barreira contra escrever na OS de outro inquilino é
-   * ESTA validação acontecer antes de entrar na transação.
+   * (`relatosDoOperador`, entre outros). Note que esta é a validação de posse
+   * da OS especificamente — a de `depositoId` (achado I2) mora em
+   * `validarDeposito` e roda antes desta, e a de `companyId` no UPDATE final
+   * (achado I4) mora em `atualizarStatusMateriaisDaOs`: são três camadas
+   * independentes, nenhuma torna as outras duas dispensáveis.
    */
   private async itensDoPlanoDaOs(input: {
     companyId: string;
@@ -319,7 +430,7 @@ export class AlmoxarifadoService {
   /**
    * `REQ-2026-001`. MAX+1 por empresa, igual ao protocolo de OS. NÃO evita
    * colisão sozinho — o `@@unique([companyId, numero])` só a DETECTA; quem
-   * absorve é o retry em `reservarParaOs` (`MAX_TENTATIVAS_NUMERO`).
+   * absorve é o retry em `reservarParaOs` (`MAX_TENTATIVAS_CONCORRENCIA`).
    *
    * Achado Critical C1 da revisão: a versão anterior achava "o último" com
    * `orderBy: { numero: 'desc' }` — MAX **lexicográfico** numa coluna TEXT.
@@ -329,8 +440,8 @@ export class AlmoxarifadoService {
    * sempre, `n` volta a ser `1000` em toda chamada seguinte, e o
    * `@@unique([companyId, numero])` rejeita a mesma string repetidamente —
    * um `P2002` ETERNO que nem o retry de `reservarParaOs` resolve (esgota as
-   * `MAX_TENTATIVAS_NUMERO` tentativas sempre computando o mesmo número).
-   * Mesmo caminho de `nextProtocoloOsPg`
+   * `MAX_TENTATIVAS_CONCORRENCIA` tentativas sempre computando o mesmo
+   * número). Mesmo caminho de `nextProtocoloOsPg`
    * (`common/prisma/gerar-protocolo-os-prisma.helper.ts`): busca TODOS os
    * números do ano e tira o maior em NÚMERO, nunca por `ORDER BY` em texto.
    */
@@ -388,6 +499,10 @@ export class AlmoxarifadoService {
     if (input.quantidade <= 0) {
       throw new BadRequestException('Quantidade tem de ser maior que zero.');
     }
+    // Achado Important I2: mesma checagem de posse do depósito que a
+    // reserva faz, pelas mesmas duas razões (empresa errada não acha nada
+    // de útil; depósito inexistente estoura FK cru dentro da transação).
+    await this.validarDeposito(input.companyId, input.depositoId);
 
     return this.prisma.$transaction(async (tx) => {
       await tx.pecaSaldo.upsert({
