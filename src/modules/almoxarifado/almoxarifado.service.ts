@@ -36,6 +36,7 @@ import {
   type ResultadoDoRecebimento,
 } from './compras/recebimento';
 import { acaoPermitida } from './regras/compras';
+import { refinarPelaCompra } from './compras/cobertura';
 import {
   MAX_TENTATIVAS_CONCORRENCIA,
   colisaoDeRequisicaoJaAberta,
@@ -1063,7 +1064,13 @@ export class AlmoxarifadoService {
     // qualquer reportaria `aguardando_separacao` em vez de
     // `aguardando_compra`, e o fluxo de compra nunca seria acionado.
     const base = statusAposSeparacao(paraRegra.map((i) => ({ impeditivo: i.impeditivo, status: i.status })));
-    const statusMateriais = temDivergencia(paraRegra) && base === 'materiais_separados' ? 'aguardando_separacao' : base;
+    // F4: "falta material" é refinado pelo andamento da compra — sem isto, uma
+    // reconferência numa OS em `compra_em_andamento` a rebaixava para
+    // `aguardando_compra`, e a bancada voltava a dizer que ninguém comprou.
+    // A requisição está travada desde o começo da transação.
+    const statusMateriais = temDivergencia(paraRegra) && base === 'materiais_separados'
+      ? 'aguardando_separacao'
+      : await refinarPelaCompra(tx, base, itensFinal);
 
     await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
 
@@ -1182,7 +1189,8 @@ export class AlmoxarifadoService {
         // comentário dela em `regras/status-materiais.ts`), não um empréstimo
         // por acaso.
         const paraRegra = itensFrescos.map((i) => ({ impeditivo: i.impeditivo, status: i.status }));
-        const statusMateriais = statusAposEntrega(paraRegra);
+        // Refinado pela compra, com a requisição travada acima (mesma razão da separação).
+        const statusMateriais = await refinarPelaCompra(tx, statusAposEntrega(paraRegra), itensFrescos);
 
         await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
 
@@ -1550,7 +1558,8 @@ export class AlmoxarifadoService {
       where: { requisicaoId: req.id },
     });
     const paraRegra = itensFrescos.map((i) => ({ impeditivo: i.impeditivo, status: i.status }));
-    const statusMateriais = statusAposEntrega(paraRegra);
+    // Refinado pela compra, com a requisição travada no começo da transação.
+    const statusMateriais = await refinarPelaCompra(tx, statusAposEntrega(paraRegra), itensFrescos);
     await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
 
     // Achado Important I7 da revisão final — decisão do produto (2026-09-13):

@@ -29,7 +29,7 @@ const MECANICO = '55555555-5555-5555-5555-555555555555';
  * contas de `peca_saldos` têm testes próprios em `entrega.spec.ts` e
  * `separacao-servico.spec.ts`): a trava de saldo devolve uma linha folgada.
  */
-function montarBancoFake() {
+function montarBancoFake(coberturaDaFalta: Array<{ requisicaoItemId: string; origensOc: Array<Record<string, unknown>> }> = []) {
   const requisicao = {
     id: REQ,
     companyId: COMPANY,
@@ -123,6 +123,14 @@ function montarBancoFake() {
     },
     estoqueMovimento: { create: jest.fn(async () => ({})) },
     serviceOrderInsumo: { create: jest.fn(async () => ({})), count: jest.fn(async () => 0) },
+    // F4: a cobertura da falta pela compra (`refinarPelaCompra`). Filtra pelo
+    // `requisicaoItemId in` que a produção manda — um fake que devolvesse tudo
+    // não provaria que é a falta DESTA requisição que foi olhada.
+    solicitacaoCompraItem: {
+      findMany: jest.fn(async ({ where }: { where: { requisicaoItemId: { in: string[] } } }) =>
+        (coberturaDaFalta ?? []).filter((c) => where.requisicaoItemId.in.includes(c.requisicaoItemId)),
+      ),
+    },
     serviceOrder: {
       updateMany: jest.fn(async ({ data }: { data: { statusMateriais: string } }) => {
         os.statusMateriais = data.statusMateriais;
@@ -165,6 +173,14 @@ describe('fundação F4 — a segunda rodada de uma requisição, pelo que fica 
     expect(itens.get('it-2')).toMatchObject({ status: 'faltante', quantidadeReservada: 3 });
     expect(requisicao.status).toBe('separada');
     expect(os.statusMateriais).toBe('aguardando_compra');
+  });
+
+  it('com a falta do it-2 já a caminho numa OC emitida, a primeira entrega grava compra_em_andamento na OS', async () => {
+    const { servico, os } = montarBancoFake([{ requisicaoItemId: 'it-2', origensOc: [{ quantidade: 2, quantidadeRecebida: 0, ordemCompraItem: { ordemCompra: { status: 'emitida' } } }] }]);
+
+    await entregar(servico);
+
+    expect(os.statusMateriais).toBe('compra_em_andamento');
   });
 
   it('a peça que chega é conferida, o kit FECHA de novo com o impeditivo já entregue, e a segunda entrega fecha a requisição', async () => {

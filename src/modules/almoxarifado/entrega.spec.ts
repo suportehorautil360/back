@@ -43,6 +43,7 @@ function montar(
     // a ela — sem isto, `liberadaEmAtual` já viria preenchido e o guard
     // `where: { liberadaEm: null }` nunca casaria na primeira chamada.
     naoLiberada?: boolean;
+    coberturaDaFalta?: Array<{ requisicaoItemId: string; origensOc: Array<Record<string, unknown>> }>;
   } = {},
 ) {
   const chamadas: string[] = [];
@@ -182,6 +183,14 @@ function montar(
       // insumos que a OS já tem (mesmo critério do orçamento aprovado) — por
       // padrão simula uma OS sem nenhum insumo ainda.
       count: jest.fn(async () => 0),
+    },
+    // F4: a cobertura da falta pela compra (`refinarPelaCompra`). Filtra pelo
+    // `requisicaoItemId in` que a produção manda — um fake que devolvesse tudo
+    // não provaria que é a falta DESTA requisição que foi olhada.
+    solicitacaoCompraItem: {
+      findMany: jest.fn(async ({ where }: { where: { requisicaoItemId: { in: string[] } } }) =>
+        (opts.coberturaDaFalta ?? []).filter((c) => where.requisicaoItemId.in.includes(c.requisicaoItemId)),
+      ),
     },
     serviceOrder: {
       updateMany: jest.fn(async () => { chamadas.push('UPDATE os'); return { count: 1 }; }),
@@ -422,6 +431,24 @@ describe('liberarRequisicao', () => {
 
     expect(r.statusMateriais).toBe('aguardando_compra');
     expect(prisma.notificacao.createMany).not.toHaveBeenCalled();
+  });
+
+  it('F4: liberação com a falta restante já a caminho numa OC emitida deixa a OS em compra_em_andamento', async () => {
+    const { servico, itensDb } = montar('separada', [separado()], {
+      naoLiberada: true,
+      coberturaDaFalta: [{ requisicaoItemId: 'it-2', origensOc: [{ quantidade: 2, quantidadeRecebida: 0, ordemCompraItem: { ordemCompra: { status: 'emitida' } } }] }],
+    });
+    // Relida dentro da transação: o retrato de fora não tem o `it-2`.
+    itensDb.set('it-2', {
+      ...separado(), id: 'it-2', pecaId: 'p-2', impeditivo: false, status: 'faltante',
+      quantidadeSolicitada: 5, quantidadeReservada: 3, quantidadeSeparada: 0,
+    });
+
+    const r = await servico.liberarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+    });
+
+    expect(r.statusMateriais).toBe('compra_em_andamento');
   });
 
   // --- Fundação da F4 e achados da revisão final da F3 ---------------------
@@ -754,6 +781,21 @@ describe('entregarRequisicao', () => {
       recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin',
     });
     expect(r.statusMateriais).toBe('aguardando_compra');
+  });
+
+  it('F4: entrega com a falta restante já a caminho numa OC emitida deixa a OS em compra_em_andamento', async () => {
+    const { servico } = montar('separada', [
+      separado(),
+      {
+        ...separado(), id: 'it-2', pecaId: 'p-2', status: 'faltante', impeditivo: false,
+        quantidadeSolicitada: 5, quantidadeReservada: 3, quantidadeSeparada: 0,
+      },
+    ], { coberturaDaFalta: [{ requisicaoItemId: 'it-2', origensOc: [{ quantidade: 2, quantidadeRecebida: 0, ordemCompraItem: { ordemCompra: { status: 'emitida' } } }] }] });
+    const r = await servico.entregarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin',
+    });
+    expect(r.statusMateriais).toBe('compra_em_andamento');
   });
 
   it('fundação F4: item faltante PARCIAL mantém a reserva — a requisição não fecha, e a falta não cresce', async () => {

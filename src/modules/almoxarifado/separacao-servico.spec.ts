@@ -26,7 +26,12 @@ function erroDeContencao(): Prisma.PrismaClientKnownRequestError {
  */
 function montar(
   itensIniciais: Array<Record<string, unknown>>,
-  opts: { semSaldo?: boolean; comNotificacaoDeKit?: boolean; statusFresco?: string } = {},
+  opts: {
+    semSaldo?: boolean;
+    comNotificacaoDeKit?: boolean;
+    statusFresco?: string;
+    coberturaDaFalta?: Array<{ requisicaoItemId: string; origensOc: Array<Record<string, unknown>> }>;
+  } = {},
 ) {
   const chamadas: string[] = [];
   const itensDb = new Map(itensIniciais.map((i) => [i.id as string, { ...i }]));
@@ -146,6 +151,14 @@ function montar(
     // `tx`) reprove em vez de passar despercebido.
     notificacao: {
       createMany: jest.fn().mockResolvedValue({ count: 1 }),
+    },
+    // F4: a cobertura da falta pela compra (`refinarPelaCompra`). Filtra pelo
+    // `requisicaoItemId in` que a produção manda — um fake que devolvesse tudo
+    // não provaria que é a falta DESTA requisição que foi olhada.
+    solicitacaoCompraItem: {
+      findMany: jest.fn(async ({ where }: { where: { requisicaoItemId: { in: string[] } } }) =>
+        (opts.coberturaDaFalta ?? []).filter((c) => where.requisicaoItemId.in.includes(c.requisicaoItemId)),
+      ),
     },
     serviceOrder: {
       updateMany: jest.fn(async () => {
@@ -381,6 +394,18 @@ describe('separarItens', () => {
       itens: [{ itemId: 'it-1', quantidade: 4, divergencia: 'avariada' }],
     });
     expect(r.statusMateriais).toBe('aguardando_compra');
+  });
+
+  it('F4: reconferência com a falta já a caminho numa OC emitida mantém a OS em compra_em_andamento', async () => {
+    const { servico } = montar([
+      item({ id: 'it-1', pecaId: 'p-1' }),
+      item({ id: 'it-2', pecaId: 'p-2', status: 'faltante', impeditivo: false, quantidadeSolicitada: 5, quantidadeReservada: 2 }),
+    ], { coberturaDaFalta: [{ requisicaoItemId: 'it-2', origensOc: [{ quantidade: 3, quantidadeRecebida: 0, ordemCompraItem: { ordemCompra: { status: 'emitida' } } }] }] });
+    const r = await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4 }],
+    });
+    expect(r.statusMateriais).toBe('compra_em_andamento');
   });
 
   it('Important M1: sem linha de saldo falha alto, em vez de assumir zero', async () => {
