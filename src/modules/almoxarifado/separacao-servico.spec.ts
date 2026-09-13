@@ -24,7 +24,10 @@ function erroDeContencao(): Prisma.PrismaClientKnownRequestError {
  * sem filtrar por `requisicaoId` — em todo teste deste arquivo há uma única
  * requisição, então filtrar não mudaria resultado nenhum.
  */
-function montar(itensIniciais: Array<Record<string, unknown>>, opts: { semSaldo?: boolean } = {}) {
+function montar(
+  itensIniciais: Array<Record<string, unknown>>,
+  opts: { semSaldo?: boolean; comNotificacaoDeKit?: boolean } = {},
+) {
   const chamadas: string[] = [];
   const itensDb = new Map(itensIniciais.map((i) => [i.id as string, { ...i }]));
 
@@ -73,12 +76,26 @@ function montar(itensIniciais: Array<Record<string, unknown>>, opts: { semSaldo?
       findMany: jest.fn(async () => [...itensDb.values()].map((i) => ({ ...i }))),
     },
     // Task 8: `usuariosDoAlmoxarifado` (chamada por `notificarKitCompleto`
-    // quando o kit fecha) começa por aqui. `[]` mantém o comportamento
-    // atual destes testes (sem destinatário, sem `tx.company`/
-    // `tx.operator`/`tx.notificacao` — mesmo branch coberto em
-    // `almoxarifado-notificacoes.spec.ts`).
+    // quando o kit fecha) começa por aqui. Por padrão `[]` mantém o
+    // comportamento dos testes que já existiam (sem destinatário, sem
+    // escrita — mesmo branch coberto em `almoxarifado-notificacoes.spec.ts`).
+    //
+    // Achado Important da rodada 1 de correção: nenhum teste deste arquivo
+    // passava pelo ramo COM destinatário — trocar a chamada a
+    // `notificarKitCompleto` por `Promise.resolve()` no serviço continuava
+    // 190/190 verde. `opts.comNotificacaoDeKit` fecha essa lacuna (ver os
+    // testes "(integração)" abaixo), sem mudar o default de mais nada.
     companyRole: {
-      findMany: jest.fn(async () => []),
+      findMany: jest.fn(async () => (opts.comNotificacaoDeKit ? [{ id: 'cargo-almox' }] : [])),
+    },
+    operator: {
+      findMany: jest.fn(async () => (opts.comNotificacaoDeKit ? [{ companyUserId: 'user-almox' }] : [])),
+    },
+    company: {
+      findUnique: jest.fn().mockResolvedValue({ legacyId: 'leg-1' }),
+    },
+    notificacao: {
+      createMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
     serviceOrder: {
       updateMany: jest.fn(async () => {
@@ -357,5 +374,45 @@ describe('separarItens', () => {
     })).rejects.toThrow(ConflictException);
     // MAX_TENTATIVAS_CONCORRENCIA no serviço é 5 — mesmo teto usado pela reserva.
     expect(prisma.$transaction).toHaveBeenCalledTimes(5);
+  });
+
+  // --- Achado Important da rodada 1 de correção da Task 8 ----------------
+  // Nenhum teste acima passa pelo ramo COM destinatário de
+  // `notificarKitCompleto` — o coordenador provou trocando a chamada por
+  // `Promise.resolve()` no serviço e vendo a suíte inteira continuar verde.
+  // Os dois testes abaixo fecham essa lacuna: o positivo prova que a
+  // notificação SAI quando o kit fecha e alguém tem acesso ao almoxarifado;
+  // o negativo (par obrigatório) prova que ela NÃO sai quando o kit não
+  // fecha — sem ele, o positivo não provaria que o `if` está no lugar
+  // certo, só que a função de notificação funciona isolada.
+
+  it('kit fechando com destinatário no almoxarifado grava a notificação (integração)', async () => {
+    const { servico, tx } = montar([item()], { comNotificacaoDeKit: true });
+    const r = await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4 }],
+    });
+
+    expect(r.statusRequisicao).toBe('separada');
+    expect(tx.notificacao.createMany).toHaveBeenCalledTimes(1);
+    const linha = tx.notificacao.createMany.mock.calls[0][0].data[0] as {
+      destinatarioId: string; referenciaTipo: string; referenciaId: string; mensagem: string;
+    };
+    expect(linha.destinatarioId).toBe('user-almox');
+    expect(linha.referenciaTipo).toBe('requisicao_material');
+    expect(linha.referenciaId).toBe(REQ);
+    expect(linha.mensagem).toContain('REQ-2026-001');
+    expect(linha.mensagem).toContain('OS-2026-047');
+  });
+
+  it('kit em separação PARCIAL não notifica ninguém, mesmo com destinatário disponível (par negativo)', async () => {
+    const { servico, tx } = montar([item()], { comNotificacaoDeKit: true });
+    const r = await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 2 }], // reservado 4, confere só 2: kit não fecha
+    });
+
+    expect(r.statusRequisicao).toBe('em_separacao');
+    expect(tx.notificacao.createMany).not.toHaveBeenCalled();
   });
 });

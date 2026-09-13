@@ -23,7 +23,11 @@ function erroDeContencao(): Prisma.PrismaClientKnownRequestError {
  * FORA da transação) — é essa divergência que prova que o serviço decrementa
  * o saldo pelo valor FRESCO, não pelo que leu antes de abrir a transação.
  */
-function montar(status: string, itens: Array<Record<string, unknown>>, opts: { semSaldo?: boolean } = {}) {
+function montar(
+  status: string,
+  itens: Array<Record<string, unknown>>,
+  opts: { semSaldo?: boolean; comDestinatariosDeNotificacao?: boolean } = {},
+) {
   const chamadas: string[] = [];
   const itensDb = new Map(itens.map((i) => [i.id as string, { ...i }]));
 
@@ -49,14 +53,18 @@ function montar(status: string, itens: Array<Record<string, unknown>>, opts: { s
         // Task 8: `liberarRequisicao` lê `req.deposito.nome`/`req.serviceOrder.*`
         // para `notificarOsLiberada` — sem isto o teste quebra com "Cannot
         // read properties of undefined", não com uma asserção de negócio.
-        // `equipmentId`/`responsavelOperatorId` nulos mantêm a notificação
-        // sem destinatário (mesmo branch coberto em
-        // `almoxarifado-notificacoes.spec.ts`), então nenhum teste aqui
-        // precisa mockar `tx.company`/`tx.operator`/`tx.notificacao`.
+        // Por padrão `equipmentId`/`responsavelOperatorId` nulos mantêm a
+        // notificação sem destinatário (mesmo branch coberto em
+        // `almoxarifado-notificacoes.spec.ts`); os 19 testes que já
+        // passavam não pedem `comDestinatariosDeNotificacao` e continuam
+        // roteando por aqui, sem tocar `tx.company`/`tx.operator`/
+        // `tx.notificacao`.
         deposito: { nome: 'Almoxarifado Central' },
         serviceOrder: {
-          protocolo: 'OS-2026-047', equipmentId: null, equipmentNome: null,
-          responsavelOperatorId: null,
+          protocolo: 'OS-2026-047',
+          equipmentId: opts.comDestinatariosDeNotificacao ? 'eq-1' : null,
+          equipmentNome: opts.comDestinatariosDeNotificacao ? 'ESC-014' : null,
+          responsavelOperatorId: opts.comDestinatariosDeNotificacao ? 'op-mec' : null,
         },
       }),
       update: jest.fn(async () => { chamadas.push('UPDATE requisicao'); return {}; }),
@@ -116,6 +124,28 @@ function montar(status: string, itens: Array<Record<string, unknown>>, opts: { s
         custoMedio: 25, descricao: 'Filtro de óleo', codigoInterno: 'ALM-000001',
         marca: 'JCB', unidade: 'un',
       }),
+    },
+    // Achado Important da rodada 1 de correção: os 19 testes de `liberarRequisicao`
+    // que já existiam só exercitavam o ramo "sem destinatário" de
+    // `notificarOsLiberada` — trocar a chamada por `Promise.resolve()` no
+    // serviço continuava 190/190 verde. Estes delegates, resolvidos com um
+    // destinatário quando `opts.comDestinatariosDeNotificacao`, fecham essa
+    // lacuna (ver os testes "(integração)" abaixo).
+    operator: {
+      findFirst: jest.fn().mockResolvedValue(
+        opts.comDestinatariosDeNotificacao ? { companyUserId: 'user-mec' } : null,
+      ),
+    },
+    equipmentProgramador: {
+      findFirst: jest.fn().mockResolvedValue(
+        opts.comDestinatariosDeNotificacao ? { companyUserId: 'user-prog' } : null,
+      ),
+    },
+    company: {
+      findUnique: jest.fn().mockResolvedValue({ legacyId: 'leg-1' }),
+    },
+    notificacao: {
+      createMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
   };
   const prisma = {
@@ -205,6 +235,35 @@ describe('liberarRequisicao', () => {
     // devolveria `liberada_para_execucao`. Lendo de DENTRO (o item fresco,
     // `faltante`): devolve `aguardando_compra`. O valor correto é o segundo.
     expect(r.statusMateriais).toBe('aguardando_compra');
+  });
+
+  it('avisa mecânico e programador quando a OS libera com destinatário (integração — achado Important da rodada 1)', async () => {
+    // Os 4 testes acima provam o RESTO de `liberarRequisicao`, mas nenhum
+    // passa pelo ramo COM destinatário de `notificarOsLiberada` — é
+    // exatamente essa lacuna que permitiu trocar a chamada por
+    // `Promise.resolve()` no serviço sem nenhum teste reclamar (ver
+    // relatório da rodada 1). Este teste fecha o ramo cheio: mecânico e
+    // programador são pessoas DIFERENTES ('user-mec'/'user-prog'), então a
+    // notificação grava DUAS linhas.
+    const { servico, tx } = montar('separada', [separado()], {
+      comDestinatariosDeNotificacao: true,
+    });
+    await servico.liberarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+    });
+
+    expect(tx.notificacao.createMany).toHaveBeenCalledTimes(1);
+    const linhas = tx.notificacao.createMany.mock.calls[0][0].data as Array<{
+      destinatarioId: string; referenciaTipo: string; referenciaId: string; mensagem: string;
+    }>;
+    expect(linhas.map((l) => l.destinatarioId).sort()).toEqual(['user-mec', 'user-prog']);
+    for (const linha of linhas) {
+      expect(linha.referenciaTipo).toBe('service_order');
+      expect(linha.referenciaId).toBe('os-1');
+      // O nome do DEPÓSITO — sem ele o mecânico sabe que pode buscar mas
+      // não sabe onde.
+      expect(linha.mensagem).toContain('Almoxarifado Central');
+    }
   });
 });
 
