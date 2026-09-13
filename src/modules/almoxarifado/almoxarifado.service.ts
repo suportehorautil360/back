@@ -27,7 +27,10 @@ import {
   abrirSolicitacaoDasFaltas,
   cancelarSolicitacoesDasFaltas,
   type FaltaParaSolicitar,
+  type SolicitacaoAberta,
 } from './compras/solicitacao-de-falta';
+import { montarNotificacoesDePecaAdicional } from './compras/notificacoes-peca-adicional';
+import { registrarAuditoriaSuprimentos } from './auditoria';
 import { montarNotificacoesDeCancelamento, montarNotificacoesDeFalta } from './compras/notificacoes-falta';
 import {
   executarRecebimento,
@@ -66,6 +69,18 @@ export interface ItemReservado {
   quantidadeFaltante: number;
   impeditivo: boolean;
   status: 'reservada' | 'faltante' | 'nao_vinculado';
+}
+
+export interface ResultadoDaPecaAdicional {
+  requisicaoId: string;
+  numero: string;
+  itemId: string;
+  status: 'reservada' | 'faltante';
+  quantidadeReservada: number;
+  quantidadeFaltante: number;
+  statusMateriais: StatusMateriais;
+  /** Número da solicitação de compra aberta para a falta; nulo quando reservou tudo. */
+  solicitacaoCompra: string | null;
 }
 
 export interface ResultadoDaReserva {
@@ -2042,5 +2057,317 @@ export class AlmoxarifadoService {
         quantidadePendente: Math.max(0, Math.round((Number(i.quantidade) - Number(i.quantidadeRecebida)) * 1000) / 1000),
       })),
     }));
+  }
+
+  /**
+   * A peça que o mecânico pede com a OS em andamento, fora do kit do plano
+   * (§5 da F4). Age na hora: não passa por aprovação.
+   *
+   * Validação antes da transação (OS interna e não concluída, peça ativa,
+   * motivo). Dentro: trava a requisição aberta da OS e relê — ou abre uma
+   * nova quando a da OS já foi entregue —, trava o saldo e relê, reserva o
+   * que houver com escrita condicionada, grava o item `peca_adicional`, abre
+   * a solicitação da falta e recalcula a OS. Ordem única de trava:
+   * requisição → saldo → OS.
+   *
+   * Duas chamadas simultâneas numa OS sem requisição aberta criam duas; o
+   * índice `requisicoes_material_uma_aberta_por_os` barra a segunda, e a nova
+   * tentativa acha a da primeira e acrescenta o item nela.
+   */
+  async pedirPecaAdicional(input: {
+    companyId: string;
+    serviceOrderId: string;
+    autorCompanyUserId: string;
+    pecaId: string;
+    quantidade: number;
+    impeditivo: boolean;
+    motivo: string;
+  }): Promise<ResultadoDaPecaAdicional> {
+    // `!(x > 0)` e não `x <= 0`: NaN falha em qualquer comparação e passaria.
+    if (!(Math.round(input.quantidade * 1000) > 0)) {
+      throw new BadRequestException('Quantidade tem de ser maior que zero.');
+    }
+    const motivo = (input.motivo ?? '').trim();
+    if (!motivo) {
+      throw new BadRequestException('Diga por que a peça é necessária — o pedido fica no histórico da OS.');
+    }
+
+    const os = await this.prisma.serviceOrder.findFirst({
+      where: { id: input.serviceOrderId, companyId: input.companyId },
+      select: { execucao: true, situacao: true, statusMateriais: true },
+    });
+    if (!os) throw new NotFoundException('OS não encontrada para esta empresa.');
+    if (os.execucao !== 'interna') {
+      throw new ConflictException('Peça adicional só é pedida em OS de execução interna.');
+    }
+    if (os.situacao === 'Concluida' || os.statusMateriais === 'concluida' || os.statusMateriais === 'cancelada') {
+      throw new ConflictException('OS encerrada não recebe pedido de peça.');
+    }
+    const peca = await this.prisma.peca.findFirst({
+      where: { id: input.pecaId, companyId: input.companyId, ativo: true },
+      select: { id: true },
+    });
+    if (!peca) throw new NotFoundException('Peça não encontrada ou inativa nesta empresa.');
+
+    const depositoId = await this.depositoDaPecaAdicional(input.companyId, input.serviceOrderId);
+    const pedido = { ...input, motivo, depositoId };
+
+    for (let tentativa = 1; ; tentativa++) {
+      try {
+        const { notificacoes, ...resultado } = await this.prisma.$transaction((tx) =>
+          this.executarPecaAdicional(tx, pedido),
+        );
+        await enviarNotificacoes(this.prisma, notificacoes);
+        return resultado;
+      } catch (erro) {
+        if (!colisaoDeRequisicaoJaAberta(erro) && !erroDeContencaoTransitoria(erro)) throw erro;
+        if (tentativa >= MAX_TENTATIVAS_CONCORRENCIA) {
+          throw new ConflictException(
+            `Não foi possível registrar o pedido após ${MAX_TENTATIVAS_CONCORRENCIA} tentativas por contenção — tente novamente.`,
+          );
+        }
+      }
+    }
+  }
+
+  /**
+   * Onde a peça adicional é reservada: no depósito da requisição mais recente
+   * da OS (a aberta, se houver — ela é sempre a mais nova, porque só nasce
+   * requisição quando não há aberta); sem requisição nenhuma, no depósito
+   * ativo mais antigo da empresa, o mesmo padrão da abertura de OS no painel.
+   * Com requisição aberta, vale o depósito relido dentro da transação.
+   */
+  private async depositoDaPecaAdicional(companyId: string, serviceOrderId: string): Promise<string> {
+    const ultima = await this.prisma.requisicaoMaterial.findFirst({
+      where: { companyId, serviceOrderId, status: { not: 'cancelada' } },
+      orderBy: { createdAt: 'desc' },
+      select: { depositoId: true },
+    });
+    if (ultima) return ultima.depositoId;
+    const padrao = await this.prisma.deposito.findFirst({
+      where: { companyId, ativo: true },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true },
+    });
+    if (!padrao) {
+      throw new ConflictException('Nenhum depósito ativo cadastrado — cadastre um no Almoxarifado antes de pedir peça.');
+    }
+    return padrao.id;
+  }
+
+  private async executarPecaAdicional(
+    tx: Prisma.TransactionClient,
+    input: {
+      companyId: string;
+      serviceOrderId: string;
+      autorCompanyUserId: string;
+      pecaId: string;
+      quantidade: number;
+      impeditivo: boolean;
+      motivo: string;
+      depositoId: string;
+    },
+  ): Promise<ResultadoDaPecaAdicional & { notificacoes: NotificacaoPronta[] }> {
+    // 1. A requisição aberta da OS, travada e relida. Se fechou entre a
+    //    leitura e a trava (entrega ou cancelamento), o pedido abre outra.
+    const aberta = await tx.requisicaoMaterial.findFirst({
+      where: {
+        serviceOrderId: input.serviceOrderId,
+        companyId: input.companyId,
+        status: { notIn: ['cancelada', 'entregue'] },
+      },
+      select: { id: true },
+    });
+    let req: { id: string; numero: string; status: string; depositoId: string } | null = null;
+    if (aberta) {
+      await travarRequisicao(tx, aberta.id, input.companyId);
+      const fresca = await tx.requisicaoMaterial.findUniqueOrThrow({
+        where: { id: aberta.id },
+        select: { id: true, numero: true, status: true, depositoId: true },
+      });
+      if (fresca.status !== 'cancelada' && fresca.status !== 'entregue') req = fresca;
+    }
+    if (!req) {
+      const numero = await this.proximoNumeroRequisicao(tx, input.companyId);
+      req = await tx.requisicaoMaterial.create({
+        data: {
+          companyId: input.companyId,
+          numero,
+          serviceOrderId: input.serviceOrderId,
+          depositoId: input.depositoId,
+          solicitanteCompanyUserId: input.autorCompanyUserId,
+        },
+        select: { id: true, numero: true, status: true, depositoId: true },
+      });
+    }
+
+    // 2. O saldo no depósito da requisição. Sem linha, a peça não está
+    //    estocada ali: tudo é falta.
+    const pedida = Math.round(input.quantidade * 1000);
+    let reservar = 0;
+    const travado = await tx.$queryRaw<{ peca_id: string }[]>(Prisma.sql`
+      SELECT peca_id FROM peca_saldos
+       WHERE peca_id = ${input.pecaId}::uuid
+         AND deposito_id = ${req.depositoId}::uuid
+         FOR UPDATE
+    `);
+    if (travado[0]) {
+      const saldo = await tx.pecaSaldo.findUniqueOrThrow({
+        where: { pecaId_depositoId: { pecaId: input.pecaId, depositoId: req.depositoId } },
+        select: { saldoFisico: true, saldoReservado: true },
+      });
+      const livre = Math.round(Number(saldo.saldoFisico) * 1000) - Math.round(Number(saldo.saldoReservado) * 1000);
+      reservar = Math.max(0, Math.min(livre, pedida));
+    }
+    if (reservar > 0) {
+      const gravado = await tx.$executeRaw(Prisma.sql`
+        UPDATE peca_saldos
+           SET saldo_reservado = saldo_reservado + ${reservar / 1000},
+               updated_at = now()
+         WHERE peca_id = ${input.pecaId}::uuid
+           AND deposito_id = ${req.depositoId}::uuid
+           AND saldo_fisico - saldo_reservado >= ${reservar / 1000}
+      `);
+      if (gravado !== 1) {
+        throw new ConflictException('O saldo da peça mudou durante o pedido — tente de novo.');
+      }
+    }
+    const falta = pedida - reservar;
+
+    // 3. O item, com o retrato da peça no momento do pedido.
+    const peca = await tx.peca.findFirstOrThrow({
+      where: { id: input.pecaId, companyId: input.companyId },
+      select: { descricao: true, codigoInterno: true },
+    });
+    const agora = new Date();
+    const hoje = new Date(Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth(), agora.getUTCDate()));
+    const status = falta > 0 ? 'faltante' : 'reservada';
+    const item = await tx.requisicaoMaterialItem.create({
+      data: {
+        requisicaoId: req.id,
+        pecaId: input.pecaId,
+        descricao: peca.descricao,
+        codigoPeca: peca.codigoInterno,
+        quantidadeSolicitada: pedida / 1000,
+        quantidadeReservada: reservar / 1000,
+        impeditivo: input.impeditivo,
+        prioridade: input.impeditivo ? 'critica' : 'alta',
+        dataNecessidade: hoje,
+        status,
+        origem: 'peca_adicional',
+        motivo: input.motivo,
+        solicitadoPorCompanyUserId: input.autorCompanyUserId,
+      },
+      select: { id: true },
+    });
+
+    // 4. Kit conferido com peça nova para conferir volta à conferência. Só
+    //    item `reservada` reabre: falta pura não tem o que conferir, e reabrir
+    //    travaria a liberação e a entrega do resto do kit — mesmo critério do
+    //    recebimento.
+    if (status === 'reservada' && req.status === 'separada') {
+      await tx.requisicaoMaterial.updateMany({
+        where: { id: req.id, status: 'separada' },
+        data: { status: 'em_separacao' },
+      });
+    }
+
+    // 5. A falta vira solicitação de compra na mesma transação.
+    let solicitacao: SolicitacaoAberta | null = null;
+    if (falta > 0) {
+      solicitacao = await abrirSolicitacaoDasFaltas(tx, {
+        companyId: input.companyId,
+        depositoId: req.depositoId,
+        serviceOrderId: input.serviceOrderId,
+        requisicaoId: req.id,
+        solicitanteCompanyUserId: input.autorCompanyUserId,
+        origem: 'peca_adicional',
+        dataNecessidade: hoje,
+        faltas: [{ requisicaoItemId: item.id, pecaId: input.pecaId, quantidade: falta / 1000, impeditivo: input.impeditivo }],
+      });
+    }
+
+    // 6. A OS, pela máquina inteira da requisição refinada pela compra.
+    const itens = await tx.requisicaoMaterialItem.findMany({ where: { requisicaoId: req.id } });
+    const base = statusAposConsulta(itens.map((i) => ({ impeditivo: i.impeditivo, status: i.status })));
+    const statusMateriais = await refinarPelaCompra(tx, base, itens);
+    await this.atualizarStatusMateriaisDaOs(tx, input.serviceOrderId, input.companyId, statusMateriais);
+
+    // 7. Avisos (só montados) e rastro (parte do ato).
+    const os = await tx.serviceOrder.findFirstOrThrow({
+      where: { id: input.serviceOrderId, companyId: input.companyId },
+      select: { protocolo: true, equipmentId: true, equipmentNome: true },
+    });
+    const notificacoes = await montarNotificacoesDePecaAdicional(tx, {
+      companyId: input.companyId,
+      serviceOrderId: input.serviceOrderId,
+      requisicaoId: req.id,
+      numeroRequisicao: req.numero,
+      protocolo: os.protocolo,
+      equipmentId: os.equipmentId,
+      equipmentNome: os.equipmentNome,
+      descricaoPeca: peca.descricao,
+      quantidade: pedida / 1000,
+      reservadaInteira: falta === 0,
+      solicitacao,
+    });
+    await registrarAuditoriaSuprimentos(tx, {
+      companyId: input.companyId,
+      acao: 'requisicao.peca_adicional',
+      alvoTipo: 'suprimentos.requisicao',
+      alvoId: req.id,
+      atorCompanyUserId: input.autorCompanyUserId,
+      motivo: input.motivo,
+      depois: {
+        itemId: item.id,
+        pecaId: input.pecaId,
+        quantidade: pedida / 1000,
+        reservada: reservar / 1000,
+        faltante: falta / 1000,
+        impeditivo: input.impeditivo,
+        solicitacaoCompra: solicitacao?.numero ?? null,
+        statusMateriais,
+      },
+    });
+
+    return {
+      requisicaoId: req.id,
+      numero: req.numero,
+      itemId: item.id,
+      status,
+      quantidadeReservada: reservar / 1000,
+      quantidadeFaltante: falta / 1000,
+      statusMateriais,
+      solicitacaoCompra: solicitacao?.numero ?? null,
+      notificacoes,
+    };
+  }
+
+  /** As peças adicionais pedidas para uma OS, com o estado de cada uma — a lista da tela da OS. */
+  async listarPecasAdicionais(companyId: string, serviceOrderId: string) {
+    return this.prisma.requisicaoMaterialItem.findMany({
+      where: { origem: 'peca_adicional', requisicao: { companyId, serviceOrderId } },
+      select: {
+        id: true,
+        descricao: true,
+        codigoPeca: true,
+        quantidadeSolicitada: true,
+        quantidadeReservada: true,
+        quantidadeSeparada: true,
+        quantidadeEntregue: true,
+        status: true,
+        impeditivo: true,
+        motivo: true,
+        createdAt: true,
+        peca: { select: { codigoInterno: true, descricao: true, unidade: true } },
+        requisicao: { select: { id: true, numero: true, status: true } },
+        solicitacaoCompraItens: {
+          where: { status: { not: 'cancelada' } },
+          select: { status: true, solicitacao: { select: { numero: true, status: true } } },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
   }
 }

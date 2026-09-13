@@ -10,6 +10,7 @@ import { SepararDto } from './dto/separacao.dto';
 import { EntregarDto } from './dto/entrega.dto';
 import { CancelarRequisicaoDto } from './dto/cancelamento.dto';
 import { ReceberDto } from './dto/recebimento.dto';
+import { PedirPecaAdicionalDto } from './dto/peca-adicional.dto';
 
 @ApiTags('almoxarifado')
 @Controller('almoxarifado')
@@ -217,5 +218,36 @@ export class AlmoxarifadoController {
         divergencia: i.divergencia ?? null,
       })),
     });
+  }
+
+  @Post('os/:osId/pecas-adicionais')
+  // Quem pede é o mecânico, pela bancada — o grupo `mecanica`, não o do
+  // almoxarife. A rota sobrescreve o gate da classe, como a de reservar.
+  @ModuloComercial('suprimentos', 'mecanica')
+  // Duplo clique pedindo a mesma peça reservaria o saldo duas vezes e
+  // abriria duas solicitações de compra.
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Pede ao almoxarifado uma peça fora do kit, com a OS em andamento' })
+  async pedirPecaAdicional(
+    @Req() req: RequestComPainel,
+    @Param('osId') osId: string,
+    @Body() dto: PedirPecaAdicionalDto,
+  ) {
+    return this.servico.pedirPecaAdicional({
+      companyId: req.painel.companyId,
+      serviceOrderId: osId,
+      autorCompanyUserId: req.painel.companyUserId,
+      pecaId: dto.pecaId,
+      quantidade: dto.quantidade,
+      impeditivo: dto.impeditivo,
+      motivo: dto.motivo,
+    });
+  }
+
+  @Get('os/:osId/pecas-adicionais')
+  @ModuloComercial('suprimentos', 'mecanica')
+  @ApiOperation({ summary: 'As peças adicionais pedidas para a OS, com o estado de cada uma' })
+  async pecasAdicionais(@Req() req: RequestComPainel, @Param('osId') osId: string) {
+    return this.servico.listarPecasAdicionais(req.painel.companyId, osId);
   }
 }
