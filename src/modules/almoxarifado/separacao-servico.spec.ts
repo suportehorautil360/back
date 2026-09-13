@@ -26,7 +26,7 @@ function erroDeContencao(): Prisma.PrismaClientKnownRequestError {
  */
 function montar(
   itensIniciais: Array<Record<string, unknown>>,
-  opts: { semSaldo?: boolean; comNotificacaoDeKit?: boolean } = {},
+  opts: { semSaldo?: boolean; comNotificacaoDeKit?: boolean; statusFresco?: string } = {},
 ) {
   const chamadas: string[] = [];
   const itensDb = new Map(itensIniciais.map((i) => [i.id as string, { ...i }]));
@@ -34,10 +34,18 @@ function montar(
   // guard `where: { status: { not: 'separada' } }` (achado Important I3 da
   // rodada 2) ter algo real para checar entre chamadas sucessivas dentro do
   // MESMO teste (ver "dois POSTs sequenciais" abaixo).
-  let statusDaRequisicao = 'pendente';
+  // Fundação da F4: é também o status RELIDO dentro da transação, depois da
+  // trava da requisição. `opts.statusFresco` simula outra operação que
+  // commitou depois do retrato de fora (`findFirst`, sempre `pendente`).
+  let statusDaRequisicao = opts.statusFresco ?? 'pendente';
 
   const tx = {
-    $queryRaw: jest.fn(async () => {
+    $queryRaw: jest.fn(async (query: { text: string }) => {
+      // Fundação da F4: a primeira trava é a da REQUISIÇÃO — rótulo próprio.
+      if (query.text.includes('requisicoes_material')) {
+        chamadas.push('LOCK requisicao');
+        return [{ id: REQ }];
+      }
       chamadas.push('LOCK');
       if (opts.semSaldo) return [];
       return [{ saldo_separado: '0' }];
@@ -61,6 +69,8 @@ function montar(
         // asserção de negócio.
         serviceOrder: { protocolo: 'OS-2026-047' },
       }),
+      // Fundação da F4: o status relido com a requisição travada.
+      findUniqueOrThrow: jest.fn(async () => ({ status: statusDaRequisicao })),
       // Achado Important I3 da rodada 2: `executarSeparacao` passou de
       // `.update` incondicional para `.updateMany` condicionado a
       // `status: { not: 'separada' }` SÓ quando o status calculado é
@@ -178,7 +188,8 @@ describe('separarItens', () => {
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
       itens: [{ itemId: 'it-1', quantidade: 4 }],
     });
-    expect(chamadas[0]).toBe('LOCK');
+    // A requisição primeiro (fundação da F4), depois a linha de saldo.
+    expect(chamadas.slice(0, 2)).toEqual(['LOCK requisicao', 'LOCK']);
     expect(chamadas).toContain('UPDATE saldo');
   });
 
@@ -316,7 +327,10 @@ describe('separarItens', () => {
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
       itens: [{ itemId: 'it-1', quantidade: 4 }],
     });
-    const consultaLock = tx.$queryRaw.mock.calls[0][0] as { text: string };
+    // A trava de SALDO — a primeira chamada é a da requisição (fundação da F4).
+    const consultaLock = (tx.$queryRaw.mock.calls as unknown as [{ text: string }][])
+      .map((c) => c[0])
+      .find((q) => q.text.includes('peca_saldos'))!;
     expect(consultaLock.text).toMatch(/FOR UPDATE/i);
     expect(consultaLock.text).toContain('saldo_separado');
 
@@ -404,7 +418,9 @@ describe('separarItens', () => {
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
       itens: [{ itemId: 'it-1', quantidade: 4 }],
     });
-    expect(tentativas).toBe(2);
+    // 1 (a trava da requisição falha na primeira tentativa) + 2 (requisição e
+    // saldo, na segunda).
+    expect(tentativas).toBe(3);
     expect(prisma.$transaction).toHaveBeenCalledTimes(2);
     expect(r.statusRequisicao).toBe('separada');
   });
@@ -493,5 +509,54 @@ describe('separarItens', () => {
     expect(r1.statusRequisicao).toBe('separada');
     expect(r2.statusRequisicao).toBe('separada'); // resposta não muda de forma nem de conteúdo
     expect(prisma.notificacao.createMany).toHaveBeenCalledTimes(1);
+  });
+
+  // --- Fundação da F4 e achados da revisão final da F3 ---------------------
+
+  it('fundação F4: revalida a conferência contra a reserva RELIDA com a requisição travada', async () => {
+    // Retrato de fora: reserva 4 (passa na validação de fora). Banco: a
+    // reserva agora é 2. Conferir 4 contra o número velho gravaria separado
+    // acima da reserva real.
+    const { servico, tx, itensDb } = montar([item()]);
+    itensDb.set('it-1', { ...item(), quantidadeReservada: 2 });
+    await expect(servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4 }],
+    })).rejects.toThrow(/2 reservado/);
+    expect(tx.$executeRaw).not.toHaveBeenCalled();
+  });
+
+  it('fundação F4 (m1): o status do item decide pela reserva FRESCA, não pela do retrato', async () => {
+    // Retrato: reserva 4. Banco: reserva 2. Conferir 2 é o item INTEIRO pela
+    // reserva fresca (`separada`); pela do retrato seria meio item (`reservada`).
+    const { servico, itensDb } = montar([item()]);
+    itensDb.set('it-1', { ...item(), quantidadeReservada: 2 });
+    await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 2 }],
+    });
+    expect(itensDb.get('it-1')?.status).toBe('separada');
+  });
+
+  it('fundação F4: requisição que outra operação entregou depois do retrato não aceita conferência', async () => {
+    const { servico, tx, chamadas } = montar([item()], { statusFresco: 'entregue' });
+    await expect(servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4 }],
+    })).rejects.toBeInstanceOf(ConflictException);
+    expect(chamadas).toEqual(['LOCK requisicao']);
+    expect(tx.requisicaoMaterial.update).not.toHaveBeenCalled();
+    expect(tx.requisicaoMaterial.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('I4 (revisão final da F3): a conferência grava na OS o mesmo statusMateriais que devolve', async () => {
+    const { servico, tx } = montar([item()]);
+    const r = await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4 }],
+    });
+    const chamada = tx.serviceOrder.updateMany.mock.calls.at(-1) as unknown as [{ data: { statusMateriais: string } }];
+    expect(chamada[0].data.statusMateriais).toBe('materiais_separados');
+    expect(chamada[0].data.statusMateriais).toBe(r.statusMateriais);
   });
 });

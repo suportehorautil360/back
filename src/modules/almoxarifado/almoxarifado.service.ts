@@ -24,6 +24,14 @@ import {
 } from './regras/plano-pecas';
 import { formatNumeroRequisicao, parseNumeroRequisicaoSeq } from './helpers/numero-requisicao.helper';
 import {
+  MAX_TENTATIVAS_CONCORRENCIA,
+  colisaoDeRequisicaoJaAberta,
+  comRetryDeContencao,
+  compararPorPeca,
+  erroDeContencaoTransitoria,
+  travarRequisicao,
+} from './transacao';
+import {
   enviarNotificacoes,
   montarNotificacaoKitCompleto,
   montarNotificacaoOsLiberada,
@@ -52,105 +60,6 @@ export interface ResultadoDaReserva {
   numero: string | null;
   statusMateriais: StatusMateriais;
   itens: ItemReservado[];
-}
-
-/**
- * Quantas vezes recalcular `numero`/reler o saldo antes de desistir.
- *
- * O brief original dizia "o unique de (company_id, numero) absorve a
- * concorrência" — mas um `@@unique` DETECTA colisão, não a absorve: sem
- * retry, a segunda de duas reservas abertas no mesmo segundo (o cenário que
- * esta tarefa existe para resolver) levava P2002 e derrubava a transação
- * inteira, sem requisição nenhuma. `nextProtocoloOsPg` (protocolo de OS)
- * tem o mesmo problema hoje e fica fora desta frente — aqui, resolvido.
- */
-const MAX_TENTATIVAS_CONCORRENCIA = 5;
-
-/**
- * Nome do índice único parcial que garante NO MÁXIMO uma requisição aberta
- * por OS (migration `20260912195000_requisicao_unica_por_os`). Não existe
- * em `schema.prisma` — Prisma não expressa índice parcial (`WHERE`), mesma
- * situação de `operator_salario_vigente_key` em `OperatorSalario`.
- */
-const INDICE_REQUISICAO_UNICA_POR_OS = 'requisicoes_material_uma_aberta_por_os';
-
-/**
- * O alvo de uma violação de unique, normalizado pra uma string só.
- *
- * `meta.target` varia de formato: às vezes um array de CAMPOS DO SCHEMA
- * (quando o Prisma reconhece a constraint por vir do `@@unique` declarado —
- * é o caso de `RequisicaoMaterial.@@unique([companyId, numero])`), às vezes
- * o NOME CRU do índice/constraint (quando o Prisma não tem de onde tirar os
- * campos — é o caso do índice único parcial acima, que só existe em SQL,
- * nunca em `schema.prisma`). Não achei confirmação de qual das duas formas
- * o Prisma 7 com `@prisma/adapter-pg` usa para um índice fora do schema
- * neste ambiente (sem Postgres acessível aos testes para reproduzir de
- * verdade) — por isso a função aceita as duas, em vez de supor uma.
- */
-function alvoDaViolacao(erro: Prisma.PrismaClientKnownRequestError): string {
-  const target = (erro.meta as { target?: unknown } | undefined)?.target;
-  if (Array.isArray(target)) return target.join(',');
-  if (typeof target === 'string') return target;
-  return '';
-}
-
-/**
- * Achado Important R1 (residual da revisão): a colisão no índice
- * `requisicoes_material_uma_aberta_por_os` NÃO é contenção — é a mesma regra
- * de negócio do achado I3 (uma OS não pode ter duas requisições abertas),
- * só que pega no banco em vez de na checagem de aplicação (que é TOCTOU sob
- * READ COMMITTED: duas transações em voo ao mesmo tempo leem "não existe" as
- * duas e as duas tentam inserir — só o INSERT que perde a corrida encontra o
- * índice). Tentar de novo não resolveria nada (a OS SEMPRE vai ter a
- * requisição da outra transação), e gastaria `MAX_TENTATIVAS_CONCORRENCIA`
- * tentativas travando `peca_saldos` à toa antes de desistir com uma
- * mensagem de "contenção" que estaria mentindo sobre o que aconteceu.
- */
-function colisaoDeRequisicaoJaAberta(erro: unknown): boolean {
-  if (!(erro instanceof Prisma.PrismaClientKnownRequestError) || erro.code !== 'P2002') {
-    return false;
-  }
-  const alvo = alvoDaViolacao(erro);
-  return (
-    alvo.includes(INDICE_REQUISICAO_UNICA_POR_OS) ||
-    alvo.includes('serviceOrderId') ||
-    alvo.includes('service_order_id')
-  );
-}
-
-/**
- * Verdadeiro para os erros de CONTENÇÃO que vale a pena tentar de novo com a
- * transação inteira do zero:
- *
- * - `P2002` no índice de NÚMERO (`companyId, numero`) — duas transações
- *   calculando o mesmo MAX+1 ao mesmo tempo. Não confundir com o `P2002` do
- *   índice de requisição-única-por-OS (`colisaoDeRequisicaoJaAberta`, achado
- *   R1): aquele não é retentável, e por isso o chamador confere
- *   `colisaoDeRequisicaoJaAberta` ANTES desta função.
- * - `P2010` com `meta.code` `40P01` (deadlock) ou `40001` (falha de
- *   serialização) — os dois só existem em erro de `$queryRaw`/`$executeRaw`
- *   (as raw queries do `SELECT … FOR UPDATE`): é assim que o Prisma expõe o
- *   SQLSTATE cru do Postgres quando uma raw query falha. Achado Important
- *   I1: o laço de travas ordenado por `pecaId` (ver `executarReserva`) evita
- *   a maior parte dos deadlocks ENTRE duas chamadas deste método, mas não
- *   os elimina por completo (pooler de conexão, outra rota tocando a mesma
- *   linha), então o retry continua sendo a rede de segurança.
- * - `P2034`: "Transaction failed due to a write conflict or a deadlock" —
- *   achado Important R2, o equivalente do `40P01`/`40001` para operações
- *   NÃO-raw (`create`, `updateMany`, etc.) dentro de uma transação
- *   interativa. `40P01`/`40001` só chegam como `P2010`, e só em raw query;
- *   um deadlock no `requisicaoMaterial.create` ou no `serviceOrder.updateMany`
- *   chega como `P2034`, sem precisar olhar `meta` — o código já é inequívoco.
- */
-function erroDeContencaoTransitoria(erro: unknown): boolean {
-  if (!(erro instanceof Prisma.PrismaClientKnownRequestError)) return false;
-  if (erro.code === 'P2002') return !colisaoDeRequisicaoJaAberta(erro) && alvoDaViolacao(erro).includes('numero');
-  if (erro.code === 'P2010') {
-    const sqlstate = (erro.meta as { code?: string } | undefined)?.code;
-    return sqlstate === '40P01' || sqlstate === '40001';
-  }
-  if (erro.code === 'P2034') return true;
-  return false;
 }
 
 /** A requisição com seus itens — o que `separarItens` lê antes de decidir. */
@@ -374,11 +283,7 @@ export class AlmoxarifadoService {
     // `indiceOriginal`.
     const ordemDeTrava = itens
       .map((item, indiceOriginal) => ({ item, indiceOriginal }))
-      .sort((a, b) => {
-        const pa = a.item.pecaId ?? '';
-        const pb = b.item.pecaId ?? '';
-        return pa < pb ? -1 : pa > pb ? 1 : 0;
-      });
+      .sort((a, b) => compararPorPeca(a.item.pecaId, b.item.pecaId));
 
     const resultado: ItemReservado[] = new Array(itens.length);
 
@@ -874,15 +779,53 @@ export class AlmoxarifadoService {
     // (`separarItens`) grava depois do commit, fora do laço de retry.
     notificacoes: NotificacaoPronta[];
   }> {
+    // Fundação da F4: trava a REQUISIÇÃO antes de qualquer outra coisa e
+    // relê o status dela. Sem isto, uma entrega que fechasse a requisição
+    // enquanto esta conferência esperava a trava de `peca_saldos` era
+    // reescrita para `em_separacao` pelo `update` incondicional lá embaixo — a
+    // corrida que ficou aberta como tarefa própria na F3.
+    await travarRequisicao(tx, req.id, input.companyId);
+    const reqFresca = await tx.requisicaoMaterial.findUniqueOrThrow({
+      where: { id: req.id },
+      select: { status: true },
+    });
+    if (reqFresca.status === 'entregue' || reqFresca.status === 'cancelada') {
+      throw new ConflictException(`Requisição ${reqFresca.status} não aceita conferência.`);
+    }
+
+    // A validação de `separarItens` usou o retrato de fora da transação.
+    // Refeita aqui contra os itens relidos com a requisição travada: a reserva
+    // de um item pode ter mudado entre as duas leituras (na F4 o recebimento
+    // de compra SOBE a reserva de um item faltante), e conferir contra o
+    // número velho gravaria `quantidadeSeparada` acima da reserva real — o
+    // CHECK `req_item_cascata_quantidades` derrubaria, mas com 500 em vez de
+    // mensagem.
+    const itensDaRequisicao = await tx.requisicaoMaterialItem.findMany({
+      where: { requisicaoId: req.id },
+    });
+    const frescoPorId = new Map(itensDaRequisicao.map((i) => [i.id, i]));
+    for (const p of planejado) {
+      const fresco = frescoPorId.get(p.item.id);
+      if (!fresco) {
+        throw new BadRequestException(`Item ${p.item.id} não é desta requisição.`);
+      }
+      const v = validarConferencia(
+        {
+          quantidadeReservada: Number(fresco.quantidadeReservada),
+          status: fresco.status,
+          impeditivo: fresco.impeditivo,
+          divergencia: fresco.divergencia,
+        },
+        { quantidade: p.quantidade },
+      );
+      if (!v.ok) throw new BadRequestException(v.erro);
+    }
+
     // Achado Important I1 da reserva, válido aqui pela mesma razão: trava
     // `peca_saldos` SEMPRE na mesma ordem — por `pecaId` — entre chamadas
     // concorrentes. Duas conferências simultâneas travando as mesmas linhas
     // em ordens opostas dão deadlock (`40P01`), que não é `P2002`.
-    const ordemDeTrava = [...planejado].sort((a, b) => {
-      const pa = a.item.pecaId ?? '';
-      const pb = b.item.pecaId ?? '';
-      return pa < pb ? -1 : pa > pb ? 1 : 0;
-    });
+    const ordemDeTrava = [...planejado].sort((a, b) => compararPorPeca(a.item.pecaId, b.item.pecaId));
 
     for (const p of ordemDeTrava) {
       // Item `nao_vinculado` não tem `pecaId` — nenhuma linha de saldo para
@@ -957,11 +900,14 @@ export class AlmoxarifadoService {
         data: {
           quantidadeSeparada: p.quantidade,
           divergencia,
+          // Achado minor m1 da revisão final da F3: a reserva e o impeditivo
+          // que decidem o status do item são os FRESCOS (`itemFresco`, relido
+          // depois das travas) — nunca os do retrato de fora da transação.
           status: statusDoItemAposSeparacao(
             {
-              quantidadeReservada: Number(p.item.quantidadeReservada),
+              quantidadeReservada: Number(itemFresco.quantidadeReservada),
               status: itemFresco.status,
-              impeditivo: p.item.impeditivo,
+              impeditivo: itemFresco.impeditivo,
               divergencia,
             },
             { quantidade: p.quantidade },
@@ -1028,8 +974,10 @@ export class AlmoxarifadoService {
       }
     } else {
       // Inclui a transição REVERSA (separada → em_separacao) — incondicional
-      // de propósito. Não há corrida a fechar aqui: só a transição PARA
-      // `separada` autoriza notificação, então só ela precisa de guarda.
+      // de propósito. A corrida com uma entrega ou um cancelamento fechando a
+      // requisição ao mesmo tempo está fechada no começo desta transação
+      // (trava da requisição + status relido; terminal é recusado). A guarda
+      // do outro ramo existe só para a notificação sair uma vez.
       await tx.requisicaoMaterial.update({
         where: { id: req.id },
         data: {
@@ -1078,12 +1026,11 @@ export class AlmoxarifadoService {
    * trabalho de prateleira, liberar é a pessoa assumindo que o kit confere. O
    * spec funcional separa os dois passos (7 e 8) pela mesma razão.
    *
-   * Não mexe em `peca_saldos` nem no razão do estoque — por isso, ao
-   * contrário de `entregarRequisicao`, não há laço de retry por contenção
-   * aqui: sem `SELECT … FOR UPDATE`, não existe o `40001`/`40P01` que só
-   * aparece em raw query (ver `erroDeContencaoTransitoria`). As únicas
-   * escritas são no próprio registro da requisição e no `statusMateriais` da
-   * OS — sem disputa por linha de saldo.
+   * Não mexe em `peca_saldos` nem no razão do estoque. Trava a requisição
+   * (fundação da F4) e por isso usa o mesmo laço de retry por contenção dos
+   * outros métodos. Achado minor m4 da revisão final da F3: o comentário
+   * antigo dizia que, sem `FOR UPDATE`, não havia contenção a tratar — mas
+   * `P2034` também chega em escrita não-raw.
    */
   async liberarRequisicao(input: {
     companyId: string;
@@ -1116,72 +1063,90 @@ export class AlmoxarifadoService {
       );
     }
 
-    const resultado = await this.prisma.$transaction(async (tx) => {
-      // Achado Important I3 da rodada 2: guarda `liberadaEm: null` — sem
-      // ela, uma segunda chamada (o guard de fora só olha `status ===
-      // 'separada'`, que a liberação NÃO muda) re-estamparia `liberadaEm`/
-      // `liberadaPorCompanyUserId` e avisaria mecânico e programador de
-      // novo, para o MESMO evento. `count === 1` só é verdade quando ESTA
-      // chamada de fato liberou a requisição pela primeira vez.
-      const fechamento = await tx.requisicaoMaterial.updateMany({
-        where: { id: req.id, liberadaEm: null },
-        data: { liberadaEm: new Date(), liberadaPorCompanyUserId: input.autorCompanyUserId },
-      });
-
-      // Relê os itens AQUI, dentro da transação — nunca o retrato de fora
-      // dela (`req.itens`). É a QUINTA vez que "leu fora da transação,
-      // decidiu com o que leu" apareceria nesta frente (entrada de estoque,
-      // conferência do kit, duas vezes na entrega, e esta): uma conferência
-      // concorrente (`separarItens` aceita chamadas mesmo com
-      // `status: 'separada'`) pode mudar o status de um item entre a
-      // leitura de fora e o commit desta transação. O que sai daqui não é
-      // saldo, mas é o que a bancada do mecânico mostra — `statusMateriais`
-      // errado manda buscar um kit que não está pronto. Roda mesmo numa
-      // chamada repetida: recalcular o `statusMateriais` da OS é idempotente
-      // e barato, só a NOTIFICAÇÃO precisa do guard acima.
-      const itensFrescos = await tx.requisicaoMaterialItem.findMany({
-        where: { requisicaoId: req.id },
-      });
-
-      // `statusAposEntrega` responde à MESMA pergunta aqui que na entrega:
-      // sobrou pendência de material? Os itens estão `separada`, não
-      // `entregue` — mas a função dá a resposta certa do mesmo jeito, porque
-      // só distingue `nao_vinculado`/`faltante` do resto. É deliberado (ver o
-      // comentário dela em `regras/status-materiais.ts`), não um empréstimo
-      // por acaso.
-      const paraRegra = itensFrescos.map((i) => ({ impeditivo: i.impeditivo, status: i.status }));
-      const statusMateriais = statusAposEntrega(paraRegra);
-
-      await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
-
-      // OS liberada PELA PRIMEIRA VEZ nesta chamada (`fechamento.count ===
-      // 1`) E o status CALCULADO acima é `liberada_para_execucao` — achado
-      // Important I1 da revisão final. Antes, a segunda condição não
-      // existia: bastava `fechamento.count === 1` para montar "OS liberada,
-      // retire o kit" mesmo quando `statusMateriais` saía `aguardando_compra`
-      // (item não impeditivo faltante, requisição fechada só pelos
-      // impeditivos). O mecânico recebia o aviso de retirada na mesma hora
-      // em que a própria bancada mostrava a OS em vermelho, "Aguardando
-      // peça", para o mesmo protocolo. MONTA as linhas de notificação
-      // (resolve mecânico e programador, ainda dentro da transação — dados
-      // já carregados acima em `req.serviceOrder.*`/`req.deposito.nome`).
-      // Não GRAVA nada aqui — quem chama grava depois do commit, com
-      // `enviarNotificacoes`.
-      let notificacoes: NotificacaoPronta[] = [];
-      if (fechamento.count === 1 && statusMateriais === 'liberada_para_execucao') {
-        notificacoes = await montarNotificacaoOsLiberada(tx, {
-          companyId: input.companyId,
-          serviceOrderId: req.serviceOrderId,
-          protocolo: req.serviceOrder.protocolo,
-          equipmentNome: req.serviceOrder.equipmentNome,
-          equipmentId: req.serviceOrder.equipmentId,
-          responsavelOperatorId: req.serviceOrder.responsavelOperatorId,
-          local: req.deposito.nome,
+    const resultado = await comRetryDeContencao('a liberação', () =>
+      this.prisma.$transaction(async (tx) => {
+        // Fundação da F4: trava a requisição e relê o status antes de decidir
+        // qualquer coisa. O portão de fora (`req.status !== 'separada'`) olhou
+        // um retrato — uma reconferência que rebaixou o kit pode ter commitado
+        // depois dele, e liberar por aquele retrato mandaria o mecânico buscar
+        // um kit incompleto.
+        await travarRequisicao(tx, req.id, input.companyId);
+        const reqFresca = await tx.requisicaoMaterial.findUniqueOrThrow({
+          where: { id: req.id },
+          select: { status: true },
         });
-      }
+        if (reqFresca.status !== 'separada') {
+          throw new ConflictException(
+            `Só requisição com kit conferido é liberada — esta está "${reqFresca.status}".`,
+          );
+        }
 
-      return { statusMateriais, notificacoes };
-    });
+        // Achado Important I3 da rodada 2: guarda `liberadaEm: null` — sem
+        // ela, uma segunda chamada (o guard de fora só olha `status ===
+        // 'separada'`, que a liberação NÃO muda) re-estamparia `liberadaEm`/
+        // `liberadaPorCompanyUserId` e avisaria mecânico e programador de
+        // novo, para o MESMO evento. `count === 1` só é verdade quando ESTA
+        // chamada de fato liberou a requisição pela primeira vez.
+        const fechamento = await tx.requisicaoMaterial.updateMany({
+          where: { id: req.id, liberadaEm: null },
+          data: { liberadaEm: new Date(), liberadaPorCompanyUserId: input.autorCompanyUserId },
+        });
+
+        // Relê os itens AQUI, dentro da transação — nunca o retrato de fora
+        // dela (`req.itens`). É a QUINTA vez que "leu fora da transação,
+        // decidiu com o que leu" apareceria nesta frente (entrada de estoque,
+        // conferência do kit, duas vezes na entrega, e esta): uma conferência
+        // concorrente (`separarItens` aceita chamadas mesmo com
+        // `status: 'separada'`) pode mudar o status de um item entre a
+        // leitura de fora e o commit desta transação. O que sai daqui não é
+        // saldo, mas é o que a bancada do mecânico mostra — `statusMateriais`
+        // errado manda buscar um kit que não está pronto. Roda mesmo numa
+        // chamada repetida: recalcular o `statusMateriais` da OS é idempotente
+        // e barato, só a NOTIFICAÇÃO precisa do guard acima.
+        const itensFrescos = await tx.requisicaoMaterialItem.findMany({
+          where: { requisicaoId: req.id },
+        });
+
+        // `statusAposEntrega` responde à MESMA pergunta aqui que na entrega:
+        // sobrou pendência de material? Os itens estão `separada`, não
+        // `entregue` — mas a função dá a resposta certa do mesmo jeito, porque
+        // só distingue `nao_vinculado`/`faltante` do resto. É deliberado (ver o
+        // comentário dela em `regras/status-materiais.ts`), não um empréstimo
+        // por acaso.
+        const paraRegra = itensFrescos.map((i) => ({ impeditivo: i.impeditivo, status: i.status }));
+        const statusMateriais = statusAposEntrega(paraRegra);
+
+        await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
+
+        // OS liberada PELA PRIMEIRA VEZ nesta chamada (`fechamento.count ===
+        // 1`) E o status CALCULADO acima é `liberada_para_execucao` — achado
+        // Important I1 da revisão final. Antes, a segunda condição não
+        // existia: bastava `fechamento.count === 1` para montar "OS liberada,
+        // retire o kit" mesmo quando `statusMateriais` saía `aguardando_compra`
+        // (item não impeditivo faltante, requisição fechada só pelos
+        // impeditivos). O mecânico recebia o aviso de retirada na mesma hora
+        // em que a própria bancada mostrava a OS em vermelho, "Aguardando
+        // peça", para o mesmo protocolo. MONTA as linhas de notificação
+        // (resolve mecânico e programador, ainda dentro da transação — dados
+        // já carregados acima em `req.serviceOrder.*`/`req.deposito.nome`).
+        // Não GRAVA nada aqui — quem chama grava depois do commit, com
+        // `enviarNotificacoes`.
+        let notificacoes: NotificacaoPronta[] = [];
+        if (fechamento.count === 1 && statusMateriais === 'liberada_para_execucao') {
+          notificacoes = await montarNotificacaoOsLiberada(tx, {
+            companyId: input.companyId,
+            serviceOrderId: req.serviceOrderId,
+            protocolo: req.serviceOrder.protocolo,
+            equipmentNome: req.serviceOrder.equipmentNome,
+            equipmentId: req.serviceOrder.equipmentId,
+            responsavelOperatorId: req.serviceOrder.responsavelOperatorId,
+            local: req.deposito.nome,
+          });
+        }
+
+        return { statusMateriais, notificacoes };
+      }),
+    );
 
     // Achados I3/I4 da rodada 2: a notificação sai DEPOIS do commit, com o
     // client normal — nunca com `tx`. `enviarNotificacoes` nunca lança.
@@ -1217,9 +1182,12 @@ export class AlmoxarifadoService {
       );
     }
 
+    // Retrato de fora da transação: serve só para devolver 404/409 cedo, sem
+    // abrir transação à toa. Quem DECIDE é a releitura com a requisição
+    // travada, dentro de `executarEntrega`.
     const req = await this.prisma.requisicaoMaterial.findFirst({
       where: { id: input.requisicaoId, companyId: input.companyId },
-      include: { itens: true },
+      select: { id: true, status: true, serviceOrderId: true, depositoId: true },
     });
     if (!req) throw new NotFoundException('Requisição não encontrada para esta empresa.');
     if (req.status === 'entregue') {
@@ -1231,39 +1199,25 @@ export class AlmoxarifadoService {
       );
     }
 
-    // Achado Critical C2 da revisão: o CONJUNTO de candidatos é todo item
-    // com peça vinculada que teve ALGUMA reserva — não só os que ficaram
-    // `status: 'separada'`. Um item NÃO impeditivo conferido em PARTE (2 de
-    // 4) fica em `reservada` de propósito (`statusDoItemAposSeparacao`: meio
-    // item não libera meia OS), mas as 2 unidades JÁ foram fisicamente
-    // separadas — estão na caixa. Filtrar por `status === 'separada'`
-    // deixava essas 2 de fora da entrega para sempre: a requisição fechava
-    // como `entregue` (terminal — `separarItens`/`entregarRequisicao`
-    // recusam, e o cancelamento da Task 7 não alcança requisição entregue) e
-    // as 2 unidades ficavam presas em `saldo_reservado`/`saldo_separado`
-    // sem tela nenhuma mostrando por quê.
-    //
-    // `quantidadeReservada` nunca AUMENTA depois da criação do item: só
-    // `reservarParaOs` a grava para cima, e ela sempre CRIA o item (nunca
-    // soma em item existente). A entrega ZERA quando nada foi separado (o
-    // ramo `separado === 0` de `executarEntrega`) — no ramo `separado > 0`
-    // ela grava só `quantidadeEntregue`/`status`, sem zerar; o cancelamento
-    // ZERA sempre. Por isso é seguro usar o retrato de fora para decidir
-    // QUAIS linhas de `peca_saldos` travar: um item pode SAIR desta lista
-    // entre o retrato e a trava (reserva zerada por chamada concorrente —
-    // barrada pelos guards frescos logo abaixo), nunca ENTRAR nela depois.
-    // O quanto entregar ou devolver de cada uma continua sendo lido FRESCO
-    // dentro da transação (`executarEntrega`), nunca por um valor
-    // pré-calculado aqui fora.
-    const candidatos = req.itens.filter((i) => i.pecaId && Number(i.quantidadeReservada) > 0);
+    // Achado Important I3 da revisão final da F3: quem retira o kit tem de
+    // ser funcionário DESTA empresa. A FK `recebedor_operator_id` é global e o
+    // seletor da tela era o único controle — uma chamada forjada registrava
+    // operador de outra empresa como quem levou a peça, num ato que não se
+    // desfaz. Mesmo molde de `validarDeposito`.
+    const recebedor = await this.prisma.operator.findFirst({
+      where: { id: input.recebedorOperatorId, companyId: input.companyId },
+      select: { id: true },
+    });
+    if (!recebedor) {
+      throw new NotFoundException('Funcionário que retira o kit não encontrado nesta empresa.');
+    }
 
     // Mesma rede de contenção da reserva e da separação
-    // (`erroDeContencaoTransitoria` já existe no arquivo): sem isto, um
-    // `40001`/`P2034` na trava de `peca_saldos` chegaria ao cliente como 500
-    // cru.
+    // (`erroDeContencaoTransitoria`): sem isto, um `40001`/`P2034` na trava
+    // de `peca_saldos` chegaria ao cliente como 500 cru.
     for (let tentativa = 1; tentativa <= MAX_TENTATIVAS_CONCORRENCIA; tentativa++) {
       try {
-        return await this.prisma.$transaction((tx) => this.executarEntrega(tx, input, req, candidatos));
+        return await this.prisma.$transaction((tx) => this.executarEntrega(tx, input, req));
       } catch (erro) {
         if (!erroDeContencaoTransitoria(erro) || tentativa === MAX_TENTATIVAS_CONCORRENCIA) {
           if (erroDeContencaoTransitoria(erro)) {
@@ -1296,40 +1250,70 @@ export class AlmoxarifadoService {
       confirmacaoTipo: string;
       assinatura?: string | null;
     },
-    req: RequisicaoComItens,
-    candidatos: RequisicaoComItens['itens'],
+    req: Pick<RequisicaoComItens, 'id' | 'serviceOrderId' | 'depositoId'>,
   ): Promise<{ statusMateriais: StatusMateriais }> {
-    // Achado Important I2 da revisão final: entregar sem nunca ter passado
-    // por `liberarRequisicao` pulava o ato explícito do passo 8 do §6 (e a
-    // notificação de §9) — `liberadaEm` ficava NULL para sempre e a OS
-    // ainda assim chegava a `liberada_para_execucao`. A checagem lê
-    // `liberadaEm` FRESCO, DENTRO da transação — nunca `req.liberadaEm` (o
-    // retrato de fora dela, que nem chega a existir no objeto que
-    // `entregarRequisicao` monta antes de abrir a transação): é a NONA
-    // ocorrência da mesma classe de defeito nesta frente (ler fora,
-    // decidir com o que leu), e aqui ela importa de verdade — uma
-    // liberação que acabou de commitar enquanto esta chamada esperava
-    // pela transação não pode ser tratada como "não liberada" só porque um
-    // retrato antigo diria isso.
+    // Fundação da F4: trava a REQUISIÇÃO antes de tudo e relê status e
+    // liberação com a trava na mão. O portão de fora olhou um retrato: uma
+    // reconferência que rebaixou o kit, ou um cancelamento, pode ter commitado
+    // depois dele.
+    await travarRequisicao(tx, req.id, input.companyId);
     const reqFresca = await tx.requisicaoMaterial.findUniqueOrThrow({
       where: { id: req.id },
-      select: { liberadaEm: true },
+      select: { status: true, liberadaEm: true },
     });
+    if (reqFresca.status === 'entregue') {
+      throw new ConflictException('Esta requisição já foi entregue.');
+    }
+    if (reqFresca.status !== 'separada') {
+      throw new ConflictException(
+        `Só requisição com kit conferido é entregue — esta está "${reqFresca.status}".`,
+      );
+    }
+    // Achado Important I2 da revisão final: entregar sem nunca ter passado
+    // por `liberarRequisicao` pulava o ato explícito do passo 8 do §6 (e a
+    // notificação de §9) — `liberadaEm` ficava NULL para sempre e a OS ainda
+    // assim chegava a `liberada_para_execucao`.
     if (!reqFresca.liberadaEm) {
       throw new ConflictException(
         'Esta requisição ainda não foi liberada — libere o kit antes de confirmar a entrega.',
       );
     }
 
-    // Mesma ordem ascendente por `pecaId` de `executarReserva` e
-    // `executarSeparacao`: travar `peca_saldos` sempre na mesma direção
-    // entre chamadas concorrentes evita deadlock (`40P01`) em vez de só
-    // detectá-lo depois.
-    const ordemDeTrava = [...candidatos].sort((a, b) => {
-      const pa = a.pecaId ?? '';
-      const pb = b.pecaId ?? '';
-      return pa < pb ? -1 : pa > pb ? 1 : 0;
+    // O CONJUNTO do que entregar sai da releitura com a requisição travada —
+    // não mais de um retrato de fora da transação. Até a F3 o retrato era
+    // tolerável porque a reserva de um item "só descia" depois de criada; o
+    // recebimento de compra (F4) SOBE a reserva de um item faltante, e um item
+    // que entrasse na lista entre o retrato e a trava ficaria de fora da
+    // entrega, com a reserva presa numa requisição fechada.
+    //
+    // Entra todo item com peça vinculada e alguma reserva viva, MENOS:
+    // - `entregue`/`cancelada` — já fechados;
+    // - `faltante` — fundação da F4: requisição com falta NÃO fecha (achado
+    //   I7, decisão do produto), então a reserva parcial desse item (ex.: 3
+    //   de 5) continua servindo a esta OS até a compra cobrir o resto.
+    //   Devolvê-la aqui fazia a falta saltar de 2 para 5 depois da entrega, e
+    //   a solicitação de compra aberta por 2 ficava curta.
+    //
+    // Item `reservada` não conferido CONTINUA entrando (achado Critical C2):
+    // só pode ser não impeditivo — impeditivo não conferido não deixa o kit
+    // fechar, e sem kit fechado a requisição não chega a `separada` — e a
+    // reserva dele é devolvida abaixo.
+    const itensDaRequisicao = await tx.requisicaoMaterialItem.findMany({
+      where: { requisicaoId: req.id },
     });
+    const candidatos = itensDaRequisicao.filter(
+      (i) =>
+        i.pecaId &&
+        Number(i.quantidadeReservada) > 0 &&
+        i.status !== 'faltante' &&
+        i.status !== 'entregue' &&
+        i.status !== 'cancelada',
+    );
+
+    // Mesma ordem única de trava de `peca_saldos` dos outros métodos
+    // (`compararPorPeca`): travar sempre na mesma direção entre chamadas
+    // concorrentes evita deadlock (`40P01`) em vez de só detectá-lo depois.
+    const ordemDeTrava = [...candidatos].sort((a, b) => compararPorPeca(a.pecaId, b.pecaId));
 
     // Achado m3 da revisão: continua a numeração que a OS já tem — mesmo
     // critério de `itensParaInsumos`/`converterPecasEmInsumos` (orçamento
@@ -1471,34 +1455,14 @@ export class AlmoxarifadoService {
           data: { status: 'cancelada', quantidadeReservada: 0 },
         });
       } else {
-        // Único outro caso que chega aqui com `separado === 0`:
-        // `itemFresco.status === 'faltante'` — um `faltante` nunca é
-        // conferível (`CONFERIVEL` em `regras/separacao.ts` só aceita
-        // `reservada`/`separada`), então sua `quantidadeSeparada` nunca sai
-        // de 0.
-        //
-        // Achado Critical N1 da 3ª revisão: `faltante` NESTE MÓDULO
-        // significa "falta ALGUMA coisa", não "não tem nada" —
-        // `executarReserva` estampa `faltante` COM `quantidadeReservada > 0`
-        // sempre que sobra menos do que o solicitado (ex.: 3 de 5
-        // disponíveis), sem concorrência nenhuma. Gravar `cancelada` aqui
-        // apagava esse `faltante` da releitura fresca que decide
-        // `statusMateriais` (`FORA` exclui `cancelada` de `vivos`) — a OS
-        // saía `liberada_para_execucao` com peça faltando, o inverso do que
-        // a releitura fresca (achado C1) foi corrigida para impedir. O
-        // status TEM de continuar `faltante`: é o que a Task 7 (compra e
-        // recebimento) lê para saber o que ainda falta comprar.
-        //
-        // `quantidadeReservada` zera pela mesma razão do outro ramo — a
-        // reserva já voltou ao saldo. A necessidade em aberto que a compra
-        // cobre é `quantidade_solicitada - quantidade_entregue`, não
-        // `quantidade_reservada`; zerada, um faltante parcial e um faltante
-        // total passam a ter a mesma forma no banco — a mesma forma que
-        // `cancelarRequisicao` já grava para item cancelado.
-        await tx.requisicaoMaterialItem.update({
-          where: { id: item.id },
-          data: { quantidadeReservada: 0 },
-        });
+        // Inalcançável: `faltante` não entra em `candidatos` (ver acima), e
+        // `separada` com nada separado não existe (`statusDoItemAposSeparacao`
+        // só estampa `separada` com quantidade > 0). Com a requisição travada,
+        // o status relido não muda por baixo. Falhar alto em vez de adivinhar:
+        // o `UPDATE` de saldo acima já rodou, e o `throw` é o ROLLBACK dele.
+        throw new Error(
+          `Item ${item.id} em estado inesperado na entrega (${itemFresco.status}, nada separado).`,
+        );
       }
     }
 
@@ -1629,19 +1593,15 @@ export class AlmoxarifadoService {
     input: { companyId: string; requisicaoId: string; autorCompanyUserId: string },
     motivo: string,
   ): Promise<{ statusMateriais: StatusMateriais }> {
-    // Diferente de `executarReserva`/`executarSeparacao`/`executarEntrega`, a
-    // EXISTÊNCIA e o STATUS da requisição são conferidos AQUI DENTRO da
-    // transação, não antes dela — mas isto sozinho NÃO fecha a corrida com uma
-    // entrega concorrente: não há `isolationLevel` neste `$transaction` (nem
-    // em nenhum outro deste arquivo), então o Postgres roda em READ COMMITTED
-    // e este `findFirst` enxerga o estado no instante em que roda, ANTES de
-    // qualquer `FOR UPDATE` em `peca_saldos`. Quem de fato fecha a janela são
-    // as duas guardas PÓS-TRAVA abaixo: o `if (fresco.status === …) continue`
-    // por item (espelha `executarEntrega`) e o `updateMany` condicionado ao
-    // fechar a requisição — o `throw` deste último desfaz por ROLLBACK
-    // qualquer decremento de saldo que o laço já tenha feito antes de
-    // descobrir o conflito. O motivo, por não depender de estado nenhum do
-    // banco, já foi validado antes do laço de retry, em `cancelarRequisicao`.
+    // Fundação da F4: trava a requisição ANTES de ler o status dela. Sem a
+    // trava, este `findFirst` enxergava o estado de um instante qualquer (READ
+    // COMMITTED), e uma entrega concorrente podia fechar a requisição entre a
+    // leitura e o fim desta transação. Com a trava, entrega e cancelamento se
+    // enfileiram na mesma linha. As guardas pós-trava de saldo abaixo (o
+    // `continue` por item já fechado e o `updateMany` condicionado no
+    // fechamento) ficam como segunda rede. O motivo, por não depender de
+    // estado nenhum do banco, já foi validado antes do laço de retry.
+    await travarRequisicao(tx, input.requisicaoId, input.companyId);
     const req = await tx.requisicaoMaterial.findFirst({
       where: { id: input.requisicaoId, companyId: input.companyId },
       include: { itens: true },
@@ -1658,16 +1618,9 @@ export class AlmoxarifadoService {
       (i) => i.pecaId && (Number(i.quantidadeReservada) > 0 || Number(i.quantidadeSeparada) > 0),
     );
 
-    // Mesma ordem ascendente por `pecaId` de `executarReserva`,
-    // `executarSeparacao` e `executarEntrega`: travar `peca_saldos` sempre na
-    // mesma direção entre chamadas concorrentes evita deadlock em vez de só
-    // detectá-lo depois. Mesmo comparador dos três — não `localeCompare`, que
-    // diverge dele em UUID de case misto e depende do ICU do runtime.
-    const ordemDeTrava = [...aLiberar].sort((a, b) => {
-      const pa = a.pecaId ?? '';
-      const pb = b.pecaId ?? '';
-      return pa < pb ? -1 : pa > pb ? 1 : 0;
-    });
+    // Mesma ordem única de trava de `peca_saldos` dos outros métodos
+    // (`compararPorPeca`, em `transacao.ts`).
+    const ordemDeTrava = [...aLiberar].sort((a, b) => compararPorPeca(a.pecaId, b.pecaId));
 
     for (const item of ordemDeTrava) {
       const linhas = await tx.$queryRaw<{ saldo_reservado: string }[]>(Prisma.sql`

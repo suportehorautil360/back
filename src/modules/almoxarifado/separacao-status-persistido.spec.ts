@@ -4,6 +4,7 @@ import { AlmoxarifadoService } from './almoxarifado.service';
 const COMPANY = '11111111-1111-1111-1111-111111111111';
 const REQ = '33333333-3333-3333-3333-333333333333';
 const AUTOR = '44444444-4444-4444-4444-444444444444';
+const OUTRO_AUTOR = '77777777-7777-7777-7777-777777777777';
 
 /**
  * Achado Critical N1 da rodada 3: nenhum teste da suíte olhava o status
@@ -34,6 +35,8 @@ function montarBancoFake() {
     atendidaPorCompanyUserId: null as string | null,
     atendidaEm: null as Date | null,
   };
+  // I4 da revisão final da F3: o `statusMateriais` GRAVADO na OS.
+  const os = { statusMateriais: 'planejada' };
   const item = {
     id: 'it-1', pecaId: 'p-1', quantidadeReservada: 4, quantidadeSeparada: 0,
     status: 'reservada', impeditivo: true, divergencia: null as string | null,
@@ -80,6 +83,9 @@ function montarBancoFake() {
         Object.assign(requisicao, data);
         return { ...requisicao };
       }),
+      // Fundação da F4: o status relido com a requisição travada — mesma fonte
+      // de verdade de `findFirst`.
+      findUniqueOrThrow: jest.fn(async () => ({ ...requisicao })),
     },
     requisicaoMaterialItem: {
       findUniqueOrThrow: jest.fn(async () => ({ ...item })),
@@ -101,7 +107,12 @@ function montarBancoFake() {
     equipmentProgramador: { findMany: jest.fn(async () => []) },
     company: { findUnique: jest.fn(async () => ({ legacyId: 'leg-1' })) },
     notificacao: { createMany: jest.fn(async () => ({ count: 1 })) },
-    serviceOrder: { updateMany: jest.fn(async () => ({ count: 1 })) },
+    serviceOrder: {
+      updateMany: jest.fn(async ({ data }: { data: { statusMateriais: string } }) => {
+        os.statusMateriais = data.statusMateriais;
+        return { count: 1 };
+      }),
+    },
   };
 
   const prisma = {
@@ -110,7 +121,7 @@ function montarBancoFake() {
     notificacao: tx.notificacao,
   };
 
-  return { servico: new AlmoxarifadoService(prisma as never), requisicao, tx };
+  return { servico: new AlmoxarifadoService(prisma as never), requisicao, tx, os };
 }
 
 describe('separarItens — o status GRAVADO tem de bater com o RETORNADO (achado Critical N1)', () => {
@@ -163,5 +174,47 @@ describe('liberarRequisicao — o portão bloqueia um kit rebaixado (achado Crit
     await expect(servico.liberarRequisicao({
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
     })).rejects.toBeInstanceOf(ConflictException);
+  });
+});
+
+describe('separarItens — as escritas da requisição e da OS, pelo que foi GRAVADO (I4/I5 da revisão final da F3)', () => {
+  it('P2: reconferir um kit já fechado mantém o banco em separada e regrava quem mexeu por último', async () => {
+    const { servico, requisicao } = montarBancoFake();
+    await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4 }],
+    });
+    await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: OUTRO_AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4 }],
+    });
+    expect(requisicao.status).toBe('separada');
+    expect(requisicao.atendidaPorCompanyUserId).toBe(OUTRO_AUTOR);
+    expect(requisicao.atendidaEm).toBeInstanceOf(Date);
+  });
+
+  it('P3: conferência parcial grava no banco quem conferiu e quando', async () => {
+    const { servico, requisicao } = montarBancoFake();
+    await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 2 }],
+    });
+    expect(requisicao.status).toBe('em_separacao');
+    expect(requisicao.atendidaPorCompanyUserId).toBe(AUTOR);
+    expect(requisicao.atendidaEm).toBeInstanceOf(Date);
+  });
+
+  it('I4: o statusMateriais GRAVADO na OS acompanha o kit — fecha e rebaixa', async () => {
+    const { servico, os } = montarBancoFake();
+    await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4 }],
+    });
+    expect(os.statusMateriais).toBe('materiais_separados');
+    await servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 2 }],
+    });
+    expect(os.statusMateriais).toBe('aguardando_separacao');
   });
 });

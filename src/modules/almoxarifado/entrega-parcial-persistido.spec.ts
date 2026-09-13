@@ -64,7 +64,9 @@ function montarBancoFake() {
   const saldoP1 = { saldo_fisico: '10', saldo_reservado: '4', saldo_separado: '4' };
 
   const tx = {
-    $queryRaw: jest.fn(async (query: { values: unknown[] }) => {
+    $queryRaw: jest.fn(async (query: { text: string; values: unknown[] }) => {
+      // Fundação da F4: a trava da requisição vem antes das de saldo.
+      if (query.text.includes('requisicoes_material')) return [{ id: REQ }];
       const pecaId = query.values[0];
       return pecaId === 'p-1' ? [{ ...saldoP1 }] : [];
     }),
@@ -145,6 +147,9 @@ function montarBancoFake() {
   const prisma = {
     $transaction: jest.fn(async (fn: (t: typeof tx) => Promise<unknown>) => fn(tx)),
     requisicaoMaterial: tx.requisicaoMaterial,
+    // Achado I3 da revisão final da F3: quem retira o kit é conferido contra a
+    // empresa antes da transação.
+    operator: { findFirst: jest.fn(async () => ({ id: MECANICO })) },
   };
 
   return { servico: new AlmoxarifadoService(prisma as never), requisicao, itens, tx };

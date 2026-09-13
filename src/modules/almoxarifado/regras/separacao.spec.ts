@@ -88,6 +88,29 @@ describe('requisicaoEstaSeparada', () => {
     ])).toBe(true);
   });
 
+  it('impeditivo ENTREGUE numa rodada anterior conta como resolvido — senão o kit nunca mais fecha', () => {
+    // Entrega parcial (o impeditivo foi levado, um item faltava), a compra
+    // chega, o almoxarife confere a peça nova: o kit tem de fechar de novo.
+    expect(requisicaoEstaSeparada([
+      item({ status: 'entregue' }),
+      item({ status: 'separada', impeditivo: false }),
+    ])).toBe(true);
+  });
+
+  it('sem impeditivo, item entregue ao lado de item separado fecha o kit', () => {
+    expect(requisicaoEstaSeparada([
+      item({ status: 'entregue', impeditivo: false }),
+      item({ status: 'separada', impeditivo: false }),
+    ])).toBe(true);
+  });
+
+  it('entregue ao lado de impeditivo ainda reservado NÃO fecha o kit', () => {
+    expect(requisicaoEstaSeparada([
+      item({ status: 'entregue' }),
+      item({ status: 'reservada' }),
+    ])).toBe(false);
+  });
+
   it('requisição sem item nenhum não está separada', () => {
     // Kit vazio não é kit pronto. A F1/F2 já garante que requisição sem item
     // não é criada, mas o dado pode chegar assim de um cancelamento parcial.

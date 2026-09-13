@@ -27,6 +27,12 @@ export class AlmoxarifadoController {
   }
 
   @Post('os/:osId/reservar')
+  // Fundação da F4: quem reserva é quem ABRE a OS preventiva — a Manutenção.
+  // Com o gate da classe (`almoxarifado`), todo programador cujo cargo não
+  // tem o grupo do almoxarife levava 403, e a OS nascia em análise sem falta
+  // detectada — portanto sem solicitação de compra. O `PainelGuard` lê a
+  // metadata da ROTA antes da da classe, então esta sobrescreve só aqui.
+  @ModuloComercial('suprimentos', 'manutencao')
   // Achado Important I3: duplo clique (ou reenvio automático do outbox
   // offline) chamando esta rota duas vezes reservava o saldo duas vezes
   // para a mesma OS. `Idempotency-Key` faz o segundo envio da MESMA

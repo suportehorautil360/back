@@ -5,10 +5,18 @@ const COMPANY = '11111111-1111-1111-1111-111111111111';
 const REQ = '33333333-3333-3333-3333-333333333333';
 const AUTOR = '44444444-4444-4444-4444-444444444444';
 
-function montar(status: string, itens: unknown[]) {
+function montar(status: string, itens: unknown[], opts: { semSaldo?: boolean } = {}) {
   const chamadas: string[] = [];
   const tx = {
-    $queryRaw: jest.fn(async () => { chamadas.push('LOCK'); return [{ saldo_reservado: '4' }]; }),
+    $queryRaw: jest.fn(async (query: { text: string }) => {
+      // Fundação da F4: a primeira trava é a da REQUISIÇÃO — rótulo próprio.
+      if (query.text.includes('requisicoes_material')) {
+        chamadas.push('LOCK requisicao');
+        return [{ id: REQ }];
+      }
+      chamadas.push('LOCK');
+      return opts.semSaldo ? [] : [{ saldo_reservado: '4' }];
+    }),
     $executeRaw: jest.fn(async (sql: { text?: string }) => {
       chamadas.push('UPDATE saldo');
       return 1;
@@ -48,7 +56,8 @@ describe('cancelarRequisicao', () => {
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
       motivo: 'OS aberta por engano',
     });
-    expect(chamadas[0]).toBe('LOCK');
+    // A requisição primeiro (fundação da F4), depois a linha de saldo.
+    expect(chamadas.slice(0, 2)).toEqual(['LOCK requisicao', 'LOCK']);
     expect(chamadas).toContain('UPDATE saldo');
   });
 
@@ -61,13 +70,14 @@ describe('cancelarRequisicao', () => {
 
   it('requisição já entregue não é cancelada', async () => {
     // A peça já saiu do estoque; desfazer isso é devolução, e devolução é F5.
-    // Achado minor m3 da revisão: a guarda tem de vir ANTES de tocar o saldo —
-    // `chamadas` vazio prova que nada rodou (trava, UPDATE) antes do throw.
+    // Achado minor m3 da revisão: a guarda tem de vir ANTES de tocar o saldo.
+    // Só a trava da própria requisição roda antes do throw (fundação da F4: é
+    // ela que torna confiável o status lido) — nenhuma trava nem escrita de saldo.
     const { servico, chamadas } = montar('entregue', [reservado()]);
     await expect(servico.cancelarRequisicao({
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR, motivo: 'x',
     })).rejects.toBeInstanceOf(ConflictException);
-    expect(chamadas).toEqual([]);
+    expect(chamadas).toEqual(['LOCK requisicao']);
   });
 
   it('devolve a quantidade RELIDA na transação, não a do retrato', async () => {
@@ -127,7 +137,8 @@ describe('cancelarRequisicao', () => {
     });
 
     const primeiroValor = (chamada: unknown[]) => (chamada[0] as { values: unknown[] }).values[0];
-    expect(tx.$queryRaw.mock.calls.map(primeiroValor)).toEqual(['p-1', 'p-2']);
+    // A requisição primeiro (fundação da F4), depois o saldo por `pecaId`.
+    expect(tx.$queryRaw.mock.calls.map(primeiroValor)).toEqual([REQ, 'p-1', 'p-2']);
   });
 
   it('não devolve saldo de item que uma entrega concorrente já fechou', async () => {
@@ -198,5 +209,26 @@ describe('cancelarRequisicao', () => {
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR, motivo: 'engano',
     });
     expect(tx.serviceOrder.updateMany.mock.calls[0][0].data.statusMateriais).toBe('planejada');
+  });
+
+  // --- Fundação da F4 e achados da revisão final da F3 ---------------------
+
+  it('fundação F4: trava a requisição ANTES de ler o status dela', async () => {
+    const { servico, tx } = montar('pendente', [reservado()]);
+    await servico.cancelarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR, motivo: 'engano',
+    });
+    expect(tx.$queryRaw.mock.invocationCallOrder[0])
+      .toBeLessThan(tx.requisicaoMaterial.findFirst.mock.invocationCallOrder[0]);
+  });
+
+  it('I5 (revisão final da F3): sem linha de saldo falha alto, em vez de devolver nada em silêncio', async () => {
+    // `FOR UPDATE` não trava linha que não existe: sem a guarda, o UPDATE
+    // casaria zero linhas e o item ainda seria fechado como cancelado.
+    const { servico, tx } = montar('pendente', [reservado()], { semSaldo: true });
+    await expect(servico.cancelarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR, motivo: 'engano',
+    })).rejects.toThrow(/Saldo não encontrado/);
+    expect(tx.$executeRaw).not.toHaveBeenCalled();
   });
 });
