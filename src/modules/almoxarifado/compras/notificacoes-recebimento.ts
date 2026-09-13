@@ -5,6 +5,7 @@ import {
   type NotificacaoPronta,
 } from '../notificacoes/almoxarifado-notificacoes';
 import type { StatusMateriais } from '../regras/status-materiais';
+import { ESTADOS_DE_COMPRA } from '../regras/compras';
 
 /**
  * Os avisos que um recebimento gera para UMA OS (§9: "recebimento parcial" e
@@ -36,7 +37,6 @@ export async function montarNotificacoesDoRecebimento(
     depois: StatusMateriais;
   },
 ): Promise<NotificacaoPronta[]> {
-  const ESTADOS_DE_COMPRA = new Set(['aguardando_compra', 'compra_em_andamento', 'recebimento_parcial']);
   const parcialAgora = input.depois === 'recebimento_parcial' && input.antes !== 'recebimento_parcial';
   const destravou = input.depois === 'aguardando_separacao' && ESTADOS_DE_COMPRA.has(input.antes);
   if (!parcialAgora && !destravou) return [];

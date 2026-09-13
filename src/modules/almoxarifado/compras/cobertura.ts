@@ -1,6 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Prisma } from '../../../prisma/generated/client';
 import {
+  ESTADOS_DE_COMPRA,
   cobertura,
   faltaDoItem,
   statusMateriaisComCompra,
@@ -15,6 +16,8 @@ export interface ItemParaCobertura {
   status: string;
   quantidadeSolicitada: Prisma.Decimal | number | string;
   quantidadeReservada: Prisma.Decimal | number | string;
+  /** `plano` | `peca_adicional` — obrigatório para ninguém esquecer de selecionar. */
+  origem: string;
 }
 
 /**
@@ -76,6 +79,7 @@ export async function faltasComCobertura(
       quantidadeReservada: Number(i.quantidadeReservada),
     }),
     cobertura: cobertura(origensPorItem.get(i.id) ?? []),
+    adicional: i.origem === 'peca_adicional',
   }));
 }
 
@@ -94,15 +98,13 @@ export async function refinarPelaCompra(
   return statusMateriaisComCompra(base, await faltasComCobertura(tx, itens));
 }
 
-/** Os três estados em que o andamento da compra decide o `statusMateriais`. */
-const ESTADOS_DE_COMPRA = new Set<string>(['aguardando_compra', 'compra_em_andamento', 'recebimento_parcial']);
 
 /**
  * Recalcula o `statusMateriais` da OS de uma requisição depois de um ato de
  * COMPRA que muda a cobertura das faltas dela sem mexer nos itens: emitir (ou
  * aprovar e emitir), cancelar ou encerrar uma ordem de compra.
  *
- * Só mexe numa OS que está num dos três estados de compra. Os itens não
+ * Só mexe numa OS que está num dos estados de compra (`ESTADOS_DE_COMPRA`). Os itens não
  * mudaram, então a máquina da F3 continua dizendo `aguardando_compra` e só o
  * refinamento pela cobertura pode mudar o resultado. Uma OS fora desses
  * estados não tem falta cujo andamento de compra mude o estado dela: com item
@@ -125,7 +127,7 @@ export async function recalcularStatusDeCompraDaOs(
     select: {
       serviceOrderId: true,
       serviceOrder: { select: { statusMateriais: true } },
-      itens: { select: { id: true, status: true, quantidadeSolicitada: true, quantidadeReservada: true } },
+      itens: { select: { id: true, status: true, origem: true, quantidadeSolicitada: true, quantidadeReservada: true } },
     },
   });
   if (!req) return null;

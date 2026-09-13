@@ -21,6 +21,8 @@ interface Opcoes {
   linhaDeReposicao?: boolean;
   /** A requisição da falta da origem é de OUTRO depósito que o da OC. */
   requisicaoDaOrigemEmOutroDeposito?: boolean;
+  /** A falta da origem é de peça adicional (`origem = 'peca_adicional'`). */
+  faltaDePecaAdicional?: boolean;
   /** Roda quando a requisição é travada — simula quem commitou antes da trava. */
   aoTravarRequisicao?: (estado: Estado) => void;
 }
@@ -65,6 +67,7 @@ function montarBanco(opts: Opcoes = {}) {
     ['ri-1', {
       id: 'ri-1', requisicaoId: 'req-1', pecaId: 'p-1', quantidadeSolicitada: 5, quantidadeReservada: 0,
       status: opts.solicitacaoCancelada ? 'cancelada' : 'faltante', impeditivo: false,
+      origem: opts.faltaDePecaAdicional ? 'peca_adicional' : 'plano',
       prioridade: 'alta', dataNecessidade: null, createdAt: quando('2026-09-10T09:00:00Z'),
     }],
     ['ri-2', {
@@ -622,15 +625,35 @@ describe('executarRecebimento — o que fica gravado', () => {
     expect(estado.oss.get('os-1')!.statusMateriais).toBe('compra_em_andamento');
   });
 
-  it('OS fora de estado de compra não é rebaixada pela peça que chegou', async () => {
-    const { tx, estado } = montarBanco({ statusOs: 'aguardando_peca_adicional' });
+  it('peça adicional que chega tira a OS de aguardando peça adicional e avisa', async () => {
+    const { tx, estado } = montarBanco({ statusOs: 'aguardando_peca_adicional', faltaDePecaAdicional: true });
 
     const { notificacoes } = await executarRecebimento(
       tx as never,
       entrada([linha({ ordemCompraItemId: 'oci-1', quantidadeRecebida: 5 })]),
     );
 
-    expect(estado.oss.get('os-1')!.statusMateriais).toBe('aguardando_peca_adicional');
+    expect(estado.oss.get('os-1')!.statusMateriais).toBe('aguardando_separacao');
+    expect(notificacoes.map((n) => n.titulo)).toContain('OS-2026-047: peça chegou');
+  });
+
+  it('parte da peça adicional chega: recebimento parcial, não aguardando compra', async () => {
+    const { tx, estado } = montarBanco({ statusOs: 'aguardando_peca_adicional', faltaDePecaAdicional: true });
+
+    await executarRecebimento(tx as never, entrada([linha({ ordemCompraItemId: 'oci-1', quantidadeRecebida: 2 })]));
+
+    expect(estado.oss.get('os-1')!.statusMateriais).toBe('recebimento_parcial');
+  });
+
+  it('OS fora de estado de compra não é rebaixada pela peça que chegou', async () => {
+    const { tx, estado } = montarBanco({ statusOs: 'em_execucao' });
+
+    const { notificacoes } = await executarRecebimento(
+      tx as never,
+      entrada([linha({ ordemCompraItemId: 'oci-1', quantidadeRecebida: 5 })]),
+    );
+
+    expect(estado.oss.get('os-1')!.statusMateriais).toBe('em_execucao');
     expect(estado.log).not.toContain('os:os-1');
     expect(notificacoes).toEqual([]);
   });

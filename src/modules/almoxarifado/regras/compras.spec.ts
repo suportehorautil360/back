@@ -55,41 +55,62 @@ describe('cobertura', () => {
 describe('statusMateriaisComCompra', () => {
   const coberta = (aCaminho: number, recebido = 0) => ({ emCotacao: 0, aCaminho, recebido });
 
+  it('falta descoberta só de peça adicional: aguardando peça adicional', () => {
+    expect(statusMateriaisComCompra('aguardando_compra', [
+      { falta: 2, cobertura: coberta(0), adicional: true },
+      { falta: 1, cobertura: coberta(1), adicional: false },
+    ])).toBe('aguardando_peca_adicional');
+  });
+
+  it('falta descoberta do plano junto com a adicional: aguardando compra', () => {
+    expect(statusMateriaisComCompra('aguardando_compra', [
+      { falta: 2, cobertura: coberta(0), adicional: true },
+      { falta: 1, cobertura: coberta(0), adicional: false },
+    ])).toBe('aguardando_compra');
+  });
+
+  it('peça adicional coberta por OC emitida anda como qualquer compra', () => {
+    expect(statusMateriaisComCompra('aguardando_compra', [{ falta: 2, cobertura: coberta(2), adicional: true }]))
+      .toBe('compra_em_andamento');
+    expect(statusMateriaisComCompra('aguardando_compra', [{ falta: 2, cobertura: coberta(2, 1), adicional: true }]))
+      .toBe('recebimento_parcial');
+  });
+
   it('falta sem OC emitida cobrindo continua aguardando compra — cotação não conta', () => {
     expect(statusMateriaisComCompra('aguardando_compra', [
-      { falta: 2, cobertura: { emCotacao: 2, aCaminho: 0, recebido: 0 } },
+      { falta: 2, cobertura: { emCotacao: 2, aCaminho: 0, recebido: 0 }, adicional: false },
     ])).toBe('aguardando_compra');
   });
 
   it('toda falta coberta por OC emitida, nada recebido: compra em andamento', () => {
-    expect(statusMateriaisComCompra('aguardando_compra', [{ falta: 2, cobertura: coberta(2) }]))
+    expect(statusMateriaisComCompra('aguardando_compra', [{ falta: 2, cobertura: coberta(2), adicional: false }]))
       .toBe('compra_em_andamento');
   });
 
   it('toda falta coberta e alguma já recebeu parte: recebimento parcial', () => {
     expect(statusMateriaisComCompra('aguardando_compra', [
-      { falta: 1, cobertura: coberta(1, 1) },
-      { falta: 3, cobertura: coberta(3) },
+      { falta: 1, cobertura: coberta(1, 1), adicional: false },
+      { falta: 3, cobertura: coberta(3), adicional: false },
     ])).toBe('recebimento_parcial');
   });
 
   it('uma falta descoberta segura a OS em aguardando compra, mesmo com outra recebendo', () => {
     expect(statusMateriaisComCompra('aguardando_compra', [
-      { falta: 1, cobertura: coberta(1, 1) },
-      { falta: 3, cobertura: coberta(2) },
+      { falta: 1, cobertura: coberta(1, 1), adicional: false },
+      { falta: 3, cobertura: coberta(2), adicional: false },
     ])).toBe('aguardando_compra');
   });
 
   it('não mexe em estado que não é de falta', () => {
-    expect(statusMateriaisComCompra('aguardando_separacao', [{ falta: 2, cobertura: coberta(2) }]))
+    expect(statusMateriaisComCompra('aguardando_separacao', [{ falta: 2, cobertura: coberta(2), adicional: false }]))
       .toBe('aguardando_separacao');
-    expect(statusMateriaisComCompra('em_analise_materiais', [{ falta: 2, cobertura: coberta(2) }]))
+    expect(statusMateriaisComCompra('em_analise_materiais', [{ falta: 2, cobertura: coberta(2), adicional: false }]))
       .toBe('em_analise_materiais');
   });
 
   it('cobertura igual à falta cobre — em milésimos, 0,1 + 0,2 cobre 0,3', () => {
     expect(statusMateriaisComCompra('aguardando_compra', [
-      { falta: 0.3, cobertura: cobertura([origem('emitida', 0.1), origem('emitida', 0.2)]) },
+      { falta: 0.3, cobertura: cobertura([origem('emitida', 0.1), origem('emitida', 0.2)]), adicional: false },
     ])).toBe('compra_em_andamento');
   });
 });

@@ -102,7 +102,21 @@ export function cobertura(origens: OrigemParaCobertura[]): Cobertura {
 export interface FaltaComCobertura {
   falta: number;
   cobertura: Cobertura;
+  /** O item é peça pedida com a OS em andamento (`origem = 'peca_adicional'`). */
+  adicional: boolean;
 }
+
+/**
+ * Os estados da OS em que o andamento da compra decide o `statusMateriais` —
+ * os que `statusMateriaisComCompra` produz. Quem recalcula a OS depois de um
+ * ato de compra só mexe numa OS que está num deles.
+ */
+export const ESTADOS_DE_COMPRA: ReadonlySet<string> = new Set([
+  'aguardando_compra',
+  'aguardando_peca_adicional',
+  'compra_em_andamento',
+  'recebimento_parcial',
+]);
 
 /**
  * Refina `aguardando_compra` pelo andamento da compra.
@@ -110,7 +124,9 @@ export interface FaltaComCobertura {
  * As funções de `status-materiais.ts` continuam decidindo a máquina — esta só
  * olha o caso em que elas dizem "falta material":
  * - alguma falta SEM ordem de compra emitida cobrindo-a → `aguardando_compra`
- *   (cotação não é compra: rascunho e aguardando aprovação não contam);
+ *   (cotação não é compra: rascunho e aguardando aprovação não contam) — ou
+ *   `aguardando_peca_adicional` quando TODAS as faltas descobertas são de peça
+ *   adicional (a OS já andou e espera a peça que o mecânico pediu, §5);
  * - toda falta coberta, e alguma já recebeu parte → `recebimento_parcial`;
  * - toda falta coberta, nada recebido ainda → `compra_em_andamento`.
  *
@@ -126,7 +142,10 @@ export function statusMateriaisComCompra(
   // Base diz que falta material, mas nenhuma falta com número: não há o que
   // refinar — fica o que a máquina decidiu.
   if (vivas.length === 0) return base;
-  if (vivas.some((f) => milesimos(f.cobertura.aCaminho) < milesimos(f.falta))) return 'aguardando_compra';
+  const descobertas = vivas.filter((f) => milesimos(f.cobertura.aCaminho) < milesimos(f.falta));
+  if (descobertas.length > 0) {
+    return descobertas.every((f) => f.adicional) ? 'aguardando_peca_adicional' : 'aguardando_compra';
+  }
   if (vivas.some((f) => milesimos(f.cobertura.recebido) > 0)) return 'recebimento_parcial';
   return 'compra_em_andamento';
 }

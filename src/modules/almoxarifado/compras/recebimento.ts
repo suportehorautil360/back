@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, NotFoundException } from '@nest
 import { Prisma } from '../../../prisma/generated/client';
 import { compararPorPeca, travarRequisicao } from '../transacao';
 import {
+  ESTADOS_DE_COMPRA,
   acaoPermitida,
   distribuirRecebimento,
   faltaDoItem,
@@ -46,7 +47,6 @@ export interface ResultadoDoRecebimento {
 }
 
 const REQUISICAO_FECHADA = new Set(['entregue', 'cancelada']);
-const ESTADOS_DE_COMPRA = new Set(['aguardando_compra', 'compra_em_andamento', 'recebimento_parcial']);
 
 function milesimos(n: number): number {
   return Math.round(n * 1000);
@@ -490,9 +490,8 @@ export async function executarRecebimento(
   //     nunca deixam uma OS com item faltante fora deles (a máquina manda
   //     `aguardando_compra`), e a exceção — `em_analise_materiais`, com item
   //     não vinculado — a própria máquina devolve igual. O guard existe para
-  //     o que vier por cima: uma OS em `aguardando_peca_adicional` ou já em
-  //     execução não pode ser rebaixada a `aguardando_separacao` porque chegou
-  //     a peça de uma falta antiga.
+  //     o que vier por cima: uma OS já em execução não pode ser rebaixada a
+  //     `aguardando_separacao` porque chegou a peça de uma falta antiga.
   const notificacoes: NotificacaoPronta[] = [];
   for (const requisicaoId of [...requisicoesQueGanharamPeca].sort()) {
     const req = await tx.requisicaoMaterial.findUniqueOrThrow({
@@ -501,7 +500,9 @@ export async function executarRecebimento(
         numero: true,
         serviceOrderId: true,
         itens: {
-          select: { id: true, status: true, impeditivo: true, quantidadeSolicitada: true, quantidadeReservada: true },
+          select: {
+            id: true, status: true, origem: true, impeditivo: true, quantidadeSolicitada: true, quantidadeReservada: true,
+          },
         },
         serviceOrder: {
           select: {

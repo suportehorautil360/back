@@ -33,8 +33,8 @@ function txFalso(itensSc: ItemSc[]) {
   };
 }
 
-const faltante = (id: string, solicitada: number, reservada: number) => ({
-  id, status: 'faltante', quantidadeSolicitada: solicitada, quantidadeReservada: reservada,
+const faltante = (id: string, solicitada: number, reservada: number, origem = 'plano') => ({
+  id, status: 'faltante', origem, quantidadeSolicitada: solicitada, quantidadeReservada: reservada,
 });
 
 describe('faltasComCobertura', () => {
@@ -45,13 +45,18 @@ describe('faltasComCobertura', () => {
       { requisicaoItemId: 'ri1', status: 'cancelada', origensOc: [{ quantidade: 5, quantidadeRecebida: 0, statusOc: 'emitida' }] },
     ]);
     const faltas = await faltasComCobertura(tx as never, [faltante('ri1', 5, 3)]);
-    expect(faltas).toEqual([{ falta: 2, cobertura: { emCotacao: 0, aCaminho: 2, recebido: 0 } }]);
+    expect(faltas).toEqual([{ falta: 2, cobertura: { emCotacao: 0, aCaminho: 2, recebido: 0 }, adicional: false }]);
+  });
+
+  it('marca a falta de peça adicional pela origem do item', async () => {
+    const faltas = await faltasComCobertura(txFalso([]) as never, [faltante('ri1', 2, 0, 'peca_adicional')]);
+    expect(faltas).toEqual([{ falta: 2, cobertura: { emCotacao: 0, aCaminho: 0, recebido: 0 }, adicional: true }]);
   });
 
   it('item que não é faltante nem chega a consultar o banco', async () => {
     const tx = txFalso([]);
     const faltas = await faltasComCobertura(tx as never, [
-      { id: 'ri1', status: 'reservada', quantidadeSolicitada: 5, quantidadeReservada: 5 },
+      { id: 'ri1', status: 'reservada', origem: 'plano', quantidadeSolicitada: 5, quantidadeReservada: 5 },
     ]);
     expect(faltas).toEqual([]);
     expect(tx.solicitacaoCompraItem.findMany).not.toHaveBeenCalled();
@@ -87,14 +92,14 @@ describe('recalcularStatusDeCompraDaOs', () => {
   const COMPANY = '11111111-1111-1111-1111-111111111111';
 
   /** Banco falso: a requisição filtra por id e empresa; a OS guarda o status GRAVADO. */
-  function montar(statusDaOs: string, itensSc: ItemSc[]) {
+  function montar(statusDaOs: string, itensSc: ItemSc[], origemDaFalta = 'plano') {
     const os = { statusMateriais: statusDaOs };
     const tx = {
       ...txFalso(itensSc),
       requisicaoMaterial: {
         findFirst: jest.fn(async ({ where }: { where: { id: string; companyId: string } }) =>
           where.id === 'req-1' && where.companyId === COMPANY
-            ? { serviceOrderId: 'os-1', serviceOrder: { statusMateriais: os.statusMateriais }, itens: [faltante('ri1', 5, 3)] }
+            ? { serviceOrderId: 'os-1', serviceOrder: { statusMateriais: os.statusMateriais }, itens: [faltante('ri1', 5, 3, origemDaFalta)] }
             : null,
         ),
       },
@@ -124,6 +129,20 @@ describe('recalcularStatusDeCompraDaOs', () => {
     ]);
     await recalcularStatusDeCompraDaOs(tx as never, { requisicaoId: 'req-1', companyId: COMPANY });
     expect(os.statusMateriais).toBe('aguardando_compra');
+  });
+
+  it('peça adicional: OC emitida tira a OS de aguardando peça adicional, e cancelada a devolve', async () => {
+    const emitida = montar('aguardando_peca_adicional', [
+      { requisicaoItemId: 'ri1', status: 'aberta', origensOc: [{ quantidade: 2, quantidadeRecebida: 0, statusOc: 'emitida' }] },
+    ], 'peca_adicional');
+    await recalcularStatusDeCompraDaOs(emitida.tx as never, { requisicaoId: 'req-1', companyId: COMPANY });
+    expect(emitida.os.statusMateriais).toBe('compra_em_andamento');
+
+    const cancelada = montar('compra_em_andamento', [
+      { requisicaoItemId: 'ri1', status: 'aberta', origensOc: [{ quantidade: 2, quantidadeRecebida: 0, statusOc: 'cancelada' }] },
+    ], 'peca_adicional');
+    await recalcularStatusDeCompraDaOs(cancelada.tx as never, { requisicaoId: 'req-1', companyId: COMPANY });
+    expect(cancelada.os.statusMateriais).toBe('aguardando_peca_adicional');
   });
 
   it('OS fora dos estados de compra não é tocada', async () => {
