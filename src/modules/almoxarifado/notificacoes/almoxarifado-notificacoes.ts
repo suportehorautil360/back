@@ -212,7 +212,15 @@ export async function enviarNotificacoes(
   try {
     await prisma.notificacao.createMany({ data: linhas });
   } catch (err) {
-    console.error('[almoxarifado-notificacoes] falha ao gravar notificação', err);
+    // Achado minor n4 da rodada 3: sem identificador, o log só dizia "um
+    // sino falhou" — nunca QUAL kit ou OS. Todas as linhas de UMA chamada
+    // compartilham a mesma referência (a requisição que fechou o kit, ou a
+    // OS que foi liberada) — `console.error` é a convenção do repo para
+    // isto (precedente em `solicitacoes-ponto.service.ts:188`).
+    console.error(
+      `[almoxarifado-notificacoes] falha ao gravar notificação (${linhas[0]?.referenciaTipo}:${linhas[0]?.referenciaId})`,
+      err,
+    );
   }
 }
 

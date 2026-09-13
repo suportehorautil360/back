@@ -63,10 +63,11 @@ function montar(
       }),
       // Achado Important I3 da rodada 2: `executarSeparacao` passou de
       // `.update` incondicional para `.updateMany` condicionado a
-      // `status: { not: 'separada' }` — a notificação só dispara quando
-      // ESTA chamada de fato fecha o kit (transição), não sempre que o kit
-      // ESTÁ fechado (estado). `statusDaRequisicao` simula a coluna real:
-      // uma segunda chamada, com o kit já `separada`, casa zero linhas.
+      // `status: { not: 'separada' }` SÓ quando o status calculado é
+      // `separada` — a notificação só dispara quando ESTA chamada de fato
+      // fecha o kit (transição), não sempre que o kit ESTÁ fechado (estado).
+      // `statusDaRequisicao` simula a coluna real: uma segunda chamada, com
+      // o kit já `separada`, casa zero linhas no `updateMany`.
       updateMany: jest.fn(async ({ where, data }: {
         where: { id: string; status?: { not: string } };
         data: { status: string };
@@ -81,6 +82,17 @@ function montar(
         }
         statusDaRequisicao = data.status;
         return { count: 1 };
+      }),
+      // Achado Critical N1 da rodada 3: a guarda acima NÃO pode ser a única
+      // escrita — uma reconferência que REBAIXA o status (ou uma
+      // reconfirmação redundante do kit já fechado) grava por aqui,
+      // incondicional. Sem isto, o banco fake ficaria preso em `separada`
+      // mesmo quando a produção tenta gravar `em_separacao` — o mesmo
+      // defeito que o N1 documentou no banco de verdade.
+      update: jest.fn(async ({ data }: { data: { status?: string } }) => {
+        chamadas.push('UPDATE requisicao');
+        if (data.status !== undefined) statusDaRequisicao = data.status;
+        return {};
       }),
     },
     requisicaoMaterialItem: {
@@ -116,6 +128,12 @@ function montar(
     company: {
       findUnique: jest.fn().mockResolvedValue({ legacyId: 'leg-1' }),
     },
+    // Achado minor n2 da rodada 3: este `tx.notificacao` NUNCA deve ser
+    // tocado pela produção (`montarNotificacaoKitCompleto` só MONTA linhas;
+    // quem grava é `enviarNotificacoes(this.prisma, ...)`). Um `jest.fn()`
+    // PRÓPRIO — diferente do de `prisma.notificacao` abaixo — para que um
+    // regresso que movesse a gravação para dentro da transação (usando
+    // `tx`) reprove em vez de passar despercebido.
     notificacao: {
       createMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
@@ -132,12 +150,12 @@ function montar(
     // usa `this.prisma`, não `tx` — igual a um `PrismaService` de verdade, em
     // que o mesmo delegate de modelo atende fora e dentro de `$transaction`.
     requisicaoMaterial: tx.requisicaoMaterial,
-    // Achado Important I4 da rodada 2: `enviarNotificacoes` grava com
-    // `this.prisma` DEPOIS do commit — nunca com `tx`. Reaproveita a MESMA
-    // instância do mock (`tx.notificacao`) para que os testes possam
-    // continuar inspecionando `tx.notificacao.createMany`, que é
-    // literalmente o mesmo `jest.fn()` que `enviarNotificacoes` chama.
-    notificacao: tx.notificacao,
+    // Achado Important I4 da rodada 2 / minor n2 da rodada 3:
+    // `enviarNotificacoes` grava com `this.prisma` DEPOIS do commit — nunca
+    // com `tx`. `jest.fn()` PRÓPRIO, não `tx.notificacao`.
+    notificacao: {
+      createMany: jest.fn().mockResolvedValue({ count: 1 }),
+    },
   };
   return { servico: new AlmoxarifadoService(prisma as never), prisma, tx, chamadas, itensDb };
 }
@@ -415,15 +433,20 @@ describe('separarItens', () => {
   // certo, só que a função de notificação funciona isolada.
 
   it('kit fechando com destinatário no almoxarifado grava a notificação (integração)', async () => {
-    const { servico, tx } = montar([item()], { comNotificacaoDeKit: true });
+    const { servico, prisma, tx } = montar([item()], { comNotificacaoDeKit: true });
     const r = await servico.separarItens({
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
       itens: [{ itemId: 'it-1', quantidade: 4 }],
     });
 
     expect(r.statusRequisicao).toBe('separada');
-    expect(tx.notificacao.createMany).toHaveBeenCalledTimes(1);
-    const linha = tx.notificacao.createMany.mock.calls[0][0].data[0] as {
+    // Achado minor n2 da rodada 3: a gravação usou o client EXTERNO
+    // (`this.prisma`, depois do commit) — nunca `tx`. Com os dois mocks
+    // agora DIFERENTES, um regresso que movesse a gravação para dentro da
+    // transação reprovaria aqui.
+    expect(tx.notificacao.createMany).not.toHaveBeenCalled();
+    expect(prisma.notificacao.createMany).toHaveBeenCalledTimes(1);
+    const linha = prisma.notificacao.createMany.mock.calls[0][0].data[0] as {
       destinatarioId: string; referenciaTipo: string; referenciaId: string; mensagem: string;
     };
     expect(linha.destinatarioId).toBe('user-almox');
@@ -434,7 +457,7 @@ describe('separarItens', () => {
     // Achado minor m5 da revisão: os campos que decidem se a notificação é
     // VISÍVEL (sino certo, tenant certo) não eram assertados por nada — o
     // `tsc` só garante a PRESENÇA (NOT NULL sem default), nunca o VALOR.
-    const linhaCompleta = tx.notificacao.createMany.mock.calls[0][0].data[0] as {
+    const linhaCompleta = prisma.notificacao.createMany.mock.calls[0][0].data[0] as {
       destinatarioTipo: string; prefeituraLegacyId: string;
     };
     expect(linhaCompleta.destinatarioTipo).toBe('company_user');
@@ -442,14 +465,14 @@ describe('separarItens', () => {
   });
 
   it('kit em separação PARCIAL não notifica ninguém, mesmo com destinatário disponível (par negativo)', async () => {
-    const { servico, tx } = montar([item()], { comNotificacaoDeKit: true });
+    const { servico, prisma } = montar([item()], { comNotificacaoDeKit: true });
     const r = await servico.separarItens({
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
       itens: [{ itemId: 'it-1', quantidade: 2 }], // reservado 4, confere só 2: kit não fecha
     });
 
     expect(r.statusRequisicao).toBe('em_separacao');
-    expect(tx.notificacao.createMany).not.toHaveBeenCalled();
+    expect(prisma.notificacao.createMany).not.toHaveBeenCalled();
   });
 
   it('dois POSTs sequenciais que fecham o MESMO kit geram UMA notificação só (achado Important I3)', async () => {
@@ -458,7 +481,7 @@ describe('separarItens', () => {
     // (`status: { not: 'separada' }`), o segundo POST recalcularia
     // `statusRequisicao: 'separada'` de novo e notificaria o almoxarife
     // pela segunda vez do MESMO evento.
-    const { servico, tx } = montar([item()], { comNotificacaoDeKit: true });
+    const { servico, prisma } = montar([item()], { comNotificacaoDeKit: true });
     const chamar = () => servico.separarItens({
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
       itens: [{ itemId: 'it-1', quantidade: 4 }],
@@ -469,6 +492,6 @@ describe('separarItens', () => {
 
     expect(r1.statusRequisicao).toBe('separada');
     expect(r2.statusRequisicao).toBe('separada'); // resposta não muda de forma nem de conteúdo
-    expect(tx.notificacao.createMany).toHaveBeenCalledTimes(1);
+    expect(prisma.notificacao.createMany).toHaveBeenCalledTimes(1);
   });
 });

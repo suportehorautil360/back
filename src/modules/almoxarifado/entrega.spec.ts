@@ -162,6 +162,13 @@ function montar(
     company: {
       findUnique: jest.fn().mockResolvedValue({ legacyId: 'leg-1' }),
     },
+    // Achado minor n2 da rodada 3: este `tx.notificacao` NUNCA deve ser
+    // tocado pela produção — `montarNotificacaoOsLiberada` só MONTA linhas,
+    // quem grava é `enviarNotificacoes(this.prisma, ...)`. Antes, este mock
+    // e o de `prisma.notificacao` (abaixo) eram a MESMA instância, então um
+    // regresso que movesse a gravação para dentro da transação (usando
+    // `tx`) passaria despercebido — os dois jest.fn() são DIFERENTES de
+    // propósito, para que só um dos dois acumule chamadas.
     notificacao: {
       createMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
@@ -173,11 +180,13 @@ function montar(
     // verdade, em que o mesmo delegate de modelo atende fora e dentro de
     // `$transaction`.
     requisicaoMaterial: tx.requisicaoMaterial,
-    // Achado Important I4 da rodada 2: `enviarNotificacoes` grava com
-    // `this.prisma` DEPOIS do commit — nunca com `tx`. Reaproveita a MESMA
-    // instância do mock (`tx.notificacao`) para que os testes possam
-    // continuar inspecionando `tx.notificacao.createMany`.
-    notificacao: tx.notificacao,
+    // Achado Important I4 da rodada 2 / minor n2 da rodada 3:
+    // `enviarNotificacoes` grava com `this.prisma` DEPOIS do commit — nunca
+    // com `tx`. Um `jest.fn()` PRÓPRIO (não `tx.notificacao`), para que as
+    // asserções distingam de fato qual client gravou.
+    notificacao: {
+      createMany: jest.fn().mockResolvedValue({ count: 1 }),
+    },
   };
   return { servico: new AlmoxarifadoService(prisma as never), prisma, tx, chamadas, itensDb };
 }
@@ -273,15 +282,20 @@ describe('liberarRequisicao', () => {
     // relatório da rodada 1). Este teste fecha o ramo cheio: mecânico e
     // programador são pessoas DIFERENTES ('user-mec'/'user-prog'), então a
     // notificação grava DUAS linhas.
-    const { servico, tx } = montar('separada', [separado()], {
+    const { servico, prisma, tx } = montar('separada', [separado()], {
       comDestinatariosDeNotificacao: true,
     });
     await servico.liberarRequisicao({
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
     });
 
-    expect(tx.notificacao.createMany).toHaveBeenCalledTimes(1);
-    const linhas = tx.notificacao.createMany.mock.calls[0][0].data as Array<{
+    // Achado minor n2 da rodada 3: a gravação usou o client EXTERNO
+    // (`this.prisma`, depois do commit) — nunca `tx`. Com os dois mocks
+    // agora DIFERENTES, um regresso que movesse a gravação para dentro da
+    // transação reprovaria aqui.
+    expect(tx.notificacao.createMany).not.toHaveBeenCalled();
+    expect(prisma.notificacao.createMany).toHaveBeenCalledTimes(1);
+    const linhas = prisma.notificacao.createMany.mock.calls[0][0].data as Array<{
       destinatarioId: string; referenciaTipo: string; referenciaId: string; mensagem: string;
     }>;
     expect(linhas.map((l) => l.destinatarioId).sort()).toEqual(['user-mec', 'user-prog']);
@@ -308,7 +322,7 @@ describe('liberarRequisicao', () => {
     // liberação não muda o status), então o guard de fora
     // (`req.status !== 'separada'`) sozinho NÃO barra a segunda chamada —
     // só o guard `liberadaEm: null`, condicionado dentro da transação, barra.
-    const { servico, tx } = montar('separada', [separado()], {
+    const { servico, prisma } = montar('separada', [separado()], {
       comDestinatariosDeNotificacao: true,
     });
     const chamar = () => servico.liberarRequisicao({
@@ -320,7 +334,7 @@ describe('liberarRequisicao', () => {
 
     expect(r1.statusMateriais).toBe('liberada_para_execucao');
     expect(r2.statusMateriais).toBe('liberada_para_execucao'); // resposta não muda de forma nem de conteúdo
-    expect(tx.notificacao.createMany).toHaveBeenCalledTimes(1);
+    expect(prisma.notificacao.createMany).toHaveBeenCalledTimes(1);
   });
 });
 

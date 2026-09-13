@@ -145,8 +145,14 @@ describe('usuariosDoAlmoxarifado — isolamento e filtros (achado Important I2)'
    * (3) cargo desta empresa, `ativo: false` — exclui (por `ativo: true`);
    * (4) operador de OUTRA empresa, com o cargo (1) — exclui (por `companyId`
    *     do `operator.findMany`);
-   * (5) operador desta empresa, cargo (1), `companyUserId: null` — exclui
-   *     (por `companyUserId: { not: null }`).
+   * (5) operador desta empresa, cargo (1), `companyUserId: null` — presente
+   *     para provar que um `null` não vaza para o resultado, mas quem
+   *     exclui de fato é o `.filter((id): id is string => !!id)` do FIM de
+   *     `usuariosDoAlmoxarifado`, não o `where: { companyUserId: { not: null } }`
+   *     do fake (achado minor n3 da rodada 3 — o comentário anterior
+   *     atribuía a exclusão ao `where`; mutação confirma: tirar esse filtro
+   *     do fake não muda o resultado, porque o post-filtro real já barra o
+   *     `null` de qualquer forma — mutante equivalente, não lacuna).
    */
   // Cada cargo/operador "ruim" abaixo tem um PAR: um cargo excluído só pelo
   // filtro que ele testa, e um operador vinculado A ELE — sem o operador,

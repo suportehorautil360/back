@@ -968,27 +968,54 @@ export class AlmoxarifadoService {
     const fechado = requisicaoEstaSeparada(paraRegra) && !temDivergencia(paraRegra);
     const statusRequisicao = fechado ? 'separada' : 'em_separacao';
 
-    // Achado Important I3 da rodada 2: a guarda `status: { not: 'separada' }`
-    // não é sobre concorrência (isso é o m5, fora de escopo aqui) — é sobre
-    // TRANSIÇÃO. Sem ela, dois POSTs sequenciais e idênticos (um duplo
-    // clique, sem concorrência nenhuma) recalculam `statusRequisicao:
-    // 'separada'` os dois, e o segundo notificaria de novo um kit que já
-    // avisou o almoxarife na primeira vez. `count === 1` abaixo só é
-    // verdade quando ESTA chamada moveu a requisição de "não separada" para
-    // o status calculado — nunca quando ela já estava `separada` antes.
-    const fechamento = await tx.requisicaoMaterial.updateMany({
-      where: { id: req.id, status: { not: 'separada' } },
-      data: {
-        status: statusRequisicao,
-        atendidaPorCompanyUserId: input.autorCompanyUserId,
-        // Achado Important M2: autor sem carimbo de tempo é meia auditoria.
-        // Gravado em toda chamada que de fato ainda não fechou o kit — é
-        // "quem/quando mexeu por último", não um dos três atos que FECHAM a
-        // requisição (aqueles são `liberadaEm`/`entregueEm`/`canceladaEm`,
-        // de outras tasks).
-        atendidaEm: new Date(),
-      },
-    });
+    // Achado Critical N1 da rodada 3: a guarda `status: { not: 'separada' }`
+    // NÃO PODE ser a ÚNICA escrita da requisição. Ela funde duas
+    // responsabilidades — detectar a transição de FECHAMENTO (que tem de
+    // ser atômica, para não notificar duas vezes — achado I3) e gravar o
+    // status calculado, seja ele qual for. Pendurada sozinha, uma
+    // reconferência que REBAIXA o status (confere menos, ou informa
+    // divergência num kit já `separada`) casava zero linhas: o banco ficava
+    // em `separada` obsoleto enquanto a resposta devolvia `em_separacao`, e
+    // o único portão de `liberarRequisicao` (`req.status !== 'separada'`)
+    // liberava um kit incompleto. Por isso: a guarda só entra quando o
+    // status CALCULADO é `separada`; qualquer outra transição — inclusive a
+    // REVERSA — é gravada sempre, sem condição nenhuma.
+    let fechouAgora = false;
+    if (statusRequisicao === 'separada') {
+      const fechamento = await tx.requisicaoMaterial.updateMany({
+        where: { id: req.id, status: { not: 'separada' } },
+        data: {
+          status: statusRequisicao,
+          atendidaPorCompanyUserId: input.autorCompanyUserId,
+          atendidaEm: new Date(),
+        },
+      });
+      fechouAgora = fechamento.count === 1;
+      if (!fechouAgora) {
+        // Já estava `separada` (reconferência redundante): o status não
+        // muda, mas achado Important M2 continua valendo — "quem mexeu por
+        // último" é regravado mesmo sem fechar nada de novo.
+        await tx.requisicaoMaterial.update({
+          where: { id: req.id },
+          data: {
+            atendidaPorCompanyUserId: input.autorCompanyUserId,
+            atendidaEm: new Date(),
+          },
+        });
+      }
+    } else {
+      // Inclui a transição REVERSA (separada → em_separacao) — incondicional
+      // de propósito. Não há corrida a fechar aqui: só a transição PARA
+      // `separada` autoriza notificação, então só ela precisa de guarda.
+      await tx.requisicaoMaterial.update({
+        where: { id: req.id },
+        data: {
+          status: statusRequisicao,
+          atendidaPorCompanyUserId: input.autorCompanyUserId,
+          atendidaEm: new Date(),
+        },
+      });
+    }
 
     // Achado Important I1 (deste review — nome repetido, achado diferente
     // do I1 da reserva citado acima): o override de divergência só pode
@@ -1001,13 +1028,13 @@ export class AlmoxarifadoService {
 
     await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
 
-    // Kit fechou NESTA chamada (`fechamento.count === 1`, não só
-    // `statusRequisicao === 'separada'` — ver o comentário do `updateMany`
-    // acima): MONTA as linhas de notificação (resolve destinatários,
-    // ainda dentro da transação). Não GRAVA nada aqui — quem chama
-    // (`separarItens`) grava depois do commit, com `enviarNotificacoes`.
+    // Kit fechou NESTA chamada (`fechouAgora`, a transição atômica acima —
+    // não só `statusRequisicao === 'separada'`, que também é verdade numa
+    // reconferência redundante): MONTA as linhas de notificação (resolve
+    // destinatários, ainda dentro da transação). Não GRAVA nada aqui — quem
+    // chama (`separarItens`) grava depois do commit, com `enviarNotificacoes`.
     let notificacoes: NotificacaoPronta[] = [];
-    if (statusRequisicao === 'separada' && fechamento.count === 1) {
+    if (fechouAgora) {
       const destinatarios = await usuariosDoAlmoxarifado(tx, input.companyId);
       notificacoes = await montarNotificacaoKitCompleto(tx, {
         companyId: input.companyId,
