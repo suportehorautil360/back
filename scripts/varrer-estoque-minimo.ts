@@ -5,14 +5,14 @@
  *
  * Uso: npx tsx --env-file=.env scripts/varrer-estoque-minimo.ts
  */
-import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../src/prisma/generated/client';
+import { PrismaService } from '../src/prisma/prisma.service';
 import { varrerEstoqueMinimo } from '../src/modules/almoxarifado/compras/estoque-minimo';
 
 async function main(): Promise<void> {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error('DATABASE_URL não configurada.');
-  const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
+  // O mesmo cliente da aplicação: adapter, log e o timeout de transação que o
+  // `PrismaService` configura — rodar com um cliente diferente daria resultado
+  // diferente do que a rota dá.
+  const prisma = new PrismaService();
   try {
     console.log(await varrerEstoqueMinimo(prisma));
   } finally {
