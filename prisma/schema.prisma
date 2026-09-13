@@ -128,6 +128,7 @@ model Company {
   recebimentos            Recebimento[]
 
   @@map("clients")
+  fornecedorPecas FornecedorPeca[]
 }
 
 /// Destinatários de WhatsApp para alertas de emergência (lista por empresa).
@@ -1159,6 +1160,7 @@ model Partner {
   @@index([companyId])
   @@index([type])
   @@map("partners")
+  catalogoDePecas FornecedorPeca[]
 }
 
 /// Login do portal do posto (Firestore `users` com `vinculo:"posto"`).
@@ -2272,6 +2274,7 @@ model Peca {
   @@index([companyId, codigoFabricante])
   @@index([companyId, ativo])
   @@map("pecas")
+  catalogosDeFornecedor FornecedorPeca[]
 }
 
 /// As cinco quantidades. `disponivel = saldoFisico − saldoReservado` é
@@ -2748,4 +2751,33 @@ model PontoAuditoria {
   @@index([companyId, criadoEm])
   @@index([companyId, alvoTipo, alvoId])
   @@map("ponto_auditoria")
+}
+
+/// O catálogo do fornecedor: o que ele vende, por quanto e em quanto tempo.
+/// Uma linha por (fornecedor, peça) — o preço é REFERÊNCIA para a cotação;
+/// o que foi pago de verdade mora em `OrdemCompraItem.valorUnit`.
+model FornecedorPeca {
+  id        String @id @default(uuid()) @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+  /// `Partner` com `type: FORNECEDOR` — o tipo é exigido pela aplicação.
+  partnerId String @map("partner_id") @db.Uuid
+  pecaId    String @map("peca_id") @db.Uuid
+
+  /// O código que o FORNECEDOR usa para a peça: é o que vem na tabela de
+  /// preço e na nota, e quase nunca é o código interno da casa.
+  codigoFornecedor String? @map("codigo_fornecedor")
+  precoReferencia  Decimal? @map("preco_referencia") @db.Decimal(12, 4)
+  prazoEntregaDias Int?     @map("prazo_entrega_dias")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  peca    Peca    @relation(fields: [pecaId], references: [id], onDelete: Cascade)
+
+  @@unique([partnerId, pecaId])
+  @@index([companyId, partnerId])
+  @@index([pecaId])
+  @@map("fornecedor_pecas")
 }

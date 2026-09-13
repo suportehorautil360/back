@@ -123,7 +123,8 @@ export const ModelName = {
   OrdemCompraItemOrigem: 'OrdemCompraItemOrigem',
   Recebimento: 'Recebimento',
   RecebimentoItem: 'RecebimentoItem',
-  PontoAuditoria: 'PontoAuditoria'
+  PontoAuditoria: 'PontoAuditoria',
+  FornecedorPeca: 'FornecedorPeca'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1564,6 +1565,21 @@ export const PontoAuditoriaScalarFieldEnum = {
 } as const
 
 export type PontoAuditoriaScalarFieldEnum = (typeof PontoAuditoriaScalarFieldEnum)[keyof typeof PontoAuditoriaScalarFieldEnum]
+
+
+export const FornecedorPecaScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  partnerId: 'partnerId',
+  pecaId: 'pecaId',
+  codigoFornecedor: 'codigoFornecedor',
+  precoReferencia: 'precoReferencia',
+  prazoEntregaDias: 'prazoEntregaDias',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FornecedorPecaScalarFieldEnum = (typeof FornecedorPecaScalarFieldEnum)[keyof typeof FornecedorPecaScalarFieldEnum]
 
 
 export const SortOrder = {

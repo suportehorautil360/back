@@ -592,3 +592,10 @@ export type RecebimentoItem = Prisma.RecebimentoItemModel
  * gatilho, com `alvoTipo = "suprimentos.*"`).
  */
 export type PontoAuditoria = Prisma.PontoAuditoriaModel
+/**
+ * Model FornecedorPeca
+ * O catálogo do fornecedor: o que ele vende, por quanto e em quanto tempo.
+ * Uma linha por (fornecedor, peça) — o preço é REFERÊNCIA para a cotação;
+ * o que foi pago de verdade mora em `OrdemCompraItem.valorUnit`.
+ */
+export type FornecedorPeca = Prisma.FornecedorPecaModel

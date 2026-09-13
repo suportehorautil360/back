@@ -469,7 +469,8 @@ export const ModelName = {
   OrdemCompraItemOrigem: 'OrdemCompraItemOrigem',
   Recebimento: 'Recebimento',
   RecebimentoItem: 'RecebimentoItem',
-  PontoAuditoria: 'PontoAuditoria'
+  PontoAuditoria: 'PontoAuditoria',
+  FornecedorPeca: 'FornecedorPeca'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -485,7 +486,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken" | "checklistModelo" | "manualEquipamento" | "checklistExecucao" | "equipmentProgramador" | "programadorMecanico" | "serviceOrderAuditoria" | "deposito" | "peca" | "pecaSaldo" | "estoqueMovimento" | "requisicaoMaterial" | "requisicaoMaterialItem" | "solicitacaoCompra" | "solicitacaoCompraItem" | "ordemCompra" | "ordemCompraItem" | "ordemCompraItemOrigem" | "recebimento" | "recebimentoItem" | "pontoAuditoria"
+    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken" | "checklistModelo" | "manualEquipamento" | "checklistExecucao" | "equipmentProgramador" | "programadorMecanico" | "serviceOrderAuditoria" | "deposito" | "peca" | "pecaSaldo" | "estoqueMovimento" | "requisicaoMaterial" | "requisicaoMaterialItem" | "solicitacaoCompra" | "solicitacaoCompraItem" | "ordemCompra" | "ordemCompraItem" | "ordemCompraItemOrigem" | "recebimento" | "recebimentoItem" | "pontoAuditoria" | "fornecedorPeca"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -5891,6 +5892,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    FornecedorPeca: {
+      payload: Prisma.$FornecedorPecaPayload<ExtArgs>
+      fields: Prisma.FornecedorPecaFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FornecedorPecaFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FornecedorPecaPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FornecedorPecaFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FornecedorPecaPayload>
+        }
+        findFirst: {
+          args: Prisma.FornecedorPecaFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FornecedorPecaPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FornecedorPecaFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FornecedorPecaPayload>
+        }
+        findMany: {
+          args: Prisma.FornecedorPecaFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FornecedorPecaPayload>[]
+        }
+        create: {
+          args: Prisma.FornecedorPecaCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FornecedorPecaPayload>
+        }
+        createMany: {
+          args: Prisma.FornecedorPecaCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.FornecedorPecaCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FornecedorPecaPayload>[]
+        }
+        delete: {
+          args: Prisma.FornecedorPecaDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FornecedorPecaPayload>
+        }
+        update: {
+          args: Prisma.FornecedorPecaUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FornecedorPecaPayload>
+        }
+        deleteMany: {
+          args: Prisma.FornecedorPecaDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FornecedorPecaUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.FornecedorPecaUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FornecedorPecaPayload>[]
+        }
+        upsert: {
+          args: Prisma.FornecedorPecaUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FornecedorPecaPayload>
+        }
+        aggregate: {
+          args: Prisma.FornecedorPecaAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFornecedorPeca>
+        }
+        groupBy: {
+          args: Prisma.FornecedorPecaGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FornecedorPecaGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FornecedorPecaCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FornecedorPecaCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -7354,6 +7429,21 @@ export const PontoAuditoriaScalarFieldEnum = {
 export type PontoAuditoriaScalarFieldEnum = (typeof PontoAuditoriaScalarFieldEnum)[keyof typeof PontoAuditoriaScalarFieldEnum]
 
 
+export const FornecedorPecaScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  partnerId: 'partnerId',
+  pecaId: 'pecaId',
+  codigoFornecedor: 'codigoFornecedor',
+  precoReferencia: 'precoReferencia',
+  prazoEntregaDias: 'prazoEntregaDias',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FornecedorPecaScalarFieldEnum = (typeof FornecedorPecaScalarFieldEnum)[keyof typeof FornecedorPecaScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -7834,6 +7924,7 @@ export type GlobalOmitConfig = {
   recebimento?: Prisma.RecebimentoOmit
   recebimentoItem?: Prisma.RecebimentoItemOmit
   pontoAuditoria?: Prisma.PontoAuditoriaOmit
+  fornecedorPeca?: Prisma.FornecedorPecaOmit
 }
 
 /* Types for Logging */
