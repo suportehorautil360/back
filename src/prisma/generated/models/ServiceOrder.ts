@@ -461,6 +461,7 @@ export type ServiceOrderWhereInput = {
   auditoria?: Prisma.XOR<Prisma.ServiceOrderAuditoriaNullableScalarRelationFilter, Prisma.ServiceOrderAuditoriaWhereInput> | null
   checklistExecucoes?: Prisma.ChecklistExecucaoListRelationFilter
   requisicoes?: Prisma.RequisicaoMaterialListRelationFilter
+  solicitacoesCompra?: Prisma.SolicitacaoCompraListRelationFilter
 }
 
 export type ServiceOrderOrderByWithRelationInput = {
@@ -514,6 +515,7 @@ export type ServiceOrderOrderByWithRelationInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaOrderByWithRelationInput
   checklistExecucoes?: Prisma.ChecklistExecucaoOrderByRelationAggregateInput
   requisicoes?: Prisma.RequisicaoMaterialOrderByRelationAggregateInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraOrderByRelationAggregateInput
 }
 
 export type ServiceOrderWhereUniqueInput = Prisma.AtLeast<{
@@ -571,6 +573,7 @@ export type ServiceOrderWhereUniqueInput = Prisma.AtLeast<{
   auditoria?: Prisma.XOR<Prisma.ServiceOrderAuditoriaNullableScalarRelationFilter, Prisma.ServiceOrderAuditoriaWhereInput> | null
   checklistExecucoes?: Prisma.ChecklistExecucaoListRelationFilter
   requisicoes?: Prisma.RequisicaoMaterialListRelationFilter
+  solicitacoesCompra?: Prisma.SolicitacaoCompraListRelationFilter
 }, "id" | "legacyId" | "companyId_protocolo">
 
 export type ServiceOrderOrderByWithAggregationInput = {
@@ -705,6 +708,7 @@ export type ServiceOrderCreateInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateInput = {
@@ -755,6 +759,7 @@ export type ServiceOrderUncheckedCreateInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUpdateInput = {
@@ -805,6 +810,7 @@ export type ServiceOrderUpdateInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateInput = {
@@ -855,6 +861,7 @@ export type ServiceOrderUncheckedUpdateInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateManyInput = {
@@ -1405,6 +1412,22 @@ export type ServiceOrderUpdateOneRequiredWithoutRequisicoesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ServiceOrderUpdateToOneWithWhereWithoutRequisicoesInput, Prisma.ServiceOrderUpdateWithoutRequisicoesInput>, Prisma.ServiceOrderUncheckedUpdateWithoutRequisicoesInput>
 }
 
+export type ServiceOrderCreateNestedOneWithoutSolicitacoesCompraInput = {
+  create?: Prisma.XOR<Prisma.ServiceOrderCreateWithoutSolicitacoesCompraInput, Prisma.ServiceOrderUncheckedCreateWithoutSolicitacoesCompraInput>
+  connectOrCreate?: Prisma.ServiceOrderCreateOrConnectWithoutSolicitacoesCompraInput
+  connect?: Prisma.ServiceOrderWhereUniqueInput
+}
+
+export type ServiceOrderUpdateOneWithoutSolicitacoesCompraNestedInput = {
+  create?: Prisma.XOR<Prisma.ServiceOrderCreateWithoutSolicitacoesCompraInput, Prisma.ServiceOrderUncheckedCreateWithoutSolicitacoesCompraInput>
+  connectOrCreate?: Prisma.ServiceOrderCreateOrConnectWithoutSolicitacoesCompraInput
+  upsert?: Prisma.ServiceOrderUpsertWithoutSolicitacoesCompraInput
+  disconnect?: Prisma.ServiceOrderWhereInput | boolean
+  delete?: Prisma.ServiceOrderWhereInput | boolean
+  connect?: Prisma.ServiceOrderWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ServiceOrderUpdateToOneWithWhereWithoutSolicitacoesCompraInput, Prisma.ServiceOrderUpdateWithoutSolicitacoesCompraInput>, Prisma.ServiceOrderUncheckedUpdateWithoutSolicitacoesCompraInput>
+}
+
 export type ServiceOrderCreateWithoutCompanyInput = {
   id?: string
   legacyId?: string | null
@@ -1452,6 +1475,7 @@ export type ServiceOrderCreateWithoutCompanyInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutCompanyInput = {
@@ -1501,6 +1525,7 @@ export type ServiceOrderUncheckedCreateWithoutCompanyInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutCompanyInput = {
@@ -1617,6 +1642,7 @@ export type ServiceOrderCreateWithoutEquipmentInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutEquipmentInput = {
@@ -1666,6 +1692,7 @@ export type ServiceOrderUncheckedCreateWithoutEquipmentInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutEquipmentInput = {
@@ -1741,6 +1768,7 @@ export type ServiceOrderCreateWithoutInsumosInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutInsumosInput = {
@@ -1790,6 +1818,7 @@ export type ServiceOrderUncheckedCreateWithoutInsumosInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutInsumosInput = {
@@ -1855,6 +1884,7 @@ export type ServiceOrderUpdateWithoutInsumosInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutInsumosInput = {
@@ -1904,6 +1934,7 @@ export type ServiceOrderUncheckedUpdateWithoutInsumosInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutEtapasInput = {
@@ -1953,6 +1984,7 @@ export type ServiceOrderCreateWithoutEtapasInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutEtapasInput = {
@@ -2002,6 +2034,7 @@ export type ServiceOrderUncheckedCreateWithoutEtapasInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutEtapasInput = {
@@ -2067,6 +2100,7 @@ export type ServiceOrderUpdateWithoutEtapasInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutEtapasInput = {
@@ -2116,6 +2150,7 @@ export type ServiceOrderUncheckedUpdateWithoutEtapasInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutSintomasInput = {
@@ -2165,6 +2200,7 @@ export type ServiceOrderCreateWithoutSintomasInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutSintomasInput = {
@@ -2214,6 +2250,7 @@ export type ServiceOrderUncheckedCreateWithoutSintomasInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutSintomasInput = {
@@ -2279,6 +2316,7 @@ export type ServiceOrderUpdateWithoutSintomasInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutSintomasInput = {
@@ -2328,6 +2366,7 @@ export type ServiceOrderUncheckedUpdateWithoutSintomasInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutOcorrenciasInput = {
@@ -2377,6 +2416,7 @@ export type ServiceOrderCreateWithoutOcorrenciasInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutOcorrenciasInput = {
@@ -2426,6 +2466,7 @@ export type ServiceOrderUncheckedCreateWithoutOcorrenciasInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutOcorrenciasInput = {
@@ -2491,6 +2532,7 @@ export type ServiceOrderUpdateWithoutOcorrenciasInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutOcorrenciasInput = {
@@ -2540,6 +2582,7 @@ export type ServiceOrderUncheckedUpdateWithoutOcorrenciasInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutApontamentosInput = {
@@ -2589,6 +2632,7 @@ export type ServiceOrderCreateWithoutApontamentosInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutApontamentosInput = {
@@ -2638,6 +2682,7 @@ export type ServiceOrderUncheckedCreateWithoutApontamentosInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutApontamentosInput = {
@@ -2703,6 +2748,7 @@ export type ServiceOrderUpdateWithoutApontamentosInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutApontamentosInput = {
@@ -2752,6 +2798,7 @@ export type ServiceOrderUncheckedUpdateWithoutApontamentosInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutFotosInput = {
@@ -2801,6 +2848,7 @@ export type ServiceOrderCreateWithoutFotosInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutFotosInput = {
@@ -2850,6 +2898,7 @@ export type ServiceOrderUncheckedCreateWithoutFotosInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutFotosInput = {
@@ -2915,6 +2964,7 @@ export type ServiceOrderUpdateWithoutFotosInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutFotosInput = {
@@ -2964,6 +3014,7 @@ export type ServiceOrderUncheckedUpdateWithoutFotosInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutLaudoInput = {
@@ -3013,6 +3064,7 @@ export type ServiceOrderCreateWithoutLaudoInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutLaudoInput = {
@@ -3062,6 +3114,7 @@ export type ServiceOrderUncheckedCreateWithoutLaudoInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutLaudoInput = {
@@ -3127,6 +3180,7 @@ export type ServiceOrderUpdateWithoutLaudoInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutLaudoInput = {
@@ -3176,6 +3230,7 @@ export type ServiceOrderUncheckedUpdateWithoutLaudoInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutResponsavelInput = {
@@ -3225,6 +3280,7 @@ export type ServiceOrderCreateWithoutResponsavelInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutResponsavelInput = {
@@ -3274,6 +3330,7 @@ export type ServiceOrderUncheckedCreateWithoutResponsavelInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutResponsavelInput = {
@@ -3349,6 +3406,7 @@ export type ServiceOrderCreateWithoutOrcamentosInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutOrcamentosInput = {
@@ -3398,6 +3456,7 @@ export type ServiceOrderUncheckedCreateWithoutOrcamentosInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutOrcamentosInput = {
@@ -3463,6 +3522,7 @@ export type ServiceOrderUpdateWithoutOrcamentosInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutOrcamentosInput = {
@@ -3512,6 +3572,7 @@ export type ServiceOrderUncheckedUpdateWithoutOrcamentosInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutEmergenciesInput = {
@@ -3561,6 +3622,7 @@ export type ServiceOrderCreateWithoutEmergenciesInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutEmergenciesInput = {
@@ -3610,6 +3672,7 @@ export type ServiceOrderUncheckedCreateWithoutEmergenciesInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutEmergenciesInput = {
@@ -3675,6 +3738,7 @@ export type ServiceOrderUpdateWithoutEmergenciesInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutEmergenciesInput = {
@@ -3724,6 +3788,7 @@ export type ServiceOrderUncheckedUpdateWithoutEmergenciesInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutChecklistExecucoesInput = {
@@ -3773,6 +3838,7 @@ export type ServiceOrderCreateWithoutChecklistExecucoesInput = {
   laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutChecklistExecucoesInput = {
@@ -3822,6 +3888,7 @@ export type ServiceOrderUncheckedCreateWithoutChecklistExecucoesInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutChecklistExecucoesInput = {
@@ -3887,6 +3954,7 @@ export type ServiceOrderUpdateWithoutChecklistExecucoesInput = {
   laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutChecklistExecucoesInput = {
@@ -3936,6 +4004,7 @@ export type ServiceOrderUncheckedUpdateWithoutChecklistExecucoesInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutAuditoriaInput = {
@@ -3985,6 +4054,7 @@ export type ServiceOrderCreateWithoutAuditoriaInput = {
   laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutAuditoriaInput = {
@@ -4034,6 +4104,7 @@ export type ServiceOrderUncheckedCreateWithoutAuditoriaInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutAuditoriaInput = {
@@ -4099,6 +4170,7 @@ export type ServiceOrderUpdateWithoutAuditoriaInput = {
   laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutAuditoriaInput = {
@@ -4148,6 +4220,7 @@ export type ServiceOrderUncheckedUpdateWithoutAuditoriaInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateWithoutRequisicoesInput = {
@@ -4197,6 +4270,7 @@ export type ServiceOrderCreateWithoutRequisicoesInput = {
   laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderUncheckedCreateWithoutRequisicoesInput = {
@@ -4246,6 +4320,7 @@ export type ServiceOrderUncheckedCreateWithoutRequisicoesInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutServiceOrderInput
 }
 
 export type ServiceOrderCreateOrConnectWithoutRequisicoesInput = {
@@ -4311,6 +4386,7 @@ export type ServiceOrderUpdateWithoutRequisicoesInput = {
   laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutRequisicoesInput = {
@@ -4360,6 +4436,223 @@ export type ServiceOrderUncheckedUpdateWithoutRequisicoesInput = {
   laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutServiceOrderNestedInput
+}
+
+export type ServiceOrderCreateWithoutSolicitacoesCompraInput = {
+  id?: string
+  legacyId?: string | null
+  protocolo: string
+  tipoOs: string
+  serviceType?: string | null
+  equipmentNome?: string | null
+  equipmentPlaca?: string | null
+  linha?: string | null
+  segmento?: string | null
+  horimetro?: string | null
+  operadorLegacyId?: string | null
+  operadorNome?: string | null
+  relato: string
+  dataAgendamento?: Date | string | null
+  situacao?: string
+  status?: string
+  categoriaPlanoId?: string | null
+  cicloId?: string | null
+  oficinasIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasNomes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasResponderam?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lances?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  aprovadoEm?: Date | string | null
+  valorAprovado?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  oficinaVencedoraId?: string | null
+  ordemServicoAprovadaId?: string | null
+  execucao?: string
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutServiceOrdersInput
+  equipment?: Prisma.EquipmentCreateNestedOneWithoutServiceOrdersInput
+  insumos?: Prisma.ServiceOrderInsumoCreateNestedManyWithoutServiceOrderInput
+  etapas?: Prisma.ServiceOrderEtapaCreateNestedManyWithoutServiceOrderInput
+  sintomas?: Prisma.ServiceOrderSintomaCreateNestedManyWithoutServiceOrderInput
+  ocorrencias?: Prisma.ServiceOrderOcorrenciaCreateNestedManyWithoutServiceOrderInput
+  orcamentos?: Prisma.OrcamentoCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyCreateNestedManyWithoutServiceOrderInput
+  responsavel?: Prisma.OperatorCreateNestedOneWithoutOsComoResponsavelInput
+  apontamentos?: Prisma.ServiceOrderApontamentoCreateNestedManyWithoutServiceOrderInput
+  fotos?: Prisma.ServiceOrderFotoCreateNestedManyWithoutServiceOrderInput
+  laudo?: Prisma.ServiceOrderLaudoCreateNestedOneWithoutServiceOrderInput
+  auditoria?: Prisma.ServiceOrderAuditoriaCreateNestedOneWithoutServiceOrderInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutServiceOrderInput
+}
+
+export type ServiceOrderUncheckedCreateWithoutSolicitacoesCompraInput = {
+  id?: string
+  legacyId?: string | null
+  companyId: string
+  protocolo: string
+  tipoOs: string
+  serviceType?: string | null
+  equipmentId?: string | null
+  equipmentNome?: string | null
+  equipmentPlaca?: string | null
+  linha?: string | null
+  segmento?: string | null
+  horimetro?: string | null
+  operadorLegacyId?: string | null
+  operadorNome?: string | null
+  relato: string
+  dataAgendamento?: Date | string | null
+  situacao?: string
+  status?: string
+  categoriaPlanoId?: string | null
+  cicloId?: string | null
+  oficinasIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasNomes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasResponderam?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lances?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  aprovadoEm?: Date | string | null
+  valorAprovado?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  oficinaVencedoraId?: string | null
+  ordemServicoAprovadaId?: string | null
+  execucao?: string
+  responsavelOperatorId?: string | null
+  statusMateriais?: string
+  execucaoParcialAutorizadaPor?: string | null
+  execucaoParcialMotivo?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  insumos?: Prisma.ServiceOrderInsumoUncheckedCreateNestedManyWithoutServiceOrderInput
+  etapas?: Prisma.ServiceOrderEtapaUncheckedCreateNestedManyWithoutServiceOrderInput
+  sintomas?: Prisma.ServiceOrderSintomaUncheckedCreateNestedManyWithoutServiceOrderInput
+  ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedCreateNestedManyWithoutServiceOrderInput
+  orcamentos?: Prisma.OrcamentoUncheckedCreateNestedManyWithoutServiceOrderInput
+  emergencies?: Prisma.EmergencyUncheckedCreateNestedManyWithoutServiceOrderInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedCreateNestedManyWithoutServiceOrderInput
+  fotos?: Prisma.ServiceOrderFotoUncheckedCreateNestedManyWithoutServiceOrderInput
+  laudo?: Prisma.ServiceOrderLaudoUncheckedCreateNestedOneWithoutServiceOrderInput
+  auditoria?: Prisma.ServiceOrderAuditoriaUncheckedCreateNestedOneWithoutServiceOrderInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutServiceOrderInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutServiceOrderInput
+}
+
+export type ServiceOrderCreateOrConnectWithoutSolicitacoesCompraInput = {
+  where: Prisma.ServiceOrderWhereUniqueInput
+  create: Prisma.XOR<Prisma.ServiceOrderCreateWithoutSolicitacoesCompraInput, Prisma.ServiceOrderUncheckedCreateWithoutSolicitacoesCompraInput>
+}
+
+export type ServiceOrderUpsertWithoutSolicitacoesCompraInput = {
+  update: Prisma.XOR<Prisma.ServiceOrderUpdateWithoutSolicitacoesCompraInput, Prisma.ServiceOrderUncheckedUpdateWithoutSolicitacoesCompraInput>
+  create: Prisma.XOR<Prisma.ServiceOrderCreateWithoutSolicitacoesCompraInput, Prisma.ServiceOrderUncheckedCreateWithoutSolicitacoesCompraInput>
+  where?: Prisma.ServiceOrderWhereInput
+}
+
+export type ServiceOrderUpdateToOneWithWhereWithoutSolicitacoesCompraInput = {
+  where?: Prisma.ServiceOrderWhereInput
+  data: Prisma.XOR<Prisma.ServiceOrderUpdateWithoutSolicitacoesCompraInput, Prisma.ServiceOrderUncheckedUpdateWithoutSolicitacoesCompraInput>
+}
+
+export type ServiceOrderUpdateWithoutSolicitacoesCompraInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  protocolo?: Prisma.StringFieldUpdateOperationsInput | string
+  tipoOs?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentPlaca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linha?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  segmento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  horimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  relato?: Prisma.StringFieldUpdateOperationsInput | string
+  dataAgendamento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  situacao?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  categoriaPlanoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cicloId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  oficinasIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasNomes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasResponderam?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lances?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  aprovadoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  valorAprovado?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutServiceOrdersNestedInput
+  equipment?: Prisma.EquipmentUpdateOneWithoutServiceOrdersNestedInput
+  insumos?: Prisma.ServiceOrderInsumoUpdateManyWithoutServiceOrderNestedInput
+  etapas?: Prisma.ServiceOrderEtapaUpdateManyWithoutServiceOrderNestedInput
+  sintomas?: Prisma.ServiceOrderSintomaUpdateManyWithoutServiceOrderNestedInput
+  ocorrencias?: Prisma.ServiceOrderOcorrenciaUpdateManyWithoutServiceOrderNestedInput
+  orcamentos?: Prisma.OrcamentoUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUpdateManyWithoutServiceOrderNestedInput
+  responsavel?: Prisma.OperatorUpdateOneWithoutOsComoResponsavelNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUpdateManyWithoutServiceOrderNestedInput
+  fotos?: Prisma.ServiceOrderFotoUpdateManyWithoutServiceOrderNestedInput
+  laudo?: Prisma.ServiceOrderLaudoUpdateOneWithoutServiceOrderNestedInput
+  auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
+}
+
+export type ServiceOrderUncheckedUpdateWithoutSolicitacoesCompraInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  protocolo?: Prisma.StringFieldUpdateOperationsInput | string
+  tipoOs?: Prisma.StringFieldUpdateOperationsInput | string
+  serviceType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentPlaca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linha?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  segmento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  horimetro?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorLegacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operadorNome?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  relato?: Prisma.StringFieldUpdateOperationsInput | string
+  dataAgendamento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  situacao?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  categoriaPlanoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cicloId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  oficinasIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasNomes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  oficinasResponderam?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  lances?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  aprovadoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  valorAprovado?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  oficinaVencedoraId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ordemServicoAprovadaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucao?: Prisma.StringFieldUpdateOperationsInput | string
+  responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  statusMateriais?: Prisma.StringFieldUpdateOperationsInput | string
+  execucaoParcialAutorizadaPor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  execucaoParcialMotivo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  insumos?: Prisma.ServiceOrderInsumoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  etapas?: Prisma.ServiceOrderEtapaUncheckedUpdateManyWithoutServiceOrderNestedInput
+  sintomas?: Prisma.ServiceOrderSintomaUncheckedUpdateManyWithoutServiceOrderNestedInput
+  ocorrencias?: Prisma.ServiceOrderOcorrenciaUncheckedUpdateManyWithoutServiceOrderNestedInput
+  orcamentos?: Prisma.OrcamentoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  emergencies?: Prisma.EmergencyUncheckedUpdateManyWithoutServiceOrderNestedInput
+  apontamentos?: Prisma.ServiceOrderApontamentoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  fotos?: Prisma.ServiceOrderFotoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  laudo?: Prisma.ServiceOrderLaudoUncheckedUpdateOneWithoutServiceOrderNestedInput
+  auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderCreateManyCompanyInput = {
@@ -4446,6 +4739,7 @@ export type ServiceOrderUpdateWithoutCompanyInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutCompanyInput = {
@@ -4495,6 +4789,7 @@ export type ServiceOrderUncheckedUpdateWithoutCompanyInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateManyWithoutCompanyInput = {
@@ -4618,6 +4913,7 @@ export type ServiceOrderUpdateWithoutEquipmentInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutEquipmentInput = {
@@ -4667,6 +4963,7 @@ export type ServiceOrderUncheckedUpdateWithoutEquipmentInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateManyWithoutEquipmentInput = {
@@ -4790,6 +5087,7 @@ export type ServiceOrderUpdateWithoutResponsavelInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateWithoutResponsavelInput = {
@@ -4839,6 +5137,7 @@ export type ServiceOrderUncheckedUpdateWithoutResponsavelInput = {
   auditoria?: Prisma.ServiceOrderAuditoriaUncheckedUpdateOneWithoutServiceOrderNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutServiceOrderNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutServiceOrderNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutServiceOrderNestedInput
 }
 
 export type ServiceOrderUncheckedUpdateManyWithoutResponsavelInput = {
@@ -4894,6 +5193,7 @@ export type ServiceOrderCountOutputType = {
   fotos: number
   checklistExecucoes: number
   requisicoes: number
+  solicitacoesCompra: number
 }
 
 export type ServiceOrderCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -4907,6 +5207,7 @@ export type ServiceOrderCountOutputTypeSelect<ExtArgs extends runtime.Types.Exte
   fotos?: boolean | ServiceOrderCountOutputTypeCountFotosArgs
   checklistExecucoes?: boolean | ServiceOrderCountOutputTypeCountChecklistExecucoesArgs
   requisicoes?: boolean | ServiceOrderCountOutputTypeCountRequisicoesArgs
+  solicitacoesCompra?: boolean | ServiceOrderCountOutputTypeCountSolicitacoesCompraArgs
 }
 
 /**
@@ -4989,6 +5290,13 @@ export type ServiceOrderCountOutputTypeCountRequisicoesArgs<ExtArgs extends runt
   where?: Prisma.RequisicaoMaterialWhereInput
 }
 
+/**
+ * ServiceOrderCountOutputType without action
+ */
+export type ServiceOrderCountOutputTypeCountSolicitacoesCompraArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SolicitacaoCompraWhereInput
+}
+
 
 export type ServiceOrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -5041,6 +5349,7 @@ export type ServiceOrderSelect<ExtArgs extends runtime.Types.Extensions.Internal
   auditoria?: boolean | Prisma.ServiceOrder$auditoriaArgs<ExtArgs>
   checklistExecucoes?: boolean | Prisma.ServiceOrder$checklistExecucoesArgs<ExtArgs>
   requisicoes?: boolean | Prisma.ServiceOrder$requisicoesArgs<ExtArgs>
+  solicitacoesCompra?: boolean | Prisma.ServiceOrder$solicitacoesCompraArgs<ExtArgs>
   _count?: boolean | Prisma.ServiceOrderCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["serviceOrder"]>
 
@@ -5181,6 +5490,7 @@ export type ServiceOrderInclude<ExtArgs extends runtime.Types.Extensions.Interna
   auditoria?: boolean | Prisma.ServiceOrder$auditoriaArgs<ExtArgs>
   checklistExecucoes?: boolean | Prisma.ServiceOrder$checklistExecucoesArgs<ExtArgs>
   requisicoes?: boolean | Prisma.ServiceOrder$requisicoesArgs<ExtArgs>
+  solicitacoesCompra?: boolean | Prisma.ServiceOrder$solicitacoesCompraArgs<ExtArgs>
   _count?: boolean | Prisma.ServiceOrderCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ServiceOrderIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -5212,6 +5522,7 @@ export type $ServiceOrderPayload<ExtArgs extends runtime.Types.Extensions.Intern
     auditoria: Prisma.$ServiceOrderAuditoriaPayload<ExtArgs> | null
     checklistExecucoes: Prisma.$ChecklistExecucaoPayload<ExtArgs>[]
     requisicoes: Prisma.$RequisicaoMaterialPayload<ExtArgs>[]
+    solicitacoesCompra: Prisma.$SolicitacaoCompraPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -5719,6 +6030,7 @@ export interface Prisma__ServiceOrderClient<T, Null = never, ExtArgs extends run
   auditoria<T extends Prisma.ServiceOrder$auditoriaArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ServiceOrder$auditoriaArgs<ExtArgs>>): Prisma.Prisma__ServiceOrderAuditoriaClient<runtime.Types.Result.GetResult<Prisma.$ServiceOrderAuditoriaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   checklistExecucoes<T extends Prisma.ServiceOrder$checklistExecucoesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ServiceOrder$checklistExecucoesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChecklistExecucaoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   requisicoes<T extends Prisma.ServiceOrder$requisicoesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ServiceOrder$requisicoesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RequisicaoMaterialPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  solicitacoesCompra<T extends Prisma.ServiceOrder$solicitacoesCompraArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ServiceOrder$solicitacoesCompraArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SolicitacaoCompraPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -6497,6 +6809,30 @@ export type ServiceOrder$requisicoesArgs<ExtArgs extends runtime.Types.Extension
   take?: number
   skip?: number
   distinct?: Prisma.RequisicaoMaterialScalarFieldEnum | Prisma.RequisicaoMaterialScalarFieldEnum[]
+}
+
+/**
+ * ServiceOrder.solicitacoesCompra
+ */
+export type ServiceOrder$solicitacoesCompraArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the SolicitacaoCompra
+   */
+  select?: Prisma.SolicitacaoCompraSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the SolicitacaoCompra
+   */
+  omit?: Prisma.SolicitacaoCompraOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SolicitacaoCompraInclude<ExtArgs> | null
+  where?: Prisma.SolicitacaoCompraWhereInput
+  orderBy?: Prisma.SolicitacaoCompraOrderByWithRelationInput | Prisma.SolicitacaoCompraOrderByWithRelationInput[]
+  cursor?: Prisma.SolicitacaoCompraWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.SolicitacaoCompraScalarFieldEnum | Prisma.SolicitacaoCompraScalarFieldEnum[]
 }
 
 /**

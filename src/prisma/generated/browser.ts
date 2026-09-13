@@ -511,3 +511,62 @@ export type RequisicaoMaterial = Prisma.RequisicaoMaterialModel
  * 
  */
 export type RequisicaoMaterialItem = Prisma.RequisicaoMaterialItemModel
+/**
+ * Model SolicitacaoCompra
+ * Solicitação de compra (SC): a NECESSIDADE, com dono — desenho de
+ * Almoxarifado e Compras, revisão 2, §4.6, com o ajuste da F4: a aprovação
+ * por valor mora na ORDEM de compra, não aqui (três SC pequenas somando acima
+ * do limite num fornecedor só também pedem aprovação).
+ */
+export type SolicitacaoCompra = Prisma.SolicitacaoCompraModel
+/**
+ * Model SolicitacaoCompraItem
+ * Um item de SC. O vínculo com a OS mora AQUI, no item (decisão D5): uma SC
+ * pode juntar faltas, e uma OC pode atender vários itens de SC.
+ * 
+ * Índice único PARCIAL em SQL puro (Prisma não expressa `WHERE`):
+ * `solicitacao_compra_itens_uma_por_falta` — no máximo UM item vivo
+ * (`status <> 'cancelada'`) por `requisicaoItemId`. Migration
+ * `20260913130000_solicitacoes_compra`.
+ */
+export type SolicitacaoCompraItem = Prisma.SolicitacaoCompraItemModel
+/**
+ * Model OrdemCompra
+ * Ordem de compra (OC): o compromisso com o fornecedor. Nasce em `rascunho`
+ * (é a cotação: fornecedor e preço), e só é `emitida` dentro do limite de
+ * aprovação da empresa ou depois de aprovada — e só então conta em
+ * `PecaSaldo.saldoEmCompra`.
+ */
+export type OrdemCompra = Prisma.OrdemCompraModel
+/**
+ * Model OrdemCompraItem
+ * Uma peça numa OC. `quantidadeRecebida` conta só o que ENTROU no estoque:
+ * a recusa não consome o pedido (ajuste da F4 ao §11) — o item segue
+ * pendente até a reposição chegar ou alguém encerrar a OC.
+ */
+export type OrdemCompraItem = Prisma.OrdemCompraItemModel
+/**
+ * Model OrdemCompraItemOrigem
+ * Liga um item de OC a um item de SC COM QUANTIDADE — é o que permite uma OC
+ * atender várias SC e o recebimento saber a quem destinar primeiro (§8).
+ */
+export type OrdemCompraItemOrigem = Prisma.OrdemCompraItemOrigemModel
+/**
+ * Model Recebimento
+ * Uma entrega do fornecedor. Tabela própria, e não colunas na OC: entrega
+ * parcial é vários recebimentos, cada um com sua nota e sua data (§4.8).
+ */
+export type Recebimento = Prisma.RecebimentoModel
+/**
+ * Model RecebimentoItem
+ * 
+ */
+export type RecebimentoItem = Prisma.RecebimentoItemModel
+/**
+ * Model PontoAuditoria
+ * Espelho de `ponto_auditoria` (painel), SEM a relação com `Company` — o
+ * espelho do back não declara a volta em `Company`, e o Nest só grava o rastro
+ * (decisão D8: a auditoria de Compras reusa esta tabela, append-only por
+ * gatilho, com `alvoTipo = "suprimentos.*"`).
+ */
+export type PontoAuditoria = Prisma.PontoAuditoriaModel

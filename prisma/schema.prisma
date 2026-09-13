@@ -123,6 +123,9 @@ model Company {
   pecas                   Peca[]
   estoqueMovimentos       EstoqueMovimento[]
   requisicoesMaterial     RequisicaoMaterial[]
+  solicitacoesCompra      SolicitacaoCompra[]
+  ordensCompra            OrdemCompra[]
+  recebimentos            Recebimento[]
 
   @@map("clients")
 }
@@ -170,6 +173,15 @@ model WhatsappPlatformSession {
 /// compat com o portal 360 legacy.
 model CompanySettings {
   companyId String @id @map("company_id") @db.Uuid
+
+  /// Compras (F4): acima deste valor TOTAL a ordem de compra espera aprovação
+  /// de OWNER/ADMIN ou do gestor master. NULO = sem limite configurado = toda
+  /// OC pede aprovação (falha para o lado seguro).
+  comprasLimiteAprovacao    Decimal? @map("compras_limite_aprovacao") @db.Decimal(14, 2)
+  /// Em nome de quem a solicitação automática por estoque mínimo nasce, e um
+  /// dos aprovadores de OC. NULO vale o OWNER. UUID solto de propósito, como os
+  /// autores do módulo: a validação de que é usuário da empresa mora no código.
+  gestorMasterCompanyUserId String?  @map("gestor_master_company_user_id") @db.Uuid
 
   /// Alertas e notificações — 6 toggles independentes.
   alertBloqueioRevisaoVencida Boolean @default(true) @map("alert_bloqueio_revisao_vencida")
@@ -566,6 +578,7 @@ model ServiceOrder {
   auditoria          ServiceOrderAuditoria?
   checklistExecucoes ChecklistExecucao[]
   requisicoes        RequisicaoMaterial[]
+  solicitacoesCompra SolicitacaoCompra[]
 
   @@unique([companyId, protocolo])
   @@index([companyId, status])
@@ -1089,6 +1102,9 @@ model RoleAccessGroup {
 enum PartnerType {
   POSTO
   OFICINA
+  /// Fornecedor de peças para Compras (decisão D9 do desenho de Almoxarifado
+  /// e Compras). Migration `20260913110000_partner_type_fornecedor`.
+  FORNECEDOR
 }
 
 /// Parceiro credenciado (posto de combustível ou oficina mecânica) vinculado
@@ -1137,6 +1153,8 @@ model Partner {
 
   company            Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
   partnerPortalUsers PartnerPortalUser[]
+  /// Ordens de compra deste parceiro quando ele é FORNECEDOR.
+  ordensCompra       OrdemCompra[]
 
   @@index([companyId])
   @@index([type])
@@ -2202,6 +2220,9 @@ model Deposito {
   saldos      PecaSaldo[]
   movimentos  EstoqueMovimento[]
   requisicoes RequisicaoMaterial[]
+  solicitacoesCompra SolicitacaoCompra[]
+  ordensCompra       OrdemCompra[]
+  recebimentos       Recebimento[]
 
   @@unique([companyId, nome])
   @@map("depositos")
@@ -2244,6 +2265,8 @@ model Peca {
   /// Linhas de requisição em que esta peça entrou como EQUIVALENTE de outra
   /// (`equivalenteDePecaId`) — relação nomeada porque já existe a acima.
   pecasEquivalentes RequisicaoMaterialItem[] @relation("PecaEquivalente")
+  solicitacaoCompraItens SolicitacaoCompraItem[]
+  ordemCompraItens       OrdemCompraItem[]
 
   @@unique([companyId, codigoInterno])
   @@index([companyId, codigoFabricante])
@@ -2371,6 +2394,7 @@ model RequisicaoMaterial {
   itens        RequisicaoMaterialItem[]
   /// Quem RECEBEU — ver comentário do campo acima.
   recebedor    Operator?                @relation("RequisicaoRecebedor", fields: [recebedorOperatorId], references: [id], onDelete: SetNull)
+  solicitacoesCompra SolicitacaoCompra[]
 
   @@unique([companyId, numero])
   @@index([companyId, status, createdAt])
@@ -2439,8 +2463,277 @@ model RequisicaoMaterialItem {
   requisicao     RequisicaoMaterial @relation(fields: [requisicaoId], references: [id], onDelete: Cascade)
   peca           Peca?              @relation(fields: [pecaId], references: [id], onDelete: Restrict)
   equivalenteDe  Peca?              @relation("PecaEquivalente", fields: [equivalenteDePecaId], references: [id], onDelete: SetNull)
+  /// Os itens de solicitação de compra que cobrem a falta deste item.
+  solicitacaoCompraItens SolicitacaoCompraItem[]
 
   @@index([requisicaoId])
   @@index([pecaId, status])
   @@map("requisicao_material_itens")
+}
+
+/// Solicitação de compra (SC): a NECESSIDADE, com dono — desenho de
+/// Almoxarifado e Compras, revisão 2, §4.6, com o ajuste da F4: a aprovação
+/// por valor mora na ORDEM de compra, não aqui (três SC pequenas somando acima
+/// do limite num fornecedor só também pedem aprovação).
+model SolicitacaoCompra {
+  id        String @id @default(uuid()) @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+
+  /// "SC-2026-001". MAX+1 por empresa; o `@@unique` DETECTA colisão, quem
+  /// absorve é o retry do Nest.
+  numero String
+
+  /// "falta_os" | "peca_adicional" | "estoque_minimo" | "manual"
+  origem String
+  /// "pendente" | "em_cotacao" | "aprovada" | "rejeitada" | "cancelada"
+  status String @default("pendente")
+  /// "critica" | "alta" | "normal" | "reposicao"
+  prioridade String
+
+  depositoId     String  @map("deposito_id") @db.Uuid
+  /// De qual OS/requisição veio a falta. Nulo na reposição e na manual sem OS.
+  serviceOrderId String? @map("service_order_id") @db.Uuid
+  requisicaoId   String? @map("requisicao_id") @db.Uuid
+  justificativa  String?
+
+  /// Quem pediu — nulo quando foi o sistema. UUID solto de propósito, no
+  /// molde de `EstoqueMovimento.autorCompanyUserId`: o registro sobrevive à
+  /// remoção do usuário.
+  solicitanteCompanyUserId String? @map("solicitante_company_user_id") @db.Uuid
+  /// Em nome de quem a SC existe — o gestor master na automática por estoque
+  /// mínimo. Pedido sem dono é pedido que ninguém cobra.
+  emNomeDeCompanyUserId    String? @map("em_nome_de_company_user_id") @db.Uuid
+
+  rejeitadaEm               DateTime? @map("rejeitada_em")
+  rejeitadaPorCompanyUserId String?   @map("rejeitada_por_company_user_id") @db.Uuid
+  motivoRejeicao            String?   @map("motivo_rejeicao")
+  canceladaEm               DateTime? @map("cancelada_em")
+  canceladaPorCompanyUserId String?   @map("cancelada_por_company_user_id") @db.Uuid
+  motivoCancelamento        String?   @map("motivo_cancelamento")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company      Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  deposito     Deposito                @relation(fields: [depositoId], references: [id], onDelete: Restrict)
+  serviceOrder ServiceOrder?           @relation(fields: [serviceOrderId], references: [id], onDelete: SetNull)
+  requisicao   RequisicaoMaterial?     @relation(fields: [requisicaoId], references: [id], onDelete: SetNull)
+  itens        SolicitacaoCompraItem[]
+
+  @@unique([companyId, numero])
+  @@index([companyId, status, prioridade, createdAt])
+  @@index([serviceOrderId])
+  @@map("solicitacoes_compra")
+}
+
+/// Um item de SC. O vínculo com a OS mora AQUI, no item (decisão D5): uma SC
+/// pode juntar faltas, e uma OC pode atender vários itens de SC.
+///
+/// Índice único PARCIAL em SQL puro (Prisma não expressa `WHERE`):
+/// `solicitacao_compra_itens_uma_por_falta` — no máximo UM item vivo
+/// (`status <> 'cancelada'`) por `requisicaoItemId`. Migration
+/// `20260913130000_solicitacoes_compra`.
+model SolicitacaoCompraItem {
+  id            String  @id @default(uuid()) @db.Uuid
+  solicitacaoId String  @map("solicitacao_id") @db.Uuid
+  pecaId        String  @map("peca_id") @db.Uuid
+  quantidade    Decimal @db.Decimal(12, 3)
+
+  /// O item de requisição cuja falta este item cobre. Nulo = reposição (vai
+  /// para a prateleira, não para uma OS).
+  requisicaoItemId String?   @map("requisicao_item_id") @db.Uuid
+  /// "critica" | "alta" | "normal" | "reposicao"
+  prioridade       String
+  dataNecessidade  DateTime? @map("data_necessidade") @db.Date
+  /// "aberta" | "atendida" | "cancelada"
+  status           String    @default("aberta")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  solicitacao    SolicitacaoCompra       @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+  peca           Peca                    @relation(fields: [pecaId], references: [id], onDelete: Restrict)
+  requisicaoItem RequisicaoMaterialItem? @relation(fields: [requisicaoItemId], references: [id], onDelete: SetNull)
+  origensOc      OrdemCompraItemOrigem[]
+
+  @@index([solicitacaoId])
+  @@index([pecaId, status])
+  @@map("solicitacao_compra_itens")
+}
+
+/// Ordem de compra (OC): o compromisso com o fornecedor. Nasce em `rascunho`
+/// (é a cotação: fornecedor e preço), e só é `emitida` dentro do limite de
+/// aprovação da empresa ou depois de aprovada — e só então conta em
+/// `PecaSaldo.saldoEmCompra`.
+model OrdemCompra {
+  id        String @id @default(uuid()) @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+
+  /// "OC-2026-001".
+  numero String
+
+  /// "rascunho" | "aguardando_aprovacao" | "emitida" | "enviada" |
+  /// "recebida_parcial" | "recebida" | "encerrada" | "cancelada"
+  status String @default("rascunho")
+
+  /// O fornecedor — `Partner` com `type: FORNECEDOR` (decisão D9).
+  partnerId  String @map("partner_id") @db.Uuid
+  depositoId String @map("deposito_id") @db.Uuid
+
+  condicaoPagamento String?   @map("condicao_pagamento")
+  previsaoEntrega   DateTime? @map("previsao_entrega") @db.Date
+  observacao        String?
+  valorTotal        Decimal   @default(0) @map("valor_total") @db.Decimal(14, 2)
+
+  /// UUIDs soltos de propósito, como os outros autores do módulo.
+  criadaPorCompanyUserId    String    @map("criada_por_company_user_id") @db.Uuid
+  emitidaEm                 DateTime? @map("emitida_em")
+  emitidaPorCompanyUserId   String?   @map("emitida_por_company_user_id") @db.Uuid
+  aprovadaEm                DateTime? @map("aprovada_em")
+  aprovadaPorCompanyUserId  String?   @map("aprovada_por_company_user_id") @db.Uuid
+  devolvidaEm               DateTime? @map("devolvida_em")
+  devolvidaPorCompanyUserId String?   @map("devolvida_por_company_user_id") @db.Uuid
+  motivoDevolucao           String?   @map("motivo_devolucao")
+  enviadaEm                 DateTime? @map("enviada_em")
+  enviadaPorCompanyUserId   String?   @map("enviada_por_company_user_id") @db.Uuid
+  canceladaEm               DateTime? @map("cancelada_em")
+  canceladaPorCompanyUserId String?   @map("cancelada_por_company_user_id") @db.Uuid
+  motivoCancelamento        String?   @map("motivo_cancelamento")
+  encerradaEm               DateTime? @map("encerrada_em")
+  encerradaPorCompanyUserId String?   @map("encerrada_por_company_user_id") @db.Uuid
+  motivoEncerramento        String?   @map("motivo_encerramento")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company      Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  fornecedor   Partner           @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  deposito     Deposito          @relation(fields: [depositoId], references: [id], onDelete: Restrict)
+  itens        OrdemCompraItem[]
+  recebimentos Recebimento[]
+
+  @@unique([companyId, numero])
+  @@index([companyId, status, createdAt])
+  @@map("ordens_compra")
+}
+
+/// Uma peça numa OC. `quantidadeRecebida` conta só o que ENTROU no estoque:
+/// a recusa não consome o pedido (ajuste da F4 ao §11) — o item segue
+/// pendente até a reposição chegar ou alguém encerrar a OC.
+model OrdemCompraItem {
+  id                 String  @id @default(uuid()) @db.Uuid
+  ordemCompraId      String  @map("ordem_compra_id") @db.Uuid
+  pecaId             String  @map("peca_id") @db.Uuid
+  quantidade         Decimal @db.Decimal(12, 3)
+  quantidadeRecebida Decimal @default(0) @map("quantidade_recebida") @db.Decimal(12, 3)
+  valorUnit          Decimal @default(0) @map("valor_unit") @db.Decimal(12, 4)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  ordemCompra      OrdemCompra             @relation(fields: [ordemCompraId], references: [id], onDelete: Cascade)
+  peca             Peca                    @relation(fields: [pecaId], references: [id], onDelete: Restrict)
+  origens          OrdemCompraItemOrigem[]
+  recebimentoItens RecebimentoItem[]
+
+  @@unique([ordemCompraId, pecaId])
+  @@index([pecaId])
+  @@map("ordem_compra_itens")
+}
+
+/// Liga um item de OC a um item de SC COM QUANTIDADE — é o que permite uma OC
+/// atender várias SC e o recebimento saber a quem destinar primeiro (§8).
+model OrdemCompraItemOrigem {
+  id                      String  @id @default(uuid()) @db.Uuid
+  ordemCompraItemId       String  @map("ordem_compra_item_id") @db.Uuid
+  solicitacaoCompraItemId String  @map("solicitacao_compra_item_id") @db.Uuid
+  quantidade              Decimal @db.Decimal(12, 3)
+  quantidadeRecebida      Decimal @default(0) @map("quantidade_recebida") @db.Decimal(12, 3)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  ordemCompraItem       OrdemCompraItem       @relation(fields: [ordemCompraItemId], references: [id], onDelete: Cascade)
+  solicitacaoCompraItem SolicitacaoCompraItem @relation(fields: [solicitacaoCompraItemId], references: [id], onDelete: Restrict)
+
+  @@unique([ordemCompraItemId, solicitacaoCompraItemId])
+  @@index([solicitacaoCompraItemId])
+  @@map("ordem_compra_item_origens")
+}
+
+/// Uma entrega do fornecedor. Tabela própria, e não colunas na OC: entrega
+/// parcial é vários recebimentos, cada um com sua nota e sua data (§4.8).
+model Recebimento {
+  id            String @id @default(uuid()) @db.Uuid
+  companyId     String @map("company_id") @db.Uuid
+  ordemCompraId String @map("ordem_compra_id") @db.Uuid
+  depositoId    String @map("deposito_id") @db.Uuid
+
+  notaFiscalNumero         String? @map("nota_fiscal_numero")
+  notaFiscalChave          String? @map("nota_fiscal_chave")
+  /// UUID solto de propósito, como os outros autores do módulo.
+  recebidoPorCompanyUserId String  @map("recebido_por_company_user_id") @db.Uuid
+  observacao               String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  company     Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  ordemCompra OrdemCompra       @relation(fields: [ordemCompraId], references: [id], onDelete: Restrict)
+  deposito    Deposito          @relation(fields: [depositoId], references: [id], onDelete: Restrict)
+  itens       RecebimentoItem[]
+
+  @@index([ordemCompraId])
+  @@index([companyId, createdAt])
+  @@map("recebimentos")
+}
+
+model RecebimentoItem {
+  id                 String    @id @default(uuid()) @db.Uuid
+  recebimentoId      String    @map("recebimento_id") @db.Uuid
+  ordemCompraItemId  String    @map("ordem_compra_item_id") @db.Uuid
+  quantidadeRecebida Decimal   @default(0) @map("quantidade_recebida") @db.Decimal(12, 3)
+  quantidadeRecusada Decimal   @default(0) @map("quantidade_recusada") @db.Decimal(12, 3)
+  /// Preço da nota, quando difere do da OC. Nulo = vale o da OC.
+  valorUnit          Decimal?  @map("valor_unit") @db.Decimal(12, 4)
+  lote               String?
+  validade           DateTime? @db.Date
+  /// O que veio errado. Obrigatória quando há recusa (CHECK no banco).
+  divergencia        String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  recebimento     Recebimento     @relation(fields: [recebimentoId], references: [id], onDelete: Cascade)
+  ordemCompraItem OrdemCompraItem @relation(fields: [ordemCompraItemId], references: [id], onDelete: Restrict)
+
+  @@index([recebimentoId])
+  @@map("recebimento_itens")
+}
+
+/// Espelho de `ponto_auditoria` (painel), SEM a relação com `Company` — o
+/// espelho do back não declara a volta em `Company`, e o Nest só grava o rastro
+/// (decisão D8: a auditoria de Compras reusa esta tabela, append-only por
+/// gatilho, com `alvoTipo = "suprimentos.*"`).
+model PontoAuditoria {
+  id        String @id @default(uuid()) @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+
+  acao String
+
+  alvoTipo String @map("alvo_tipo")
+  alvoId   String @map("alvo_id")
+  alvoNsr  Int?   @map("alvo_nsr")
+
+  atorId    String? @map("ator_id") @db.Uuid
+  atorNome  String  @map("ator_nome")
+  atorEmail String  @map("ator_email")
+
+  motivo String? @db.Text
+  antes  Json?
+  depois Json?
+
+  criadoEm DateTime @default(now()) @map("criado_em")
+
+  @@index([companyId, criadoEm])
+  @@index([companyId, alvoTipo, alvoId])
+  @@map("ponto_auditoria")
 }

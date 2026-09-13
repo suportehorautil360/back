@@ -31,15 +31,19 @@ export type AggregateCompanySettings = {
 }
 
 export type CompanySettingsAvgAggregateOutputType = {
+  comprasLimiteAprovacao: runtime.Decimal | null
   escalaAlmocoMin: number | null
 }
 
 export type CompanySettingsSumAggregateOutputType = {
+  comprasLimiteAprovacao: runtime.Decimal | null
   escalaAlmocoMin: number | null
 }
 
 export type CompanySettingsMinAggregateOutputType = {
   companyId: string | null
+  comprasLimiteAprovacao: runtime.Decimal | null
+  gestorMasterCompanyUserId: string | null
   alertBloqueioRevisaoVencida: boolean | null
   alertNivelCriticoTanque: boolean | null
   alertAbastecimentoIrregular: boolean | null
@@ -58,6 +62,8 @@ export type CompanySettingsMinAggregateOutputType = {
 
 export type CompanySettingsMaxAggregateOutputType = {
   companyId: string | null
+  comprasLimiteAprovacao: runtime.Decimal | null
+  gestorMasterCompanyUserId: string | null
   alertBloqueioRevisaoVencida: boolean | null
   alertNivelCriticoTanque: boolean | null
   alertAbastecimentoIrregular: boolean | null
@@ -76,6 +82,8 @@ export type CompanySettingsMaxAggregateOutputType = {
 
 export type CompanySettingsCountAggregateOutputType = {
   companyId: number
+  comprasLimiteAprovacao: number
+  gestorMasterCompanyUserId: number
   alertBloqueioRevisaoVencida: number
   alertNivelCriticoTanque: number
   alertAbastecimentoIrregular: number
@@ -97,15 +105,19 @@ export type CompanySettingsCountAggregateOutputType = {
 
 
 export type CompanySettingsAvgAggregateInputType = {
+  comprasLimiteAprovacao?: true
   escalaAlmocoMin?: true
 }
 
 export type CompanySettingsSumAggregateInputType = {
+  comprasLimiteAprovacao?: true
   escalaAlmocoMin?: true
 }
 
 export type CompanySettingsMinAggregateInputType = {
   companyId?: true
+  comprasLimiteAprovacao?: true
+  gestorMasterCompanyUserId?: true
   alertBloqueioRevisaoVencida?: true
   alertNivelCriticoTanque?: true
   alertAbastecimentoIrregular?: true
@@ -124,6 +136,8 @@ export type CompanySettingsMinAggregateInputType = {
 
 export type CompanySettingsMaxAggregateInputType = {
   companyId?: true
+  comprasLimiteAprovacao?: true
+  gestorMasterCompanyUserId?: true
   alertBloqueioRevisaoVencida?: true
   alertNivelCriticoTanque?: true
   alertAbastecimentoIrregular?: true
@@ -142,6 +156,8 @@ export type CompanySettingsMaxAggregateInputType = {
 
 export type CompanySettingsCountAggregateInputType = {
   companyId?: true
+  comprasLimiteAprovacao?: true
+  gestorMasterCompanyUserId?: true
   alertBloqueioRevisaoVencida?: true
   alertNivelCriticoTanque?: true
   alertAbastecimentoIrregular?: true
@@ -249,6 +265,8 @@ export type CompanySettingsGroupByArgs<ExtArgs extends runtime.Types.Extensions.
 
 export type CompanySettingsGroupByOutputType = {
   companyId: string
+  comprasLimiteAprovacao: runtime.Decimal | null
+  gestorMasterCompanyUserId: string | null
   alertBloqueioRevisaoVencida: boolean
   alertNivelCriticoTanque: boolean
   alertAbastecimentoIrregular: boolean
@@ -292,6 +310,8 @@ export type CompanySettingsWhereInput = {
   OR?: Prisma.CompanySettingsWhereInput[]
   NOT?: Prisma.CompanySettingsWhereInput | Prisma.CompanySettingsWhereInput[]
   companyId?: Prisma.UuidFilter<"CompanySettings"> | string
+  comprasLimiteAprovacao?: Prisma.DecimalNullableFilter<"CompanySettings"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gestorMasterCompanyUserId?: Prisma.UuidNullableFilter<"CompanySettings"> | string | null
   alertBloqueioRevisaoVencida?: Prisma.BoolFilter<"CompanySettings"> | boolean
   alertNivelCriticoTanque?: Prisma.BoolFilter<"CompanySettings"> | boolean
   alertAbastecimentoIrregular?: Prisma.BoolFilter<"CompanySettings"> | boolean
@@ -313,6 +333,8 @@ export type CompanySettingsWhereInput = {
 
 export type CompanySettingsOrderByWithRelationInput = {
   companyId?: Prisma.SortOrder
+  comprasLimiteAprovacao?: Prisma.SortOrderInput | Prisma.SortOrder
+  gestorMasterCompanyUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   alertBloqueioRevisaoVencida?: Prisma.SortOrder
   alertNivelCriticoTanque?: Prisma.SortOrder
   alertAbastecimentoIrregular?: Prisma.SortOrder
@@ -337,6 +359,8 @@ export type CompanySettingsWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.CompanySettingsWhereInput | Prisma.CompanySettingsWhereInput[]
   OR?: Prisma.CompanySettingsWhereInput[]
   NOT?: Prisma.CompanySettingsWhereInput | Prisma.CompanySettingsWhereInput[]
+  comprasLimiteAprovacao?: Prisma.DecimalNullableFilter<"CompanySettings"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gestorMasterCompanyUserId?: Prisma.UuidNullableFilter<"CompanySettings"> | string | null
   alertBloqueioRevisaoVencida?: Prisma.BoolFilter<"CompanySettings"> | boolean
   alertNivelCriticoTanque?: Prisma.BoolFilter<"CompanySettings"> | boolean
   alertAbastecimentoIrregular?: Prisma.BoolFilter<"CompanySettings"> | boolean
@@ -358,6 +382,8 @@ export type CompanySettingsWhereUniqueInput = Prisma.AtLeast<{
 
 export type CompanySettingsOrderByWithAggregationInput = {
   companyId?: Prisma.SortOrder
+  comprasLimiteAprovacao?: Prisma.SortOrderInput | Prisma.SortOrder
+  gestorMasterCompanyUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   alertBloqueioRevisaoVencida?: Prisma.SortOrder
   alertNivelCriticoTanque?: Prisma.SortOrder
   alertAbastecimentoIrregular?: Prisma.SortOrder
@@ -386,6 +412,8 @@ export type CompanySettingsScalarWhereWithAggregatesInput = {
   OR?: Prisma.CompanySettingsScalarWhereWithAggregatesInput[]
   NOT?: Prisma.CompanySettingsScalarWhereWithAggregatesInput | Prisma.CompanySettingsScalarWhereWithAggregatesInput[]
   companyId?: Prisma.UuidWithAggregatesFilter<"CompanySettings"> | string
+  comprasLimiteAprovacao?: Prisma.DecimalNullableWithAggregatesFilter<"CompanySettings"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gestorMasterCompanyUserId?: Prisma.UuidNullableWithAggregatesFilter<"CompanySettings"> | string | null
   alertBloqueioRevisaoVencida?: Prisma.BoolWithAggregatesFilter<"CompanySettings"> | boolean
   alertNivelCriticoTanque?: Prisma.BoolWithAggregatesFilter<"CompanySettings"> | boolean
   alertAbastecimentoIrregular?: Prisma.BoolWithAggregatesFilter<"CompanySettings"> | boolean
@@ -405,6 +433,8 @@ export type CompanySettingsScalarWhereWithAggregatesInput = {
 }
 
 export type CompanySettingsCreateInput = {
+  comprasLimiteAprovacao?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gestorMasterCompanyUserId?: string | null
   alertBloqueioRevisaoVencida?: boolean
   alertNivelCriticoTanque?: boolean
   alertAbastecimentoIrregular?: boolean
@@ -426,6 +456,8 @@ export type CompanySettingsCreateInput = {
 
 export type CompanySettingsUncheckedCreateInput = {
   companyId: string
+  comprasLimiteAprovacao?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gestorMasterCompanyUserId?: string | null
   alertBloqueioRevisaoVencida?: boolean
   alertNivelCriticoTanque?: boolean
   alertAbastecimentoIrregular?: boolean
@@ -445,6 +477,8 @@ export type CompanySettingsUncheckedCreateInput = {
 }
 
 export type CompanySettingsUpdateInput = {
+  comprasLimiteAprovacao?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gestorMasterCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   alertBloqueioRevisaoVencida?: Prisma.BoolFieldUpdateOperationsInput | boolean
   alertNivelCriticoTanque?: Prisma.BoolFieldUpdateOperationsInput | boolean
   alertAbastecimentoIrregular?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -466,6 +500,8 @@ export type CompanySettingsUpdateInput = {
 
 export type CompanySettingsUncheckedUpdateInput = {
   companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  comprasLimiteAprovacao?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gestorMasterCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   alertBloqueioRevisaoVencida?: Prisma.BoolFieldUpdateOperationsInput | boolean
   alertNivelCriticoTanque?: Prisma.BoolFieldUpdateOperationsInput | boolean
   alertAbastecimentoIrregular?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -486,6 +522,8 @@ export type CompanySettingsUncheckedUpdateInput = {
 
 export type CompanySettingsCreateManyInput = {
   companyId: string
+  comprasLimiteAprovacao?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gestorMasterCompanyUserId?: string | null
   alertBloqueioRevisaoVencida?: boolean
   alertNivelCriticoTanque?: boolean
   alertAbastecimentoIrregular?: boolean
@@ -505,6 +543,8 @@ export type CompanySettingsCreateManyInput = {
 }
 
 export type CompanySettingsUpdateManyMutationInput = {
+  comprasLimiteAprovacao?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gestorMasterCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   alertBloqueioRevisaoVencida?: Prisma.BoolFieldUpdateOperationsInput | boolean
   alertNivelCriticoTanque?: Prisma.BoolFieldUpdateOperationsInput | boolean
   alertAbastecimentoIrregular?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -525,6 +565,8 @@ export type CompanySettingsUpdateManyMutationInput = {
 
 export type CompanySettingsUncheckedUpdateManyInput = {
   companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  comprasLimiteAprovacao?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gestorMasterCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   alertBloqueioRevisaoVencida?: Prisma.BoolFieldUpdateOperationsInput | boolean
   alertNivelCriticoTanque?: Prisma.BoolFieldUpdateOperationsInput | boolean
   alertAbastecimentoIrregular?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -550,6 +592,8 @@ export type CompanySettingsNullableScalarRelationFilter = {
 
 export type CompanySettingsCountOrderByAggregateInput = {
   companyId?: Prisma.SortOrder
+  comprasLimiteAprovacao?: Prisma.SortOrder
+  gestorMasterCompanyUserId?: Prisma.SortOrder
   alertBloqueioRevisaoVencida?: Prisma.SortOrder
   alertNivelCriticoTanque?: Prisma.SortOrder
   alertAbastecimentoIrregular?: Prisma.SortOrder
@@ -569,11 +613,14 @@ export type CompanySettingsCountOrderByAggregateInput = {
 }
 
 export type CompanySettingsAvgOrderByAggregateInput = {
+  comprasLimiteAprovacao?: Prisma.SortOrder
   escalaAlmocoMin?: Prisma.SortOrder
 }
 
 export type CompanySettingsMaxOrderByAggregateInput = {
   companyId?: Prisma.SortOrder
+  comprasLimiteAprovacao?: Prisma.SortOrder
+  gestorMasterCompanyUserId?: Prisma.SortOrder
   alertBloqueioRevisaoVencida?: Prisma.SortOrder
   alertNivelCriticoTanque?: Prisma.SortOrder
   alertAbastecimentoIrregular?: Prisma.SortOrder
@@ -592,6 +639,8 @@ export type CompanySettingsMaxOrderByAggregateInput = {
 
 export type CompanySettingsMinOrderByAggregateInput = {
   companyId?: Prisma.SortOrder
+  comprasLimiteAprovacao?: Prisma.SortOrder
+  gestorMasterCompanyUserId?: Prisma.SortOrder
   alertBloqueioRevisaoVencida?: Prisma.SortOrder
   alertNivelCriticoTanque?: Prisma.SortOrder
   alertAbastecimentoIrregular?: Prisma.SortOrder
@@ -609,6 +658,7 @@ export type CompanySettingsMinOrderByAggregateInput = {
 }
 
 export type CompanySettingsSumOrderByAggregateInput = {
+  comprasLimiteAprovacao?: Prisma.SortOrder
   escalaAlmocoMin?: Prisma.SortOrder
 }
 
@@ -644,7 +694,17 @@ export type CompanySettingsUncheckedUpdateOneWithoutCompanyNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.CompanySettingsUpdateToOneWithWhereWithoutCompanyInput, Prisma.CompanySettingsUpdateWithoutCompanyInput>, Prisma.CompanySettingsUncheckedUpdateWithoutCompanyInput>
 }
 
+export type NullableDecimalFieldUpdateOperationsInput = {
+  set?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  increment?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  decrement?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  multiply?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  divide?: runtime.Decimal | runtime.DecimalJsLike | number | string
+}
+
 export type CompanySettingsCreateWithoutCompanyInput = {
+  comprasLimiteAprovacao?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gestorMasterCompanyUserId?: string | null
   alertBloqueioRevisaoVencida?: boolean
   alertNivelCriticoTanque?: boolean
   alertAbastecimentoIrregular?: boolean
@@ -664,6 +724,8 @@ export type CompanySettingsCreateWithoutCompanyInput = {
 }
 
 export type CompanySettingsUncheckedCreateWithoutCompanyInput = {
+  comprasLimiteAprovacao?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gestorMasterCompanyUserId?: string | null
   alertBloqueioRevisaoVencida?: boolean
   alertNivelCriticoTanque?: boolean
   alertAbastecimentoIrregular?: boolean
@@ -699,6 +761,8 @@ export type CompanySettingsUpdateToOneWithWhereWithoutCompanyInput = {
 }
 
 export type CompanySettingsUpdateWithoutCompanyInput = {
+  comprasLimiteAprovacao?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gestorMasterCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   alertBloqueioRevisaoVencida?: Prisma.BoolFieldUpdateOperationsInput | boolean
   alertNivelCriticoTanque?: Prisma.BoolFieldUpdateOperationsInput | boolean
   alertAbastecimentoIrregular?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -718,6 +782,8 @@ export type CompanySettingsUpdateWithoutCompanyInput = {
 }
 
 export type CompanySettingsUncheckedUpdateWithoutCompanyInput = {
+  comprasLimiteAprovacao?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  gestorMasterCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   alertBloqueioRevisaoVencida?: Prisma.BoolFieldUpdateOperationsInput | boolean
   alertNivelCriticoTanque?: Prisma.BoolFieldUpdateOperationsInput | boolean
   alertAbastecimentoIrregular?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -740,6 +806,8 @@ export type CompanySettingsUncheckedUpdateWithoutCompanyInput = {
 
 export type CompanySettingsSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   companyId?: boolean
+  comprasLimiteAprovacao?: boolean
+  gestorMasterCompanyUserId?: boolean
   alertBloqueioRevisaoVencida?: boolean
   alertNivelCriticoTanque?: boolean
   alertAbastecimentoIrregular?: boolean
@@ -761,6 +829,8 @@ export type CompanySettingsSelect<ExtArgs extends runtime.Types.Extensions.Inter
 
 export type CompanySettingsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   companyId?: boolean
+  comprasLimiteAprovacao?: boolean
+  gestorMasterCompanyUserId?: boolean
   alertBloqueioRevisaoVencida?: boolean
   alertNivelCriticoTanque?: boolean
   alertAbastecimentoIrregular?: boolean
@@ -782,6 +852,8 @@ export type CompanySettingsSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
 
 export type CompanySettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   companyId?: boolean
+  comprasLimiteAprovacao?: boolean
+  gestorMasterCompanyUserId?: boolean
   alertBloqueioRevisaoVencida?: boolean
   alertNivelCriticoTanque?: boolean
   alertAbastecimentoIrregular?: boolean
@@ -803,6 +875,8 @@ export type CompanySettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
 
 export type CompanySettingsSelectScalar = {
   companyId?: boolean
+  comprasLimiteAprovacao?: boolean
+  gestorMasterCompanyUserId?: boolean
   alertBloqueioRevisaoVencida?: boolean
   alertNivelCriticoTanque?: boolean
   alertAbastecimentoIrregular?: boolean
@@ -821,7 +895,7 @@ export type CompanySettingsSelectScalar = {
   updatedAt?: boolean
 }
 
-export type CompanySettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"companyId" | "alertBloqueioRevisaoVencida" | "alertNivelCriticoTanque" | "alertAbastecimentoIrregular" | "alertCnhProximaVencimento" | "alertRelatorioSemanal" | "alertWhatsappEmergencia" | "bloquearAoVencer" | "alertar80" | "alertar90" | "escalaInicio" | "escalaFim" | "escalaAlmocoMin" | "escalaDias" | "intervalos" | "createdAt" | "updatedAt", ExtArgs["result"]["companySettings"]>
+export type CompanySettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"companyId" | "comprasLimiteAprovacao" | "gestorMasterCompanyUserId" | "alertBloqueioRevisaoVencida" | "alertNivelCriticoTanque" | "alertAbastecimentoIrregular" | "alertCnhProximaVencimento" | "alertRelatorioSemanal" | "alertWhatsappEmergencia" | "bloquearAoVencer" | "alertar80" | "alertar90" | "escalaInicio" | "escalaFim" | "escalaAlmocoMin" | "escalaDias" | "intervalos" | "createdAt" | "updatedAt", ExtArgs["result"]["companySettings"]>
 export type CompanySettingsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
 }
@@ -839,6 +913,18 @@ export type $CompanySettingsPayload<ExtArgs extends runtime.Types.Extensions.Int
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     companyId: string
+    /**
+     * Compras (F4): acima deste valor TOTAL a ordem de compra espera aprovação
+     * de OWNER/ADMIN ou do gestor master. NULO = sem limite configurado = toda
+     * OC pede aprovação (falha para o lado seguro).
+     */
+    comprasLimiteAprovacao: runtime.Decimal | null
+    /**
+     * Em nome de quem a solicitação automática por estoque mínimo nasce, e um
+     * dos aprovadores de OC. NULO vale o OWNER. UUID solto de propósito, como os
+     * autores do módulo: a validação de que é usuário da empresa mora no código.
+     */
+    gestorMasterCompanyUserId: string | null
     /**
      * Alertas e notificações — 6 toggles independentes.
      */
@@ -1296,6 +1382,8 @@ export interface Prisma__CompanySettingsClient<T, Null = never, ExtArgs extends 
  */
 export interface CompanySettingsFieldRefs {
   readonly companyId: Prisma.FieldRef<"CompanySettings", 'String'>
+  readonly comprasLimiteAprovacao: Prisma.FieldRef<"CompanySettings", 'Decimal'>
+  readonly gestorMasterCompanyUserId: Prisma.FieldRef<"CompanySettings", 'String'>
   readonly alertBloqueioRevisaoVencida: Prisma.FieldRef<"CompanySettings", 'Boolean'>
   readonly alertNivelCriticoTanque: Prisma.FieldRef<"CompanySettings", 'Boolean'>
   readonly alertAbastecimentoIrregular: Prisma.FieldRef<"CompanySettings", 'Boolean'>

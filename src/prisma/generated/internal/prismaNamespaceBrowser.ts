@@ -115,7 +115,15 @@ export const ModelName = {
   PecaSaldo: 'PecaSaldo',
   EstoqueMovimento: 'EstoqueMovimento',
   RequisicaoMaterial: 'RequisicaoMaterial',
-  RequisicaoMaterialItem: 'RequisicaoMaterialItem'
+  RequisicaoMaterialItem: 'RequisicaoMaterialItem',
+  SolicitacaoCompra: 'SolicitacaoCompra',
+  SolicitacaoCompraItem: 'SolicitacaoCompraItem',
+  OrdemCompra: 'OrdemCompra',
+  OrdemCompraItem: 'OrdemCompraItem',
+  OrdemCompraItemOrigem: 'OrdemCompraItemOrigem',
+  Recebimento: 'Recebimento',
+  RecebimentoItem: 'RecebimentoItem',
+  PontoAuditoria: 'PontoAuditoria'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -201,6 +209,8 @@ export type WhatsappPlatformSessionScalarFieldEnum = (typeof WhatsappPlatformSes
 
 export const CompanySettingsScalarFieldEnum = {
   companyId: 'companyId',
+  comprasLimiteAprovacao: 'comprasLimiteAprovacao',
+  gestorMasterCompanyUserId: 'gestorMasterCompanyUserId',
   alertBloqueioRevisaoVencida: 'alertBloqueioRevisaoVencida',
   alertNivelCriticoTanque: 'alertNivelCriticoTanque',
   alertAbastecimentoIrregular: 'alertAbastecimentoIrregular',
@@ -1397,6 +1407,159 @@ export const RequisicaoMaterialItemScalarFieldEnum = {
 } as const
 
 export type RequisicaoMaterialItemScalarFieldEnum = (typeof RequisicaoMaterialItemScalarFieldEnum)[keyof typeof RequisicaoMaterialItemScalarFieldEnum]
+
+
+export const SolicitacaoCompraScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  numero: 'numero',
+  origem: 'origem',
+  status: 'status',
+  prioridade: 'prioridade',
+  depositoId: 'depositoId',
+  serviceOrderId: 'serviceOrderId',
+  requisicaoId: 'requisicaoId',
+  justificativa: 'justificativa',
+  solicitanteCompanyUserId: 'solicitanteCompanyUserId',
+  emNomeDeCompanyUserId: 'emNomeDeCompanyUserId',
+  rejeitadaEm: 'rejeitadaEm',
+  rejeitadaPorCompanyUserId: 'rejeitadaPorCompanyUserId',
+  motivoRejeicao: 'motivoRejeicao',
+  canceladaEm: 'canceladaEm',
+  canceladaPorCompanyUserId: 'canceladaPorCompanyUserId',
+  motivoCancelamento: 'motivoCancelamento',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SolicitacaoCompraScalarFieldEnum = (typeof SolicitacaoCompraScalarFieldEnum)[keyof typeof SolicitacaoCompraScalarFieldEnum]
+
+
+export const SolicitacaoCompraItemScalarFieldEnum = {
+  id: 'id',
+  solicitacaoId: 'solicitacaoId',
+  pecaId: 'pecaId',
+  quantidade: 'quantidade',
+  requisicaoItemId: 'requisicaoItemId',
+  prioridade: 'prioridade',
+  dataNecessidade: 'dataNecessidade',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SolicitacaoCompraItemScalarFieldEnum = (typeof SolicitacaoCompraItemScalarFieldEnum)[keyof typeof SolicitacaoCompraItemScalarFieldEnum]
+
+
+export const OrdemCompraScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  numero: 'numero',
+  status: 'status',
+  partnerId: 'partnerId',
+  depositoId: 'depositoId',
+  condicaoPagamento: 'condicaoPagamento',
+  previsaoEntrega: 'previsaoEntrega',
+  observacao: 'observacao',
+  valorTotal: 'valorTotal',
+  criadaPorCompanyUserId: 'criadaPorCompanyUserId',
+  emitidaEm: 'emitidaEm',
+  emitidaPorCompanyUserId: 'emitidaPorCompanyUserId',
+  aprovadaEm: 'aprovadaEm',
+  aprovadaPorCompanyUserId: 'aprovadaPorCompanyUserId',
+  devolvidaEm: 'devolvidaEm',
+  devolvidaPorCompanyUserId: 'devolvidaPorCompanyUserId',
+  motivoDevolucao: 'motivoDevolucao',
+  enviadaEm: 'enviadaEm',
+  enviadaPorCompanyUserId: 'enviadaPorCompanyUserId',
+  canceladaEm: 'canceladaEm',
+  canceladaPorCompanyUserId: 'canceladaPorCompanyUserId',
+  motivoCancelamento: 'motivoCancelamento',
+  encerradaEm: 'encerradaEm',
+  encerradaPorCompanyUserId: 'encerradaPorCompanyUserId',
+  motivoEncerramento: 'motivoEncerramento',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OrdemCompraScalarFieldEnum = (typeof OrdemCompraScalarFieldEnum)[keyof typeof OrdemCompraScalarFieldEnum]
+
+
+export const OrdemCompraItemScalarFieldEnum = {
+  id: 'id',
+  ordemCompraId: 'ordemCompraId',
+  pecaId: 'pecaId',
+  quantidade: 'quantidade',
+  quantidadeRecebida: 'quantidadeRecebida',
+  valorUnit: 'valorUnit',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OrdemCompraItemScalarFieldEnum = (typeof OrdemCompraItemScalarFieldEnum)[keyof typeof OrdemCompraItemScalarFieldEnum]
+
+
+export const OrdemCompraItemOrigemScalarFieldEnum = {
+  id: 'id',
+  ordemCompraItemId: 'ordemCompraItemId',
+  solicitacaoCompraItemId: 'solicitacaoCompraItemId',
+  quantidade: 'quantidade',
+  quantidadeRecebida: 'quantidadeRecebida',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OrdemCompraItemOrigemScalarFieldEnum = (typeof OrdemCompraItemOrigemScalarFieldEnum)[keyof typeof OrdemCompraItemOrigemScalarFieldEnum]
+
+
+export const RecebimentoScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  ordemCompraId: 'ordemCompraId',
+  depositoId: 'depositoId',
+  notaFiscalNumero: 'notaFiscalNumero',
+  notaFiscalChave: 'notaFiscalChave',
+  recebidoPorCompanyUserId: 'recebidoPorCompanyUserId',
+  observacao: 'observacao',
+  createdAt: 'createdAt'
+} as const
+
+export type RecebimentoScalarFieldEnum = (typeof RecebimentoScalarFieldEnum)[keyof typeof RecebimentoScalarFieldEnum]
+
+
+export const RecebimentoItemScalarFieldEnum = {
+  id: 'id',
+  recebimentoId: 'recebimentoId',
+  ordemCompraItemId: 'ordemCompraItemId',
+  quantidadeRecebida: 'quantidadeRecebida',
+  quantidadeRecusada: 'quantidadeRecusada',
+  valorUnit: 'valorUnit',
+  lote: 'lote',
+  validade: 'validade',
+  divergencia: 'divergencia',
+  createdAt: 'createdAt'
+} as const
+
+export type RecebimentoItemScalarFieldEnum = (typeof RecebimentoItemScalarFieldEnum)[keyof typeof RecebimentoItemScalarFieldEnum]
+
+
+export const PontoAuditoriaScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  acao: 'acao',
+  alvoTipo: 'alvoTipo',
+  alvoId: 'alvoId',
+  alvoNsr: 'alvoNsr',
+  atorId: 'atorId',
+  atorNome: 'atorNome',
+  atorEmail: 'atorEmail',
+  motivo: 'motivo',
+  antes: 'antes',
+  depois: 'depois',
+  criadoEm: 'criadoEm'
+} as const
+
+export type PontoAuditoriaScalarFieldEnum = (typeof PontoAuditoriaScalarFieldEnum)[keyof typeof PontoAuditoriaScalarFieldEnum]
 
 
 export const SortOrder = {

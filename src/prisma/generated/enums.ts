@@ -71,7 +71,8 @@ export type StatusLancamento = (typeof StatusLancamento)[keyof typeof StatusLanc
 
 export const PartnerType = {
   POSTO: 'POSTO',
-  OFICINA: 'OFICINA'
+  OFICINA: 'OFICINA',
+  FORNECEDOR: 'FORNECEDOR'
 } as const
 
 export type PartnerType = (typeof PartnerType)[keyof typeof PartnerType]

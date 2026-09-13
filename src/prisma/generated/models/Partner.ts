@@ -380,6 +380,7 @@ export type PartnerWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Partner"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   partnerPortalUsers?: Prisma.PartnerPortalUserListRelationFilter
+  ordensCompra?: Prisma.OrdemCompraListRelationFilter
 }
 
 export type PartnerOrderByWithRelationInput = {
@@ -412,6 +413,7 @@ export type PartnerOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   company?: Prisma.CompanyOrderByWithRelationInput
   partnerPortalUsers?: Prisma.PartnerPortalUserOrderByRelationAggregateInput
+  ordensCompra?: Prisma.OrdemCompraOrderByRelationAggregateInput
 }
 
 export type PartnerWhereUniqueInput = Prisma.AtLeast<{
@@ -447,6 +449,7 @@ export type PartnerWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Partner"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   partnerPortalUsers?: Prisma.PartnerPortalUserListRelationFilter
+  ordensCompra?: Prisma.OrdemCompraListRelationFilter
 }, "id" | "legacyId">
 
 export type PartnerOrderByWithAggregationInput = {
@@ -546,6 +549,7 @@ export type PartnerCreateInput = {
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutPartnersInput
   partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutPartnerInput
+  ordensCompra?: Prisma.OrdemCompraCreateNestedManyWithoutFornecedorInput
 }
 
 export type PartnerUncheckedCreateInput = {
@@ -577,6 +581,7 @@ export type PartnerUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutPartnerInput
+  ordensCompra?: Prisma.OrdemCompraUncheckedCreateNestedManyWithoutFornecedorInput
 }
 
 export type PartnerUpdateInput = {
@@ -608,6 +613,7 @@ export type PartnerUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutPartnersNestedInput
   partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutPartnerNestedInput
+  ordensCompra?: Prisma.OrdemCompraUpdateManyWithoutFornecedorNestedInput
 }
 
 export type PartnerUncheckedUpdateInput = {
@@ -639,6 +645,7 @@ export type PartnerUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutPartnerNestedInput
+  ordensCompra?: Prisma.OrdemCompraUncheckedUpdateManyWithoutFornecedorNestedInput
 }
 
 export type PartnerCreateManyInput = {
@@ -835,6 +842,11 @@ export type PartnerNullableScalarRelationFilter = {
   isNot?: Prisma.PartnerWhereInput | null
 }
 
+export type PartnerScalarRelationFilter = {
+  is?: Prisma.PartnerWhereInput
+  isNot?: Prisma.PartnerWhereInput
+}
+
 export type PartnerCreateNestedManyWithoutCompanyInput = {
   create?: Prisma.XOR<Prisma.PartnerCreateWithoutCompanyInput, Prisma.PartnerUncheckedCreateWithoutCompanyInput> | Prisma.PartnerCreateWithoutCompanyInput[] | Prisma.PartnerUncheckedCreateWithoutCompanyInput[]
   connectOrCreate?: Prisma.PartnerCreateOrConnectWithoutCompanyInput | Prisma.PartnerCreateOrConnectWithoutCompanyInput[]
@@ -897,6 +909,20 @@ export type PartnerUpdateOneWithoutPartnerPortalUsersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.PartnerUpdateToOneWithWhereWithoutPartnerPortalUsersInput, Prisma.PartnerUpdateWithoutPartnerPortalUsersInput>, Prisma.PartnerUncheckedUpdateWithoutPartnerPortalUsersInput>
 }
 
+export type PartnerCreateNestedOneWithoutOrdensCompraInput = {
+  create?: Prisma.XOR<Prisma.PartnerCreateWithoutOrdensCompraInput, Prisma.PartnerUncheckedCreateWithoutOrdensCompraInput>
+  connectOrCreate?: Prisma.PartnerCreateOrConnectWithoutOrdensCompraInput
+  connect?: Prisma.PartnerWhereUniqueInput
+}
+
+export type PartnerUpdateOneRequiredWithoutOrdensCompraNestedInput = {
+  create?: Prisma.XOR<Prisma.PartnerCreateWithoutOrdensCompraInput, Prisma.PartnerUncheckedCreateWithoutOrdensCompraInput>
+  connectOrCreate?: Prisma.PartnerCreateOrConnectWithoutOrdensCompraInput
+  upsert?: Prisma.PartnerUpsertWithoutOrdensCompraInput
+  connect?: Prisma.PartnerWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PartnerUpdateToOneWithWhereWithoutOrdensCompraInput, Prisma.PartnerUpdateWithoutOrdensCompraInput>, Prisma.PartnerUncheckedUpdateWithoutOrdensCompraInput>
+}
+
 export type PartnerCreateWithoutCompanyInput = {
   id?: string
   legacyId?: string | null
@@ -925,6 +951,7 @@ export type PartnerCreateWithoutCompanyInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutPartnerInput
+  ordensCompra?: Prisma.OrdemCompraCreateNestedManyWithoutFornecedorInput
 }
 
 export type PartnerUncheckedCreateWithoutCompanyInput = {
@@ -955,6 +982,7 @@ export type PartnerUncheckedCreateWithoutCompanyInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutPartnerInput
+  ordensCompra?: Prisma.OrdemCompraUncheckedCreateNestedManyWithoutFornecedorInput
 }
 
 export type PartnerCreateOrConnectWithoutCompanyInput = {
@@ -1044,6 +1072,7 @@ export type PartnerCreateWithoutPartnerPortalUsersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutPartnersInput
+  ordensCompra?: Prisma.OrdemCompraCreateNestedManyWithoutFornecedorInput
 }
 
 export type PartnerUncheckedCreateWithoutPartnerPortalUsersInput = {
@@ -1074,6 +1103,7 @@ export type PartnerUncheckedCreateWithoutPartnerPortalUsersInput = {
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  ordensCompra?: Prisma.OrdemCompraUncheckedCreateNestedManyWithoutFornecedorInput
 }
 
 export type PartnerCreateOrConnectWithoutPartnerPortalUsersInput = {
@@ -1120,6 +1150,7 @@ export type PartnerUpdateWithoutPartnerPortalUsersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutPartnersNestedInput
+  ordensCompra?: Prisma.OrdemCompraUpdateManyWithoutFornecedorNestedInput
 }
 
 export type PartnerUncheckedUpdateWithoutPartnerPortalUsersInput = {
@@ -1150,6 +1181,147 @@ export type PartnerUncheckedUpdateWithoutPartnerPortalUsersInput = {
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  ordensCompra?: Prisma.OrdemCompraUncheckedUpdateManyWithoutFornecedorNestedInput
+}
+
+export type PartnerCreateWithoutOrdensCompraInput = {
+  id?: string
+  legacyId?: string | null
+  type: $Enums.PartnerType
+  razaoSocial: string
+  nomeFantasia?: string | null
+  cnpj?: string | null
+  telefonePrincipal?: string | null
+  emailComercial?: string | null
+  cidadeUf?: string | null
+  endereco?: string | null
+  bandeira?: string | null
+  combustiveis?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  servicos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  precoPorLitro?: number | null
+  especialidade?: string | null
+  linhasAtuacao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  segmentosAtuacao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  categoriasServico?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  condicaoPagamento?: string | null
+  limiteCredito?: number | null
+  descontoComercial?: string | null
+  observacoesFaturamento?: string | null
+  status?: string
+  ativo?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutPartnersInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserCreateNestedManyWithoutPartnerInput
+}
+
+export type PartnerUncheckedCreateWithoutOrdensCompraInput = {
+  id?: string
+  legacyId?: string | null
+  type: $Enums.PartnerType
+  companyId: string
+  razaoSocial: string
+  nomeFantasia?: string | null
+  cnpj?: string | null
+  telefonePrincipal?: string | null
+  emailComercial?: string | null
+  cidadeUf?: string | null
+  endereco?: string | null
+  bandeira?: string | null
+  combustiveis?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  servicos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  precoPorLitro?: number | null
+  especialidade?: string | null
+  linhasAtuacao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  segmentosAtuacao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  categoriasServico?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  condicaoPagamento?: string | null
+  limiteCredito?: number | null
+  descontoComercial?: string | null
+  observacoesFaturamento?: string | null
+  status?: string
+  ativo?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedCreateNestedManyWithoutPartnerInput
+}
+
+export type PartnerCreateOrConnectWithoutOrdensCompraInput = {
+  where: Prisma.PartnerWhereUniqueInput
+  create: Prisma.XOR<Prisma.PartnerCreateWithoutOrdensCompraInput, Prisma.PartnerUncheckedCreateWithoutOrdensCompraInput>
+}
+
+export type PartnerUpsertWithoutOrdensCompraInput = {
+  update: Prisma.XOR<Prisma.PartnerUpdateWithoutOrdensCompraInput, Prisma.PartnerUncheckedUpdateWithoutOrdensCompraInput>
+  create: Prisma.XOR<Prisma.PartnerCreateWithoutOrdensCompraInput, Prisma.PartnerUncheckedCreateWithoutOrdensCompraInput>
+  where?: Prisma.PartnerWhereInput
+}
+
+export type PartnerUpdateToOneWithWhereWithoutOrdensCompraInput = {
+  where?: Prisma.PartnerWhereInput
+  data: Prisma.XOR<Prisma.PartnerUpdateWithoutOrdensCompraInput, Prisma.PartnerUncheckedUpdateWithoutOrdensCompraInput>
+}
+
+export type PartnerUpdateWithoutOrdensCompraInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumPartnerTypeFieldUpdateOperationsInput | $Enums.PartnerType
+  razaoSocial?: Prisma.StringFieldUpdateOperationsInput | string
+  nomeFantasia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnpj?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  telefonePrincipal?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailComercial?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cidadeUf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  endereco?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bandeira?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  combustiveis?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  servicos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  precoPorLitro?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  especialidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linhasAtuacao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  segmentosAtuacao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  categoriasServico?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  condicaoPagamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  limiteCredito?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  descontoComercial?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  observacoesFaturamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutPartnersNestedInput
+  partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutPartnerNestedInput
+}
+
+export type PartnerUncheckedUpdateWithoutOrdensCompraInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumPartnerTypeFieldUpdateOperationsInput | $Enums.PartnerType
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  razaoSocial?: Prisma.StringFieldUpdateOperationsInput | string
+  nomeFantasia?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cnpj?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  telefonePrincipal?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailComercial?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cidadeUf?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  endereco?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bandeira?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  combustiveis?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  servicos?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  precoPorLitro?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  especialidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linhasAtuacao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  segmentosAtuacao?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  categoriasServico?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  condicaoPagamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  limiteCredito?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  descontoComercial?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  observacoesFaturamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutPartnerNestedInput
 }
 
 export type PartnerCreateManyCompanyInput = {
@@ -1209,6 +1381,7 @@ export type PartnerUpdateWithoutCompanyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partnerPortalUsers?: Prisma.PartnerPortalUserUpdateManyWithoutPartnerNestedInput
+  ordensCompra?: Prisma.OrdemCompraUpdateManyWithoutFornecedorNestedInput
 }
 
 export type PartnerUncheckedUpdateWithoutCompanyInput = {
@@ -1239,6 +1412,7 @@ export type PartnerUncheckedUpdateWithoutCompanyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partnerPortalUsers?: Prisma.PartnerPortalUserUncheckedUpdateManyWithoutPartnerNestedInput
+  ordensCompra?: Prisma.OrdemCompraUncheckedUpdateManyWithoutFornecedorNestedInput
 }
 
 export type PartnerUncheckedUpdateManyWithoutCompanyInput = {
@@ -1277,10 +1451,12 @@ export type PartnerUncheckedUpdateManyWithoutCompanyInput = {
 
 export type PartnerCountOutputType = {
   partnerPortalUsers: number
+  ordensCompra: number
 }
 
 export type PartnerCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   partnerPortalUsers?: boolean | PartnerCountOutputTypeCountPartnerPortalUsersArgs
+  ordensCompra?: boolean | PartnerCountOutputTypeCountOrdensCompraArgs
 }
 
 /**
@@ -1298,6 +1474,13 @@ export type PartnerCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Exte
  */
 export type PartnerCountOutputTypeCountPartnerPortalUsersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.PartnerPortalUserWhereInput
+}
+
+/**
+ * PartnerCountOutputType without action
+ */
+export type PartnerCountOutputTypeCountOrdensCompraArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.OrdemCompraWhereInput
 }
 
 
@@ -1331,6 +1514,7 @@ export type PartnerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   updatedAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   partnerPortalUsers?: boolean | Prisma.Partner$partnerPortalUsersArgs<ExtArgs>
+  ordensCompra?: boolean | Prisma.Partner$ordensCompraArgs<ExtArgs>
   _count?: boolean | Prisma.PartnerCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["partner"]>
 
@@ -1430,6 +1614,7 @@ export type PartnerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 export type PartnerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   partnerPortalUsers?: boolean | Prisma.Partner$partnerPortalUsersArgs<ExtArgs>
+  ordensCompra?: boolean | Prisma.Partner$ordensCompraArgs<ExtArgs>
   _count?: boolean | Prisma.PartnerCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type PartnerIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1444,6 +1629,10 @@ export type $PartnerPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   objects: {
     company: Prisma.$CompanyPayload<ExtArgs>
     partnerPortalUsers: Prisma.$PartnerPortalUserPayload<ExtArgs>[]
+    /**
+     * Ordens de compra deste parceiro quando ele é FORNECEDOR.
+     */
+    ordensCompra: Prisma.$OrdemCompraPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1873,6 +2062,7 @@ export interface Prisma__PartnerClient<T, Null = never, ExtArgs extends runtime.
   readonly [Symbol.toStringTag]: "PrismaPromise"
   company<T extends Prisma.CompanyDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CompanyDefaultArgs<ExtArgs>>): Prisma.Prisma__CompanyClient<runtime.Types.Result.GetResult<Prisma.$CompanyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   partnerPortalUsers<T extends Prisma.Partner$partnerPortalUsersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Partner$partnerPortalUsersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PartnerPortalUserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  ordensCompra<T extends Prisma.Partner$ordensCompraArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Partner$ordensCompraArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrdemCompraPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2351,6 +2541,30 @@ export type Partner$partnerPortalUsersArgs<ExtArgs extends runtime.Types.Extensi
   take?: number
   skip?: number
   distinct?: Prisma.PartnerPortalUserScalarFieldEnum | Prisma.PartnerPortalUserScalarFieldEnum[]
+}
+
+/**
+ * Partner.ordensCompra
+ */
+export type Partner$ordensCompraArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the OrdemCompra
+   */
+  select?: Prisma.OrdemCompraSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the OrdemCompra
+   */
+  omit?: Prisma.OrdemCompraOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OrdemCompraInclude<ExtArgs> | null
+  where?: Prisma.OrdemCompraWhereInput
+  orderBy?: Prisma.OrdemCompraOrderByWithRelationInput | Prisma.OrdemCompraOrderByWithRelationInput[]
+  cursor?: Prisma.OrdemCompraWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.OrdemCompraScalarFieldEnum | Prisma.OrdemCompraScalarFieldEnum[]
 }
 
 /**
