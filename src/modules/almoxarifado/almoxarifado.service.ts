@@ -1343,6 +1343,159 @@ export class AlmoxarifadoService {
   }
 
   /**
+   * A válvula de escape.
+   *
+   * Sem isto, uma OS aberta e abandonada tranca a peça para sempre: a entrega é
+   * o único outro caminho que devolve `saldo_reservado`, e OS que ninguém
+   * executa nunca chega lá. O índice único parcial
+   * `requisicoes_material_uma_aberta_por_os` exclui as canceladas de propósito —
+   * cancelar libera a OS para uma reserva nova.
+   *
+   * Requisição ENTREGUE não é cancelável: a peça já saiu do estoque, e desfazer
+   * isso é devolução, que é outra operação (F5) e gera movimento de entrada.
+   */
+  async cancelarRequisicao(input: {
+    companyId: string;
+    requisicaoId: string;
+    autorCompanyUserId: string;
+    motivo: string;
+  }): Promise<{ statusMateriais: StatusMateriais }> {
+    // Valida ANTES de tocar o banco: o CHECK `req_cancelamento_com_motivo`
+    // recusaria de qualquer jeito, mas devolver 500 cru em vez de uma
+    // mensagem clara não ajuda quem esqueceu de preencher o motivo.
+    const motivo = input.motivo?.trim();
+    if (!motivo) {
+      throw new BadRequestException('Cancelar requisição exige motivo.');
+    }
+
+    // Mesma rede de contenção da reserva, da separação e da entrega
+    // (`erroDeContencaoTransitoria` já existe no arquivo): sem isto, um
+    // `40001`/`P2034` na trava de `peca_saldos` chegaria ao cliente como 500
+    // cru.
+    for (let tentativa = 1; tentativa <= MAX_TENTATIVAS_CONCORRENCIA; tentativa++) {
+      try {
+        return await this.prisma.$transaction((tx) => this.executarCancelamento(tx, input, motivo));
+      } catch (erro) {
+        if (!erroDeContencaoTransitoria(erro) || tentativa === MAX_TENTATIVAS_CONCORRENCIA) {
+          if (erroDeContencaoTransitoria(erro)) {
+            throw new ConflictException(
+              `Não foi possível concluir o cancelamento após ` +
+                `${MAX_TENTATIVAS_CONCORRENCIA} tentativas por contenção — tente novamente.`,
+            );
+          }
+          throw erro;
+        }
+        // volta pro topo do for: a próxima tentativa relê tudo do zero
+        // dentro de `executarCancelamento` — inclusive o status da
+        // requisição e o estado dos itens.
+      }
+    }
+    // Inalcançável: o loop acima sempre retorna ou lança. Só aqui pro TS
+    // aceitar que a função tem um valor de retorno em todo caminho.
+    throw new ConflictException('Não foi possível concluir o cancelamento.');
+  }
+
+  /**
+   * O corpo da transação de `cancelarRequisicao`, isolado para poder ser
+   * chamado de novo em caso de retry (ver `MAX_TENTATIVAS_CONCORRENCIA`).
+   */
+  private async executarCancelamento(
+    tx: Prisma.TransactionClient,
+    input: { companyId: string; requisicaoId: string; autorCompanyUserId: string },
+    motivo: string,
+  ): Promise<{ statusMateriais: StatusMateriais }> {
+    // Diferente de `executarReserva`/`executarSeparacao`/`executarEntrega`, a
+    // EXISTÊNCIA e o STATUS da requisição são conferidos AQUI DENTRO da
+    // transação, não antes dela. Checar fora e só então abrir a transação
+    // deixaria uma janela entre as duas leituras em que uma entrega
+    // concorrente muda o status para `entregue` — e este método devolveria
+    // saldo de uma peça que acabou de sair do depósito. O motivo, por não
+    // depender de estado nenhum do banco, já foi validado antes do laço de
+    // retry, em `cancelarRequisicao`.
+    const req = await tx.requisicaoMaterial.findFirst({
+      where: { id: input.requisicaoId, companyId: input.companyId },
+      include: { itens: true },
+    });
+    if (!req) throw new NotFoundException('Requisição não encontrada para esta empresa.');
+    if (req.status === 'entregue') {
+      throw new ConflictException('Requisição entregue não é cancelada — a peça já saiu.');
+    }
+    if (req.status === 'cancelada') {
+      throw new ConflictException('Esta requisição já foi cancelada.');
+    }
+
+    const aLiberar = req.itens.filter(
+      (i) => i.pecaId && (Number(i.quantidadeReservada) > 0 || Number(i.quantidadeSeparada) > 0),
+    );
+
+    // Mesma ordem ascendente por `pecaId` de `executarReserva`,
+    // `executarSeparacao` e `executarEntrega`: travar `peca_saldos` sempre na
+    // mesma direção entre chamadas concorrentes evita deadlock em vez de só
+    // detectá-lo depois.
+    for (const item of [...aLiberar].sort((a, b) => (a.pecaId ?? '').localeCompare(b.pecaId ?? ''))) {
+      await tx.$queryRaw(Prisma.sql`
+        SELECT saldo_reservado FROM peca_saldos
+         WHERE peca_id = ${item.pecaId}::uuid
+           AND deposito_id = ${req.depositoId}::uuid
+           FOR UPDATE
+      `);
+
+      // As quantidades a devolver vêm de uma leitura feita DEPOIS da trava.
+      // Usar `item.quantidadeReservada`/`item.quantidadeSeparada` de
+      // `req.itens` (lido antes da transação) seria a SÉTIMA ocorrência do
+      // mesmo defeito nesta frente (entrada de estoque, reserva, conferência
+      // do kit, duas vezes na entrega, liberação): uma conferência
+      // concorrente que mudou o separado faria este UPDATE devolver a
+      // quantidade errada — e aqui o erro é para MAIS, criando saldo
+      // disponível que não existe na prateleira.
+      const fresco = await tx.requisicaoMaterialItem.findUniqueOrThrow({
+        where: { id: item.id },
+        select: { quantidadeReservada: true, quantidadeSeparada: true },
+      });
+
+      // Devolve reservado E separado: o que estava na caixa volta à
+      // prateleira. Aritmética RELATIVA no banco — nunca "leia, some em JS,
+      // grave absoluto" — igual ao resto do arquivo.
+      await tx.$executeRaw(Prisma.sql`
+        UPDATE peca_saldos
+           SET saldo_reservado = saldo_reservado - ${Number(fresco.quantidadeReservada)},
+               saldo_separado  = saldo_separado  - ${Number(fresco.quantidadeSeparada)},
+               updated_at = now()
+         WHERE peca_id = ${item.pecaId}::uuid
+           AND deposito_id = ${req.depositoId}::uuid
+      `);
+    }
+
+    // `notIn: ['entregue', 'cancelada']` continua correto depois da Task 6:
+    // aquela mudança fecha itens não separados como `cancelada` só quando a
+    // REQUISIÇÃO INTEIRA está sendo entregue (`executarEntrega`), um caminho
+    // que este método nunca alcança — aqui a requisição ainda não é
+    // `entregue` (checado acima). Itens já `entregue` (entrega parcial de um
+    // item não impeditivo, ver achado Critical C2 de `executarEntrega`)
+    // ficam de fora de propósito: a peça daquele item já saiu do depósito, e
+    // o cancelamento não pode reescrever isso.
+    await tx.requisicaoMaterialItem.updateMany({
+      where: { requisicaoId: req.id, status: { notIn: ['entregue', 'cancelada'] } },
+      data: { status: 'cancelada', quantidadeReservada: 0, quantidadeSeparada: 0 },
+    });
+
+    await tx.requisicaoMaterial.update({
+      where: { id: req.id },
+      data: {
+        status: 'cancelada',
+        canceladaEm: new Date(),
+        canceladaPorCompanyUserId: input.autorCompanyUserId,
+        motivoCancelamento: motivo,
+      },
+    });
+
+    // A OS volta ao começo: sem materiais reservados, ela não promete nada.
+    await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, 'planejada');
+
+    return { statusMateriais: 'planejada' as StatusMateriais };
+  }
+
+  /**
    * A fila do almoxarife. FIFO: quem pediu primeiro espera menos.
    *
    * Sem filtro, `entregue` e `cancelada` ficam de fora — a tela responde "o que

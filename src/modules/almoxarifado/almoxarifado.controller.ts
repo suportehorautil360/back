@@ -8,6 +8,7 @@ import { ReservarDto } from './dto/reserva.dto';
 import { EntradaDto } from './dto/entrada.dto';
 import { SepararDto } from './dto/separacao.dto';
 import { EntregarDto } from './dto/entrega.dto';
+import { CancelarRequisicaoDto } from './dto/cancelamento.dto';
 
 @ApiTags('almoxarifado')
 @Controller('almoxarifado')
@@ -133,6 +134,24 @@ export class AlmoxarifadoController {
       recebedorOperatorId: dto.recebedorOperatorId,
       confirmacaoTipo: dto.confirmacaoTipo,
       assinatura: dto.assinatura ?? null,
+    });
+  }
+
+  @Post('requisicoes/:id/cancelar')
+  // Mesma cautela das outras rotas de escrita: reenvio de rede repetindo o
+  // MESMO cancelamento não pode devolver o saldo reservado duas vezes.
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Cancela a requisição e devolve o saldo reservado' })
+  async cancelar(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: CancelarRequisicaoDto,
+  ) {
+    return this.servico.cancelarRequisicao({
+      companyId: req.painel.companyId,
+      requisicaoId: id,
+      autorCompanyUserId: req.painel.companyUserId,
+      motivo: dto.motivo,
     });
   }
 }
