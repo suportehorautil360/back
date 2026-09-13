@@ -883,15 +883,24 @@ export class AlmoxarifadoService {
            AND deposito_id = ${req.depositoId}::uuid
            FOR UPDATE
       `);
-      // Achado Important M1: `FOR UPDATE` não trava linha que não existe —
-      // sem linha, `linhas[0]` vem vazio. Isso deveria ser impossível (um
-      // item só chega a `status: 'reservada'`, a única porta que passa em
-      // `validarConferencia`, quando `reservarParaOs` conseguiu gravar
-      // `saldo_reservado > 0`, o que exige a linha já existir naquele
-      // momento). Falhar alto é melhor que silenciar: tratar como zero
-      // deixaria o `UPDATE` abaixo casar zero linhas (sem erro nenhum — o
-      // CHECK só vale para linha que É escrita) enquanto o item já teria
-      // sido marcado como separado, um estado inconsistente sem alerta.
+      // Achado Important M1, com a premissa corrigida pela revisão final
+      // (achado I6 — a classe de defeito que já custou dois Criticals
+      // nesta frente): `FOR UPDATE` não trava linha que não existe — sem
+      // linha, `linhas[0]` vem vazio. A versão anterior deste comentário
+      // dizia que isso "deveria ser impossível" porque um item só chegaria
+      // a `status: 'reservada'` quando `saldo_reservado > 0` tivesse sido
+      // gravado — PREMISSA FALSA: uma linha de plano cuja quantidade
+      // resolvesse a zero (`parseQuantidade`, antes do achado I6) produzia
+      // `reservar = 0` e `faltante = 0`, ou seja `status: 'reservada'` SEM
+      // nenhum `UPDATE` em `peca_saldos` — e se a peça nunca tivesse
+      // entrada no depósito, exatamente este `throw` disparava como 500
+      // cru. O achado I6 fechou aquele caminho (quantidade nunca mais
+      // resolve a zero), mas a guarda continua aqui de propósito: falhar
+      // alto é melhor que silenciar, e não vale supor "impossível" de novo
+      // — tratar a ausência como zero deixaria o `UPDATE` abaixo casar zero
+      // linhas (sem erro nenhum — o CHECK só vale para linha que É escrita)
+      // enquanto o item já teria sido marcado como separado, um estado
+      // inconsistente sem alerta.
       if (!linhas[0]) {
         throw new Error(
           `Saldo não encontrado para peça ${p.item.pecaId} no depósito ${req.depositoId} ` +
@@ -1132,12 +1141,20 @@ export class AlmoxarifadoService {
       await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
 
       // OS liberada PELA PRIMEIRA VEZ nesta chamada (`fechamento.count ===
-      // 1`): MONTA as linhas de notificação (resolve mecânico e programador,
-      // ainda dentro da transação — dados já carregados acima em
-      // `req.serviceOrder.*`/`req.deposito.nome`). Não GRAVA nada aqui —
-      // quem chama grava depois do commit, com `enviarNotificacoes`.
+      // 1`) E o status CALCULADO acima é `liberada_para_execucao` — achado
+      // Important I1 da revisão final. Antes, a segunda condição não
+      // existia: bastava `fechamento.count === 1` para montar "OS liberada,
+      // retire o kit" mesmo quando `statusMateriais` saía `aguardando_compra`
+      // (item não impeditivo faltante, requisição fechada só pelos
+      // impeditivos). O mecânico recebia o aviso de retirada na mesma hora
+      // em que a própria bancada mostrava a OS em vermelho, "Aguardando
+      // peça", para o mesmo protocolo. MONTA as linhas de notificação
+      // (resolve mecânico e programador, ainda dentro da transação — dados
+      // já carregados acima em `req.serviceOrder.*`/`req.deposito.nome`).
+      // Não GRAVA nada aqui — quem chama grava depois do commit, com
+      // `enviarNotificacoes`.
       let notificacoes: NotificacaoPronta[] = [];
-      if (fechamento.count === 1) {
+      if (fechamento.count === 1 && statusMateriais === 'liberada_para_execucao') {
         notificacoes = await montarNotificacaoOsLiberada(tx, {
           companyId: input.companyId,
           serviceOrderId: req.serviceOrderId,
@@ -1268,6 +1285,28 @@ export class AlmoxarifadoService {
     req: RequisicaoComItens,
     candidatos: RequisicaoComItens['itens'],
   ): Promise<{ statusMateriais: StatusMateriais }> {
+    // Achado Important I2 da revisão final: entregar sem nunca ter passado
+    // por `liberarRequisicao` pulava o ato explícito do passo 8 do §6 (e a
+    // notificação de §9) — `liberadaEm` ficava NULL para sempre e a OS
+    // ainda assim chegava a `liberada_para_execucao`. A checagem lê
+    // `liberadaEm` FRESCO, DENTRO da transação — nunca `req.liberadaEm` (o
+    // retrato de fora dela, que nem chega a existir no objeto que
+    // `entregarRequisicao` monta antes de abrir a transação): é a NONA
+    // ocorrência da mesma classe de defeito nesta frente (ler fora,
+    // decidir com o que leu), e aqui ela importa de verdade — uma
+    // liberação que acabou de commitar enquanto esta chamada esperava
+    // pela transação não pode ser tratada como "não liberada" só porque um
+    // retrato antigo diria isso.
+    const reqFresca = await tx.requisicaoMaterial.findUniqueOrThrow({
+      where: { id: req.id },
+      select: { liberadaEm: true },
+    });
+    if (!reqFresca.liberadaEm) {
+      throw new ConflictException(
+        'Esta requisição ainda não foi liberada — libere o kit antes de confirmar a entrega.',
+      );
+    }
+
     // Mesma ordem ascendente por `pecaId` de `executarReserva` e
     // `executarSeparacao`: travar `peca_saldos` sempre na mesma direção
     // entre chamadas concorrentes evita deadlock (`40P01`) em vez de só
@@ -1449,42 +1488,67 @@ export class AlmoxarifadoService {
       }
     }
 
-    // Achado Important I1 da revisão: `updateMany` condicionado a
-    // `status: 'separada'` fecha a corrida entre duas entregas concorrentes.
-    // Sem isto, uma segunda chamada que passasse as duas guardas de fora da
-    // transação (ambas leem "separada" antes de qualquer uma commitar)
-    // sobrescrevia `entregueEm`/`recebedorOperatorId`/`confirmacaoTipo`/
-    // `assinatura` com os dados de quem chegou depois — apagando a prova de
-    // quem realmente recebeu o kit, e ainda devolvendo 200 para as duas.
-    const fechada = await tx.requisicaoMaterial.updateMany({
-      where: { id: req.id, status: 'separada' },
-      data: {
-        status: 'entregue',
-        entregueEm: new Date(),
-        entreguePorCompanyUserId: input.autorCompanyUserId,
-        recebedorOperatorId: input.recebedorOperatorId,
-        confirmacaoTipo: input.confirmacaoTipo,
-        assinatura: input.assinatura ?? null,
-      },
-    });
-    if (fechada.count === 0) {
-      throw new ConflictException('Esta requisição já foi entregue por outra chamada.');
-    }
-
     // Achado Critical C1 (sexta ocorrência nesta frente): relê TODOS os
     // itens da requisição AQUI, dentro da transação — nunca `req.itens`, o
     // retrato de fora dela. Hoje nada grava `faltante` depois da criação do
     // item, mas a Task 7 (compra e recebimento) é candidata óbvia a fazer
     // isso; no dia em que fizer, ler de fora carimbaria
     // `liberada_para_execucao` numa OS com peça faltando, em silêncio. Mesmo
-    // critério de `liberarRequisicao` (releitura fresca, quinta ocorrência) e
-    // de `executarSeparacao` (releitura de `itensFinal` antes de fechar).
+    // critério de `liberarRequisicao` (releitura fresca, quinta ocorrência).
+    //
+    // Movida para ANTES da decisão de fechar a requisição (achado Important
+    // I7 da revisão final): decidir se ela fecha como `entregue` ou continua
+    // aberta depende do que sobrou de pendência, então a releitura tem de
+    // vir primeiro.
     const itensFrescos = await tx.requisicaoMaterialItem.findMany({
       where: { requisicaoId: req.id },
     });
     const paraRegra = itensFrescos.map((i) => ({ impeditivo: i.impeditivo, status: i.status }));
     const statusMateriais = statusAposEntrega(paraRegra);
     await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
+
+    // Achado Important I7 da revisão final — decisão do produto (2026-09-13):
+    // "entrega o que tem, e a requisição fica ABERTA". Só fecha como
+    // `entregue` quando NADA mais está pendente (`statusMateriais ===
+    // 'liberada_para_execucao'`, ou seja nenhum item vivo `faltante`/
+    // `nao_vinculado` — os impeditivos já são exigência de `separada`, então
+    // o que resta aqui é sempre não impeditivo). Antes desta correção,
+    // `entregarRequisicao` fechava a requisição como `entregue` (terminal)
+    // mesmo sobrando um item assim: `cancelarRequisicao` passava a recusar
+    // ("a peça já saiu"), o índice único parcial
+    // `requisicoes_material_uma_aberta_por_os` continuava contando essa
+    // linha como a aberta da OS, e sem a fatia de compras (F4) nada mais
+    // preenchia a falta — a OS ficava travada em `aguardando_compra` para
+    // sempre. Deixando o status como está (`separada`, o único valor
+    // possível para chegar aqui — `entregarRequisicao` já exige isso antes
+    // de abrir a transação), a requisição continua sendo A requisição
+    // aberta da OS, `cancelarRequisicao` continua aceitando (só recusa
+    // `entregue`/`cancelada`), e uma futura F4 tem onde escrever quando a
+    // peça chegar.
+    if (statusMateriais === 'liberada_para_execucao') {
+      // Achado Important I1 da revisão: `updateMany` condicionado a
+      // `status: 'separada'` fecha a corrida entre duas entregas
+      // concorrentes. Sem isto, uma segunda chamada que passasse as duas
+      // guardas de fora da transação (ambas leem "separada" antes de
+      // qualquer uma commitar) sobrescrevia `entregueEm`/
+      // `recebedorOperatorId`/`confirmacaoTipo`/`assinatura` com os dados
+      // de quem chegou depois — apagando a prova de quem realmente recebeu
+      // o kit, e ainda devolvendo 200 para as duas.
+      const fechada = await tx.requisicaoMaterial.updateMany({
+        where: { id: req.id, status: 'separada' },
+        data: {
+          status: 'entregue',
+          entregueEm: new Date(),
+          entreguePorCompanyUserId: input.autorCompanyUserId,
+          recebedorOperatorId: input.recebedorOperatorId,
+          confirmacaoTipo: input.confirmacaoTipo,
+          assinatura: input.assinatura ?? null,
+        },
+      });
+      if (fechada.count === 0) {
+        throw new ConflictException('Esta requisição já foi entregue por outra chamada.');
+      }
+    }
 
     return { statusMateriais };
   }

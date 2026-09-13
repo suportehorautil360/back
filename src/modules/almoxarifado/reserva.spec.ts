@@ -262,6 +262,41 @@ describe('reservarParaOs', () => {
     expect(r.itens[0].status).toBe('nao_vinculado');
   });
 
+  it('achado Important I6 da revisão final: linha do PLANO com quantidade "0" não cria item reservada com 0 reservado', async () => {
+    // Sem `override` de propósito: este teste passa pelo caminho REAL —
+    // `itensDoPlanoDaOs` → `itensDeTrocaDoCiclo` → `parseQuantidade` — para
+    // provar a cadeia inteira, não só a função pura. Antes da correção,
+    // `quantidade: '0'` produzia `quantidadeReservada: 0` com
+    // `status: 'reservada'` (`faltante = 0 - 0 = 0`): um item impeditivo que
+    // nunca fecha o kit, e que — sem saldo cadastrado para a peça — faria a
+    // conferência estourar um `Error` cru (500 na cara do almoxarife).
+    const { prisma } = prismaFalso(5, 0);
+    prisma.planoPreventivo.findFirst = jest.fn().mockResolvedValue({
+      categorias: [
+        {
+          id: 'cat-1',
+          nome: 'Filtros',
+          ciclos: [{ id: 'c1', titulo: 'Ciclo 1' }],
+          linhas: [
+            { id: 'l1', item: 'Parafuso de dreno', codigoPeca: '00000009',
+              quantidade: '0', pecaId: 'p-1', impeditivo: true,
+              acoes: { c1: 'trocar' } },
+          ],
+        },
+      ],
+    });
+    const servico = new AlmoxarifadoService(prisma as never);
+
+    const r = await servico.reservarParaOs({
+      companyId: COMPANY, serviceOrderId: OS, depositoId: DEPOSITO,
+      autorCompanyUserId: AUTOR, categoriaPlanoId: 'cat-1', cicloId: 'c1',
+    });
+
+    // Com saldo físico 5 disponível, "0" virando 1 (a correção) reserva a
+    // unidade inteira — item fecha normalmente, kit não trava.
+    expect(r.itens[0]).toMatchObject({ status: 'reservada', quantidadeReservada: 1 });
+  });
+
   it('OS de outra empresa (ou inexistente) não gera requisição nem entra em transação', async () => {
     // Divergência achada em relação ao brief: o snippet original resolve
     // `os?.equipment?.modelo ?? 'Geral'` mesmo quando `findFirst` (já

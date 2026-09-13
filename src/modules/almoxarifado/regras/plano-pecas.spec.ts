@@ -98,6 +98,18 @@ describe('parseQuantidade', () => {
       unidade: 'conforme manual',
     });
   });
+
+  it('achado Important I6 da revisão final: "0" vale 1, igual ao caso sem número', () => {
+    // Sem esta guarda, `quantidade: "0"` produzia `{ valor: 0, unidade: null
+    // }`: `reservarParaOs` reservava 0, `faltante` também dava 0, e o item
+    // nascia `status: 'reservada'` com 0 reservado — se a linha fosse
+    // impeditiva, o kit nunca fechava (nenhum item com `quantidade` 0 pode
+    // virar `separada`); e se a peça nunca tivesse entrada no depósito, a
+    // conferência estourava um `Error` cru (500). O comentário desta função
+    // já dizia que "devolver 0 faria a OS não reservar nada" — só não
+    // cobria o caso em que o PRÓPRIO plano manda 0.
+    expect(parseQuantidade('0')).toEqual({ valor: 1, unidade: null });
+  });
 });
 
 describe('resolverPeca', () => {

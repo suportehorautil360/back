@@ -51,6 +51,18 @@ function lista<T>(v: unknown): T[] {
  *
  * Sem número, vale 1 e o texto inteiro vira unidade: o plano omite a
  * quantidade quando é uma peça só, e devolver 0 faria a OS não reservar nada.
+ *
+ * Achado Important I6 da revisão final: o mesmo raciocínio vale para "0"
+ * (ou qualquer parse que resolva a zero) — o autor original já sabia que 0
+ * era perigoso (é a frase acima), só não cobriu o caso em que o PRÓPRIO
+ * número do plano é zero. Sem esta guarda, `reservarParaOs` cria um item
+ * `reservada` com `quantidadeReservada: 0` (`faltante = 0 - 0 = 0`): se a
+ * linha for impeditiva, o kit nunca fecha (`quantidade > 0` é exigido para
+ * separar), e se a peça nunca teve entrada no depósito a conferência
+ * estoura um `Error` cru — 500 na cara do almoxarife. Uma linha marcada
+ * para "trocar"/"medir_trocar" com quantidade zero é dado ruim de import de
+ * PDF, não uma quantidade real — tratar como "sem número" (vale 1) é a
+ * mesma decisão já tomada duas linhas acima, só completa agora.
  */
 export function parseQuantidade(bruto?: string): {
   valor: number;
@@ -61,7 +73,8 @@ export function parseQuantidade(bruto?: string): {
   const m = /^(\d+(?:[.,]\d+)?)\s*(.*)$/.exec(s);
   if (!m) return { valor: 1, unidade: s };
   const resto = m[2].trim();
-  return { valor: Number(m[1].replace(',', '.')), unidade: resto || null };
+  const valor = Number(m[1].replace(',', '.'));
+  return { valor: valor > 0 ? valor : 1, unidade: resto || null };
 }
 
 /**

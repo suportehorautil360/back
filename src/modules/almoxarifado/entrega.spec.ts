@@ -26,15 +26,28 @@ function erroDeContencao(): Prisma.PrismaClientKnownRequestError {
 function montar(
   status: string,
   itens: Array<Record<string, unknown>>,
-  opts: { semSaldo?: boolean; comDestinatariosDeNotificacao?: boolean } = {},
+  opts: {
+    semSaldo?: boolean;
+    comDestinatariosDeNotificacao?: boolean;
+    // Achado Important I2 da revisão final: por padrão o kit já está
+    // liberado — é a precondição realista dos testes de ENTREGA (que não
+    // chamam `liberarRequisicao` antes). Os testes da própria LIBERAÇÃO
+    // passam `naoLiberada: true` porque testam exatamente o estado anterior
+    // a ela — sem isto, `liberadaEmAtual` já viria preenchido e o guard
+    // `where: { liberadaEm: null }` nunca casaria na primeira chamada.
+    naoLiberada?: boolean;
+  } = {},
 ) {
   const chamadas: string[] = [];
   const itensDb = new Map(itens.map((i) => [i.id as string, { ...i }]));
-  // Estado fake da COLUNA `requisicaoMaterial.liberadaEm` — só existe para o
-  // guard `where: { liberadaEm: null }` de `liberarRequisicao` (achado
-  // Important I3 da rodada 2) ter algo real para checar entre chamadas
-  // sucessivas dentro do MESMO teste (ver "dois POSTs sequenciais" abaixo).
-  let liberadaEmAtual: Date | null = null;
+  // Estado fake da COLUNA `requisicaoMaterial.liberadaEm` — usado pelo guard
+  // `where: { liberadaEm: null }` de `liberarRequisicao` (achado Important
+  // I3 da rodada 2) E pela releitura fresca que `entregarRequisicao` faz
+  // dela (achado Important I2 da revisão final, via
+  // `requisicaoMaterial.findUniqueOrThrow`, logo abaixo).
+  let liberadaEmAtual: Date | null = opts.naoLiberada
+    ? null
+    : new Date('2026-09-13T09:00:00Z');
 
   const tx = {
     // Achado I3 da revisão: registra QUAL peça foi travada (`values[0]` é o
@@ -55,6 +68,16 @@ function montar(
       findFirst: jest.fn().mockResolvedValue({
         id: REQ, companyId: COMPANY, status, serviceOrderId: 'os-1',
         depositoId: 'dep-1', itens,
+        // Achado Important I2 da revisão final: este retrato (o que
+        // `entregarRequisicao` lê ANTES de abrir a transação) NUNCA carrega
+        // `liberadaEm` de verdade — fica travado em `null` de propósito.
+        // Só a releitura FRESCA de dentro da transação
+        // (`requisicaoMaterial.findUniqueOrThrow`, abaixo) reflete
+        // `liberadaEmAtual`. Se o serviço decidisse pelo campo deste
+        // objeto, TODA a suíte de `entregarRequisicao` (que roda com o kit
+        // já liberado, `liberadaEmAtual` preenchido) reprovaria — é essa
+        // divergência que prova, por mutação, que a leitura é a de dentro.
+        liberadaEm: null,
         // Task 8: `liberarRequisicao` lê `req.deposito.nome`/`req.serviceOrder.*`
         // para `notificarOsLiberada` — sem isto o teste quebra com "Cannot
         // read properties of undefined", não com uma asserção de negócio.
@@ -72,6 +95,10 @@ function montar(
           responsavelOperatorId: opts.comDestinatariosDeNotificacao ? 'op-mec' : null,
         },
       }),
+      // Achado Important I2 da revisão final: a releitura FRESCA de
+      // `liberadaEm`, dentro da transação, que `executarEntrega` faz antes
+      // de tocar qualquer saldo — nunca o retrato de `findFirst` acima.
+      findUniqueOrThrow: jest.fn(async () => ({ liberadaEm: liberadaEmAtual })),
       update: jest.fn(async () => { chamadas.push('UPDATE requisicao'); return {}; }),
       // Achado Important I1 da revisão: o fechamento da ENTREGA usa
       // `updateMany` condicionado a `status: 'separada'` — `count: 0`
@@ -199,7 +226,7 @@ const separado = () => ({
 
 describe('liberarRequisicao', () => {
   it('kit separado libera a OS para execução', async () => {
-    const { servico } = montar('separada', [separado()]);
+    const { servico } = montar('separada', [separado()], { naoLiberada: true });
     const r = await servico.liberarRequisicao({
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
     });
@@ -208,14 +235,14 @@ describe('liberarRequisicao', () => {
 
   it('kit ainda em separação NÃO libera', async () => {
     // É a regra central: receber não é separar, e separar não é liberar.
-    const { servico } = montar('em_separacao', [separado()]);
+    const { servico } = montar('em_separacao', [separado()], { naoLiberada: true });
     await expect(servico.liberarRequisicao({
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
     })).rejects.toBeInstanceOf(ConflictException);
   });
 
   it('grava liberadaEm e liberadaPorCompanyUserId, sem tocar em saldo', async () => {
-    const { servico, tx, chamadas } = montar('separada', [separado()]);
+    const { servico, tx, chamadas } = montar('separada', [separado()], { naoLiberada: true });
     await servico.liberarRequisicao({
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
     });
@@ -238,7 +265,7 @@ describe('liberarRequisicao', () => {
     // TODO(Task 8): esta é a garantia de que `notificarOsLiberada` vai achar
     // tudo que precisa sem uma segunda consulta — a chamada em si ainda não
     // existe (comentada em `liberarRequisicao`, aguardando a Task 8).
-    const { servico, prisma } = montar('separada', [separado()]);
+    const { servico, prisma } = montar('separada', [separado()], { naoLiberada: true });
     await servico.liberarRequisicao({
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
     });
@@ -261,7 +288,7 @@ describe('liberarRequisicao', () => {
     // reflete a mudança. Os dois valores DIVERGEM de propósito — é essa
     // divergência que prova que o teste discrimina entre ler de fora e ler
     // de dentro.
-    const { servico, itensDb } = montar('separada', [separado()]);
+    const { servico, itensDb } = montar('separada', [separado()], { naoLiberada: true });
     itensDb.set('it-1', { ...separado(), status: 'faltante' });
 
     const r = await servico.liberarRequisicao({
@@ -283,7 +310,7 @@ describe('liberarRequisicao', () => {
     // programador são pessoas DIFERENTES ('user-mec'/'user-prog'), então a
     // notificação grava DUAS linhas.
     const { servico, prisma, tx } = montar('separada', [separado()], {
-      comDestinatariosDeNotificacao: true,
+      comDestinatariosDeNotificacao: true, naoLiberada: true,
     });
     await servico.liberarRequisicao({
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
@@ -323,7 +350,7 @@ describe('liberarRequisicao', () => {
     // (`req.status !== 'separada'`) sozinho NÃO barra a segunda chamada —
     // só o guard `liberadaEm: null`, condicionado dentro da transação, barra.
     const { servico, prisma } = montar('separada', [separado()], {
-      comDestinatariosDeNotificacao: true,
+      comDestinatariosDeNotificacao: true, naoLiberada: true,
     });
     const chamar = () => servico.liberarRequisicao({
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
@@ -335,6 +362,27 @@ describe('liberarRequisicao', () => {
     expect(r1.statusMateriais).toBe('liberada_para_execucao');
     expect(r2.statusMateriais).toBe('liberada_para_execucao'); // resposta não muda de forma nem de conteúdo
     expect(prisma.notificacao.createMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('Important I1: NÃO notifica "OS liberada" quando o status calculado NÃO é liberada_para_execucao', async () => {
+    // Cenário exato do achado I1 (OS-2026-047, revisão final): a requisição
+    // fecha (`separada`) porque o único item IMPEDITIVO está resolvido, mas
+    // um item NÃO impeditivo continua `faltante` — `statusAposEntrega`
+    // devolve `aguardando_compra` para a OS. Sem a correção, a condição da
+    // notificação olhava só `fechamento.count === 1` (primeira liberação) e
+    // mandava "retire o kit" mesmo assim — a mesma OS aparecendo em
+    // vermelho, "Aguardando peça", na bancada do mecânico.
+    const { servico, itensDb, prisma } = montar('separada', [separado()], {
+      comDestinatariosDeNotificacao: true, naoLiberada: true,
+    });
+    itensDb.set('it-1', { ...separado(), impeditivo: false, status: 'faltante' });
+
+    const r = await servico.liberarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+    });
+
+    expect(r.statusMateriais).toBe('aguardando_compra');
+    expect(prisma.notificacao.createMany).not.toHaveBeenCalled();
   });
 });
 
@@ -399,6 +447,39 @@ describe('entregarRequisicao', () => {
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
       recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin',
     })).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('Important I2: entregar sem nunca ter liberado é recusado, sem tocar em saldo', async () => {
+    // O ato explícito do passo 8 do §6 não pode ser pulado num clique: sem
+    // esta guarda, `liberadaEm` ficava NULL para sempre, a notificação de
+    // "OS liberada" (§9) nunca saía, e a OS ainda assim chegava a
+    // `liberada_para_execucao` — o painel dizendo "materiais liberados"
+    // para uma OS que ninguém liberou.
+    const { servico, chamadas } = montar('separada', [separado()], { naoLiberada: true });
+    await expect(servico.entregarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin',
+    })).rejects.toThrow(ConflictException);
+    // Recusa ANTES de tocar em peca_saldos — não é um rollback depois de
+    // mexer, é nem começar.
+    expect(chamadas.some((c) => c.startsWith('LOCK'))).toBe(false);
+  });
+
+  it('Important I2: usa o liberadaEm FRESCO (lido dentro da transação), não o retrato de fora dela', async () => {
+    // O retrato de fora (`requisicaoMaterial.findFirst`, o que
+    // `entregarRequisicao` lê ANTES de abrir a transação) trava
+    // `liberadaEm: null` neste fake de propósito — só a releitura fresca
+    // (`findUniqueOrThrow`, dentro da transação) enxerga `liberadaEmAtual`.
+    // Por padrão (sem `naoLiberada`) o kit já está liberado: se o serviço
+    // decidisse pelo retrato de fora, esta chamada seria recusada mesmo
+    // liberada — é essa divergência que discrimina a leitura fresca da
+    // leitura de fora por mutação.
+    const { servico } = montar('separada', [separado()]);
+    const r = await servico.entregarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin',
+    });
+    expect(r.statusMateriais).toBe('liberada_para_execucao');
   });
 
   // --- Achados desta revisão (regras do coordenador, "valem mais que o brief") ---
