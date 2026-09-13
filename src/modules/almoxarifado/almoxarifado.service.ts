@@ -30,6 +30,13 @@ import {
 } from './compras/solicitacao-de-falta';
 import { montarNotificacoesDeCancelamento, montarNotificacoesDeFalta } from './compras/notificacoes-falta';
 import {
+  executarRecebimento,
+  validarEntradaDeRecebimento,
+  type EntradaDeRecebimento,
+  type ResultadoDoRecebimento,
+} from './compras/recebimento';
+import { acaoPermitida } from './regras/compras';
+import {
   MAX_TENTATIVAS_CONCORRENCIA,
   colisaoDeRequisicaoJaAberta,
   comRetryDeContencao,
@@ -1959,5 +1966,72 @@ export class AlmoxarifadoService {
     }));
 
     return { rows, total, page, pageSize };
+  }
+
+  /**
+   * O almoxarife confere a entrega do fornecedor contra a ordem de compra.
+   *
+   * Validação de forma antes de tudo (recusar no meio deixaria o almoxarife
+   * sem saber o que entrou); o portão de fora olha um retrato para devolver
+   * 404/409 sem abrir transação, e `executarRecebimento` relê tudo com as
+   * travas na mão. Os avisos saem depois do commit, com o client normal.
+   */
+  async receberOrdemDeCompra(input: EntradaDeRecebimento): Promise<ResultadoDoRecebimento> {
+    validarEntradaDeRecebimento(input);
+    const oc = await this.prisma.ordemCompra.findFirst({
+      where: { id: input.ordemCompraId, companyId: input.companyId },
+      select: { status: true },
+    });
+    if (!oc) throw new NotFoundException('Ordem de compra não encontrada para esta empresa.');
+    if (!acaoPermitida(oc.status, 'receber')) {
+      throw new ConflictException(`Ordem de compra "${oc.status}" não aceita recebimento.`);
+    }
+
+    const { resultado, notificacoes } = await comRetryDeContencao('o recebimento', () =>
+      this.prisma.$transaction((tx) => executarRecebimento(tx, input)),
+    );
+    await enviarNotificacoes(this.prisma, notificacoes);
+    return resultado;
+  }
+
+  /**
+   * A fila de recebimento: ordens de compra emitidas com algo por chegar, a
+   * que tem previsão mais cedo primeiro. Traz o pendente de cada linha já
+   * calculado — é o teto que a tela oferece para "recebido".
+   */
+  async listarRecebimentosPendentes(companyId: string) {
+    const ordens = await this.prisma.ordemCompra.findMany({
+      where: { companyId, status: { in: ['emitida', 'enviada', 'recebida_parcial'] } },
+      select: {
+        id: true,
+        numero: true,
+        status: true,
+        previsaoEntrega: true,
+        emitidaEm: true,
+        fornecedor: { select: { id: true, razaoSocial: true, nomeFantasia: true } },
+        deposito: { select: { id: true, nome: true } },
+        itens: {
+          select: {
+            id: true,
+            pecaId: true,
+            quantidade: true,
+            quantidadeRecebida: true,
+            valorUnit: true,
+            peca: {
+              select: { codigoInterno: true, codigoFabricante: true, descricao: true, unidade: true },
+            },
+          },
+        },
+      },
+      orderBy: [{ previsaoEntrega: { sort: 'asc', nulls: 'last' } }, { createdAt: 'asc' }],
+      take: 200,
+    });
+    return ordens.map((o) => ({
+      ...o,
+      itens: o.itens.map((i) => ({
+        ...i,
+        quantidadePendente: Math.max(0, Math.round((Number(i.quantidade) - Number(i.quantidadeRecebida)) * 1000) / 1000),
+      })),
+    }));
   }
 }

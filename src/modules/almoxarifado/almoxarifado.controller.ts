@@ -9,6 +9,7 @@ import { EntradaDto } from './dto/entrada.dto';
 import { SepararDto } from './dto/separacao.dto';
 import { EntregarDto } from './dto/entrega.dto';
 import { CancelarRequisicaoDto } from './dto/cancelamento.dto';
+import { ReceberDto } from './dto/recebimento.dto';
 
 @ApiTags('almoxarifado')
 @Controller('almoxarifado')
@@ -182,6 +183,39 @@ export class AlmoxarifadoController {
       requisicaoId: id,
       autorCompanyUserId: req.painel.companyUserId,
       motivo: dto.motivo,
+    });
+  }
+
+  @Get('recebimentos/pendentes')
+  @ApiOperation({ summary: 'Ordens de compra emitidas com peça por chegar' })
+  async recebimentosPendentes(@Req() req: RequestComPainel) {
+    return this.servico.listarRecebimentosPendentes(req.painel.companyId);
+  }
+
+  @Post('recebimentos')
+  // Quem recebe é o almoxarife (gate da classe). Receber duas vezes a MESMA
+  // nota somaria o físico duas vezes e baixaria o `saldo_em_compra` de um
+  // pedido que não chegou em dobro — a chave de idempotência faz o reenvio
+  // devolver a resposta gravada.
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Registra o recebimento de uma ordem de compra' })
+  async receber(@Req() req: RequestComPainel, @Body() dto: ReceberDto) {
+    return this.servico.receberOrdemDeCompra({
+      companyId: req.painel.companyId,
+      autorCompanyUserId: req.painel.companyUserId,
+      ordemCompraId: dto.ordemCompraId,
+      notaFiscalNumero: dto.notaFiscalNumero?.trim() || null,
+      notaFiscalChave: dto.notaFiscalChave?.trim() || null,
+      observacao: dto.observacao?.trim() || null,
+      itens: dto.itens.map((i) => ({
+        ordemCompraItemId: i.ordemCompraItemId,
+        quantidadeRecebida: i.quantidadeRecebida,
+        quantidadeRecusada: i.quantidadeRecusada ?? 0,
+        valorUnit: i.valorUnit ?? null,
+        lote: i.lote?.trim() || null,
+        validade: i.validade ? new Date(i.validade) : null,
+        divergencia: i.divergencia ?? null,
+      })),
     });
   }
 }
