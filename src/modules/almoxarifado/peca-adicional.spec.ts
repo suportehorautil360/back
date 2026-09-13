@@ -2,6 +2,15 @@ import { BadRequestException, ConflictException, NotFoundException } from '@nest
 import { AlmoxarifadoService } from './almoxarifado.service';
 import { Prisma } from '../../prisma/generated/client';
 
+// §5 da F4: a verificação de estoque mínimo roda DEPOIS do commit e nunca
+// lança. Mockada aqui para afirmar QUANDO e COM QUE alvos é chamada — o motor
+// dela tem suíte própria (`compras/estoque-minimo.spec.ts`).
+jest.mock('./compras/estoque-minimo', () => ({
+  verificarReposicoesSemFalhar: jest.fn(async () => ({ criadas: 0, falhas: 0 })),
+}));
+import { verificarReposicoesSemFalhar } from './compras/estoque-minimo';
+const verificouReposicao = verificarReposicoesSemFalhar as jest.Mock;
+
 const COMPANY = '11111111-1111-1111-1111-111111111111';
 const OUTRA = '99999999-9999-9999-9999-999999999999';
 const AUTOR = '44444444-4444-4444-4444-444444444444';
@@ -278,6 +287,33 @@ function pedir(servico: AlmoxarifadoService, parcial: Partial<Parameters<Almoxar
 const itensAdicionais = (e: Estado) => [...e.itens.values()].filter((i) => i.origem === 'peca_adicional');
 
 describe('pedirPecaAdicional — o que fica gravado', () => {
+  beforeEach(() => verificouReposicao.mockClear());
+
+  it('verifica o estoque mínimo depois do commit, no depósito da requisição', async () => {
+    const { servico, estado, db } = montar();
+    verificouReposicao.mockImplementation(async () => {
+      estado.log.push('minimo');
+      return { criadas: 0, falhas: 0 };
+    });
+
+    await pedir(servico);
+
+    expect(verificouReposicao.mock.calls[0][1]).toEqual([
+      { companyId: COMPANY, pecaId: 'p-1', depositoId: 'dep-2' },
+    ]);
+    expect(verificouReposicao.mock.calls[0][0]).toBe(db);
+    expect(estado.log.slice(-3)).toEqual(['commit', 'notificacao', 'minimo']);
+    verificouReposicao.mockImplementation(async () => ({ criadas: 0, falhas: 0 }));
+  });
+
+  it('pedido que virou falta inteira não mexe no disponível e não verifica o mínimo', async () => {
+    const { servico } = montar({ saldo: null });
+
+    await pedir(servico);
+
+    expect(verificouReposicao).not.toHaveBeenCalled();
+  });
+
   it('estoque cobre: reserva, grava o item peça adicional, reabre o kit, OS volta à separação, avisa e deixa rastro', async () => {
     const { servico, estado } = montar();
 
@@ -395,6 +431,11 @@ describe('pedirPecaAdicional — o que fica gravado', () => {
 
     expect(db.$transaction).toHaveBeenCalledTimes(2);
     expect(r.requisicaoId).toBe('req-rival');
+    // O mínimo é conferido no depósito da requisição que venceu (`dep-2`), não
+    // no que a leitura de fora escolheu quando não havia requisição (`dep-1`).
+    expect(verificouReposicao.mock.calls[0][1]).toEqual([
+      { companyId: COMPANY, pecaId: 'p-1', depositoId: 'dep-2' },
+    ]);
     expect(itensAdicionais(estado).map((i) => i.requisicaoId)).toEqual(['req-rival']);
     // Reserva no depósito da requisição relida, não no que a leitura de fora escolheu.
     expect(r.status).toBe('reservada');

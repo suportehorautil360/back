@@ -11,6 +11,7 @@ import { EntregarDto } from './dto/entrega.dto';
 import { CancelarRequisicaoDto } from './dto/cancelamento.dto';
 import { ReceberDto } from './dto/recebimento.dto';
 import { PedirPecaAdicionalDto } from './dto/peca-adicional.dto';
+import { VerificarEstoqueMinimoDto } from './dto/estoque-minimo.dto';
 
 @ApiTags('almoxarifado')
 @Controller('almoxarifado')
@@ -249,5 +250,15 @@ export class AlmoxarifadoController {
   @ApiOperation({ summary: 'As peças adicionais pedidas para a OS, com o estado de cada uma' })
   async pecasAdicionais(@Req() req: RequestComPainel, @Param('osId') osId: string) {
     return this.servico.listarPecasAdicionais(req.painel.companyId, osId);
+  }
+
+  @Post('estoque-minimo/verificar')
+  // Sem `IdempotencyInterceptor` de propósito: a verificação é idempotente
+  // por construção — o índice único parcial deixa existir no máximo uma
+  // reposição automática aberta por peça e depósito, e a segunda chamada não
+  // cria nada.
+  @ApiOperation({ summary: 'Confere a reposição automática da peça nos depósitos em que ela tem saldo' })
+  async verificarEstoqueMinimo(@Req() req: RequestComPainel, @Body() dto: VerificarEstoqueMinimoDto) {
+    return this.servico.verificarEstoqueMinimoDaPeca(req.painel.companyId, dto.pecaId);
   }
 }

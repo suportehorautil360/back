@@ -30,6 +30,7 @@ import {
   type SolicitacaoAberta,
 } from './compras/solicitacao-de-falta';
 import { montarNotificacoesDePecaAdicional } from './compras/notificacoes-peca-adicional';
+import { verificarReposicoesSemFalhar } from './compras/estoque-minimo';
 import { registrarAuditoriaSuprimentos } from './auditoria';
 import { montarNotificacoesDeCancelamento, montarNotificacoesDeFalta } from './compras/notificacoes-falta';
 import {
@@ -241,6 +242,14 @@ export class AlmoxarifadoService {
         // liberação. `enviarNotificacoes` nunca lança, então nenhum retry roda
         // depois dele. A resposta pública não ganha o campo `notificacoes`.
         await enviarNotificacoes(this.prisma, notificacoes);
+        // §5 da F4: reservar baixa o disponível, e é aí que a peça pode cruzar
+        // o mínimo. A verificação roda DEPOIS do commit, com o client normal, e
+        // nunca lança — a reserva já está gravada e não se desfaz por causa de
+        // uma reposição que não nasceu. Só as peças que de fato reservaram.
+        const reservadas = resultado.itens
+          .filter((i) => i.pecaId && i.quantidadeReservada > 0)
+          .map((i) => ({ companyId: input.companyId, pecaId: i.pecaId as string, depositoId: input.depositoId }));
+        if (reservadas.length > 0) await verificarReposicoesSemFalhar(this.prisma, reservadas);
         return resultado;
       } catch (erro) {
         // Achado Important R1: a colisão no índice de requisição-única-por-OS
@@ -2114,10 +2123,17 @@ export class AlmoxarifadoService {
 
     for (let tentativa = 1; ; tentativa++) {
       try {
-        const { notificacoes, ...resultado } = await this.prisma.$transaction((tx) =>
+        const { notificacoes, depositoId: depositoDaReserva, ...resultado } = await this.prisma.$transaction((tx) =>
           this.executarPecaAdicional(tx, pedido),
         );
         await enviarNotificacoes(this.prisma, notificacoes);
+        // Mesma razão da reserva (§5): o pedido baixou o disponível. Depois do
+        // commit e sem lançar.
+        if (resultado.quantidadeReservada > 0) {
+          await verificarReposicoesSemFalhar(this.prisma, [
+            { companyId: input.companyId, pecaId: input.pecaId, depositoId: depositoDaReserva },
+          ]);
+        }
         return resultado;
       } catch (erro) {
         if (!colisaoDeRequisicaoJaAberta(erro) && !erroDeContencaoTransitoria(erro)) throw erro;
@@ -2167,7 +2183,7 @@ export class AlmoxarifadoService {
       motivo: string;
       depositoId: string;
     },
-  ): Promise<ResultadoDaPecaAdicional & { notificacoes: NotificacaoPronta[] }> {
+  ): Promise<ResultadoDaPecaAdicional & { notificacoes: NotificacaoPronta[]; depositoId: string }> {
     // 1. A requisição aberta da OS, travada e relida. Se fechou entre a
     //    leitura e a trava (entrega ou cancelamento), o pedido abre outra.
     const aberta = await tx.requisicaoMaterial.findFirst({
@@ -2340,6 +2356,9 @@ export class AlmoxarifadoService {
       statusMateriais,
       solicitacaoCompra: solicitacao?.numero ?? null,
       notificacoes,
+      // Só para a verificação de estoque mínimo depois do commit: a resposta
+      // pública (`ResultadoDaPecaAdicional`) não leva o depósito.
+      depositoId: req.depositoId,
     };
   }
 
@@ -2369,5 +2388,35 @@ export class AlmoxarifadoService {
       orderBy: { createdAt: 'desc' },
       take: 200,
     });
+  }
+
+  /**
+   * Confere a reposição automática de uma peça em todos os depósitos ATIVOS em
+   * que ela tem saldo — o que o painel chama depois de mudar o mínimo ou o lote
+   * de reposição (§5 da F4).
+   *
+   * Par sem linha de saldo não entra: peça que nunca foi estocada naquele
+   * depósito não é reposta ali, e a verificação não cria linha de saldo.
+   * Nunca lança por falha de uma peça: o cadastro já foi salvo.
+   */
+  async verificarEstoqueMinimoDaPeca(
+    companyId: string,
+    pecaId: string,
+  ): Promise<{ criadas: number; falhas: number }> {
+    const peca = await this.prisma.peca.findFirst({
+      where: { id: pecaId, companyId },
+      select: { id: true },
+    });
+    if (!peca) throw new NotFoundException('Peça não encontrada para esta empresa.');
+
+    const saldos = await this.prisma.pecaSaldo.findMany({
+      where: { pecaId, deposito: { companyId, ativo: true } },
+      select: { depositoId: true },
+    });
+    if (saldos.length === 0) return { criadas: 0, falhas: 0 };
+    return verificarReposicoesSemFalhar(
+      this.prisma,
+      saldos.map((s) => ({ companyId, pecaId, depositoId: s.depositoId })),
+    );
   }
 }

@@ -2,6 +2,15 @@ import { BadRequestException, ConflictException, NotFoundException } from '@nest
 import { AlmoxarifadoService } from './almoxarifado.service';
 import { Prisma } from '../../prisma/generated/client';
 
+// §5 da F4: a verificação de estoque mínimo roda DEPOIS do commit e nunca
+// lança. Mockada aqui para afirmar QUANDO e COM QUE alvos é chamada — o motor
+// dela tem suíte própria (`compras/estoque-minimo.spec.ts`).
+jest.mock('./compras/estoque-minimo', () => ({
+  verificarReposicoesSemFalhar: jest.fn(async () => ({ criadas: 0, falhas: 0 })),
+}));
+import { verificarReposicoesSemFalhar } from './compras/estoque-minimo';
+const verificouReposicao = verificarReposicoesSemFalhar as jest.Mock;
+
 /** Fabrica o erro que o Postgres/Prisma devolve numa colisão de unique. */
 function erroDeUniqueViolado(): Prisma.PrismaClientKnownRequestError {
   return new Prisma.PrismaClientKnownRequestError(
@@ -174,6 +183,43 @@ const itemDeTroca = {
 };
 
 describe('reservarParaOs', () => {
+  beforeEach(() => verificouReposicao.mockClear());
+
+  it('verifica o estoque mínimo depois do commit, só das peças que reservaram', async () => {
+    const { prisma, tx } = prismaFalso(5, 0);
+    const servico = new AlmoxarifadoService(prisma as never);
+    // A segunda peça não tem linha de saldo: fica faltante e não baixa o
+    // disponível de ninguém.
+    tx.$queryRaw
+      .mockImplementationOnce(async () => [{ saldo_fisico: 5, saldo_reservado: 0 }])
+      .mockImplementationOnce(async () => []);
+
+    await servico.reservarParaOs({
+      companyId: COMPANY, serviceOrderId: OS, depositoId: DEPOSITO,
+      autorCompanyUserId: AUTOR, categoriaPlanoId: 'cat-1', cicloId: 'c1',
+    }, { itensDoPlano: [itemDeTroca, { ...itemDeTroca, linhaId: 'l2', pecaId: 'p-2' }] });
+
+    expect(verificouReposicao).toHaveBeenCalledTimes(1);
+    expect(verificouReposicao.mock.calls[0][1]).toEqual([
+      { companyId: COMPANY, pecaId: 'p-1', depositoId: DEPOSITO },
+    ]);
+    // Depois do commit e com o client normal — nunca com o `tx`.
+    expect(verificouReposicao.mock.calls[0][0]).toBe(prisma);
+    expect(prisma.$transaction).toHaveBeenCalled();
+  });
+
+  it('reserva que não pegou nada não chama a verificação de estoque mínimo', async () => {
+    const { prisma } = prismaFalso(0, 0);
+    const servico = new AlmoxarifadoService(prisma as never);
+
+    await servico.reservarParaOs({
+      companyId: COMPANY, serviceOrderId: OS, depositoId: DEPOSITO,
+      autorCompanyUserId: AUTOR, categoriaPlanoId: 'cat-1', cicloId: 'c1',
+    }, { itensDoPlano: [itemDeTroca] });
+
+    expect(verificouReposicao).not.toHaveBeenCalled();
+  });
+
   it('trava a linha do saldo ANTES de decidir', async () => {
     const { prisma, chamadas, tx } = prismaFalso(5, 0);
     const servico = new AlmoxarifadoService(prisma as never);
