@@ -85,7 +85,12 @@ export class ParceirosService {
         this.prisma.company.findMany({
           select: { id: true, legacyId: true, name: true, uf: true },
         }),
+        // Só os parceiros da REDE (posto e oficina). Desde a F4 existe também
+        // FORNECEDOR, cadastrado pelo setor de compras da própria empresa — ele
+        // não é da rede credenciada e, sem este filtro, caía no `else` abaixo
+        // e aparecia como oficina.
         this.prisma.partner.findMany({
+          where: { type: { in: ['POSTO', 'OFICINA'] } },
           include: { company: { select: { legacyId: true } } },
         }),
       ]);
@@ -115,7 +120,7 @@ export class ParceirosService {
 
         if (row.type === 'POSTO') {
           postos.push(mapPartnerToPostoOverview(row, prefId, localFallback));
-        } else {
+        } else if (row.type === 'OFICINA') {
           oficinas.push(mapPartnerToOficinaOverview(row, prefId, localFallback));
         }
       }

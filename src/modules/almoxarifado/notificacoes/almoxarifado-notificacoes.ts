@@ -45,7 +45,7 @@ type ClienteDeEnvio = PrismaClient;
 /** Uma linha já pronta para `notificacao.createMany` — mesmo shape da tabela. */
 export type NotificacaoPronta = Prisma.NotificacaoCreateManyInput;
 
-interface LinhaDeNotificacao {
+export interface LinhaDeNotificacao {
   destinatarioId: string;
   titulo: string;
   mensagem: string;
@@ -60,7 +60,7 @@ interface LinhaDeNotificacao {
  * Só MONTA as linhas — não escreve nada. Roda dentro da transação (lê
  * `company`, sem risco de RLS de INSERT).
  */
-async function montarLinhas(
+export async function montarLinhas(
   tx: ClienteDaTransacao,
   companyId: string,
   linhas: LinhaDeNotificacao[],
@@ -230,7 +230,11 @@ export async function enviarNotificacoes(
  * recebe notificação é o `companyUserId` do operador, que é nullable: operador
  * sem login no painel não vira destinatário.
  */
-export async function usuariosDoAlmoxarifado(tx: ClienteDaTransacao, companyId: string): Promise<string[]> {
+export async function usuariosDoGrupo(
+  tx: ClienteDaTransacao,
+  companyId: string,
+  grupo: 'almoxarifado' | 'compras',
+): Promise<string[]> {
   // Duas etapas de propósito: o espelho do `back` declara só a COLUNA
   // `Operator.companyRoleId`, sem a relação `companyRole` (e `CompanyRole` não
   // tem a volta `operators`). Um `where: { companyRole: { ... } }` não compila
@@ -240,7 +244,7 @@ export async function usuariosDoAlmoxarifado(tx: ClienteDaTransacao, companyId: 
     where: {
       companyId,
       ativo: true,
-      accessGroups: { some: { enabled: true, group: { key: 'almoxarifado' } } },
+      accessGroups: { some: { enabled: true, group: { key: grupo } } },
     },
     select: { id: true },
   });
@@ -255,4 +259,35 @@ export async function usuariosDoAlmoxarifado(tx: ClienteDaTransacao, companyId: 
     select: { companyUserId: true },
   });
   return operadores.map((o) => o.companyUserId).filter((id): id is string => !!id);
+}
+
+/** Quem age depois do kit conferido é quem tem a tela do almoxarifado. */
+export async function usuariosDoAlmoxarifado(tx: ClienteDaTransacao, companyId: string): Promise<string[]> {
+  return usuariosDoGrupo(tx, companyId, 'almoxarifado');
+}
+
+/**
+ * Quem pode aprovar uma ordem de compra acima do limite: OWNER e ADMIN da
+ * conta (`client_users.role`) e o gestor master configurado — a mesma regra
+ * de `podeAprovarOrdemDeCompra` (`regras/compras.ts`). Só usuários ATIVOS
+ * DESTA empresa: um gestor master que foi desativado, ou que não é da
+ * empresa, não recebe aviso.
+ */
+export async function aprovadoresDeCompra(
+  tx: ClienteDaTransacao,
+  companyId: string,
+  gestorMasterCompanyUserId: string | null,
+): Promise<string[]> {
+  const usuarios = await tx.companyUser.findMany({
+    where: {
+      companyId,
+      status: 'ACTIVE',
+      OR: [
+        { role: { in: ['OWNER', 'ADMIN'] } },
+        ...(gestorMasterCompanyUserId ? [{ id: gestorMasterCompanyUserId }] : []),
+      ],
+    },
+    select: { id: true },
+  });
+  return usuarios.map((u) => u.id);
 }
