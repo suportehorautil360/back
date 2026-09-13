@@ -44,53 +44,6 @@ export interface ReposicaoCriada {
   numero: string;
 }
 
-interface CausaDoAdapter {
-  originalCode?: string;
-  constraint?: { fields?: string[]; index?: string };
-}
-
-const SQLSTATE_DE_CONTENCAO = new Set(['40P01', '40001']);
-
-/**
- * Traduz o erro do Prisma 7 com `@prisma/adapter-pg` para o formato que
- * `erroDeContencaoTransitoria` e `alvoDaViolacao` (`transacao.ts`) leem.
- *
- * Conferido contra o runtime instalado, com um `pg.Pool` falso devolvendo o
- * erro do Postgres (sem banco): com o adapter, o `meta` é
- * `{ modelName?, driverAdapterError: { cause } }`, e
- * - `P2002` chega SEM `meta.target` — os campos estão em
- *   `cause.constraint.fields` (`['company_id','numero']`,
- *   `['peca_id','deposito_reposicao_id']`);
- * - deadlock (`40P01`) chega como `P2010` sem `meta.code` numa raw query e como
- *   `P2039` numa operação de modelo; `40001` chega como `P2010` sem
- *   `meta.code` numa raw query (em operação de modelo já vem `P2034`).
- *
- * Sem esta tradução, a colisão de número e o deadlock subiriam na primeira
- * tentativa em vez de serem refeitos por `comRetryDeContencao`.
- */
-function noFormatoDaTransacao(erro: unknown): unknown {
-  if (!(erro instanceof Prisma.PrismaClientKnownRequestError)) return erro;
-  const causa = (erro.meta as { driverAdapterError?: { cause?: CausaDoAdapter } } | undefined)?.driverAdapterError
-    ?.cause;
-  if (!causa) return erro;
-
-  const meta: Record<string, unknown> = { ...(erro.meta ?? {}) };
-  let code = erro.code;
-  const contencao = causa.originalCode !== undefined && SQLSTATE_DE_CONTENCAO.has(causa.originalCode);
-  if (erro.code === 'P2002' && !alvoDaViolacao(erro)) {
-    const alvo = causa.constraint?.fields ?? causa.constraint?.index;
-    if (!alvo) return erro;
-    meta.target = alvo;
-  } else if (erro.code === 'P2010' && meta.code === undefined && contencao) {
-    meta.code = causa.originalCode;
-  } else if (erro.code === 'P2039' && contencao) {
-    code = 'P2034';
-  } else {
-    return erro;
-  }
-  return new Prisma.PrismaClientKnownRequestError(erro.message, { code, clientVersion: erro.clientVersion, meta });
-}
-
 /**
  * Outra transação criou a reposição automática deste par entre a nossa
  * checagem e o INSERT. Não é erro nem contenção: o que se queria já existe, e
@@ -287,9 +240,7 @@ export async function verificarReposicao(
 ): Promise<ReposicaoCriada | null> {
   try {
     return await comRetryDeContencao('a verificação de estoque mínimo', () =>
-      prisma.$transaction((tx) => executarVerificacao(tx, alvo)).catch((erro: unknown) => {
-        throw noFormatoDaTransacao(erro);
-      }),
+      prisma.$transaction((tx) => executarVerificacao(tx, alvo)),
     );
   } catch (erro) {
     if (colisaoDeReposicaoAutomatica(erro)) return null;

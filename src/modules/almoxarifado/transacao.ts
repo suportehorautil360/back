@@ -53,22 +53,42 @@ export const MAX_TENTATIVAS_CONCORRENCIA = 5;
 export const INDICE_REQUISICAO_UNICA_POR_OS = 'requisicoes_material_uma_aberta_por_os';
 
 /**
+ * A causa que o `@prisma/adapter-pg` pendura no erro do Prisma 7, em
+ * `meta.driverAdapterError.cause`. Conferido no código instalado do adapter
+ * (`mapDriverError`) e do client (`We`/`fp`/`gp`):
+ * - `23505` (unique) vira `kind: 'UniqueConstraintViolation'` com
+ *   `constraint.fields` = as COLUNAS tiradas do `detail` do Postgres
+ *   ("Key (company_id, numero)=…") — nunca o nome do índice;
+ * - todo erro traz `originalCode`, o SQLSTATE cru.
+ */
+interface CausaDoAdapter {
+  originalCode?: string;
+  kind?: string;
+  constraint?: { fields?: string[]; index?: string };
+}
+
+function causaDoAdapter(erro: Prisma.PrismaClientKnownRequestError): CausaDoAdapter | undefined {
+  return (erro.meta as { driverAdapterError?: { cause?: CausaDoAdapter } } | undefined)?.driverAdapterError?.cause;
+}
+
+/**
  * O alvo de uma violação de unique, normalizado pra uma string só.
  *
- * `meta.target` varia de formato: às vezes um array de CAMPOS DO SCHEMA
- * (quando o Prisma reconhece a constraint por vir do `@@unique` declarado —
- * é o caso de `RequisicaoMaterial.@@unique([companyId, numero])`), às vezes
- * o NOME CRU do índice/constraint (quando o Prisma não tem de onde tirar os
- * campos — é o caso do índice único parcial acima, que só existe em SQL,
- * nunca em `schema.prisma`). Não achei confirmação de qual das duas formas
- * o Prisma 7 com `@prisma/adapter-pg` usa para um índice fora do schema
- * neste ambiente (sem Postgres acessível aos testes para reproduzir de
- * verdade) — por isso a função aceita as duas, em vez de supor uma.
+ * Em produção (Prisma 7 + `@prisma/adapter-pg`) o `P2002` chega SEM
+ * `meta.target`: o alvo são as colunas de `cause.constraint.fields`
+ * (`company_id,numero`; `service_order_id` no índice parcial de requisição
+ * aberta por OS). Até esta correção a função só lia `meta.target`, devolvia
+ * `''` em produção, e nenhuma colisão de número era refeita. `meta.target`
+ * (campos do schema ou nome do índice) continua aceito: é o formato do client
+ * sem adapter e o que as specs antigas fabricam.
  */
 export function alvoDaViolacao(erro: Prisma.PrismaClientKnownRequestError): string {
   const target = (erro.meta as { target?: unknown } | undefined)?.target;
   if (Array.isArray(target)) return target.join(',');
   if (typeof target === 'string') return target;
+  const restricao = causaDoAdapter(erro)?.constraint;
+  if (restricao?.fields?.length) return restricao.fields.join(',');
+  if (restricao?.index) return restricao.index;
   return '';
 }
 
@@ -105,26 +125,22 @@ export function colisaoDeRequisicaoJaAberta(erro: unknown): boolean {
  *   índice de requisição-única-por-OS (`colisaoDeRequisicaoJaAberta`, achado
  *   R1): aquele não é retentável, e por isso o chamador confere
  *   `colisaoDeRequisicaoJaAberta` ANTES desta função.
- * - `P2010` com `meta.code` `40P01` (deadlock) ou `40001` (falha de
- *   serialização) — os dois só existem em erro de `$queryRaw`/`$executeRaw`
- *   (as raw queries do `SELECT … FOR UPDATE`): é assim que o Prisma expõe o
- *   SQLSTATE cru do Postgres quando uma raw query falha. Achado Important
- *   I1: o laço de travas ordenado por `pecaId` (ver `executarReserva`) evita
- *   a maior parte dos deadlocks ENTRE duas chamadas deste método, mas não
- *   os elimina por completo (pooler de conexão, outra rota tocando a mesma
- *   linha), então o retry continua sendo a rede de segurança.
- * - `P2034`: "Transaction failed due to a write conflict or a deadlock" —
- *   achado Important R2, o equivalente do `40P01`/`40001` para operações
- *   NÃO-raw (`create`, `updateMany`, etc.) dentro de uma transação
- *   interativa. `40P01`/`40001` só chegam como `P2010`, e só em raw query;
- *   um deadlock no `requisicaoMaterial.create` ou no `serviceOrder.updateMany`
- *   chega como `P2034`, sem precisar olhar `meta` — o código já é inequívoco.
+ * - SQLSTATE `40P01` (deadlock) ou `40001` (falha de serialização). Com o
+ *   adapter, uma raw query (`$queryRaw`/`$executeRaw`, as travas `FOR
+ *   UPDATE`) que falha chega SEMPRE como `P2010`, e o SQLSTATE está em
+ *   `cause.originalCode` — não em `meta.code`, que só o client sem adapter
+ *   preenche. Numa operação de modelo, `40001` chega como `P2034` e `40P01`
+ *   como `P2039` (erro Postgres sem tradução própria), também com o SQLSTATE
+ *   na causa. Achado Important I1: o laço de travas ordenado por `pecaId`
+ *   evita a maior parte dos deadlocks, mas não todos (pooler de conexão,
+ *   outra rota tocando a mesma linha) — o retry é a rede.
+ * - `P2034`: "write conflict or a deadlock" — inequívoco pelo código.
  */
 export function erroDeContencaoTransitoria(erro: unknown): boolean {
   if (!(erro instanceof Prisma.PrismaClientKnownRequestError)) return false;
   if (erro.code === 'P2002') return !colisaoDeRequisicaoJaAberta(erro) && alvoDaViolacao(erro).includes('numero');
-  if (erro.code === 'P2010') {
-    const sqlstate = (erro.meta as { code?: string } | undefined)?.code;
+  if (erro.code === 'P2010' || erro.code === 'P2039') {
+    const sqlstate = (erro.meta as { code?: string } | undefined)?.code ?? causaDoAdapter(erro)?.originalCode;
     return sqlstate === '40P01' || sqlstate === '40001';
   }
   if (erro.code === 'P2034') return true;
