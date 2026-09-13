@@ -588,6 +588,10 @@ export function montarBancoFalso() {
     t.requisicaoItens.push({
       id: f.requisicaoItemId, requisicaoId: f.requisicaoId, pecaId: f.pecaId, status: 'faltante',
       quantidadeSolicitada: f.solicitada, quantidadeReservada: f.reservada, impeditivo: true,
+      // O default da coluna. `cobertura.ts` lê a origem para separar falta do
+      // plano de peça adicional — linha real nunca vem sem ela, e deixá-la
+      // `undefined` aqui só acertaria por acaso.
+      origem: 'plano',
     });
     plantarSolicitacao({
       id: f.solicitacaoId,
