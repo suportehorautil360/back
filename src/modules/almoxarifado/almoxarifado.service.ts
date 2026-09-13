@@ -1071,6 +1071,15 @@ export class AlmoxarifadoService {
     confirmacaoTipo: string;
     assinatura?: string | null;
   }): Promise<{ statusMateriais: StatusMateriais }> {
+    // Achado m2 da revisão: "assinatura" sem traço nenhum registraria a
+    // retirada como se tivesse prova, sem guardar prova nenhuma. Validação de
+    // FORMA do pedido — roda antes de qualquer leitura do banco.
+    if (input.confirmacaoTipo === 'assinatura' && !(input.assinatura ?? '').trim()) {
+      throw new BadRequestException(
+        'confirmacaoTipo "assinatura" exige o traço da assinatura.',
+      );
+    }
+
     const req = await this.prisma.requisicaoMaterial.findFirst({
       where: { id: input.requisicaoId, companyId: input.companyId },
       include: { itens: true },
@@ -1085,15 +1094,24 @@ export class AlmoxarifadoService {
       );
     }
 
-    // Só o CONJUNTO de itens candidatos (quais têm peça vinculada e estavam
-    // separados) vem da leitura de fora da transação — decide QUAIS linhas
-    // de saldo travar, nunca QUANTO tirar delas. O quanto é sempre relido
-    // FRESCO lá dentro, depois da trava (`executarEntrega`): usar
-    // `quantidadeSeparada` de `req.itens` para a aritmética do saldo seria o
-    // mesmo defeito de "leu fora da transação, decidiu o valor com o que
-    // leu" que já apareceu na entrada de estoque (Critical C2) e na
-    // conferência do kit (Critical C1) — pela quarta vez.
-    const candidatos = req.itens.filter((i) => i.status === 'separada' && i.pecaId);
+    // Achado Critical C2 da revisão: o CONJUNTO de candidatos é todo item
+    // com peça vinculada que teve ALGUMA reserva — não só os que ficaram
+    // `status: 'separada'`. Um item NÃO impeditivo conferido em PARTE (2 de
+    // 4) fica em `reservada` de propósito (`statusDoItemAposSeparacao`: meio
+    // item não libera meia OS), mas as 2 unidades JÁ foram fisicamente
+    // separadas — estão na caixa. Filtrar por `status === 'separada'`
+    // deixava essas 2 de fora da entrega para sempre: a requisição fechava
+    // como `entregue` (terminal — `separarItens`/`entregarRequisicao`
+    // recusam, e o cancelamento da Task 7 não alcança requisição entregue) e
+    // as 2 unidades ficavam presas em `saldo_reservado`/`saldo_separado`
+    // sem tela nenhuma mostrando por quê.
+    //
+    // `quantidadeReservada` nunca é escrita depois da criação do item — só
+    // `reservarParaOs` a grava — por isso é seguro usar o retrato de fora
+    // para decidir QUAIS linhas de `peca_saldos` travar; o quanto entregar
+    // ou devolver de cada uma continua sendo lido FRESCO dentro da transação
+    // (`executarEntrega`), nunca por um valor pré-calculado aqui fora.
+    const candidatos = req.itens.filter((i) => i.pecaId && Number(i.quantidadeReservada) > 0);
 
     // Mesma rede de contenção da reserva e da separação
     // (`erroDeContencaoTransitoria` já existe no arquivo): sem isto, um
@@ -1147,12 +1165,20 @@ export class AlmoxarifadoService {
       return pa < pb ? -1 : pa > pb ? 1 : 0;
     });
 
-    const entregues = new Set<string>();
+    // Achado m3 da revisão: continua a numeração que a OS já tem — mesmo
+    // critério de `itensParaInsumos`/`converterPecasEmInsumos` (orçamento
+    // aprovado, `orcamentos/helpers/itens-para-insumos.helper.ts`). Sem
+    // isto, todo insumo desta entrega nasceria com `ordem: 0` (default da
+    // coluna) e o índice `(service_order_id, ordem)` não ordenaria nada de
+    // verdade quando mais de uma peça sai na mesma entrega.
+    let proximaOrdem = await tx.serviceOrderInsumo.count({
+      where: { serviceOrderId: req.serviceOrderId },
+    });
 
     for (const item of ordemDeTrava) {
       if (!item.pecaId) continue; // inalcançável — `candidatos` já filtra por `pecaId`
 
-      // Trava a linha do saldo ANTES de decidir quanto tirar dela — mesma
+      // Trava a linha do saldo ANTES de decidir o que fazer com ela — mesma
       // regra de `executarReserva`/`executarSeparacao`.
       const linhas = await tx.$queryRaw<
         { saldo_fisico: string; saldo_reservado: string; saldo_separado: string }[]
@@ -1163,97 +1189,128 @@ export class AlmoxarifadoService {
            FOR UPDATE
       `);
       // Achado M1 de `executarSeparacao`, válido aqui pela mesma razão:
-      // `FOR UPDATE` não trava linha que não existe. Deveria ser impossível
-      // (o item só chega a `status: 'separada'` se a linha de saldo já
-      // existisse desde a reserva) — falhar alto é melhor que silenciar:
-      // tratar como zero deixaria o `UPDATE` abaixo casar zero linhas sem
-      // erro nenhum, enquanto o item já teria sido marcado como entregue.
+      // `FOR UPDATE` não trava linha que não existe. `quantidadeReservada >
+      // 0` (o critério de `candidatos`) garante que a linha existia desde a
+      // RESERVA — deveria ser impossível não achá-la aqui, tenha o item sido
+      // separado ou não. Falhar alto é melhor que silenciar: tratar como
+      // zero deixaria o `UPDATE` abaixo casar zero linhas sem erro nenhum,
+      // enquanto o item já teria sido marcado como entregue ou cancelado.
       if (!linhas[0]) {
         throw new Error(
           `Saldo não encontrado para peça ${item.pecaId} no depósito ${req.depositoId} ` +
-            `ao entregar — estado inconsistente com a separação.`,
+            `ao entregar — estado inconsistente com a reserva.`,
         );
       }
 
       // Relê o item AQUI, depois da trava — nunca o retrato de fora da
       // transação (`item`, vindo de `candidatos`/`req.itens`). Mesma razão
       // de `executarSeparacao`: sob READ COMMITTED este `findUniqueOrThrow`
-      // enxerga o último commit, inclusive de uma reconferência que tenha
-      // mudado `quantidadeSeparada` enquanto esta transação esperava a
-      // trava. É este valor — não o de fora — que decide quanto sai do
-      // saldo.
+      // enxerga o último commit, inclusive de uma chamada concorrente que já
+      // tenha fechado este item enquanto esta transação esperava a trava.
       const itemFresco = await tx.requisicaoMaterialItem.findUniqueOrThrow({
         where: { id: item.id },
       });
-      const qtd = Number(itemFresco.quantidadeSeparada);
-      if (itemFresco.status !== 'separada' || qtd <= 0) {
-        // Já entregue (ou zerado) por outra chamada enquanto esperávamos a
-        // trava — nada a fazer com este item nesta passada.
+      if (itemFresco.status === 'entregue' || itemFresco.status === 'cancelada') {
+        // Já processado por outra chamada concorrente enquanto esperávamos
+        // a trava — nada a fazer de novo com este item.
         continue;
       }
+      const reservado = Number(itemFresco.quantidadeReservada);
+      const separado = Number(itemFresco.quantidadeSeparada);
+      if (reservado <= 0) continue; // defensivo — `candidatos` já garante isto
 
-      // Aritmética RELATIVA no banco para as TRÊS colunas — não "leia, some
-      // em JS, grave absoluto" (é a mesma classe do Critical C2 de
-      // `darEntrada`, só que nas três colunas de uma vez). `fisicoDepois`
-      // abaixo é só o retrato para o razão: como a trava é contínua entre
-      // este SELECT e este UPDATE, nenhuma outra transação altera a linha
-      // nesse meio-tempo, e o valor que o Postgres vai gravar é exatamente
-      // este.
-      const fisicoDepois = Number(linhas[0].saldo_fisico) - qtd;
+      // Achado Critical C2: a requisição está FECHANDO — reserva não pode
+      // sobreviver a ela. `saldo_reservado` cai pelo total RESERVADO do item
+      // (a caixa inteira que existia para ele), não só pelo que foi
+      // separado: a diferença (`reservado - separado`) é o que NUNCA chegou
+      // a ser conferido, e sem devolvê-la aqui ela fica presa para sempre —
+      // a requisição vira `entregue` (terminal) e nada mais vai tocar este
+      // item. `saldo_separado`/`saldo_fisico`, por outro lado, só descem
+      // pelo que REALMENTE saiu da caixa (`separado`). Aritmética RELATIVA
+      // nas três colunas, igual ao resto do arquivo — nunca "leia, some em
+      // JS, grave absoluto".
+      const fisicoDepois = Number(linhas[0].saldo_fisico) - separado;
       await tx.$executeRaw(Prisma.sql`
         UPDATE peca_saldos
-           SET saldo_fisico    = saldo_fisico - ${qtd},
-               saldo_reservado = saldo_reservado - ${qtd},
-               saldo_separado  = saldo_separado  - ${qtd},
+           SET saldo_fisico    = saldo_fisico - ${separado},
+               saldo_reservado = saldo_reservado - ${reservado},
+               saldo_separado  = saldo_separado  - ${separado},
                updated_at = now()
          WHERE peca_id = ${item.pecaId}::uuid
            AND deposito_id = ${req.depositoId}::uuid
       `);
 
-      const peca = await tx.peca.findFirstOrThrow({
-        where: { id: item.pecaId, companyId: input.companyId },
-        select: { custoMedio: true, descricao: true, codigoInterno: true, marca: true, unidade: true },
-      });
+      if (separado > 0) {
+        // Parte (ou tudo) do que foi reservado está fisicamente separado —
+        // isso o mecânico leva. O status do item (`separada`, ou ainda
+        // `reservada` se a conferência foi parcial) é CONSEQUÊNCIA do que
+        // foi conferido, não permissão para entregar: aqui só importa
+        // quanto tem na caixa.
+        const peca = await tx.peca.findFirstOrThrow({
+          where: { id: item.pecaId, companyId: input.companyId },
+          select: { custoMedio: true, descricao: true, codigoInterno: true, marca: true, unidade: true },
+        });
 
-      await tx.estoqueMovimento.create({
-        data: {
-          companyId: input.companyId,
-          pecaId: item.pecaId,
-          depositoId: req.depositoId,
-          tipo: 'saida',
-          // NEGATIVO: `quantidade` em `estoque_movimentos` é com sinal, e
-          // conferir o saldo é um SUM.
-          quantidade: -qtd,
-          saldoApos: fisicoDepois,
-          custoUnit: peca.custoMedio,
-          origemTipo: 'requisicao',
-          origemId: req.id,
-          autorCompanyUserId: input.autorCompanyUserId,
-        },
-      });
+        await tx.estoqueMovimento.create({
+          data: {
+            companyId: input.companyId,
+            pecaId: item.pecaId,
+            depositoId: req.depositoId,
+            tipo: 'saida',
+            // NEGATIVO: `quantidade` em `estoque_movimentos` é com sinal, e
+            // conferir o saldo é um SUM.
+            quantidade: -separado,
+            saldoApos: fisicoDepois,
+            custoUnit: peca.custoMedio,
+            origemTipo: 'requisicao',
+            origemId: req.id,
+            autorCompanyUserId: input.autorCompanyUserId,
+          },
+        });
 
-      await tx.serviceOrderInsumo.create({
-        data: {
-          serviceOrderId: req.serviceOrderId,
-          codigo: peca.codigoInterno,
-          descricao: peca.descricao,
-          marca: peca.marca,
-          quantidade: qtd,
-          unidade: peca.unidade,
-          valorUnit: peca.custoMedio,
-        },
-      });
+        await tx.serviceOrderInsumo.create({
+          data: {
+            serviceOrderId: req.serviceOrderId,
+            ordem: proximaOrdem,
+            codigo: peca.codigoInterno,
+            descricao: peca.descricao,
+            marca: peca.marca,
+            quantidade: separado,
+            unidade: peca.unidade,
+            valorUnit: peca.custoMedio,
+          },
+        });
+        proximaOrdem += 1;
 
-      await tx.requisicaoMaterialItem.update({
-        where: { id: item.id },
-        data: { quantidadeEntregue: qtd, status: 'entregue' },
-      });
-
-      entregues.add(item.id);
+        await tx.requisicaoMaterialItem.update({
+          where: { id: item.id },
+          data: { quantidadeEntregue: separado, status: 'entregue' },
+        });
+      } else {
+        // `separado === 0`: nada deste item chegou a ser separado — a
+        // reserva inteira acaba de ser devolvida pelo `UPDATE` acima. Sem
+        // movimento de razão nem insumo: nenhuma peça física saiu do
+        // depósito. Alternativas descartadas pelo coordenador: inventar um
+        // status `entregue_parcial` só adia o problema (o CHECK do banco não
+        // tem esse estado), e recusar a entrega por causa de um item não
+        // impeditivo trava o mecânico pela exata situação que a regra de
+        // impeditivo existe para não travar.
+        await tx.requisicaoMaterialItem.update({
+          where: { id: item.id },
+          data: { status: 'cancelada' },
+        });
+      }
     }
 
-    await tx.requisicaoMaterial.update({
-      where: { id: req.id },
+    // Achado Important I1 da revisão: `updateMany` condicionado a
+    // `status: 'separada'` fecha a corrida entre duas entregas concorrentes.
+    // Sem isto, uma segunda chamada que passasse as duas guardas de fora da
+    // transação (ambas leem "separada" antes de qualquer uma commitar)
+    // sobrescrevia `entregueEm`/`recebedorOperatorId`/`confirmacaoTipo`/
+    // `assinatura` com os dados de quem chegou depois — apagando a prova de
+    // quem realmente recebeu o kit, e ainda devolvendo 200 para as duas.
+    const fechada = await tx.requisicaoMaterial.updateMany({
+      where: { id: req.id, status: 'separada' },
       data: {
         status: 'entregue',
         entregueEm: new Date(),
@@ -1263,20 +1320,23 @@ export class AlmoxarifadoService {
         assinatura: input.assinatura ?? null,
       },
     });
+    if (fechada.count === 0) {
+      throw new ConflictException('Esta requisição já foi entregue por outra chamada.');
+    }
 
-    // `statusAposEntrega` é usada nos DOIS métodos deste arquivo — ver o
-    // comentário dela em `regras/status-materiais.ts`. Itens fora de
-    // `entregues` mantêm o `status` de `req.itens` (o retrato de fora da
-    // transação): aceitável aqui porque só decide o rótulo de MATERIAIS da
-    // OS, e o conjunto de status que importa para essa decisão
-    // (`nao_vinculado`/`faltante` vs. o resto) não muda por causa desta
-    // entrega.
-    const depois = req.itens.map((i) =>
-      entregues.has(i.id)
-        ? { impeditivo: i.impeditivo, status: 'entregue' }
-        : { impeditivo: i.impeditivo, status: i.status },
-    );
-    const statusMateriais = statusAposEntrega(depois);
+    // Achado Critical C1 (sexta ocorrência nesta frente): relê TODOS os
+    // itens da requisição AQUI, dentro da transação — nunca `req.itens`, o
+    // retrato de fora dela. Hoje nada grava `faltante` depois da criação do
+    // item, mas a Task 7 (compra e recebimento) é candidata óbvia a fazer
+    // isso; no dia em que fizer, ler de fora carimbaria
+    // `liberada_para_execucao` numa OS com peça faltando, em silêncio. Mesmo
+    // critério de `liberarRequisicao` (releitura fresca, quinta ocorrência) e
+    // de `executarSeparacao` (releitura de `itensFinal` antes de fechar).
+    const itensFrescos = await tx.requisicaoMaterialItem.findMany({
+      where: { requisicaoId: req.id },
+    });
+    const paraRegra = itensFrescos.map((i) => ({ impeditivo: i.impeditivo, status: i.status }));
+    const statusMateriais = statusAposEntrega(paraRegra);
     await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
 
     return { statusMateriais };

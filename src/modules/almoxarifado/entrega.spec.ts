@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { AlmoxarifadoService } from './almoxarifado.service';
 import { Prisma } from '../../prisma/generated/client';
 
@@ -28,8 +28,13 @@ function montar(status: string, itens: Array<Record<string, unknown>>, opts: { s
   const itensDb = new Map(itens.map((i) => [i.id as string, { ...i }]));
 
   const tx = {
-    $queryRaw: jest.fn(async () => {
-      chamadas.push('LOCK');
+    // Achado I3 da revisão: registra QUAL peça foi travada (`values[0]` é o
+    // primeiro `${...}` do `Prisma.sql`, sempre `item.pecaId` nas duas raw
+    // queries deste arquivo) — não só que uma trava aconteceu. Sem isto, um
+    // refactor que tirasse `FOR UPDATE` do laço continuaria verde no teste
+    // de ordenação (que olharia só a ordem dos `UPDATE` de item).
+    $queryRaw: jest.fn(async (query: { values: unknown[] }) => {
+      chamadas.push(`LOCK ${query.values[0]}`);
       if (opts.semSaldo) return [];
       return [{ saldo_fisico: '10', saldo_reservado: '4', saldo_separado: '4' }];
     }),
@@ -43,6 +48,12 @@ function montar(status: string, itens: Array<Record<string, unknown>>, opts: { s
         depositoId: 'dep-1', itens,
       }),
       update: jest.fn(async () => { chamadas.push('UPDATE requisicao'); return {}; }),
+      // Achado Important I1 da revisão: o fechamento da ENTREGA usa
+      // `updateMany` condicionado a `status: 'separada'` — `count: 0`
+      // simula uma segunda chamada chegando depois que a primeira já
+      // fechou. `liberarRequisicao` continua usando `update` (sem condição:
+      // não há corrida de saldo para fechar ali).
+      updateMany: jest.fn(async () => { chamadas.push('UPDATE requisicao'); return { count: 1 }; }),
     },
     requisicaoMaterialItem: {
       // A leitura FRESCA de dentro da transação — chave da correção do
@@ -61,10 +72,11 @@ function montar(status: string, itens: Array<Record<string, unknown>>, opts: { s
         itensDb.set(id, atualizado);
         return atualizado;
       }),
-      // A releitura FRESCA que `liberarRequisicao` faz para decidir
-      // `statusMateriais` — mesma razão de `findUniqueOrThrow` acima: sem
-      // isto, o serviço teria de decidir com `req.itens` (o retrato de fora
-      // da transação), o mesmo defeito pela QUINTA vez nesta frente.
+      // A releitura FRESCA que `liberarRequisicao` e `entregarRequisicao`
+      // fazem para decidir `statusMateriais` — mesma razão de
+      // `findUniqueOrThrow` acima: sem isto, o serviço teria de decidir com
+      // `req.itens` (o retrato de fora da transação), o mesmo defeito pela
+      // quinta (liberação) e sexta (entrega) vez nesta frente.
       findMany: jest.fn(async () => [...itensDb.values()].map((i) => ({ ...i }))),
     },
     estoqueMovimento: {
@@ -75,6 +87,10 @@ function montar(status: string, itens: Array<Record<string, unknown>>, opts: { s
     },
     serviceOrderInsumo: {
       create: jest.fn(async () => { chamadas.push('INSUMO'); return {}; }),
+      // Achado m3 da revisão: `entregarRequisicao` continua a numeração dos
+      // insumos que a OS já tem (mesmo critério do orçamento aprovado) — por
+      // padrão simula uma OS sem nenhum insumo ainda.
+      count: jest.fn(async () => 0),
     },
     serviceOrder: {
       updateMany: jest.fn(async () => { chamadas.push('UPDATE os'); return { count: 1 }; }),
@@ -131,7 +147,7 @@ describe('liberarRequisicao', () => {
     expect(dados.liberadaEm).toBeInstanceOf(Date);
     expect(dados.liberadaPorCompanyUserId).toBe(AUTOR);
     // Nenhuma chamada de saldo — liberar é ato administrativo, não físico.
-    expect(chamadas).not.toContain('LOCK');
+    expect(chamadas.some((c) => c.startsWith('LOCK'))).toBe(false);
     expect(chamadas).not.toContain('UPDATE saldo');
   });
 
@@ -193,7 +209,7 @@ describe('entregarRequisicao', () => {
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
       recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin',
     });
-    expect(chamadas[0]).toBe('LOCK');
+    expect(chamadas[0]).toMatch(/^LOCK /);
   });
 
   it('grava o insumo na OS — é o que a auditoria de OS lê', async () => {
@@ -206,6 +222,21 @@ describe('entregarRequisicao', () => {
     expect(insumo.serviceOrderId).toBe('os-1');
     expect(Number(insumo.quantidade)).toBe(4);
     expect(Number(insumo.valorUnit)).toBe(25);
+  });
+
+  it('grava saldoApos como o saldo físico DEPOIS do decremento, não o lido antes dele', async () => {
+    // Achado I2 da revisão: sem esta asserção, nada provava que `saldoApos`
+    // é o valor PÓS-decremento — comparar com a leitura crua do lock
+    // (`linhas[0].saldo_fisico`, ainda '10') passaria mesmo se o código
+    // esquecesse de subtrair. Com a fixture atual (saldo_fisico: '10',
+    // separado: 4) o valor certo é 6.
+    const { servico, tx } = montar('separada', [separado()]);
+    await servico.entregarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin',
+    });
+    const movimento = tx.estoqueMovimento.create.mock.calls[0][0].data;
+    expect(Number(movimento.saldoApos)).toBe(6);
   });
 
   it('requisição não separada não pode ser entregue', async () => {
@@ -255,6 +286,12 @@ describe('entregarRequisicao', () => {
     // serviço decrementasse pelo retrato de fora (4), o razão e o saldo
     // ficariam errados por 2 unidades — o mesmo defeito já corrigido na
     // entrada de estoque e na conferência do kit, desta vez na entrega.
+    //
+    // `quantidadeReservada` continua 4 nos dois retratos (é imutável depois
+    // da criação do item) — por isso a asserção olha as POSIÇÕES 0 e 2 do
+    // `UPDATE` (saldo_fisico/saldo_separado, que usam a quantidade separada
+    // FRESCA), não a posição 1 (saldo_reservado, que usa a reservada — 4 em
+    // ambos os retratos, de propósito).
     const { servico, tx, itensDb, chamadas } = montar('separada', [separado()]);
     itensDb.set('it-1', { ...separado(), quantidadeSeparada: 2 });
 
@@ -265,15 +302,15 @@ describe('entregarRequisicao', () => {
 
     expect(chamadas).toContain('MOVIMENTO saida -2');
     const atualiza = tx.$executeRaw.mock.calls[0][0] as { values: unknown[] };
-    expect(atualiza.values).toContain(2);
-    expect(atualiza.values).not.toContain(4);
+    expect(atualiza.values[0]).toBe(2); // saldo_fisico -= 2 (fresco)
+    expect(atualiza.values[2]).toBe(2); // saldo_separado -= 2 (fresco)
     const insumo = tx.serviceOrderInsumo.create.mock.calls[0][0].data;
     expect(Number(insumo.quantidade)).toBe(2);
     expect(Number(itensDb.get('it-1')?.quantidadeEntregue)).toBe(2);
   });
 
   it('trava peca_saldos em ordem por pecaId, não pela ordem dos itens da requisição', async () => {
-    const { servico, tx } = montar('separada', [
+    const { servico, tx, chamadas } = montar('separada', [
       { ...separado(), id: 'it-2', pecaId: 'p-2' },
       { ...separado(), id: 'it-1', pecaId: 'p-1' },
     ]);
@@ -281,6 +318,15 @@ describe('entregarRequisicao', () => {
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
       recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin',
     });
+    // Achado I3 da revisão: olhar só a ordem dos `UPDATE` de item não pegaria
+    // um refactor que tirasse a trava do laço (continuaria compilando e
+    // passando, só sem `FOR UPDATE` nenhum) — por isso checa a ordem das
+    // PRÓPRIAS travas, não só a consequência delas.
+    const ordemDeTravas = chamadas
+      .filter((c) => c.startsWith('LOCK'))
+      .map((c) => c.replace('LOCK ', ''));
+    expect(ordemDeTravas).toEqual(['p-1', 'p-2']);
+
     // Se a ordenação por pecaId for removida num refactor futuro, este teste
     // falha: sem ela, duas entregas simultâneas travando as mesmas linhas em
     // ordens opostas dão deadlock (40P01), não um erro de aplicação normal.
@@ -294,7 +340,7 @@ describe('entregarRequisicao', () => {
     // Mesmo raciocínio do Important M1 de `separarItens`: `FOR UPDATE` não
     // trava linha inexistente — silenciar deixaria o item marcado como
     // entregue sem o saldo ter mexido. Falha com um erro cru (não
-    // `ConflictException`): é estado inconsistente com a separação, não uma
+    // `ConflictException`): é estado inconsistente com a reserva, não uma
     // recusa de negócio normal.
     const { servico } = montar('separada', [separado()], { semSaldo: true });
     let capturado: unknown;
@@ -311,24 +357,28 @@ describe('entregarRequisicao', () => {
     expect((capturado as Error).message).toMatch(/inconsistente/);
   });
 
-  it('grava status entregue e os dados de recebimento na requisição', async () => {
+  it('grava status entregue e os dados de recebimento na requisição, condicionado a ainda estar separada', async () => {
     const { servico, tx } = montar('separada', [separado()]);
     await servico.entregarRequisicao({
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
       recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin', assinatura: 'traço',
     });
-    const dados = tx.requisicaoMaterial.update.mock.calls.find(
-      (c: [{ data: { status?: string } }]) => c[0].data.status === 'entregue',
-    )?.[0].data as {
-      status: string; entregueEm: Date; entreguePorCompanyUserId: string;
-      recebedorOperatorId: string; confirmacaoTipo: string; assinatura: string | null;
+    const chamada = tx.requisicaoMaterial.updateMany.mock.calls[0][0] as {
+      where: { id: string; status: string };
+      data: {
+        status: string; entregueEm: Date; entreguePorCompanyUserId: string;
+        recebedorOperatorId: string; confirmacaoTipo: string; assinatura: string | null;
+      };
     };
-    expect(dados.status).toBe('entregue');
-    expect(dados.entregueEm).toBeInstanceOf(Date);
-    expect(dados.entreguePorCompanyUserId).toBe(AUTOR);
-    expect(dados.recebedorOperatorId).toBe(MECANICO);
-    expect(dados.confirmacaoTipo).toBe('pin');
-    expect(dados.assinatura).toBe('traço');
+    // Achado Important I1: condicionado ao status ainda ser `separada` —
+    // sem isto, uma segunda chamada concorrente sobrescreveria estes dados.
+    expect(chamada.where).toEqual({ id: REQ, status: 'separada' });
+    expect(chamada.data.status).toBe('entregue');
+    expect(chamada.data.entregueEm).toBeInstanceOf(Date);
+    expect(chamada.data.entreguePorCompanyUserId).toBe(AUTOR);
+    expect(chamada.data.recebedorOperatorId).toBe(MECANICO);
+    expect(chamada.data.confirmacaoTipo).toBe('pin');
+    expect(chamada.data.assinatura).toBe('traço');
   });
 
   it('contenção transitória aciona o retry da transação inteira', async () => {
@@ -363,15 +413,141 @@ describe('entregarRequisicao', () => {
 
   it('statusAposEntrega: item faltante ao lado do entregue manda comprar, não libera', async () => {
     // Prova que `statusAposEntrega` é usada de verdade (não só chamada) nos
-    // dois caminhos possíveis desta função.
+    // dois caminhos possíveis desta função. `quantidadeReservada: 0` é
+    // deliberado: um faltante genuíno (nada disponível na reserva) não entra
+    // em `candidatos` — fica de fora da entrega, e o fresco relido no fim
+    // ainda o mostra `faltante`.
     const { servico } = montar('separada', [
       separado(),
-      { ...separado(), id: 'it-2', pecaId: 'p-2', status: 'faltante', quantidadeSeparada: 0 },
+      {
+        ...separado(), id: 'it-2', pecaId: 'p-2', status: 'faltante',
+        quantidadeReservada: 0, quantidadeSeparada: 0,
+      },
     ]);
     const r = await servico.entregarRequisicao({
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
       recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin',
     });
     expect(r.statusMateriais).toBe('aguardando_compra');
+  });
+
+  // --- Critical C2 (segunda rodada de revisão) -----------------------------
+
+  it('C2: item não impeditivo conferido em PARTE é entregue pelo que está na caixa, e a sobra da reserva é devolvida', async () => {
+    // Reproduz o caminho do Critical C2 tal como o revisor o descreveu: item
+    // NÃO impeditivo conferido em parte (2 de 4) fica em `reservada`
+    // (`statusDoItemAposSeparacao`: meio item não libera meia OS), mas as 2
+    // unidades JÁ foram fisicamente separadas — estão na caixa. Sem a
+    // correção, o filtro de candidatos (`status === 'separada'`) deixava
+    // este item de fora da entrega inteira: a requisição fechava como
+    // `entregue` (terminal) com 4 de `saldo_reservado` e 2 de
+    // `saldo_separado` presos para sempre, sem UPDATE nenhum.
+    const parcial = {
+      id: 'it-2', pecaId: 'p-2', quantidadeReservada: 4, quantidadeSeparada: 2,
+      quantidadeEntregue: 0, status: 'reservada', impeditivo: false, divergencia: null,
+      descricao: 'Correia', codigoPeca: '00000002',
+    };
+    const { servico, tx, chamadas } = montar('separada', [separado(), parcial]);
+    await servico.entregarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin',
+    });
+
+    const updateDoParcial = (tx.$executeRaw.mock.calls as [{ values: unknown[] }][]).find(
+      (c) => c[0].values[3] === 'p-2',
+    )?.[0].values;
+    expect(updateDoParcial).toBeDefined();
+    // saldo_fisico e saldo_separado descem só pelo que foi SEPARADO (2); o
+    // saldo_reservado desce pelo total RESERVADO (4) — a diferença (2) é a
+    // sobra que ficaria presa para sempre sem a correção.
+    expect(updateDoParcial![0]).toBe(2); // saldo_fisico -= 2
+    expect(updateDoParcial![1]).toBe(4); // saldo_reservado -= 4
+    expect(updateDoParcial![2]).toBe(2); // saldo_separado -= 2
+
+    expect(chamadas).toContain('MOVIMENTO saida -2');
+    const itemAtualizado = tx.requisicaoMaterialItem.update.mock.calls.find(
+      (c: [{ where: { id: string } }]) => c[0].where.id === 'it-2',
+    )?.[0].data;
+    expect(itemAtualizado).toEqual({ quantidadeEntregue: 2, status: 'entregue' });
+  });
+
+  it('C2: item não impeditivo nunca separado é cancelado e devolve a reserva inteira, sem movimento nem insumo', async () => {
+    const nuncaSeparado = {
+      id: 'it-3', pecaId: 'p-3', quantidadeReservada: 3, quantidadeSeparada: 0,
+      quantidadeEntregue: 0, status: 'reservada', impeditivo: false, divergencia: null,
+      descricao: 'Correia B', codigoPeca: '00000003',
+    };
+    const { servico, tx, chamadas } = montar('separada', [separado(), nuncaSeparado]);
+    await servico.entregarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin',
+    });
+
+    const updateDoItem = (tx.$executeRaw.mock.calls as [{ values: unknown[] }][]).find(
+      (c) => c[0].values[3] === 'p-3',
+    )?.[0].values;
+    expect(updateDoItem).toBeDefined();
+    expect(updateDoItem![0]).toBe(0); // saldo_fisico -= 0 (nada saiu fisicamente)
+    expect(updateDoItem![1]).toBe(3); // saldo_reservado -= 3 (devolve tudo)
+    expect(updateDoItem![2]).toBe(0); // saldo_separado -= 0
+
+    // Nenhum movimento nem insumo para este item — nada saiu do depósito.
+    expect(chamadas.some((c) => c.startsWith('MOVIMENTO') && c.includes('p-3'))).toBe(false);
+    expect(tx.serviceOrderInsumo.create.mock.calls.length).toBe(1); // só o de 'it-1'
+
+    const itemAtualizado = tx.requisicaoMaterialItem.update.mock.calls.find(
+      (c: [{ where: { id: string } }]) => c[0].where.id === 'it-3',
+    )?.[0].data;
+    expect(itemAtualizado).toEqual({ status: 'cancelada' });
+  });
+
+  it('Important I1: segunda entrega concorrente não sobrescreve os dados de quem recebeu de verdade', async () => {
+    // Simula a corrida: outra chamada já fechou a requisição (`count: 0`)
+    // entre a checagem de fora da transação e o `updateMany` condicional.
+    // Sem a condição no `where`, esta chamada gravaria os SEUS dados de
+    // recebimento por cima dos da chamada vencedora, e devolveria 200.
+    const { servico, tx } = montar('separada', [separado()]);
+    tx.requisicaoMaterial.updateMany = jest.fn(async () => ({ count: 0 }));
+    await expect(servico.entregarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin',
+    })).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  // --- Important m2 e m3 (segunda rodada de revisão) -----------------------
+
+  it('m2: confirmacaoTipo "assinatura" sem traço nenhum é recusado', async () => {
+    const { servico } = montar('separada', [separado()]);
+    await expect(servico.entregarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      recebedorOperatorId: MECANICO, confirmacaoTipo: 'assinatura', assinatura: null,
+    })).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('m2: confirmacaoTipo "assinatura" com traço de verdade é aceito', async () => {
+    const { servico } = montar('separada', [separado()]);
+    const r = await servico.entregarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      recebedorOperatorId: MECANICO, confirmacaoTipo: 'assinatura', assinatura: 'traço real',
+    });
+    expect(r.statusMateriais).toBe('liberada_para_execucao');
+  });
+
+  it('m3: numera os insumos na sequência da entrega, continuando o que a OS já tem', async () => {
+    const segundo = {
+      id: 'it-2', pecaId: 'p-2', quantidadeReservada: 3, quantidadeSeparada: 3,
+      quantidadeEntregue: 0, status: 'separada', impeditivo: true, divergencia: null,
+      descricao: 'Correia', codigoPeca: '00000002',
+    };
+    const { servico, tx } = montar('separada', [separado(), segundo]);
+    tx.serviceOrderInsumo.count = jest.fn(async () => 2); // a OS já tinha 2 insumos lançados
+    await servico.entregarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin',
+    });
+    const ordens = tx.serviceOrderInsumo.create.mock.calls.map(
+      (c: [{ data: { ordem: number } }]) => c[0].data.ordem,
+    );
+    expect(ordens).toEqual([2, 3]); // continua de onde a OS já estava
   });
 });
