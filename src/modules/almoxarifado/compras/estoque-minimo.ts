@@ -240,7 +240,14 @@ export async function verificarReposicao(
 ): Promise<ReposicaoCriada | null> {
   try {
     return await comRetryDeContencao('a verificação de estoque mínimo', () =>
-      prisma.$transaction((tx) => executarVerificacao(tx, alvo)),
+      // Os 5s padrão do Prisma são curtos demais para este caminho: ele começa
+      // por um `SELECT … FOR UPDATE`, que ESPERA quem estiver com a linha de
+      // saldo (uma reserva, um recebimento), e a varredura diária ainda paga o
+      // custo da primeira conexão com o pooler. Medido no banco compartilhado:
+      // a primeira transação da varredura levou 92s e expirou, com a seguinte
+      // rodando em milissegundos. A folga não segura trava por mais tempo —
+      // só evita desistir de uma espera legítima.
+      prisma.$transaction((tx) => executarVerificacao(tx, alvo), { timeout: 30_000, maxWait: 30_000 }),
     );
   } catch (erro) {
     if (colisaoDeReposicaoAutomatica(erro)) return null;
