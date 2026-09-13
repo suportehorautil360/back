@@ -6,8 +6,8 @@
  * Uso: npx tsx --env-file=.env scripts/varrer-estoque-minimo.ts
  */
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from './src/prisma/generated/client';
-import { varrerEstoqueMinimo } from './src/modules/almoxarifado/compras/estoque-minimo';
+import { PrismaClient } from '../src/prisma/generated/client';
+import { varrerEstoqueMinimo } from '../src/modules/almoxarifado/compras/estoque-minimo';
 
 async function main(): Promise<void> {
   const url = process.env.DATABASE_URL;

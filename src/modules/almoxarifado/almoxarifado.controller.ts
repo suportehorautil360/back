@@ -12,6 +12,7 @@ import { CancelarRequisicaoDto } from './dto/cancelamento.dto';
 import { ReceberDto } from './dto/recebimento.dto';
 import { PedirPecaAdicionalDto } from './dto/peca-adicional.dto';
 import { VerificarEstoqueMinimoDto } from './dto/estoque-minimo.dto';
+import { DevolverSobraDto } from './dto/devolucao.dto';
 
 @ApiTags('almoxarifado')
 @Controller('almoxarifado')
@@ -260,5 +261,26 @@ export class AlmoxarifadoController {
   @ApiOperation({ summary: 'Confere a reposição automática da peça nos depósitos em que ela tem saldo' })
   async verificarEstoqueMinimo(@Req() req: RequestComPainel, @Body() dto: VerificarEstoqueMinimoDto) {
     return this.servico.verificarEstoqueMinimoDaPeca(req.painel.companyId, dto.pecaId);
+  }
+
+  @Post('requisicoes/:id/devolucoes')
+  // Quem recebe a sobra no balcão é o almoxarife (gate da classe). Sem a
+  // chave, um reenvio de rede devolveria a mesma peça duas vezes — subindo o
+  // físico por peça que voltou uma vez só.
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Devolve ao estoque a sobra de um kit já entregue' })
+  async devolver(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: DevolverSobraDto,
+  ) {
+    return this.servico.devolverSobra({
+      companyId: req.painel.companyId,
+      requisicaoId: id,
+      autorCompanyUserId: req.painel.companyUserId,
+      motivo: dto.motivo,
+      recebidoDe: dto.recebidoDe?.trim() || null,
+      itens: dto.itens.map((i) => ({ itemId: i.itemId, quantidade: i.quantidade })),
+    });
   }
 }

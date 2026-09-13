@@ -72,6 +72,17 @@ export interface ItemReservado {
   status: 'reservada' | 'faltante' | 'nao_vinculado';
 }
 
+export interface ItemDevolvido {
+  itemId: string;
+  quantidade: number;
+}
+
+export interface ResultadoDaDevolucao {
+  requisicaoId: string;
+  numero: string;
+  itens: Array<{ itemId: string; pecaId: string; quantidade: number; quantidadeDevolvidaTotal: number }>;
+}
+
 export interface ResultadoDaPecaAdicional {
   requisicaoId: string;
   numero: string;
@@ -2418,5 +2429,215 @@ export class AlmoxarifadoService {
       this.prisma,
       saldos.map((s) => ({ companyId, pecaId, depositoId: s.depositoId })),
     );
+  }
+
+  /**
+   * A sobra volta à prateleira (F5, critério 9: "sobra devolvida → entrada
+   * vinculada à OS e custo ajustado").
+   *
+   * A peça volta LIVRE, não reservada: a entrega já tirou a unidade do
+   * reservado e do físico, então devolver só repõe o físico. O custo médio NÃO
+   * muda — devolução volta sem nota, e tratá-la como entrada a custo zero
+   * achataria o valor do estoque (é o que `novoCustoMedio` já decide com
+   * `custoEntrada` nulo). O custo da OS cai por uma linha de insumo NEGATIVA
+   * com o mesmo valor unitário que a entrega cobrou: o rastro fica somável,
+   * como o razão, em vez de reescrever o que já foi lançado.
+   *
+   * Quem registra é o almoxarife, no balcão (gate da classe). Devolver duas
+   * vezes a mesma peça é o que a chave de idempotência da rota barra; o CHECK
+   * `req_item_devolvida_ate_entregue` é a rede do banco.
+   */
+  async devolverSobra(input: {
+    companyId: string;
+    requisicaoId: string;
+    autorCompanyUserId: string;
+    motivo: string;
+    recebidoDe?: string | null;
+    itens: ItemDevolvido[];
+  }): Promise<ResultadoDaDevolucao> {
+    const motivo = (input.motivo ?? '').trim();
+    if (!motivo) {
+      throw new BadRequestException('Diga por que a peça está voltando — fica no razão e na auditoria.');
+    }
+    if (input.itens.length === 0) {
+      throw new BadRequestException('Informe ao menos uma peça devolvida.');
+    }
+    const vistos = new Set<string>();
+    for (const item of input.itens) {
+      if (vistos.has(item.itemId)) {
+        throw new BadRequestException('Item repetido na mesma devolução — some as quantidades numa linha só.');
+      }
+      vistos.add(item.itemId);
+      // `!(x > 0)` e não `x <= 0`: NaN falha em qualquer comparação e passaria.
+      if (!(Math.round(item.quantidade * 1000) > 0)) {
+        throw new BadRequestException('Quantidade devolvida tem de ser maior que zero.');
+      }
+    }
+
+    const req = await this.prisma.requisicaoMaterial.findFirst({
+      where: { id: input.requisicaoId, companyId: input.companyId },
+      select: { id: true, status: true },
+    });
+    if (!req) throw new NotFoundException('Requisição não encontrada para esta empresa.');
+    if (req.status === 'cancelada') {
+      throw new ConflictException('Requisição cancelada não recebe devolução.');
+    }
+
+    return comRetryDeContencao('a devolução de sobra', () =>
+      this.prisma.$transaction((tx) => this.executarDevolucao(tx, { ...input, motivo })),
+    );
+  }
+
+  private async executarDevolucao(
+    tx: Prisma.TransactionClient,
+    input: {
+      companyId: string;
+      requisicaoId: string;
+      autorCompanyUserId: string;
+      motivo: string;
+      recebidoDe?: string | null;
+      itens: ItemDevolvido[];
+    },
+  ): Promise<ResultadoDaDevolucao> {
+    // 1. Trava a requisição e relê — o estado de fora é retrato.
+    await travarRequisicao(tx, input.requisicaoId, input.companyId);
+    const req = await tx.requisicaoMaterial.findUniqueOrThrow({
+      where: { id: input.requisicaoId },
+      select: { id: true, numero: true, status: true, depositoId: true, serviceOrderId: true },
+    });
+    if (req.status === 'cancelada') {
+      throw new ConflictException('Requisição cancelada não recebe devolução.');
+    }
+
+    // 2. Os itens, relidos com a trava na mão.
+    const ids = input.itens.map((i) => i.itemId);
+    const frescos = await tx.requisicaoMaterialItem.findMany({
+      where: { id: { in: ids }, requisicaoId: req.id },
+      select: {
+        id: true, pecaId: true, status: true, quantidadeEntregue: true, quantidadeDevolvida: true,
+      },
+    });
+    const porId = new Map(frescos.map((i) => [i.id, i]));
+    const linhas = input.itens.map((pedido) => {
+      const item = porId.get(pedido.itemId);
+      if (!item) throw new BadRequestException(`Item ${pedido.itemId} não é desta requisição.`);
+      if (!item.pecaId) throw new BadRequestException('Item sem peça vinculada não tem o que devolver.');
+      if (item.status !== 'entregue') {
+        throw new ConflictException('Só peça ENTREGUE volta por devolução — as outras nem saíram do depósito.');
+      }
+      const podeVoltar =
+        Math.round(Number(item.quantidadeEntregue) * 1000) - Math.round(Number(item.quantidadeDevolvida) * 1000);
+      if (Math.round(pedido.quantidade * 1000) > podeVoltar) {
+        throw new BadRequestException(
+          `Devolução acima do entregue: restam ${podeVoltar / 1000} desta peça para voltar.`,
+        );
+      }
+      return { pedido, item, pecaId: item.pecaId };
+    });
+
+    // 3. Uma peça por vez, na ordem única de trava de `peca_saldos`.
+    let proximaOrdem = await tx.serviceOrderInsumo.count({ where: { serviceOrderId: req.serviceOrderId } });
+    const devolvidos: ResultadoDaDevolucao['itens'] = [];
+
+    for (const { pedido, item, pecaId } of [...linhas].sort((a, b) => compararPorPeca(a.pecaId, b.pecaId))) {
+      const travado = await tx.$queryRaw<{ peca_id: string }[]>(Prisma.sql`
+        SELECT peca_id FROM peca_saldos
+         WHERE peca_id = ${pecaId}::uuid
+           AND deposito_id = ${req.depositoId}::uuid
+           FOR UPDATE
+      `);
+      // A linha existe desde a reserva desta peça; não existir aqui é estado
+      // quebrado, e falhar alto é melhor que gravar meia devolução.
+      if (!travado[0]) {
+        throw new Error(
+          `Saldo não encontrado para peça ${pecaId} no depósito ${req.depositoId} ao devolver — estado inconsistente.`,
+        );
+      }
+      const saldo = await tx.pecaSaldo.findUniqueOrThrow({
+        where: { pecaId_depositoId: { pecaId, depositoId: req.depositoId } },
+        select: { saldoFisico: true },
+      });
+      const saldoAnterior = Number(saldo.saldoFisico);
+
+      await tx.$executeRaw(Prisma.sql`
+        UPDATE peca_saldos
+           SET saldo_fisico = saldo_fisico + ${pedido.quantidade},
+               updated_at = now()
+         WHERE peca_id = ${pecaId}::uuid
+           AND deposito_id = ${req.depositoId}::uuid
+      `);
+
+      // Condicionada ao item ainda estar `entregue`: com a requisição travada
+      // nada o muda por baixo, e se mudou o `throw` desfaz o saldo acima.
+      const gravado = await tx.requisicaoMaterialItem.updateMany({
+        where: { id: item.id, status: 'entregue' },
+        data: { quantidadeDevolvida: { increment: pedido.quantidade } },
+      });
+      if (gravado.count === 0) {
+        throw new ConflictException('O item mudou durante a devolução — tente de novo.');
+      }
+
+      const peca = await tx.peca.findFirstOrThrow({
+        where: { id: pecaId, companyId: input.companyId },
+        select: { codigoInterno: true, descricao: true, marca: true, unidade: true, custoMedio: true },
+      });
+      // O valor da entrega, não o custo médio de hoje: creditar a OS por outro
+      // preço deixaria um resíduo em quem entregou e devolveu a mesma peça.
+      const insumoDaEntrega = await tx.serviceOrderInsumo.findFirst({
+        where: { serviceOrderId: req.serviceOrderId, codigo: peca.codigoInterno, quantidade: { gt: 0 } },
+        orderBy: { ordem: 'desc' },
+        select: { valorUnit: true },
+      });
+
+      await tx.estoqueMovimento.create({
+        data: {
+          companyId: input.companyId,
+          pecaId,
+          depositoId: req.depositoId,
+          tipo: 'devolucao',
+          quantidade: pedido.quantidade,
+          saldoApos: saldoAnterior + pedido.quantidade,
+          // Sem custo: volta sem nota, e o custo médio não se mexe por isso.
+          custoUnit: null,
+          origemTipo: 'devolucao_requisicao',
+          origemId: req.id,
+          autorCompanyUserId: input.autorCompanyUserId,
+          observacao: input.recebidoDe ? `${input.motivo} (de ${input.recebidoDe})` : input.motivo,
+        },
+      });
+
+      await tx.serviceOrderInsumo.create({
+        data: {
+          serviceOrderId: req.serviceOrderId,
+          ordem: proximaOrdem,
+          codigo: peca.codigoInterno,
+          descricao: `Devolução — ${peca.descricao}`,
+          marca: peca.marca,
+          quantidade: -pedido.quantidade,
+          unidade: peca.unidade,
+          valorUnit: insumoDaEntrega?.valorUnit ?? peca.custoMedio,
+        },
+      });
+      proximaOrdem += 1;
+
+      devolvidos.push({
+        itemId: item.id,
+        pecaId,
+        quantidade: pedido.quantidade,
+        quantidadeDevolvidaTotal: Number(item.quantidadeDevolvida) + pedido.quantidade,
+      });
+    }
+
+    await registrarAuditoriaSuprimentos(tx, {
+      companyId: input.companyId,
+      acao: 'requisicao.devolver_sobra',
+      alvoTipo: 'suprimentos.requisicao',
+      alvoId: req.id,
+      atorCompanyUserId: input.autorCompanyUserId,
+      motivo: input.motivo,
+      depois: { numero: req.numero, recebidoDe: input.recebidoDe ?? null, itens: devolvidos },
+    });
+
+    return { requisicaoId: req.id, numero: req.numero, itens: devolvidos };
   }
 }
