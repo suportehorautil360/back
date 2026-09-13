@@ -80,8 +80,12 @@ function montar(status: string, itens: Array<Record<string, unknown>>, opts: { s
       findMany: jest.fn(async () => [...itensDb.values()].map((i) => ({ ...i }))),
     },
     estoqueMovimento: {
-      create: jest.fn(async (a: { data: { quantidade: number; tipo: string } }) => {
-        chamadas.push(`MOVIMENTO ${a.data.tipo} ${a.data.quantidade}`);
+      // Achado Important N2 da 3ª revisão: o rótulo precisa do `pecaId` —
+      // sem ele, uma asserção como `chamadas.some(c => c.includes('p-3'))`
+      // é `false` por construção (a string nunca teve `p-3` para achar), e
+      // "passa" mesmo que o razão receba um movimento para aquela peça.
+      create: jest.fn(async (a: { data: { quantidade: number; tipo: string; pecaId: string } }) => {
+        chamadas.push(`MOVIMENTO ${a.data.tipo} ${a.data.quantidade} ${a.data.pecaId}`);
         return {};
       }),
     },
@@ -200,7 +204,7 @@ describe('entregarRequisicao', () => {
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
       recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin',
     });
-    expect(chamadas).toContain('MOVIMENTO saida -4');
+    expect(chamadas).toContain('MOVIMENTO saida -4 p-1');
   });
 
   it('trava antes de mexer no saldo', async () => {
@@ -300,7 +304,7 @@ describe('entregarRequisicao', () => {
       recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin',
     });
 
-    expect(chamadas).toContain('MOVIMENTO saida -2');
+    expect(chamadas).toContain('MOVIMENTO saida -2 p-1');
     const atualiza = tx.$executeRaw.mock.calls[0][0] as { values: unknown[] };
     expect(atualiza.values[0]).toBe(2); // saldo_fisico -= 2 (fresco)
     expect(atualiza.values[2]).toBe(2); // saldo_separado -= 2 (fresco)
@@ -413,15 +417,24 @@ describe('entregarRequisicao', () => {
 
   it('statusAposEntrega: item faltante ao lado do entregue manda comprar, não libera', async () => {
     // Prova que `statusAposEntrega` é usada de verdade (não só chamada) nos
-    // dois caminhos possíveis desta função. `quantidadeReservada: 0` é
-    // deliberado: um faltante genuíno (nada disponível na reserva) não entra
-    // em `candidatos` — fica de fora da entrega, e o fresco relido no fim
-    // ainda o mostra `faltante`.
+    // dois caminhos possíveis desta função.
+    //
+    // Achado Critical N1 da 3ª revisão: a fixture aqui tinha
+    // `quantidadeReservada: 0`, justificada por um comentário que dizia "um
+    // faltante genuíno (nada disponível na reserva) não entra em
+    // `candidatos`" — PREMISSA FALSA. `faltante` neste módulo significa
+    // "falta ALGUMA coisa", não "não tem nada": `executarReserva` estampa
+    // `status: 'faltante'` COM `quantidadeReservada > 0` sempre que sobra
+    // menos do que o solicitado (ex.: 3 reservados de 5 solicitados, sem
+    // concorrência nenhuma — é o caso real, não um exagero de teste). Com
+    // reservada zerada, o item ficava de fora de `candidatos` e o teste
+    // "passava" sem nunca exercitar o caminho que o item realmente percorre
+    // — foi essa fixture desarmada que deixou o N1 entrar despercebido.
     const { servico } = montar('separada', [
       separado(),
       {
         ...separado(), id: 'it-2', pecaId: 'p-2', status: 'faltante',
-        quantidadeReservada: 0, quantidadeSeparada: 0,
+        quantidadeSolicitada: 5, quantidadeReservada: 3, quantidadeSeparada: 0,
       },
     ]);
     const r = await servico.entregarRequisicao({
@@ -429,6 +442,44 @@ describe('entregarRequisicao', () => {
       recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin',
     });
     expect(r.statusMateriais).toBe('aguardando_compra');
+  });
+
+  it('N1: item faltante PARCIAL devolve a reserva e some do saldo, mas NUNCA vira cancelada', async () => {
+    // Mesmo cenário do teste acima, com as asserções que o brief da 3ª
+    // revisão exigiu: o item continua `faltante` (não `cancelada`, que
+    // apagaria a peça faltante do radar da compra), sua
+    // `quantidadeReservada` zera (a reserva já voltou ao saldo — deixar "3
+    // reservado" gravado seria mentir sobre o saldo), o `saldo_reservado` do
+    // depósito cai pelas 3 unidades devolvidas, e `saldo_fisico` NÃO muda
+    // para esta peça — nada saiu fisicamente do depósito.
+    const faltanteParcial = {
+      id: 'it-2', pecaId: 'p-2', quantidadeSolicitada: 5, quantidadeReservada: 3,
+      quantidadeSeparada: 0, quantidadeEntregue: 0, status: 'faltante',
+      impeditivo: false, divergencia: null, descricao: 'Correia', codigoPeca: '00000002',
+    };
+    const { servico, tx, itensDb } = montar('separada', [separado(), faltanteParcial]);
+    const r = await servico.entregarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin',
+    });
+
+    expect(r.statusMateriais).toBe('aguardando_compra');
+
+    const itemAtualizado = tx.requisicaoMaterialItem.update.mock.calls.find(
+      (c: [{ where: { id: string } }]) => c[0].where.id === 'it-2',
+    )?.[0].data;
+    // Só `quantidadeReservada` é gravada — `status` NÃO está no `data`, ou
+    // seja, o `faltante` original sobrevive intacto no "banco".
+    expect(itemAtualizado).toEqual({ quantidadeReservada: 0 });
+    expect(itensDb.get('it-2')?.status).toBe('faltante');
+
+    const updateDoFaltante = (tx.$executeRaw.mock.calls as [{ values: unknown[] }][]).find(
+      (c) => c[0].values[3] === 'p-2',
+    )?.[0].values;
+    expect(updateDoFaltante).toBeDefined();
+    expect(updateDoFaltante![0]).toBe(0); // saldo_fisico -= 0 (nada saiu)
+    expect(updateDoFaltante![1]).toBe(3); // saldo_reservado -= 3 (devolve tudo)
+    expect(updateDoFaltante![2]).toBe(0); // saldo_separado -= 0
   });
 
   // --- Critical C2 (segunda rodada de revisão) -----------------------------
@@ -464,7 +515,7 @@ describe('entregarRequisicao', () => {
     expect(updateDoParcial![1]).toBe(4); // saldo_reservado -= 4
     expect(updateDoParcial![2]).toBe(2); // saldo_separado -= 2
 
-    expect(chamadas).toContain('MOVIMENTO saida -2');
+    expect(chamadas).toContain('MOVIMENTO saida -2 p-2');
     const itemAtualizado = tx.requisicaoMaterialItem.update.mock.calls.find(
       (c: [{ where: { id: string } }]) => c[0].where.id === 'it-2',
     )?.[0].data;
@@ -498,7 +549,10 @@ describe('entregarRequisicao', () => {
     const itemAtualizado = tx.requisicaoMaterialItem.update.mock.calls.find(
       (c: [{ where: { id: string } }]) => c[0].where.id === 'it-3',
     )?.[0].data;
-    expect(itemAtualizado).toEqual({ status: 'cancelada' });
+    // `quantidadeReservada` zera junto (achado N1 da 3ª revisão): o UPDATE de
+    // saldo já devolveu a reserva — o registro do item não pode continuar
+    // dizendo "3 reservado".
+    expect(itemAtualizado).toEqual({ status: 'cancelada', quantidadeReservada: 0 });
   });
 
   it('Important I1: segunda entrega concorrente não sobrescreve os dados de quem recebeu de verdade', async () => {

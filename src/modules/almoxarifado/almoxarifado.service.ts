@@ -1286,8 +1286,8 @@ export class AlmoxarifadoService {
           where: { id: item.id },
           data: { quantidadeEntregue: separado, status: 'entregue' },
         });
-      } else {
-        // `separado === 0`: nada deste item chegou a ser separado — a
+      } else if (itemFresco.status === 'reservada') {
+        // Achado Critical C2: item NÃO impeditivo que ninguém confirmou — a
         // reserva inteira acaba de ser devolvida pelo `UPDATE` acima. Sem
         // movimento de razão nem insumo: nenhuma peça física saiu do
         // depósito. Alternativas descartadas pelo coordenador: inventar um
@@ -1295,9 +1295,43 @@ export class AlmoxarifadoService {
         // tem esse estado), e recusar a entrega por causa de um item não
         // impeditivo trava o mecânico pela exata situação que a regra de
         // impeditivo existe para não travar.
+        //
+        // `quantidadeReservada` zera junto (achado Critical N1 da 3ª
+        // revisão): o `UPDATE` acima já devolveu a reserva ao saldo —
+        // deixar o registro dizendo "N reservado" seria mentir sobre o
+        // estado do saldo para quem ler este item depois.
         await tx.requisicaoMaterialItem.update({
           where: { id: item.id },
-          data: { status: 'cancelada' },
+          data: { status: 'cancelada', quantidadeReservada: 0 },
+        });
+      } else {
+        // Único outro caso que chega aqui com `separado === 0`:
+        // `itemFresco.status === 'faltante'` — um `faltante` nunca é
+        // conferível (`CONFERIVEL` em `regras/separacao.ts` só aceita
+        // `reservada`/`separada`), então sua `quantidadeSeparada` nunca sai
+        // de 0.
+        //
+        // Achado Critical N1 da 3ª revisão: `faltante` NESTE MÓDULO
+        // significa "falta ALGUMA coisa", não "não tem nada" —
+        // `executarReserva` estampa `faltante` COM `quantidadeReservada > 0`
+        // sempre que sobra menos do que o solicitado (ex.: 3 de 5
+        // disponíveis), sem concorrência nenhuma. Gravar `cancelada` aqui
+        // apagava esse `faltante` da releitura fresca que decide
+        // `statusMateriais` (`FORA` exclui `cancelada` de `vivos`) — a OS
+        // saía `liberada_para_execucao` com peça faltando, o inverso do que
+        // a releitura fresca (achado C1) foi corrigida para impedir. O
+        // status TEM de continuar `faltante`: é o que a Task 7 (compra e
+        // recebimento) lê para saber o que ainda falta comprar.
+        //
+        // `quantidadeReservada` zera pela mesma razão do outro ramo — a
+        // reserva já voltou ao saldo. A necessidade em aberto que a compra
+        // cobre é `quantidade_solicitada - quantidade_entregue`, não
+        // `quantidade_reservada`; zerada, um faltante parcial e um faltante
+        // total passam a ter a mesma forma no banco — a mesma forma que
+        // `cancelarRequisicao` já grava para item cancelado.
+        await tx.requisicaoMaterialItem.update({
+          where: { id: item.id },
+          data: { quantidadeReservada: 0 },
         });
       }
     }
