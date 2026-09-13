@@ -82,6 +82,30 @@ export class AlmoxarifadoController {
     return this.servico.detalharRequisicao(req.painel.companyId, id);
   }
 
+  @Get('movimentos')
+  @ApiOperation({ summary: 'O razão do estoque — histórico append-only, somente leitura' })
+  @ApiQuery({ name: 'pecaId', required: false })
+  @ApiQuery({ name: 'depositoId', required: false })
+  @ApiQuery({ name: 'tipo', required: false })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'pageSize', required: false })
+  async movimentos(
+    @Req() req: RequestComPainel,
+    @Query('pecaId') pecaId?: string,
+    @Query('depositoId') depositoId?: string,
+    @Query('tipo') tipo?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    return this.servico.listarMovimentos(req.painel.companyId, {
+      pecaId,
+      depositoId,
+      tipo,
+      page: page !== undefined ? Number(page) : undefined,
+      pageSize: pageSize !== undefined ? Number(pageSize) : undefined,
+    });
+  }
+
   @Post('requisicoes/:id/separar')
   // Mesma razão das outras duas rotas de escrita: reenvio de rede (ou duplo
   // clique) repetindo a MESMA conferência não pode mexer no saldo separado

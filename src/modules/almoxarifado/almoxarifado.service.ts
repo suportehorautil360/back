@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { normalizarCodigo } from './regras/codigo';
 import { Prisma } from '../../prisma/generated/client';
 import { disponivel } from './regras/disponibilidade';
-import { novoCustoMedio } from './regras/movimento';
+import { novoCustoMedio, type TipoMovimento } from './regras/movimento';
 import {
   statusAposConsulta,
   statusAposEntrega,
@@ -190,6 +190,20 @@ function resolverDivergencia(
 /** Os status que ainda dão trabalho ao almoxarife. */
 const STATUS_NA_FILA = ['pendente', 'em_separacao', 'separada'] as const;
 const STATUS_REQUISICAO = [...STATUS_NA_FILA, 'entregue', 'cancelada'] as const;
+
+/**
+ * Os cinco tipos do razão — espelho EM TEMPO DE EXECUÇÃO de `TipoMovimento`
+ * (`regras/movimento.ts`). Duplicado de propósito: um `type` union some no
+ * JS compilado, então a validação de `?tipo=` precisa de uma lista de
+ * verdade, não só do type-check.
+ */
+const TIPOS_MOVIMENTO: readonly TipoMovimento[] = [
+  'entrada',
+  'saida',
+  'ajuste',
+  'devolucao',
+  'transferencia',
+];
 
 @Injectable()
 export class AlmoxarifadoService {
@@ -1801,5 +1815,95 @@ export class AlmoxarifadoService {
     });
     if (!req) throw new NotFoundException('Requisição não encontrada para esta empresa.');
     return req;
+  }
+
+  /**
+   * O razão do estoque (`estoque_movimentos`) — histórico append-only,
+   * somente leitura (o gatilho do banco barra UPDATE/DELETE; esta tela nem
+   * tenta). Mais recente primeiro — o oposto da fila do almoxarife
+   * (`listarRequisicoes`, FIFO): ali é "o que fazer agora", aqui é
+   * auditoria de "o que já aconteceu".
+   *
+   * `autorCompanyUserId` não tem relação no Prisma — o comentário do schema
+   * é explícito ("UUID solto de propósito … o razão precisa sobreviver à
+   * remoção do CompanyUser que autorou o movimento"), então não dá para
+   * `include` o autor como se fosse FK. Resolvido numa SEGUNDA consulta, com
+   * todos os ids distintos da PÁGINA de uma vez (`companyUser.findMany` com
+   * `id: { in }`) — não um `findUnique` por linha, que seria o N+1 que a
+   * tela pediu para evitar.
+   */
+  async listarMovimentos(
+    companyId: string,
+    filtros: {
+      pecaId?: string;
+      depositoId?: string;
+      tipo?: string;
+      page?: number;
+      pageSize?: number;
+    },
+  ) {
+    if (filtros.tipo && !TIPOS_MOVIMENTO.includes(filtros.tipo as TipoMovimento)) {
+      throw new BadRequestException(`Tipo de movimento desconhecido: ${filtros.tipo}`);
+    }
+
+    // `Number.isFinite` cobre `NaN` — `?page=abc` (chega como string do
+    // controller, convertida com `Number(...)`) não pode virar `skip: NaN`
+    // e estourar um erro cru do Prisma.
+    const page = Number.isFinite(filtros.page) ? Math.max(0, filtros.page as number) : 0;
+    const pageSize = Number.isFinite(filtros.pageSize)
+      ? Math.min(200, Math.max(1, filtros.pageSize as number))
+      : 50;
+
+    const where: Prisma.EstoqueMovimentoWhereInput = { companyId };
+    if (filtros.pecaId) where.pecaId = filtros.pecaId;
+    if (filtros.depositoId) where.depositoId = filtros.depositoId;
+    if (filtros.tipo) where.tipo = filtros.tipo;
+
+    const [total, movimentos] = await Promise.all([
+      this.prisma.estoqueMovimento.count({ where }),
+      this.prisma.estoqueMovimento.findMany({
+        where,
+        include: {
+          peca: { select: { codigoInterno: true, descricao: true } },
+          deposito: { select: { nome: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: page * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    // Ids distintos, numa consulta só — não uma por linha da página.
+    const autorIds = [...new Set(movimentos.map((m) => m.autorCompanyUserId))];
+    const autores = autorIds.length
+      ? await this.prisma.companyUser.findMany({
+          where: { id: { in: autorIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const nomePorAutorId = new Map(autores.map((a) => [a.id, a.name]));
+
+    const rows = movimentos.map((m) => ({
+      id: m.id,
+      tipo: m.tipo,
+      // COM SINAL — mesmo contrato de `estoque_movimentos.quantidade`
+      // (saída negativa). Decimal do Prisma atravessa o JSON como string;
+      // quem lê (o painel) converte, como já faz com os outros Decimal.
+      quantidade: m.quantidade,
+      saldoApos: m.saldoApos,
+      custoUnit: m.custoUnit,
+      origemTipo: m.origemTipo,
+      origemId: m.origemId,
+      observacao: m.observacao,
+      createdAt: m.createdAt,
+      peca: { codigoInterno: m.peca.codigoInterno, descricao: m.peca.descricao },
+      deposito: { nome: m.deposito.nome },
+      // Achado defensivo (sem repro real): `autorCompanyUserId` não tem FK —
+      // se o CompanyUser algum dia for removido, o razão não pode quebrar a
+      // tela por causa de um nome que sumiu.
+      autorNome: nomePorAutorId.get(m.autorCompanyUserId) ?? 'Usuário removido',
+    }));
+
+    return { rows, total, page, pageSize };
   }
 }
