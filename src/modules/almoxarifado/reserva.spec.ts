@@ -182,6 +182,90 @@ const itemDeTroca = {
   impeditivo: true,
 };
 
+/**
+ * Qual PLANO responde pela máquina. O painel oferece o ciclo por
+ * `getPlanoParaModelo` (modelo da máquina, caindo no "Geral"); a reserva
+ * precisa achar o MESMO plano, senão a preventiva morre com "Categoria não
+ * encontrada" logo depois de a OS ser aberta — foi o que aconteceu na VRENTAL,
+ * cuja frota tem modelo preenchido e cujo único plano é o "Geral".
+ */
+describe('reservarParaOs — de qual plano vem o ciclo', () => {
+  const PLANO = {
+    categorias: [
+      {
+        id: 'cat-1',
+        nome: 'Filtros',
+        ciclos: [{ id: 'c1', titulo: 'Ciclo 1' }],
+        linhas: [
+          { id: 'l1', item: 'Filtro de óleo', codigoPeca: '32925682',
+            quantidade: '1', pecaId: 'p-1', impeditivo: true, acoes: { c1: 'trocar' } },
+        ],
+      },
+    ],
+  };
+
+  const reservar = (servico: AlmoxarifadoService) =>
+    servico.reservarParaOs({
+      companyId: COMPANY, serviceOrderId: OS, depositoId: DEPOSITO,
+      autorCompanyUserId: AUTOR, categoriaPlanoId: 'cat-1', cicloId: 'c1',
+    });
+
+  it('modelo sem plano próprio cai no plano Geral, como o painel faz', async () => {
+    const { prisma } = prismaFalso(5, 0);
+    // A máquina é '320D'; a empresa só escreveu o plano "Geral".
+    prisma.serviceOrder.findFirst = jest.fn().mockResolvedValue({ id: OS, equipment: { modelo: '320D' } });
+    prisma.planoPreventivo.findFirst = jest
+      .fn()
+      .mockImplementation(async ({ where }: { where: { modelo: string } }) =>
+        where.modelo === 'Geral' ? PLANO : null,
+      );
+    const servico = new AlmoxarifadoService(prisma as never);
+
+    const r = await reservar(servico);
+
+    expect(r.itens[0]).toMatchObject({ status: 'reservada', quantidadeReservada: 1 });
+    expect(prisma.planoPreventivo.findFirst.mock.calls.map((c: [{ where: { modelo: string } }]) => c[0].where.modelo))
+      .toEqual(['320D', 'Geral']);
+  });
+
+  it('modelo COM plano próprio não cai no Geral', async () => {
+    const { prisma } = prismaFalso(5, 0);
+    prisma.serviceOrder.findFirst = jest.fn().mockResolvedValue({ id: OS, equipment: { modelo: '320D' } });
+    prisma.planoPreventivo.findFirst = jest
+      .fn()
+      .mockImplementation(async ({ where }: { where: { modelo: string } }) =>
+        where.modelo === '320D' ? PLANO : null,
+      );
+    const servico = new AlmoxarifadoService(prisma as never);
+
+    await reservar(servico);
+
+    expect(prisma.planoPreventivo.findFirst.mock.calls.map((c: [{ where: { modelo: string } }]) => c[0].where.modelo))
+      .toEqual(['320D']);
+  });
+
+  it('máquina sem modelo procura direto o Geral', async () => {
+    const { prisma } = prismaFalso(5, 0);
+    prisma.serviceOrder.findFirst = jest.fn().mockResolvedValue({ id: OS, equipment: { modelo: null } });
+    prisma.planoPreventivo.findFirst = jest.fn().mockResolvedValue(PLANO);
+    const servico = new AlmoxarifadoService(prisma as never);
+
+    await reservar(servico);
+
+    expect(prisma.planoPreventivo.findFirst.mock.calls.map((c: [{ where: { modelo: string } }]) => c[0].where.modelo))
+      .toEqual(['Geral']);
+  });
+
+  it('sem plano nenhum, a categoria não existe e a reserva recusa — a OS não vai para a bancada em silêncio', async () => {
+    const { prisma } = prismaFalso(5, 0);
+    prisma.serviceOrder.findFirst = jest.fn().mockResolvedValue({ id: OS, equipment: { modelo: '320D' } });
+    prisma.planoPreventivo.findFirst = jest.fn().mockResolvedValue(null);
+    const servico = new AlmoxarifadoService(prisma as never);
+
+    await expect(reservar(servico)).rejects.toThrow(/Categoria "cat-1" não encontrada/);
+  });
+});
+
 describe('reservarParaOs', () => {
   beforeEach(() => verificouReposicao.mockClear());
 

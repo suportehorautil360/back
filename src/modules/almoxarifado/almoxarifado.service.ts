@@ -138,6 +138,15 @@ function resolverDivergencia(
 }
 
 /** Os status que ainda dão trabalho ao almoxarife. */
+/**
+ * O plano que vale para máquina cujo modelo não tem plano próprio. Mesmo nome
+ * e mesma queda de `MODELO_GERAL` no painel (`lib/company/plano-preventivo.ts`,
+ * `getPlanoParaModelo`) — as duas pontas TÊM de concordar sobre qual plano
+ * responde por uma máquina, senão o painel oferece um ciclo que a reserva não
+ * encontra.
+ */
+const MODELO_GERAL_DO_PLANO = 'Geral';
+
 const STATUS_NA_FILA = ['pendente', 'em_separacao', 'separada'] as const;
 const STATUS_REQUISICAO = [...STATUS_NA_FILA, 'entregue', 'cancelada'] as const;
 
@@ -557,10 +566,25 @@ export class AlmoxarifadoService {
     });
     if (!os) throw new NotFoundException('OS não encontrada.');
 
-    const plano = await this.prisma.planoPreventivo.findFirst({
-      where: { companyId: input.companyId, modelo: os.equipment?.modelo ?? 'Geral' },
-      select: { categorias: true },
-    });
+    // A MESMA regra do painel (`getPlanoParaModelo`): o plano do modelo da
+    // máquina e, não havendo, o "Geral". Antes daqui só caía no Geral quando o
+    // equipamento não tinha modelo NENHUM — então toda máquina com modelo
+    // preenchido e sem plano próprio (a frota inteira de quem escreveu um
+    // plano só, "Geral") levava "Categoria não encontrada no plano
+    // preventivo": o painel oferecia o ciclo do Geral, e a reserva procurava
+    // um plano de modelo que não existe.
+    const modeloDaMaquina = os.equipment?.modelo?.trim();
+    const plano =
+      (modeloDaMaquina
+        ? await this.prisma.planoPreventivo.findFirst({
+            where: { companyId: input.companyId, modelo: modeloDaMaquina },
+            select: { categorias: true },
+          })
+        : null) ??
+      (await this.prisma.planoPreventivo.findFirst({
+        where: { companyId: input.companyId, modelo: MODELO_GERAL_DO_PLANO },
+        select: { categorias: true },
+      }));
 
     // Achado Important R3: `itensDeTrocaDoCiclo` devolve `[]` tanto para
     // "ciclo existe e não tem item de troca" (legítimo — ciclo só de
