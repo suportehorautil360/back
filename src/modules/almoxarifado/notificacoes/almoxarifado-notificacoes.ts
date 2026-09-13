@@ -1,18 +1,49 @@
 /**
  * As notificações do almoxarifado.
  *
- * Grava direto em `notificacoes`, a mesma tabela que o painel usa por
+ * Grava na mesma tabela `notificacoes` que o painel usa por
  * `lib/company/notificacoes/enviar.ts` — não há serviço compartilhado entre os
- * dois repos, e duplicar a ESCRITA de duas linhas é mais barato que inventar
- * um. O que NÃO se duplica é regra de saldo.
+ * dois repos, e duplicar os CAMPOS da escrita é mais barato que inventar um.
+ * O que NÃO se duplica é regra de saldo.
  *
- * Recebe o `tx` de propósito: a notificação nasce na mesma transação do ato que
- * a motivou. Avisar que a OS foi liberada e a liberação dar rollback é pior que
- * não avisar.
+ * RULING da rodada 2 (achado Important I4, reabre a versão anterior deste
+ * comentário): `notificacoes` tem FORCE ROW LEVEL SECURITY com policies só de
+ * SELECT e UPDATE — nenhuma de INSERT (conferido em `pg_policies`). Hoje o
+ * INSERT passa porque o `back` conecta como o `postgres` do Supabase
+ * (BYPASSRLS); com qualquer role de privilégio menor ele falha com `42501`,
+ * que `erroDeContencaoTransitoria` não trata — a exceção sobe. Receber `tx` e
+ * escrever DENTRO da transação de negócio (o desenho original) significa que
+ * essa exceção derrubaria o ato: todo kit fechado e toda OS liberada
+ * responderiam 500 com rollback de uma conferência que já aconteceu na
+ * prateleira. `enviarNotificacao` (`lib/company/notificacoes/enviar.ts`), o
+ * OUTRO escritor desta mesma tabela, decidiu o oposto e documentou por quê:
+ * "Nunca lança. […] o aviso vem depois do commit e uma falha aqui não pode
+ * desfazer um ato que já aconteceu" e "sem `tx` no parâmetro: quem chamar não
+ * tem como, nem por engano, prender a aprovação a este insert". Este módulo
+ * segue o mesmo contrato agora:
+ *
+ * - `montarNotificacaoKitCompleto`/`montarNotificacaoOsLiberada` RESOLVEM
+ *   destinatários (leem `operator`/`equipment_programadores`/`company_roles`/
+ *   `access_groups`/`companies` — nenhuma delas com o mesmo risco de RLS) e
+ *   DEVOLVEM as linhas prontas para gravar. Recebem `tx` DE PROPÓSITO e
+ *   PODEM lançar: rodam DENTRO da transação de negócio, onde o estado
+ *   (cargo do operador, kit fechado) é lido fresco, e uma falha aqui é uma
+ *   falha de leitura comum — deve dar rollback como qualquer outra.
+ * - `enviarNotificacoes` GRAVA. Roda DEPOIS do commit, com o client normal
+ *   (nunca `tx` — por isso o parâmetro é tipado `PrismaClient`, que um `tx`
+ *   não satisfaz) e NUNCA LANÇA: uma falha de INSERT vira log, o sino fica
+ *   sem a linha, e o ato de negócio que já comitou não é desfeito.
  */
-import { Prisma } from '../../../prisma/generated/client';
+import { Prisma, PrismaClient } from '../../../prisma/generated/client';
 
-type Cliente = Prisma.TransactionClient;
+/** Para RESOLVER destinatários — roda dentro da transação de negócio. */
+type ClienteDaTransacao = Prisma.TransactionClient;
+
+/** Para GRAVAR — roda depois do commit. Um `tx` não tem este tipo. */
+type ClienteDeEnvio = PrismaClient;
+
+/** Uma linha já pronta para `notificacao.createMany` — mesmo shape da tabela. */
+export type NotificacaoPronta = Prisma.NotificacaoCreateManyInput;
 
 interface LinhaDeNotificacao {
   destinatarioId: string;
@@ -25,42 +56,50 @@ interface LinhaDeNotificacao {
 /**
  * `prefeitura_legacy_id` é NOT NULL e `Company.legacyId` é nullable: empresa
  * nascida no horautil não tem docId do Firestore. Mesmo fallback do painel.
+ *
+ * Só MONTA as linhas — não escreve nada. Roda dentro da transação (lê
+ * `company`, sem risco de RLS de INSERT).
  */
-async function gravar(
-  tx: Cliente,
+async function montarLinhas(
+  tx: ClienteDaTransacao,
   companyId: string,
   linhas: LinhaDeNotificacao[],
-): Promise<void> {
-  // Gestor que também é programador é um destinatário só.
+): Promise<NotificacaoPronta[]> {
+  // Gestor que também é programador é um destinatário só. Mantém a PRIMEIRA
+  // ocorrência (achado minor m6 da revisão): hoje é inofensivo (mecânico e
+  // programador recebem `titulo`/`mensagem` idênticos por caminho), mas fixa
+  // um critério determinístico para o dia em que divergirem por
+  // destinatário, em vez de depender da ordem de inserção no `Map`.
   const unicos = new Map<string, LinhaDeNotificacao>();
   for (const l of linhas) {
-    if (l.destinatarioId) unicos.set(l.destinatarioId, l);
+    if (l.destinatarioId && !unicos.has(l.destinatarioId)) unicos.set(l.destinatarioId, l);
   }
-  if (unicos.size === 0) return;
+  if (unicos.size === 0) return [];
 
   const company = await tx.company.findUnique({
     where: { id: companyId },
     select: { legacyId: true },
   });
 
-  await tx.notificacao.createMany({
-    data: [...unicos.values()].map((l) => ({
-      companyId,
-      destinatarioTipo: 'company_user',
-      destinatarioId: l.destinatarioId,
-      prefeituraLegacyId: company?.legacyId ?? companyId,
-      titulo: l.titulo,
-      mensagem: l.mensagem,
-      tipo: 'info',
-      referenciaTipo: l.referenciaTipo,
-      referenciaId: l.referenciaId,
-    })),
-  });
+  return [...unicos.values()].map((l) => ({
+    companyId,
+    destinatarioTipo: 'company_user',
+    destinatarioId: l.destinatarioId,
+    prefeituraLegacyId: company?.legacyId ?? companyId,
+    titulo: l.titulo,
+    mensagem: l.mensagem,
+    tipo: 'info',
+    referenciaTipo: l.referenciaTipo,
+    referenciaId: l.referenciaId,
+  }));
 }
 
-/** Kit conferido: o almoxarife é quem age em seguida (libera). */
-export async function notificarKitCompleto(
-  tx: Cliente,
+/**
+ * Kit conferido: o almoxarife é quem age em seguida (libera). Só MONTA as
+ * linhas — quem chama grava depois do commit, com `enviarNotificacoes`.
+ */
+export async function montarNotificacaoKitCompleto(
+  tx: ClienteDaTransacao,
   input: {
     companyId: string;
     requisicaoId: string;
@@ -68,17 +107,16 @@ export async function notificarKitCompleto(
     protocolo: string;
     destinatarios: string[];
   },
-): Promise<void> {
-  await gravar(
+): Promise<NotificacaoPronta[]> {
+  return montarLinhas(
     tx,
     input.companyId,
     input.destinatarios.map((id) => ({
       destinatarioId: id,
       titulo: `Kit da ${input.numero} conferido`,
-      // Achado da implementação: a versão original do brief só citava
-      // `protocolo` aqui — a mensagem não dizia qual REQUISIÇÃO fechou (o
-      // teste desta task cobra `numero` na mensagem, não só no título).
-      // Mantém `protocolo` também: é o que liga o kit à OS.
+      // A mensagem cita `numero` E `protocolo`: só `protocolo` (o texto
+      // original do brief da Task 8) não dizia qual REQUISIÇÃO fechou — o
+      // teste de integração cobra as duas strings.
       mensagem: `Todos os itens impeditivos da ${input.numero} (${input.protocolo}) estão separados. Libere a ordem para o mecânico.`,
       referenciaTipo: 'requisicao_material',
       referenciaId: input.requisicaoId,
@@ -87,13 +125,14 @@ export async function notificarKitCompleto(
 }
 
 /**
- * OS liberada: mecânico E programador.
+ * OS liberada: mecânico E todo programador do equipamento. Só MONTA as
+ * linhas — quem chama grava depois do commit, com `enviarNotificacoes`.
  *
  * A mensagem diz ONDE retirar — sem isso o mecânico sabe que pode começar e
  * não sabe para onde ir.
  */
-export async function notificarOsLiberada(
-  tx: Cliente,
+export async function montarNotificacaoOsLiberada(
+  tx: ClienteDaTransacao,
   input: {
     companyId: string;
     serviceOrderId: string;
@@ -103,7 +142,7 @@ export async function notificarOsLiberada(
     responsavelOperatorId: string | null;
     local: string;
   },
-): Promise<void> {
+): Promise<NotificacaoPronta[]> {
   const destinatarios: string[] = [];
 
   if (input.responsavelOperatorId) {
@@ -118,22 +157,29 @@ export async function notificarOsLiberada(
   }
 
   if (input.equipmentId) {
-    // CORREÇÃO DO COORDENADOR (preflight): `equipment_programadores` NÃO tem
-    // coluna `company_id` — conferido no schema. O isolamento por empresa vai
-    // pela relação, não por coluna própria. Sem isso o `tsc` quebra no
-    // `npm run build` (e o `npx jest` NÃO pegaria: o teste mocka este
-    // `findFirst`).
-    const programador = await tx.equipmentProgramador.findFirst({
+    // CORREÇÃO DO COORDENADOR (preflight, Task 8): `equipment_programadores`
+    // NÃO tem coluna `company_id` — o isolamento por empresa vai pela
+    // relação (`equipment: { companyId }`), não por coluna própria.
+    //
+    // Achado minor m3 da revisão: `EquipmentProgramador` tem
+    // `@@unique([equipmentId, companyUserId])` — um equipamento pode ter
+    // MAIS de um programador. Um `findFirst` avisava só um, escolhido pelo
+    // plano do Postgres (não determinístico); `findMany` avisa todos, e o
+    // dedupe de `montarLinhas` já cobre o caso de o mesmo programador
+    // também ser o mecânico responsável.
+    const programadores = await tx.equipmentProgramador.findMany({
       where: {
         equipmentId: input.equipmentId,
         equipment: { companyId: input.companyId },
       },
       select: { companyUserId: true },
     });
-    if (programador?.companyUserId) destinatarios.push(programador.companyUserId);
+    for (const p of programadores) {
+      if (p.companyUserId) destinatarios.push(p.companyUserId);
+    }
   }
 
-  await gravar(
+  return montarLinhas(
     tx,
     input.companyId,
     destinatarios.map((id) => ({
@@ -147,12 +193,36 @@ export async function notificarOsLiberada(
 }
 
 /**
+ * Grava as notificações já montadas. Roda DEPOIS do commit da transação de
+ * negócio — nunca dentro dela, nunca com `tx` (o parâmetro é `PrismaClient`
+ * de propósito: um `tx` não tem os métodos que esse tipo exige, então quem
+ * chama não tem como, nem por engano, prender o ato de negócio a este
+ * insert).
+ *
+ * NUNCA LANÇA — mesmo contrato de `enviarNotificacao`
+ * (`lib/company/notificacoes/enviar.ts`): uma falha aqui (inclusive o
+ * `42501` de RLS descrito no comentário do módulo) vira log, o sino fica sem
+ * a linha, e o ato de negócio que já comitou não é desfeito.
+ */
+export async function enviarNotificacoes(
+  prisma: ClienteDeEnvio,
+  linhas: NotificacaoPronta[],
+): Promise<void> {
+  if (linhas.length === 0) return;
+  try {
+    await prisma.notificacao.createMany({ data: linhas });
+  } catch (err) {
+    console.error('[almoxarifado-notificacoes] falha ao gravar notificação', err);
+  }
+}
+
+/**
  * Quem age depois do kit conferido é quem tem a tela do almoxarifado. O cargo
  * mora no `Operator` (`CompanyRole.operators`), não no `CompanyUser` — e quem
  * recebe notificação é o `companyUserId` do operador, que é nullable: operador
  * sem login no painel não vira destinatário.
  */
-export async function usuariosDoAlmoxarifado(tx: Cliente, companyId: string): Promise<string[]> {
+export async function usuariosDoAlmoxarifado(tx: ClienteDaTransacao, companyId: string): Promise<string[]> {
   // Duas etapas de propósito: o espelho do `back` declara só a COLUNA
   // `Operator.companyRoleId`, sem a relação `companyRole` (e `CompanyRole` não
   // tem a volta `operators`). Um `where: { companyRole: { ... } }` não compila

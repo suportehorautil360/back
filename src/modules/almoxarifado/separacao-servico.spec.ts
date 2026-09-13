@@ -30,6 +30,11 @@ function montar(
 ) {
   const chamadas: string[] = [];
   const itensDb = new Map(itensIniciais.map((i) => [i.id as string, { ...i }]));
+  // Estado fake da COLUNA `requisicaoMaterial.status` — só existe para o
+  // guard `where: { status: { not: 'separada' } }` (achado Important I3 da
+  // rodada 2) ter algo real para checar entre chamadas sucessivas dentro do
+  // MESMO teste (ver "dois POSTs sequenciais" abaixo).
+  let statusDaRequisicao = 'pendente';
 
   const tx = {
     $queryRaw: jest.fn(async () => {
@@ -56,9 +61,26 @@ function montar(
         // asserção de negócio.
         serviceOrder: { protocolo: 'OS-2026-047' },
       }),
-      update: jest.fn(async () => {
+      // Achado Important I3 da rodada 2: `executarSeparacao` passou de
+      // `.update` incondicional para `.updateMany` condicionado a
+      // `status: { not: 'separada' }` — a notificação só dispara quando
+      // ESTA chamada de fato fecha o kit (transição), não sempre que o kit
+      // ESTÁ fechado (estado). `statusDaRequisicao` simula a coluna real:
+      // uma segunda chamada, com o kit já `separada`, casa zero linhas.
+      updateMany: jest.fn(async ({ where, data }: {
+        where: { id: string; status?: { not: string } };
+        data: { status: string };
+      }) => {
         chamadas.push('UPDATE requisicao');
-        return {};
+        // `where.status` ausente = SEM RESTRIÇÃO (semântica real do
+        // Prisma) — assim, remover a guarda de produção faz o `count`
+        // continuar `1` em toda chamada (inclusive numa repetida), em vez
+        // de travar o mock com um acesso a `undefined.not`.
+        if (where.status?.not !== undefined && statusDaRequisicao === where.status.not) {
+          return { count: 0 };
+        }
+        statusDaRequisicao = data.status;
+        return { count: 1 };
       }),
     },
     requisicaoMaterialItem: {
@@ -110,6 +132,12 @@ function montar(
     // usa `this.prisma`, não `tx` — igual a um `PrismaService` de verdade, em
     // que o mesmo delegate de modelo atende fora e dentro de `$transaction`.
     requisicaoMaterial: tx.requisicaoMaterial,
+    // Achado Important I4 da rodada 2: `enviarNotificacoes` grava com
+    // `this.prisma` DEPOIS do commit — nunca com `tx`. Reaproveita a MESMA
+    // instância do mock (`tx.notificacao`) para que os testes possam
+    // continuar inspecionando `tx.notificacao.createMany`, que é
+    // literalmente o mesmo `jest.fn()` que `enviarNotificacoes` chama.
+    notificacao: tx.notificacao,
   };
   return { servico: new AlmoxarifadoService(prisma as never), prisma, tx, chamadas, itensDb };
 }
@@ -337,7 +365,7 @@ describe('separarItens', () => {
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
       itens: [{ itemId: 'it-1', quantidade: 4 }],
     });
-    const dadosGravados = tx.requisicaoMaterial.update.mock.calls[0][0].data as {
+    const dadosGravados = tx.requisicaoMaterial.updateMany.mock.calls[0][0].data as {
       atendidaPorCompanyUserId: string;
       atendidaEm: Date;
     };
@@ -403,6 +431,14 @@ describe('separarItens', () => {
     expect(linha.referenciaId).toBe(REQ);
     expect(linha.mensagem).toContain('REQ-2026-001');
     expect(linha.mensagem).toContain('OS-2026-047');
+    // Achado minor m5 da revisão: os campos que decidem se a notificação é
+    // VISÍVEL (sino certo, tenant certo) não eram assertados por nada — o
+    // `tsc` só garante a PRESENÇA (NOT NULL sem default), nunca o VALOR.
+    const linhaCompleta = tx.notificacao.createMany.mock.calls[0][0].data[0] as {
+      destinatarioTipo: string; prefeituraLegacyId: string;
+    };
+    expect(linhaCompleta.destinatarioTipo).toBe('company_user');
+    expect(linhaCompleta.prefeituraLegacyId).toBe('leg-1');
   });
 
   it('kit em separação PARCIAL não notifica ninguém, mesmo com destinatário disponível (par negativo)', async () => {
@@ -414,5 +450,25 @@ describe('separarItens', () => {
 
     expect(r.statusRequisicao).toBe('em_separacao');
     expect(tx.notificacao.createMany).not.toHaveBeenCalled();
+  });
+
+  it('dois POSTs sequenciais que fecham o MESMO kit geram UMA notificação só (achado Important I3)', async () => {
+    // Não é concorrência (isso é o m5, fora de escopo) — é o mesmo POST
+    // repetido (duplo clique, front que reenvia). Sem o guard de transição
+    // (`status: { not: 'separada' }`), o segundo POST recalcularia
+    // `statusRequisicao: 'separada'` de novo e notificaria o almoxarife
+    // pela segunda vez do MESMO evento.
+    const { servico, tx } = montar([item()], { comNotificacaoDeKit: true });
+    const chamar = () => servico.separarItens({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      itens: [{ itemId: 'it-1', quantidade: 4 }],
+    });
+
+    const r1 = await chamar();
+    const r2 = await chamar();
+
+    expect(r1.statusRequisicao).toBe('separada');
+    expect(r2.statusRequisicao).toBe('separada'); // resposta não muda de forma nem de conteúdo
+    expect(tx.notificacao.createMany).toHaveBeenCalledTimes(1);
   });
 });

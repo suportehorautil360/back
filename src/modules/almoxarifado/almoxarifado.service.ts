@@ -24,9 +24,11 @@ import {
 } from './regras/plano-pecas';
 import { formatNumeroRequisicao, parseNumeroRequisicaoSeq } from './helpers/numero-requisicao.helper';
 import {
-  notificarKitCompleto,
-  notificarOsLiberada,
+  enviarNotificacoes,
+  montarNotificacaoKitCompleto,
+  montarNotificacaoOsLiberada,
   usuariosDoAlmoxarifado,
+  type NotificacaoPronta,
 } from './notificacoes/almoxarifado-notificacoes';
 
 export interface ItemReservado {
@@ -800,9 +802,22 @@ export class AlmoxarifadoService {
     // `peca_saldos` chegava ao cliente como 500 cru.
     for (let tentativa = 1; tentativa <= MAX_TENTATIVAS_CONCORRENCIA; tentativa++) {
       try {
-        return await this.prisma.$transaction((tx) =>
+        const resultado = await this.prisma.$transaction((tx) =>
           this.executarSeparacao(tx, input, req, planejado, req.serviceOrder.protocolo),
         );
+        // Achados Important I3/I4 da rodada 2: a notificação sai DEPOIS do
+        // laço de retry ter sucesso — nunca dentro dele (uma tentativa que
+        // aciona retry não pode notificar, e uma tentativa bem-sucedida não
+        // pode notificar duas vezes) — e DEPOIS do commit, com o client
+        // normal (`this.prisma`), nunca com `tx`. `resultado.notificacoes`
+        // só tem linhas quando ESTA chamada de fato fechou o kit (a releitura
+        // fresca dentro de `executarSeparacao` decide isso via `updateMany` +
+        // `count`); `enviarNotificacoes` nunca lança, então uma falha aqui
+        // não pode virar 500 de um kit que já fechou de verdade.
+        await enviarNotificacoes(this.prisma, resultado.notificacoes);
+        // A resposta pública não pode ganhar o campo `notificacoes` — só o
+        // controller consome este retorno.
+        return { statusRequisicao: resultado.statusRequisicao, statusMateriais: resultado.statusMateriais };
       } catch (erro) {
         if (!erroDeContencaoTransitoria(erro) || tentativa === MAX_TENTATIVAS_CONCORRENCIA) {
           if (erroDeContencaoTransitoria(erro)) {
@@ -831,13 +846,20 @@ export class AlmoxarifadoService {
     input: { companyId: string; autorCompanyUserId: string },
     req: RequisicaoComItens,
     planejado: PlanoDeSeparacao[],
-    // Task 8: protocolo da OS, para a mensagem de `notificarKitCompleto`.
+    // Task 8: protocolo da OS, para a mensagem de `montarNotificacaoKitCompleto`.
     // Passado à parte (em vez de lido de `req.serviceOrder`) porque
     // `RequisicaoComItens` só inclui `itens` — alargar o type alcançaria
     // `executarEntrega`/`executarCancelamento`, que reaproveitam o mesmo
     // type e não carregam `serviceOrder`.
     protocolo: string,
-  ): Promise<{ statusRequisicao: string; statusMateriais: StatusMateriais }> {
+  ): Promise<{
+    statusRequisicao: string;
+    statusMateriais: StatusMateriais;
+    // Achados I3/I4 da rodada 2: linhas já MONTADAS (nunca gravadas aqui
+    // dentro) — vazio quando esta chamada não fechou o kit. Quem chama
+    // (`separarItens`) grava depois do commit, fora do laço de retry.
+    notificacoes: NotificacaoPronta[];
+  }> {
     // Achado Important I1 da reserva, válido aqui pela mesma razão: trava
     // `peca_saldos` SEMPRE na mesma ordem — por `pecaId` — entre chamadas
     // concorrentes. Duas conferências simultâneas travando as mesmas linhas
@@ -946,16 +968,24 @@ export class AlmoxarifadoService {
     const fechado = requisicaoEstaSeparada(paraRegra) && !temDivergencia(paraRegra);
     const statusRequisicao = fechado ? 'separada' : 'em_separacao';
 
-    await tx.requisicaoMaterial.update({
-      where: { id: req.id },
+    // Achado Important I3 da rodada 2: a guarda `status: { not: 'separada' }`
+    // não é sobre concorrência (isso é o m5, fora de escopo aqui) — é sobre
+    // TRANSIÇÃO. Sem ela, dois POSTs sequenciais e idênticos (um duplo
+    // clique, sem concorrência nenhuma) recalculam `statusRequisicao:
+    // 'separada'` os dois, e o segundo notificaria de novo um kit que já
+    // avisou o almoxarife na primeira vez. `count === 1` abaixo só é
+    // verdade quando ESTA chamada moveu a requisição de "não separada" para
+    // o status calculado — nunca quando ela já estava `separada` antes.
+    const fechamento = await tx.requisicaoMaterial.updateMany({
+      where: { id: req.id, status: { not: 'separada' } },
       data: {
         status: statusRequisicao,
         atendidaPorCompanyUserId: input.autorCompanyUserId,
         // Achado Important M2: autor sem carimbo de tempo é meia auditoria.
-        // Gravado em toda chamada (parcial ou não) — é "quem/quando mexeu
-        // por último", não um dos três atos que FECHAM a requisição
-        // (aqueles são `liberadaEm`/`entregueEm`/`canceladaEm`, de outras
-        // tasks).
+        // Gravado em toda chamada que de fato ainda não fechou o kit — é
+        // "quem/quando mexeu por último", não um dos três atos que FECHAM a
+        // requisição (aqueles são `liberadaEm`/`entregueEm`/`canceladaEm`,
+        // de outras tasks).
         atendidaEm: new Date(),
       },
     });
@@ -971,11 +1001,15 @@ export class AlmoxarifadoService {
 
     await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
 
-    // Kit fechou: avisa quem tem a tela do almoxarifado, na MESMA transação
-    // — se o fechamento der rollback, o aviso não pode ter saído.
-    if (statusRequisicao === 'separada') {
+    // Kit fechou NESTA chamada (`fechamento.count === 1`, não só
+    // `statusRequisicao === 'separada'` — ver o comentário do `updateMany`
+    // acima): MONTA as linhas de notificação (resolve destinatários,
+    // ainda dentro da transação). Não GRAVA nada aqui — quem chama
+    // (`separarItens`) grava depois do commit, com `enviarNotificacoes`.
+    let notificacoes: NotificacaoPronta[] = [];
+    if (statusRequisicao === 'separada' && fechamento.count === 1) {
       const destinatarios = await usuariosDoAlmoxarifado(tx, input.companyId);
-      await notificarKitCompleto(tx, {
+      notificacoes = await montarNotificacaoKitCompleto(tx, {
         companyId: input.companyId,
         requisicaoId: req.id,
         numero: req.numero,
@@ -984,7 +1018,7 @@ export class AlmoxarifadoService {
       });
     }
 
-    return { statusRequisicao, statusMateriais };
+    return { statusRequisicao, statusMateriais, notificacoes };
   }
 
   /**
@@ -1032,9 +1066,15 @@ export class AlmoxarifadoService {
       );
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      await tx.requisicaoMaterial.update({
-        where: { id: req.id },
+    const resultado = await this.prisma.$transaction(async (tx) => {
+      // Achado Important I3 da rodada 2: guarda `liberadaEm: null` — sem
+      // ela, uma segunda chamada (o guard de fora só olha `status ===
+      // 'separada'`, que a liberação NÃO muda) re-estamparia `liberadaEm`/
+      // `liberadaPorCompanyUserId` e avisaria mecânico e programador de
+      // novo, para o MESMO evento. `count === 1` só é verdade quando ESTA
+      // chamada de fato liberou a requisição pela primeira vez.
+      const fechamento = await tx.requisicaoMaterial.updateMany({
+        where: { id: req.id, liberadaEm: null },
         data: { liberadaEm: new Date(), liberadaPorCompanyUserId: input.autorCompanyUserId },
       });
 
@@ -1046,7 +1086,9 @@ export class AlmoxarifadoService {
       // `status: 'separada'`) pode mudar o status de um item entre a
       // leitura de fora e o commit desta transação. O que sai daqui não é
       // saldo, mas é o que a bancada do mecânico mostra — `statusMateriais`
-      // errado manda buscar um kit que não está pronto.
+      // errado manda buscar um kit que não está pronto. Roda mesmo numa
+      // chamada repetida: recalcular o `statusMateriais` da OS é idempotente
+      // e barato, só a NOTIFICAÇÃO precisa do guard acima.
       const itensFrescos = await tx.requisicaoMaterialItem.findMany({
         where: { requisicaoId: req.id },
       });
@@ -1062,22 +1104,32 @@ export class AlmoxarifadoService {
 
       await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
 
-      // OS liberada: avisa mecânico e programador, NA MESMA transação — a
-      // liberação dar rollback é pior que não avisar. Os dados já foram
-      // carregados acima (req.serviceOrder.*, req.deposito.nome), na mesma
-      // consulta que já acontecia de qualquer forma.
-      await notificarOsLiberada(tx, {
-        companyId: input.companyId,
-        serviceOrderId: req.serviceOrderId,
-        protocolo: req.serviceOrder.protocolo,
-        equipmentNome: req.serviceOrder.equipmentNome,
-        equipmentId: req.serviceOrder.equipmentId,
-        responsavelOperatorId: req.serviceOrder.responsavelOperatorId,
-        local: req.deposito.nome,
-      });
+      // OS liberada PELA PRIMEIRA VEZ nesta chamada (`fechamento.count ===
+      // 1`): MONTA as linhas de notificação (resolve mecânico e programador,
+      // ainda dentro da transação — dados já carregados acima em
+      // `req.serviceOrder.*`/`req.deposito.nome`). Não GRAVA nada aqui —
+      // quem chama grava depois do commit, com `enviarNotificacoes`.
+      let notificacoes: NotificacaoPronta[] = [];
+      if (fechamento.count === 1) {
+        notificacoes = await montarNotificacaoOsLiberada(tx, {
+          companyId: input.companyId,
+          serviceOrderId: req.serviceOrderId,
+          protocolo: req.serviceOrder.protocolo,
+          equipmentNome: req.serviceOrder.equipmentNome,
+          equipmentId: req.serviceOrder.equipmentId,
+          responsavelOperatorId: req.serviceOrder.responsavelOperatorId,
+          local: req.deposito.nome,
+        });
+      }
 
-      return { statusMateriais };
+      return { statusMateriais, notificacoes };
     });
+
+    // Achados I3/I4 da rodada 2: a notificação sai DEPOIS do commit, com o
+    // client normal — nunca com `tx`. `enviarNotificacoes` nunca lança.
+    await enviarNotificacoes(this.prisma, resultado.notificacoes);
+    // A resposta pública não pode ganhar o campo `notificacoes`.
+    return { statusMateriais: resultado.statusMateriais };
   }
 
   /**
@@ -1135,13 +1187,16 @@ export class AlmoxarifadoService {
     //
     // `quantidadeReservada` nunca AUMENTA depois da criação do item: só
     // `reservarParaOs` a grava para cima, e ela sempre CRIA o item (nunca
-    // soma em item existente). A entrega e o cancelamento a ZERAM. Por isso
-    // é seguro usar o retrato de fora para decidir QUAIS linhas de
-    // `peca_saldos` travar: um item pode SAIR desta lista entre o retrato e
-    // a trava (reserva zerada por chamada concorrente — barrada pelos guards
-    // frescos logo abaixo), nunca ENTRAR nela depois. O quanto entregar ou
-    // devolver de cada uma continua sendo lido FRESCO dentro da transação
-    // (`executarEntrega`), nunca por um valor pré-calculado aqui fora.
+    // soma em item existente). A entrega ZERA quando nada foi separado (o
+    // ramo `separado === 0` de `executarEntrega`) — no ramo `separado > 0`
+    // ela grava só `quantidadeEntregue`/`status`, sem zerar; o cancelamento
+    // ZERA sempre. Por isso é seguro usar o retrato de fora para decidir
+    // QUAIS linhas de `peca_saldos` travar: um item pode SAIR desta lista
+    // entre o retrato e a trava (reserva zerada por chamada concorrente —
+    // barrada pelos guards frescos logo abaixo), nunca ENTRAR nela depois.
+    // O quanto entregar ou devolver de cada uma continua sendo lido FRESCO
+    // dentro da transação (`executarEntrega`), nunca por um valor
+    // pré-calculado aqui fora.
     const candidatos = req.itens.filter((i) => i.pecaId && Number(i.quantidadeReservada) > 0);
 
     // Mesma rede de contenção da reserva e da separação

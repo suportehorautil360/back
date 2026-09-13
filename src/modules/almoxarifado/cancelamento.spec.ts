@@ -92,11 +92,20 @@ describe('cancelarRequisicao', () => {
 
     const sql = tx.$executeRaw.mock.calls[0][0];
     expect(sql.values.slice(0, 2)).toEqual([3, 2]);
-    // Segunda rede contra a mesma troca, apagada pela correção do I1: fixa
-    // os NOMES das colunas no SQL, não só a posição dos valores — uma troca
-    // que movesse ambos (coluna E valor) juntos escaparia da asserção acima.
-    expect(sql.text).toMatch(/saldo_reservado\s*=\s*saldo_reservado\s*-/);
-    expect(sql.text).toMatch(/saldo_separado\s*=\s*saldo_separado\s*-/);
+    // Achado I1 da re-revisão (rodada 2): as duas redes acima olham eixos
+    // INDEPENDENTES — `values.slice(0,2)` fixa a ORDEM dos parâmetros,
+    // `sql.text` (versão anterior) só conferia que CADA coluna aparecia
+    // decrementada por *algo*. Nenhuma amarrava parâmetro a coluna, e
+    // trocar os NOMES das colunas mantendo os parâmetros na mesma posição
+    // (`SET saldo_separado = saldo_separado - $1, saldo_reservado =
+    // saldo_reservado - $2`) passava nas duas: é semanticamente idêntico à
+    // troca de valores que a asserção acima pega, só que move as cláusulas
+    // `SET` em vez dos valores. `$1`/`$2` são os índices REAIS do
+    // `Prisma.sql` desta query (conferidos: `$1` = quantidadeReservada,
+    // `$2` = quantidadeSeparada, `$3`/`$4` = pecaId/depositoId no WHERE) —
+    // amarrar o número ao nome fecha a lacuna nos dois sentidos.
+    expect(sql.text).toMatch(/saldo_reservado\s*=\s*saldo_reservado\s*-\s*\$1\b/);
+    expect(sql.text).toMatch(/saldo_separado\s*=\s*saldo_separado\s*-\s*\$2\b/);
   });
 
   it('trava peca_saldos SEMPRE na mesma ordem por pecaId — evita deadlock com uma entrega concorrente (achado n2)', async () => {

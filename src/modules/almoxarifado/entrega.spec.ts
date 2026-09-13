@@ -30,6 +30,11 @@ function montar(
 ) {
   const chamadas: string[] = [];
   const itensDb = new Map(itens.map((i) => [i.id as string, { ...i }]));
+  // Estado fake da COLUNA `requisicaoMaterial.liberadaEm` — só existe para o
+  // guard `where: { liberadaEm: null }` de `liberarRequisicao` (achado
+  // Important I3 da rodada 2) ter algo real para checar entre chamadas
+  // sucessivas dentro do MESMO teste (ver "dois POSTs sequenciais" abaixo).
+  let liberadaEmAtual: Date | null = null;
 
   const tx = {
     // Achado I3 da revisão: registra QUAL peça foi travada (`values[0]` é o
@@ -71,9 +76,20 @@ function montar(
       // Achado Important I1 da revisão: o fechamento da ENTREGA usa
       // `updateMany` condicionado a `status: 'separada'` — `count: 0`
       // simula uma segunda chamada chegando depois que a primeira já
-      // fechou. `liberarRequisicao` continua usando `update` (sem condição:
-      // não há corrida de saldo para fechar ali).
-      updateMany: jest.fn(async () => { chamadas.push('UPDATE requisicao'); return { count: 1 }; }),
+      // fechou. Achado Important I3 da rodada 2: `liberarRequisicao` PASSOU
+      // a usar `updateMany` também, condicionado a `liberadaEm: null` (a
+      // notificação só sai na liberação que de fato é a primeira) — o MESMO
+      // mock atende as duas formas de `where`, discriminando por qual
+      // campo aparece nele.
+      updateMany: jest.fn(async ({ where }: { where: Record<string, unknown> }) => {
+        chamadas.push('UPDATE requisicao');
+        if ('liberadaEm' in where) {
+          if (where.liberadaEm !== null || liberadaEmAtual !== null) return { count: 0 };
+          liberadaEmAtual = new Date();
+          return { count: 1 };
+        }
+        return { count: 1 };
+      }),
     },
     requisicaoMaterialItem: {
       // A leitura FRESCA de dentro da transação — chave da correção do
@@ -136,9 +152,11 @@ function montar(
         opts.comDestinatariosDeNotificacao ? { companyUserId: 'user-mec' } : null,
       ),
     },
+    // Achado minor m3 da revisão: `findMany`, não `findFirst` — um
+    // equipamento pode ter mais de um programador cadastrado.
     equipmentProgramador: {
-      findFirst: jest.fn().mockResolvedValue(
-        opts.comDestinatariosDeNotificacao ? { companyUserId: 'user-prog' } : null,
+      findMany: jest.fn().mockResolvedValue(
+        opts.comDestinatariosDeNotificacao ? [{ companyUserId: 'user-prog' }] : [],
       ),
     },
     company: {
@@ -155,6 +173,11 @@ function montar(
     // verdade, em que o mesmo delegate de modelo atende fora e dentro de
     // `$transaction`.
     requisicaoMaterial: tx.requisicaoMaterial,
+    // Achado Important I4 da rodada 2: `enviarNotificacoes` grava com
+    // `this.prisma` DEPOIS do commit — nunca com `tx`. Reaproveita a MESMA
+    // instância do mock (`tx.notificacao`) para que os testes possam
+    // continuar inspecionando `tx.notificacao.createMany`.
+    notificacao: tx.notificacao,
   };
   return { servico: new AlmoxarifadoService(prisma as never), prisma, tx, chamadas, itensDb };
 }
@@ -187,11 +210,16 @@ describe('liberarRequisicao', () => {
     await servico.liberarRequisicao({
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
     });
-    const dados = tx.requisicaoMaterial.update.mock.calls[0][0].data as {
-      liberadaEm: Date; liberadaPorCompanyUserId: string;
+    // Achado Important I3 da rodada 2: `liberarRequisicao` passou de
+    // `.update` incondicional para `.updateMany` condicionado a
+    // `liberadaEm: null`.
+    const chamada = tx.requisicaoMaterial.updateMany.mock.calls[0][0] as {
+      where: { id: string; liberadaEm: null };
+      data: { liberadaEm: Date; liberadaPorCompanyUserId: string };
     };
-    expect(dados.liberadaEm).toBeInstanceOf(Date);
-    expect(dados.liberadaPorCompanyUserId).toBe(AUTOR);
+    expect(chamada.where).toEqual({ id: REQ, liberadaEm: null });
+    expect(chamada.data.liberadaEm).toBeInstanceOf(Date);
+    expect(chamada.data.liberadaPorCompanyUserId).toBe(AUTOR);
     // Nenhuma chamada de saldo — liberar é ato administrativo, não físico.
     expect(chamadas.some((c) => c.startsWith('LOCK'))).toBe(false);
     expect(chamadas).not.toContain('UPDATE saldo');
@@ -257,13 +285,42 @@ describe('liberarRequisicao', () => {
       destinatarioId: string; referenciaTipo: string; referenciaId: string; mensagem: string;
     }>;
     expect(linhas.map((l) => l.destinatarioId).sort()).toEqual(['user-mec', 'user-prog']);
-    for (const linha of linhas) {
+    for (const linha of linhas as Array<{
+      destinatarioId: string; referenciaTipo: string; referenciaId: string; mensagem: string;
+      destinatarioTipo: string; prefeituraLegacyId: string;
+    }>) {
       expect(linha.referenciaTipo).toBe('service_order');
       expect(linha.referenciaId).toBe('os-1');
       // O nome do DEPÓSITO — sem ele o mecânico sabe que pode buscar mas
       // não sabe onde.
       expect(linha.mensagem).toContain('Almoxarifado Central');
+      // Achado minor m5 da revisão: os campos que decidem se a notificação
+      // é VISÍVEL não eram assertados por nada — o `tsc` só garante a
+      // PRESENÇA (NOT NULL sem default), nunca o VALOR.
+      expect(linha.destinatarioTipo).toBe('company_user');
+      expect(linha.prefeituraLegacyId).toBe('leg-1');
     }
+  });
+
+  it('dois POSTs sequenciais que liberam a MESMA requisição geram UMA notificação só (achado Important I3)', async () => {
+    // Não é concorrência — é o mesmo POST repetido (duplo clique, front que
+    // reenvia). `req.status` continua `'separada'` depois de liberar (a
+    // liberação não muda o status), então o guard de fora
+    // (`req.status !== 'separada'`) sozinho NÃO barra a segunda chamada —
+    // só o guard `liberadaEm: null`, condicionado dentro da transação, barra.
+    const { servico, tx } = montar('separada', [separado()], {
+      comDestinatariosDeNotificacao: true,
+    });
+    const chamar = () => servico.liberarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+    });
+
+    const r1 = await chamar();
+    const r2 = await chamar();
+
+    expect(r1.statusMateriais).toBe('liberada_para_execucao');
+    expect(r2.statusMateriais).toBe('liberada_para_execucao'); // resposta não muda de forma nem de conteúdo
+    expect(tx.notificacao.createMany).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -363,9 +420,10 @@ describe('entregarRequisicao', () => {
     // entrada de estoque e na conferência do kit, desta vez na entrega.
     //
     // `quantidadeReservada` continua 4 nos dois retratos NESTE teste, não
-    // porque seja imutável (a entrega ZERA no fim) — é só que este cenário
-    // não simula mudança nela, só em `quantidadeSeparada` — por isso a
-    // asserção olha as POSIÇÕES 0 e 2 do
+    // porque seja imutável — neste cenário (`separado: 4 > 0`) a entrega
+    // nem chega a zerar `quantidadeReservada` (só grava `quantidadeEntregue`/
+    // `status`); é só que este teste não simula mudança nela, só em
+    // `quantidadeSeparada` — por isso a asserção olha as POSIÇÕES 0 e 2 do
     // `UPDATE` (saldo_fisico/saldo_separado, que usam a quantidade separada
     // FRESCA), não a posição 1 (saldo_reservado, que usa a reservada — 4 em
     // ambos os retratos, de propósito).
