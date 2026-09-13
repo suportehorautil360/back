@@ -1402,6 +1402,9 @@ export const RequisicaoMaterialItemScalarFieldEnum = {
   equivalenteDePecaId: 'equivalenteDePecaId',
   status: 'status',
   divergencia: 'divergencia',
+  origem: 'origem',
+  motivo: 'motivo',
+  solicitadoPorCompanyUserId: 'solicitadoPorCompanyUserId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1444,6 +1447,7 @@ export const SolicitacaoCompraItemScalarFieldEnum = {
   prioridade: 'prioridade',
   dataNecessidade: 'dataNecessidade',
   status: 'status',
+  depositoReposicaoId: 'depositoReposicaoId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

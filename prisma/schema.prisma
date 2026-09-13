@@ -2457,6 +2457,13 @@ model RequisicaoMaterialItem {
   /// quantidade a menos. Divergência impede a liberação.
   divergencia String?
 
+  /// "plano" (kit resolvido na reserva) | "peca_adicional" (pedido do
+  /// mecânico com a OS em andamento — exige `motivo`, CHECK no banco).
+  origem                     String  @default("plano")
+  motivo                     String?
+  /// Quem pediu a peça adicional. UUID solto, como os outros autores do módulo.
+  solicitadoPorCompanyUserId String? @map("solicitado_por_company_user_id") @db.Uuid
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -2547,6 +2554,11 @@ model SolicitacaoCompraItem {
   dataNecessidade  DateTime? @map("data_necessidade") @db.Date
   /// "aberta" | "atendida" | "cancelada"
   status           String    @default("aberta")
+  /// Só na SC automática por estoque mínimo: o depósito que está sendo
+  /// reposto. O índice único parcial `solicitacao_compra_itens_uma_reposicao_
+  /// automatica` usa (peça, este depósito) entre os itens abertos. Sem
+  /// relação no Prisma de propósito — a FK existe no banco.
+  depositoReposicaoId String?  @map("deposito_reposicao_id") @db.Uuid
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

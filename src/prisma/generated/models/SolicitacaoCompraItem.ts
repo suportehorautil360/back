@@ -49,6 +49,7 @@ export type SolicitacaoCompraItemMinAggregateOutputType = {
   prioridade: string | null
   dataNecessidade: Date | null
   status: string | null
+  depositoReposicaoId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -62,6 +63,7 @@ export type SolicitacaoCompraItemMaxAggregateOutputType = {
   prioridade: string | null
   dataNecessidade: Date | null
   status: string | null
+  depositoReposicaoId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -75,6 +77,7 @@ export type SolicitacaoCompraItemCountAggregateOutputType = {
   prioridade: number
   dataNecessidade: number
   status: number
+  depositoReposicaoId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -98,6 +101,7 @@ export type SolicitacaoCompraItemMinAggregateInputType = {
   prioridade?: true
   dataNecessidade?: true
   status?: true
+  depositoReposicaoId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -111,6 +115,7 @@ export type SolicitacaoCompraItemMaxAggregateInputType = {
   prioridade?: true
   dataNecessidade?: true
   status?: true
+  depositoReposicaoId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -124,6 +129,7 @@ export type SolicitacaoCompraItemCountAggregateInputType = {
   prioridade?: true
   dataNecessidade?: true
   status?: true
+  depositoReposicaoId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -224,6 +230,7 @@ export type SolicitacaoCompraItemGroupByOutputType = {
   prioridade: string
   dataNecessidade: Date | null
   status: string
+  depositoReposicaoId: string | null
   createdAt: Date
   updatedAt: Date
   _count: SolicitacaoCompraItemCountAggregateOutputType | null
@@ -260,6 +267,7 @@ export type SolicitacaoCompraItemWhereInput = {
   prioridade?: Prisma.StringFilter<"SolicitacaoCompraItem"> | string
   dataNecessidade?: Prisma.DateTimeNullableFilter<"SolicitacaoCompraItem"> | Date | string | null
   status?: Prisma.StringFilter<"SolicitacaoCompraItem"> | string
+  depositoReposicaoId?: Prisma.UuidNullableFilter<"SolicitacaoCompraItem"> | string | null
   createdAt?: Prisma.DateTimeFilter<"SolicitacaoCompraItem"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SolicitacaoCompraItem"> | Date | string
   solicitacao?: Prisma.XOR<Prisma.SolicitacaoCompraScalarRelationFilter, Prisma.SolicitacaoCompraWhereInput>
@@ -277,6 +285,7 @@ export type SolicitacaoCompraItemOrderByWithRelationInput = {
   prioridade?: Prisma.SortOrder
   dataNecessidade?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  depositoReposicaoId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   solicitacao?: Prisma.SolicitacaoCompraOrderByWithRelationInput
@@ -297,6 +306,7 @@ export type SolicitacaoCompraItemWhereUniqueInput = Prisma.AtLeast<{
   prioridade?: Prisma.StringFilter<"SolicitacaoCompraItem"> | string
   dataNecessidade?: Prisma.DateTimeNullableFilter<"SolicitacaoCompraItem"> | Date | string | null
   status?: Prisma.StringFilter<"SolicitacaoCompraItem"> | string
+  depositoReposicaoId?: Prisma.UuidNullableFilter<"SolicitacaoCompraItem"> | string | null
   createdAt?: Prisma.DateTimeFilter<"SolicitacaoCompraItem"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SolicitacaoCompraItem"> | Date | string
   solicitacao?: Prisma.XOR<Prisma.SolicitacaoCompraScalarRelationFilter, Prisma.SolicitacaoCompraWhereInput>
@@ -314,6 +324,7 @@ export type SolicitacaoCompraItemOrderByWithAggregationInput = {
   prioridade?: Prisma.SortOrder
   dataNecessidade?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  depositoReposicaoId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.SolicitacaoCompraItemCountOrderByAggregateInput
@@ -335,6 +346,7 @@ export type SolicitacaoCompraItemScalarWhereWithAggregatesInput = {
   prioridade?: Prisma.StringWithAggregatesFilter<"SolicitacaoCompraItem"> | string
   dataNecessidade?: Prisma.DateTimeNullableWithAggregatesFilter<"SolicitacaoCompraItem"> | Date | string | null
   status?: Prisma.StringWithAggregatesFilter<"SolicitacaoCompraItem"> | string
+  depositoReposicaoId?: Prisma.UuidNullableWithAggregatesFilter<"SolicitacaoCompraItem"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"SolicitacaoCompraItem"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"SolicitacaoCompraItem"> | Date | string
 }
@@ -345,6 +357,7 @@ export type SolicitacaoCompraItemCreateInput = {
   prioridade: string
   dataNecessidade?: Date | string | null
   status?: string
+  depositoReposicaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   solicitacao: Prisma.SolicitacaoCompraCreateNestedOneWithoutItensInput
@@ -362,6 +375,7 @@ export type SolicitacaoCompraItemUncheckedCreateInput = {
   prioridade: string
   dataNecessidade?: Date | string | null
   status?: string
+  depositoReposicaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   origensOc?: Prisma.OrdemCompraItemOrigemUncheckedCreateNestedManyWithoutSolicitacaoCompraItemInput
@@ -373,6 +387,7 @@ export type SolicitacaoCompraItemUpdateInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  depositoReposicaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   solicitacao?: Prisma.SolicitacaoCompraUpdateOneRequiredWithoutItensNestedInput
@@ -390,6 +405,7 @@ export type SolicitacaoCompraItemUncheckedUpdateInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  depositoReposicaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   origensOc?: Prisma.OrdemCompraItemOrigemUncheckedUpdateManyWithoutSolicitacaoCompraItemNestedInput
@@ -404,6 +420,7 @@ export type SolicitacaoCompraItemCreateManyInput = {
   prioridade: string
   dataNecessidade?: Date | string | null
   status?: string
+  depositoReposicaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -414,6 +431,7 @@ export type SolicitacaoCompraItemUpdateManyMutationInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  depositoReposicaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -427,6 +445,7 @@ export type SolicitacaoCompraItemUncheckedUpdateManyInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  depositoReposicaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -450,6 +469,7 @@ export type SolicitacaoCompraItemCountOrderByAggregateInput = {
   prioridade?: Prisma.SortOrder
   dataNecessidade?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  depositoReposicaoId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -467,6 +487,7 @@ export type SolicitacaoCompraItemMaxOrderByAggregateInput = {
   prioridade?: Prisma.SortOrder
   dataNecessidade?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  depositoReposicaoId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -480,6 +501,7 @@ export type SolicitacaoCompraItemMinOrderByAggregateInput = {
   prioridade?: Prisma.SortOrder
   dataNecessidade?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  depositoReposicaoId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -639,6 +661,7 @@ export type SolicitacaoCompraItemCreateWithoutPecaInput = {
   prioridade: string
   dataNecessidade?: Date | string | null
   status?: string
+  depositoReposicaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   solicitacao: Prisma.SolicitacaoCompraCreateNestedOneWithoutItensInput
@@ -654,6 +677,7 @@ export type SolicitacaoCompraItemUncheckedCreateWithoutPecaInput = {
   prioridade: string
   dataNecessidade?: Date | string | null
   status?: string
+  depositoReposicaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   origensOc?: Prisma.OrdemCompraItemOrigemUncheckedCreateNestedManyWithoutSolicitacaoCompraItemInput
@@ -697,6 +721,7 @@ export type SolicitacaoCompraItemScalarWhereInput = {
   prioridade?: Prisma.StringFilter<"SolicitacaoCompraItem"> | string
   dataNecessidade?: Prisma.DateTimeNullableFilter<"SolicitacaoCompraItem"> | Date | string | null
   status?: Prisma.StringFilter<"SolicitacaoCompraItem"> | string
+  depositoReposicaoId?: Prisma.UuidNullableFilter<"SolicitacaoCompraItem"> | string | null
   createdAt?: Prisma.DateTimeFilter<"SolicitacaoCompraItem"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SolicitacaoCompraItem"> | Date | string
 }
@@ -707,6 +732,7 @@ export type SolicitacaoCompraItemCreateWithoutRequisicaoItemInput = {
   prioridade: string
   dataNecessidade?: Date | string | null
   status?: string
+  depositoReposicaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   solicitacao: Prisma.SolicitacaoCompraCreateNestedOneWithoutItensInput
@@ -722,6 +748,7 @@ export type SolicitacaoCompraItemUncheckedCreateWithoutRequisicaoItemInput = {
   prioridade: string
   dataNecessidade?: Date | string | null
   status?: string
+  depositoReposicaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   origensOc?: Prisma.OrdemCompraItemOrigemUncheckedCreateNestedManyWithoutSolicitacaoCompraItemInput
@@ -759,6 +786,7 @@ export type SolicitacaoCompraItemCreateWithoutSolicitacaoInput = {
   prioridade: string
   dataNecessidade?: Date | string | null
   status?: string
+  depositoReposicaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   peca: Prisma.PecaCreateNestedOneWithoutSolicitacaoCompraItensInput
@@ -774,6 +802,7 @@ export type SolicitacaoCompraItemUncheckedCreateWithoutSolicitacaoInput = {
   prioridade: string
   dataNecessidade?: Date | string | null
   status?: string
+  depositoReposicaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   origensOc?: Prisma.OrdemCompraItemOrigemUncheckedCreateNestedManyWithoutSolicitacaoCompraItemInput
@@ -811,6 +840,7 @@ export type SolicitacaoCompraItemCreateWithoutOrigensOcInput = {
   prioridade: string
   dataNecessidade?: Date | string | null
   status?: string
+  depositoReposicaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   solicitacao: Prisma.SolicitacaoCompraCreateNestedOneWithoutItensInput
@@ -827,6 +857,7 @@ export type SolicitacaoCompraItemUncheckedCreateWithoutOrigensOcInput = {
   prioridade: string
   dataNecessidade?: Date | string | null
   status?: string
+  depositoReposicaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -853,6 +884,7 @@ export type SolicitacaoCompraItemUpdateWithoutOrigensOcInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  depositoReposicaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   solicitacao?: Prisma.SolicitacaoCompraUpdateOneRequiredWithoutItensNestedInput
@@ -869,6 +901,7 @@ export type SolicitacaoCompraItemUncheckedUpdateWithoutOrigensOcInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  depositoReposicaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -881,6 +914,7 @@ export type SolicitacaoCompraItemCreateManyPecaInput = {
   prioridade: string
   dataNecessidade?: Date | string | null
   status?: string
+  depositoReposicaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -891,6 +925,7 @@ export type SolicitacaoCompraItemUpdateWithoutPecaInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  depositoReposicaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   solicitacao?: Prisma.SolicitacaoCompraUpdateOneRequiredWithoutItensNestedInput
@@ -906,6 +941,7 @@ export type SolicitacaoCompraItemUncheckedUpdateWithoutPecaInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  depositoReposicaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   origensOc?: Prisma.OrdemCompraItemOrigemUncheckedUpdateManyWithoutSolicitacaoCompraItemNestedInput
@@ -919,6 +955,7 @@ export type SolicitacaoCompraItemUncheckedUpdateManyWithoutPecaInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  depositoReposicaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -931,6 +968,7 @@ export type SolicitacaoCompraItemCreateManyRequisicaoItemInput = {
   prioridade: string
   dataNecessidade?: Date | string | null
   status?: string
+  depositoReposicaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -941,6 +979,7 @@ export type SolicitacaoCompraItemUpdateWithoutRequisicaoItemInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  depositoReposicaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   solicitacao?: Prisma.SolicitacaoCompraUpdateOneRequiredWithoutItensNestedInput
@@ -956,6 +995,7 @@ export type SolicitacaoCompraItemUncheckedUpdateWithoutRequisicaoItemInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  depositoReposicaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   origensOc?: Prisma.OrdemCompraItemOrigemUncheckedUpdateManyWithoutSolicitacaoCompraItemNestedInput
@@ -969,6 +1009,7 @@ export type SolicitacaoCompraItemUncheckedUpdateManyWithoutRequisicaoItemInput =
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  depositoReposicaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -981,6 +1022,7 @@ export type SolicitacaoCompraItemCreateManySolicitacaoInput = {
   prioridade: string
   dataNecessidade?: Date | string | null
   status?: string
+  depositoReposicaoId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -991,6 +1033,7 @@ export type SolicitacaoCompraItemUpdateWithoutSolicitacaoInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  depositoReposicaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   peca?: Prisma.PecaUpdateOneRequiredWithoutSolicitacaoCompraItensNestedInput
@@ -1006,6 +1049,7 @@ export type SolicitacaoCompraItemUncheckedUpdateWithoutSolicitacaoInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  depositoReposicaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   origensOc?: Prisma.OrdemCompraItemOrigemUncheckedUpdateManyWithoutSolicitacaoCompraItemNestedInput
@@ -1019,6 +1063,7 @@ export type SolicitacaoCompraItemUncheckedUpdateManyWithoutSolicitacaoInput = {
   prioridade?: Prisma.StringFieldUpdateOperationsInput | string
   dataNecessidade?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  depositoReposicaoId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1063,6 +1108,7 @@ export type SolicitacaoCompraItemSelect<ExtArgs extends runtime.Types.Extensions
   prioridade?: boolean
   dataNecessidade?: boolean
   status?: boolean
+  depositoReposicaoId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   solicitacao?: boolean | Prisma.SolicitacaoCompraDefaultArgs<ExtArgs>
@@ -1081,6 +1127,7 @@ export type SolicitacaoCompraItemSelectCreateManyAndReturn<ExtArgs extends runti
   prioridade?: boolean
   dataNecessidade?: boolean
   status?: boolean
+  depositoReposicaoId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   solicitacao?: boolean | Prisma.SolicitacaoCompraDefaultArgs<ExtArgs>
@@ -1097,6 +1144,7 @@ export type SolicitacaoCompraItemSelectUpdateManyAndReturn<ExtArgs extends runti
   prioridade?: boolean
   dataNecessidade?: boolean
   status?: boolean
+  depositoReposicaoId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   solicitacao?: boolean | Prisma.SolicitacaoCompraDefaultArgs<ExtArgs>
@@ -1113,11 +1161,12 @@ export type SolicitacaoCompraItemSelectScalar = {
   prioridade?: boolean
   dataNecessidade?: boolean
   status?: boolean
+  depositoReposicaoId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type SolicitacaoCompraItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "solicitacaoId" | "pecaId" | "quantidade" | "requisicaoItemId" | "prioridade" | "dataNecessidade" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["solicitacaoCompraItem"]>
+export type SolicitacaoCompraItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "solicitacaoId" | "pecaId" | "quantidade" | "requisicaoItemId" | "prioridade" | "dataNecessidade" | "status" | "depositoReposicaoId" | "createdAt" | "updatedAt", ExtArgs["result"]["solicitacaoCompraItem"]>
 export type SolicitacaoCompraItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   solicitacao?: boolean | Prisma.SolicitacaoCompraDefaultArgs<ExtArgs>
   peca?: boolean | Prisma.PecaDefaultArgs<ExtArgs>
@@ -1163,6 +1212,13 @@ export type $SolicitacaoCompraItemPayload<ExtArgs extends runtime.Types.Extensio
      * "aberta" | "atendida" | "cancelada"
      */
     status: string
+    /**
+     * Só na SC automática por estoque mínimo: o depósito que está sendo
+     * reposto. O índice único parcial `solicitacao_compra_itens_uma_reposicao_
+     * automatica` usa (peça, este depósito) entre os itens abertos. Sem
+     * relação no Prisma de propósito — a FK existe no banco.
+     */
+    depositoReposicaoId: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["solicitacaoCompraItem"]>
@@ -1600,6 +1656,7 @@ export interface SolicitacaoCompraItemFieldRefs {
   readonly prioridade: Prisma.FieldRef<"SolicitacaoCompraItem", 'String'>
   readonly dataNecessidade: Prisma.FieldRef<"SolicitacaoCompraItem", 'DateTime'>
   readonly status: Prisma.FieldRef<"SolicitacaoCompraItem", 'String'>
+  readonly depositoReposicaoId: Prisma.FieldRef<"SolicitacaoCompraItem", 'String'>
   readonly createdAt: Prisma.FieldRef<"SolicitacaoCompraItem", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"SolicitacaoCompraItem", 'DateTime'>
 }
