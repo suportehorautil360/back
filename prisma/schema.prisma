@@ -286,6 +286,7 @@ model Equipment {
   serviceOrders      ServiceOrder[]
   fleetfuelIntencoes FleetfuelIntencao[]
   manuais            ManualEquipamento[]
+  programadores      EquipmentProgramador[]
   checklistExecucoes ChecklistExecucao[]
 
   @@index([companyId, status])
@@ -1631,6 +1632,7 @@ model CompanyUser {
   company           Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
   operator          Operator?
   mecanicoDesignado ProgramadorMecanico? @relation("ProgramadorMecanicoUser")
+  equipmentsAtribuidos EquipmentProgramador[] @relation("EquipmentProgUser")
 
   @@unique([companyId, email])
   @@index([companyId])
@@ -2104,6 +2106,25 @@ model ChecklistExecucao {
 ///
 /// `companyUserId` é a chave primária porque é UM mecânico por programador —
 /// vários tornariam a sugestão ambígua justamente onde ela é automática.
+/// Espelho de `equipment_programadores` (a migration vive no horautil). O Nest
+/// precisa dele para descobrir o programador de um equipamento na hora de
+/// notificar a liberação da OS.
+model EquipmentProgramador {
+  id            String   @id @default(uuid()) @db.Uuid
+  equipmentId   String   @map("equipment_id") @db.Uuid
+  companyUserId String   @map("company_user_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
+  createdBy     String?  @map("created_by") @db.Uuid
+
+  equipment   Equipment   @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  companyUser CompanyUser @relation("EquipmentProgUser", fields: [companyUserId], references: [id], onDelete: Cascade)
+
+  @@unique([equipmentId, companyUserId])
+  @@index([companyUserId])
+  @@index([equipmentId])
+  @@map("equipment_programadores")
+}
+
 model ProgramadorMecanico {
   /// `CompanyUser.id` do programador.
   companyUserId String @id @map("company_user_id") @db.Uuid

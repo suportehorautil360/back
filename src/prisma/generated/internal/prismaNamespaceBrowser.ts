@@ -107,6 +107,7 @@ export const ModelName = {
   ChecklistModelo: 'ChecklistModelo',
   ManualEquipamento: 'ManualEquipamento',
   ChecklistExecucao: 'ChecklistExecucao',
+  EquipmentProgramador: 'EquipmentProgramador',
   ProgramadorMecanico: 'ProgramadorMecanico',
   ServiceOrderAuditoria: 'ServiceOrderAuditoria',
   Deposito: 'Deposito',
@@ -1236,6 +1237,17 @@ export const ChecklistExecucaoScalarFieldEnum = {
 } as const
 
 export type ChecklistExecucaoScalarFieldEnum = (typeof ChecklistExecucaoScalarFieldEnum)[keyof typeof ChecklistExecucaoScalarFieldEnum]
+
+
+export const EquipmentProgramadorScalarFieldEnum = {
+  id: 'id',
+  equipmentId: 'equipmentId',
+  companyUserId: 'companyUserId',
+  createdAt: 'createdAt',
+  createdBy: 'createdBy'
+} as const
+
+export type EquipmentProgramadorScalarFieldEnum = (typeof EquipmentProgramadorScalarFieldEnum)[keyof typeof EquipmentProgramadorScalarFieldEnum]
 
 
 export const ProgramadorMecanicoScalarFieldEnum = {

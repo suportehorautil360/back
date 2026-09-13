@@ -453,6 +453,7 @@ export const ModelName = {
   ChecklistModelo: 'ChecklistModelo',
   ManualEquipamento: 'ManualEquipamento',
   ChecklistExecucao: 'ChecklistExecucao',
+  EquipmentProgramador: 'EquipmentProgramador',
   ProgramadorMecanico: 'ProgramadorMecanico',
   ServiceOrderAuditoria: 'ServiceOrderAuditoria',
   Deposito: 'Deposito',
@@ -476,7 +477,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken" | "checklistModelo" | "manualEquipamento" | "checklistExecucao" | "programadorMecanico" | "serviceOrderAuditoria" | "deposito" | "peca" | "pecaSaldo" | "estoqueMovimento" | "requisicaoMaterial" | "requisicaoMaterialItem"
+    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken" | "checklistModelo" | "manualEquipamento" | "checklistExecucao" | "equipmentProgramador" | "programadorMecanico" | "serviceOrderAuditoria" | "deposito" | "peca" | "pecaSaldo" | "estoqueMovimento" | "requisicaoMaterial" | "requisicaoMaterialItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -4624,6 +4625,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    EquipmentProgramador: {
+      payload: Prisma.$EquipmentProgramadorPayload<ExtArgs>
+      fields: Prisma.EquipmentProgramadorFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EquipmentProgramadorFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EquipmentProgramadorPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EquipmentProgramadorFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EquipmentProgramadorPayload>
+        }
+        findFirst: {
+          args: Prisma.EquipmentProgramadorFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EquipmentProgramadorPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EquipmentProgramadorFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EquipmentProgramadorPayload>
+        }
+        findMany: {
+          args: Prisma.EquipmentProgramadorFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EquipmentProgramadorPayload>[]
+        }
+        create: {
+          args: Prisma.EquipmentProgramadorCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EquipmentProgramadorPayload>
+        }
+        createMany: {
+          args: Prisma.EquipmentProgramadorCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EquipmentProgramadorCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EquipmentProgramadorPayload>[]
+        }
+        delete: {
+          args: Prisma.EquipmentProgramadorDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EquipmentProgramadorPayload>
+        }
+        update: {
+          args: Prisma.EquipmentProgramadorUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EquipmentProgramadorPayload>
+        }
+        deleteMany: {
+          args: Prisma.EquipmentProgramadorDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EquipmentProgramadorUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EquipmentProgramadorUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EquipmentProgramadorPayload>[]
+        }
+        upsert: {
+          args: Prisma.EquipmentProgramadorUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EquipmentProgramadorPayload>
+        }
+        aggregate: {
+          args: Prisma.EquipmentProgramadorAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEquipmentProgramador>
+        }
+        groupBy: {
+          args: Prisma.EquipmentProgramadorGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EquipmentProgramadorGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EquipmentProgramadorCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EquipmentProgramadorCountAggregateOutputType> | number
+        }
+      }
+    }
     ProgramadorMecanico: {
       payload: Prisma.$ProgramadorMecanicoPayload<ExtArgs>
       fields: Prisma.ProgramadorMecanicoFieldRefs
@@ -6360,6 +6435,17 @@ export const ChecklistExecucaoScalarFieldEnum = {
 export type ChecklistExecucaoScalarFieldEnum = (typeof ChecklistExecucaoScalarFieldEnum)[keyof typeof ChecklistExecucaoScalarFieldEnum]
 
 
+export const EquipmentProgramadorScalarFieldEnum = {
+  id: 'id',
+  equipmentId: 'equipmentId',
+  companyUserId: 'companyUserId',
+  createdAt: 'createdAt',
+  createdBy: 'createdBy'
+} as const
+
+export type EquipmentProgramadorScalarFieldEnum = (typeof EquipmentProgramadorScalarFieldEnum)[keyof typeof EquipmentProgramadorScalarFieldEnum]
+
+
 export const ProgramadorMecanicoScalarFieldEnum = {
   companyUserId: 'companyUserId',
   operatorId: 'operatorId',
@@ -6972,6 +7058,7 @@ export type GlobalOmitConfig = {
   checklistModelo?: Prisma.ChecklistModeloOmit
   manualEquipamento?: Prisma.ManualEquipamentoOmit
   checklistExecucao?: Prisma.ChecklistExecucaoOmit
+  equipmentProgramador?: Prisma.EquipmentProgramadorOmit
   programadorMecanico?: Prisma.ProgramadorMecanicoOmit
   serviceOrderAuditoria?: Prisma.ServiceOrderAuditoriaOmit
   deposito?: Prisma.DepositoOmit

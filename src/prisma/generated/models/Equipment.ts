@@ -551,6 +551,7 @@ export type EquipmentWhereInput = {
   serviceOrders?: Prisma.ServiceOrderListRelationFilter
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoListRelationFilter
   manuais?: Prisma.ManualEquipamentoListRelationFilter
+  programadores?: Prisma.EquipmentProgramadorListRelationFilter
   checklistExecucoes?: Prisma.ChecklistExecucaoListRelationFilter
 }
 
@@ -608,6 +609,7 @@ export type EquipmentOrderByWithRelationInput = {
   serviceOrders?: Prisma.ServiceOrderOrderByRelationAggregateInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoOrderByRelationAggregateInput
   manuais?: Prisma.ManualEquipamentoOrderByRelationAggregateInput
+  programadores?: Prisma.EquipmentProgramadorOrderByRelationAggregateInput
   checklistExecucoes?: Prisma.ChecklistExecucaoOrderByRelationAggregateInput
 }
 
@@ -668,6 +670,7 @@ export type EquipmentWhereUniqueInput = Prisma.AtLeast<{
   serviceOrders?: Prisma.ServiceOrderListRelationFilter
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoListRelationFilter
   manuais?: Prisma.ManualEquipamentoListRelationFilter
+  programadores?: Prisma.EquipmentProgramadorListRelationFilter
   checklistExecucoes?: Prisma.ChecklistExecucaoListRelationFilter
 }, "id" | "legacyId">
 
@@ -824,6 +827,7 @@ export type EquipmentCreateInput = {
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutEquipmentInput
 }
 
@@ -880,6 +884,7 @@ export type EquipmentUncheckedCreateInput = {
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoUncheckedCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
@@ -936,6 +941,7 @@ export type EquipmentUpdateInput = {
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -992,6 +998,7 @@ export type EquipmentUncheckedUpdateInput = {
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUncheckedUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -1520,6 +1527,20 @@ export type EquipmentUpdateOneRequiredWithoutChecklistExecucoesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.EquipmentUpdateToOneWithWhereWithoutChecklistExecucoesInput, Prisma.EquipmentUpdateWithoutChecklistExecucoesInput>, Prisma.EquipmentUncheckedUpdateWithoutChecklistExecucoesInput>
 }
 
+export type EquipmentCreateNestedOneWithoutProgramadoresInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutProgramadoresInput, Prisma.EquipmentUncheckedCreateWithoutProgramadoresInput>
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutProgramadoresInput
+  connect?: Prisma.EquipmentWhereUniqueInput
+}
+
+export type EquipmentUpdateOneRequiredWithoutProgramadoresNestedInput = {
+  create?: Prisma.XOR<Prisma.EquipmentCreateWithoutProgramadoresInput, Prisma.EquipmentUncheckedCreateWithoutProgramadoresInput>
+  connectOrCreate?: Prisma.EquipmentCreateOrConnectWithoutProgramadoresInput
+  upsert?: Prisma.EquipmentUpsertWithoutProgramadoresInput
+  connect?: Prisma.EquipmentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EquipmentUpdateToOneWithWhereWithoutProgramadoresInput, Prisma.EquipmentUpdateWithoutProgramadoresInput>, Prisma.EquipmentUncheckedUpdateWithoutProgramadoresInput>
+}
+
 export type EquipmentCreateWithoutCompanyInput = {
   id?: string
   legacyId?: string | null
@@ -1572,6 +1593,7 @@ export type EquipmentCreateWithoutCompanyInput = {
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutEquipmentInput
 }
 
@@ -1627,6 +1649,7 @@ export type EquipmentUncheckedCreateWithoutCompanyInput = {
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoUncheckedCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
@@ -1757,6 +1780,7 @@ export type EquipmentCreateWithoutRevisoesInput = {
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutEquipmentInput
 }
 
@@ -1812,6 +1836,7 @@ export type EquipmentUncheckedCreateWithoutRevisoesInput = {
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoUncheckedCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
@@ -1883,6 +1908,7 @@ export type EquipmentUpdateWithoutRevisoesInput = {
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -1938,6 +1964,7 @@ export type EquipmentUncheckedUpdateWithoutRevisoesInput = {
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUncheckedUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -1993,6 +2020,7 @@ export type EquipmentCreateWithoutAlocacoesInput = {
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutEquipmentInput
 }
 
@@ -2048,6 +2076,7 @@ export type EquipmentUncheckedCreateWithoutAlocacoesInput = {
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoUncheckedCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
@@ -2119,6 +2148,7 @@ export type EquipmentUpdateWithoutAlocacoesInput = {
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -2174,6 +2204,7 @@ export type EquipmentUncheckedUpdateWithoutAlocacoesInput = {
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUncheckedUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -2229,6 +2260,7 @@ export type EquipmentCreateWithoutServiceOrdersInput = {
   cargasComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutEquipmentInput
 }
 
@@ -2284,6 +2316,7 @@ export type EquipmentUncheckedCreateWithoutServiceOrdersInput = {
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoUncheckedCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
@@ -2355,6 +2388,7 @@ export type EquipmentUpdateWithoutServiceOrdersInput = {
   cargasComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -2410,6 +2444,7 @@ export type EquipmentUncheckedUpdateWithoutServiceOrdersInput = {
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUncheckedUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -2465,6 +2500,7 @@ export type EquipmentCreateWithoutAbastecimentosInput = {
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutEquipmentInput
 }
 
@@ -2520,6 +2556,7 @@ export type EquipmentUncheckedCreateWithoutAbastecimentosInput = {
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoUncheckedCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
@@ -2591,6 +2628,7 @@ export type EquipmentUpdateWithoutAbastecimentosInput = {
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -2646,6 +2684,7 @@ export type EquipmentUncheckedUpdateWithoutAbastecimentosInput = {
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUncheckedUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -2701,6 +2740,7 @@ export type EquipmentCreateWithoutFleetfuelIntencoesInput = {
   cargasComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutEquipmentInput
 }
 
@@ -2756,6 +2796,7 @@ export type EquipmentUncheckedCreateWithoutFleetfuelIntencoesInput = {
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoUncheckedCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
@@ -2827,6 +2868,7 @@ export type EquipmentUpdateWithoutFleetfuelIntencoesInput = {
   cargasComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -2882,6 +2924,7 @@ export type EquipmentUncheckedUpdateWithoutFleetfuelIntencoesInput = {
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUncheckedUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -2937,6 +2980,7 @@ export type EquipmentCreateWithoutCreditosInput = {
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutEquipmentInput
 }
 
@@ -2992,6 +3036,7 @@ export type EquipmentUncheckedCreateWithoutCreditosInput = {
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoUncheckedCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
@@ -3063,6 +3108,7 @@ export type EquipmentUpdateWithoutCreditosInput = {
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -3118,6 +3164,7 @@ export type EquipmentUncheckedUpdateWithoutCreditosInput = {
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUncheckedUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -3173,6 +3220,7 @@ export type EquipmentCreateWithoutLubrificacoesInput = {
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutEquipmentInput
 }
 
@@ -3228,6 +3276,7 @@ export type EquipmentUncheckedCreateWithoutLubrificacoesInput = {
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoUncheckedCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
@@ -3299,6 +3348,7 @@ export type EquipmentUpdateWithoutLubrificacoesInput = {
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -3354,6 +3404,7 @@ export type EquipmentUncheckedUpdateWithoutLubrificacoesInput = {
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUncheckedUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -3409,6 +3460,7 @@ export type EquipmentCreateWithoutCargasComboioInput = {
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutEquipmentInput
 }
 
@@ -3464,6 +3516,7 @@ export type EquipmentUncheckedCreateWithoutCargasComboioInput = {
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoUncheckedCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
@@ -3535,6 +3588,7 @@ export type EquipmentUpdateWithoutCargasComboioInput = {
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -3590,6 +3644,7 @@ export type EquipmentUncheckedUpdateWithoutCargasComboioInput = {
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUncheckedUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -3645,6 +3700,7 @@ export type EquipmentCreateWithoutManuaisInput = {
   cargasComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutEquipmentInput
 }
 
@@ -3700,6 +3756,7 @@ export type EquipmentUncheckedCreateWithoutManuaisInput = {
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutEquipmentInput
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedCreateNestedManyWithoutEquipmentInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
@@ -3771,6 +3828,7 @@ export type EquipmentUpdateWithoutManuaisInput = {
   cargasComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -3826,6 +3884,7 @@ export type EquipmentUncheckedUpdateWithoutManuaisInput = {
   cargasComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutEquipmentNestedInput
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -3882,6 +3941,7 @@ export type EquipmentCreateWithoutChecklistExecucoesInput = {
   serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentUncheckedCreateWithoutChecklistExecucoesInput = {
@@ -3937,6 +3997,7 @@ export type EquipmentUncheckedCreateWithoutChecklistExecucoesInput = {
   serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
   manuais?: Prisma.ManualEquipamentoUncheckedCreateNestedManyWithoutEquipmentInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedCreateNestedManyWithoutEquipmentInput
 }
 
 export type EquipmentCreateOrConnectWithoutChecklistExecucoesInput = {
@@ -4008,6 +4069,7 @@ export type EquipmentUpdateWithoutChecklistExecucoesInput = {
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentUncheckedUpdateWithoutChecklistExecucoesInput = {
@@ -4063,6 +4125,247 @@ export type EquipmentUncheckedUpdateWithoutChecklistExecucoesInput = {
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUncheckedUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedUpdateManyWithoutEquipmentNestedInput
+}
+
+export type EquipmentCreateWithoutProgramadoresInput = {
+  id?: string
+  legacyId?: string | null
+  status: string
+  descricao?: string | null
+  tipo?: string | null
+  linha?: string | null
+  placa?: string | null
+  chassi?: string | null
+  marca?: string | null
+  modelo?: string | null
+  ano?: string | null
+  medicaoAtual?: number | null
+  intervaloRevisao?: number | null
+  ultimaRevisao?: number | null
+  unidadeRevisao?: string | null
+  obra?: string | null
+  renavam?: string | null
+  numeroSerie?: string | null
+  patrimonioBase?: string | null
+  cor?: string | null
+  combustivel?: string | null
+  tipoFrota?: string | null
+  motorizacao?: string | null
+  anoModelo?: string | null
+  capacidadeTanque?: number | null
+  capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
+  valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  gestorResponsavel?: string | null
+  centroCusto?: string | null
+  cidade?: string | null
+  estado?: string | null
+  regiao?: string | null
+  ipva?: Date | string | null
+  seguro?: Date | string | null
+  licenciamento?: Date | string | null
+  vigenciaInicio?: Date | string | null
+  vigenciaFim?: Date | string | null
+  inativarAposVigencia?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutEquipmentsInput
+  abastecimentos?: Prisma.AbastecimentoCreateNestedManyWithoutEquipmentInput
+  revisoes?: Prisma.EquipmentRevisionCreateNestedManyWithoutEquipmentInput
+  alocacoes?: Prisma.WorkFrontAllocationCreateNestedManyWithoutEquipmentInput
+  creditos?: Prisma.CreditoCreateNestedManyWithoutEquipmentInput
+  lubrificacoes?: Prisma.LubrificacaoCreateNestedManyWithoutEquipmentInput
+  cargasComboio?: Prisma.ComboioReabastecimentoCreateNestedManyWithoutEquipmentInput
+  serviceOrders?: Prisma.ServiceOrderCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoCreateNestedManyWithoutEquipmentInput
+  manuais?: Prisma.ManualEquipamentoCreateNestedManyWithoutEquipmentInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoCreateNestedManyWithoutEquipmentInput
+}
+
+export type EquipmentUncheckedCreateWithoutProgramadoresInput = {
+  id?: string
+  legacyId?: string | null
+  companyId: string
+  status: string
+  descricao?: string | null
+  tipo?: string | null
+  linha?: string | null
+  placa?: string | null
+  chassi?: string | null
+  marca?: string | null
+  modelo?: string | null
+  ano?: string | null
+  medicaoAtual?: number | null
+  intervaloRevisao?: number | null
+  ultimaRevisao?: number | null
+  unidadeRevisao?: string | null
+  obra?: string | null
+  renavam?: string | null
+  numeroSerie?: string | null
+  patrimonioBase?: string | null
+  cor?: string | null
+  combustivel?: string | null
+  tipoFrota?: string | null
+  motorizacao?: string | null
+  anoModelo?: string | null
+  capacidadeTanque?: number | null
+  capacidadeTanqueCaminhao?: number | null
+  volumeTanqueAtual?: number | null
+  valorVeiculo?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  gestorResponsavel?: string | null
+  centroCusto?: string | null
+  cidade?: string | null
+  estado?: string | null
+  regiao?: string | null
+  ipva?: Date | string | null
+  seguro?: Date | string | null
+  licenciamento?: Date | string | null
+  vigenciaInicio?: Date | string | null
+  vigenciaFim?: Date | string | null
+  inativarAposVigencia?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  abastecimentos?: Prisma.AbastecimentoUncheckedCreateNestedManyWithoutEquipmentInput
+  revisoes?: Prisma.EquipmentRevisionUncheckedCreateNestedManyWithoutEquipmentInput
+  alocacoes?: Prisma.WorkFrontAllocationUncheckedCreateNestedManyWithoutEquipmentInput
+  creditos?: Prisma.CreditoUncheckedCreateNestedManyWithoutEquipmentInput
+  lubrificacoes?: Prisma.LubrificacaoUncheckedCreateNestedManyWithoutEquipmentInput
+  cargasComboio?: Prisma.ComboioReabastecimentoUncheckedCreateNestedManyWithoutEquipmentInput
+  serviceOrders?: Prisma.ServiceOrderUncheckedCreateNestedManyWithoutEquipmentInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedCreateNestedManyWithoutEquipmentInput
+  manuais?: Prisma.ManualEquipamentoUncheckedCreateNestedManyWithoutEquipmentInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedCreateNestedManyWithoutEquipmentInput
+}
+
+export type EquipmentCreateOrConnectWithoutProgramadoresInput = {
+  where: Prisma.EquipmentWhereUniqueInput
+  create: Prisma.XOR<Prisma.EquipmentCreateWithoutProgramadoresInput, Prisma.EquipmentUncheckedCreateWithoutProgramadoresInput>
+}
+
+export type EquipmentUpsertWithoutProgramadoresInput = {
+  update: Prisma.XOR<Prisma.EquipmentUpdateWithoutProgramadoresInput, Prisma.EquipmentUncheckedUpdateWithoutProgramadoresInput>
+  create: Prisma.XOR<Prisma.EquipmentCreateWithoutProgramadoresInput, Prisma.EquipmentUncheckedCreateWithoutProgramadoresInput>
+  where?: Prisma.EquipmentWhereInput
+}
+
+export type EquipmentUpdateToOneWithWhereWithoutProgramadoresInput = {
+  where?: Prisma.EquipmentWhereInput
+  data: Prisma.XOR<Prisma.EquipmentUpdateWithoutProgramadoresInput, Prisma.EquipmentUncheckedUpdateWithoutProgramadoresInput>
+}
+
+export type EquipmentUpdateWithoutProgramadoresInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linha?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  placa?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  chassi?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  marca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  modelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ano?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  medicaoAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  intervaloRevisao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  ultimaRevisao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  unidadeRevisao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  obra?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  renavam?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  numeroSerie?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  patrimonioBase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  combustivel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipoFrota?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motorizacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  centroCusto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  regiao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ipva?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  seguro?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  licenciamento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  vigenciaInicio?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  vigenciaFim?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  inativarAposVigencia?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutEquipmentsNestedInput
+  abastecimentos?: Prisma.AbastecimentoUpdateManyWithoutEquipmentNestedInput
+  revisoes?: Prisma.EquipmentRevisionUpdateManyWithoutEquipmentNestedInput
+  alocacoes?: Prisma.WorkFrontAllocationUpdateManyWithoutEquipmentNestedInput
+  creditos?: Prisma.CreditoUpdateManyWithoutEquipmentNestedInput
+  lubrificacoes?: Prisma.LubrificacaoUpdateManyWithoutEquipmentNestedInput
+  cargasComboio?: Prisma.ComboioReabastecimentoUpdateManyWithoutEquipmentNestedInput
+  serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
+  manuais?: Prisma.ManualEquipamentoUpdateManyWithoutEquipmentNestedInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutEquipmentNestedInput
+}
+
+export type EquipmentUncheckedUpdateWithoutProgramadoresInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  legacyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  linha?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  placa?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  chassi?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  marca?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  modelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ano?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  medicaoAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  intervaloRevisao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  ultimaRevisao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  unidadeRevisao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  obra?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  renavam?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  numeroSerie?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  patrimonioBase?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  combustivel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipoFrota?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motorizacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  anoModelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  capacidadeTanque?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  capacidadeTanqueCaminhao?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  volumeTanqueAtual?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  valorVeiculo?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  condutoresIds?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  gestorResponsavel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  centroCusto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cidade?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  regiao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ipva?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  seguro?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  licenciamento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  vigenciaInicio?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  vigenciaFim?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  inativarAposVigencia?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  abastecimentos?: Prisma.AbastecimentoUncheckedUpdateManyWithoutEquipmentNestedInput
+  revisoes?: Prisma.EquipmentRevisionUncheckedUpdateManyWithoutEquipmentNestedInput
+  alocacoes?: Prisma.WorkFrontAllocationUncheckedUpdateManyWithoutEquipmentNestedInput
+  creditos?: Prisma.CreditoUncheckedUpdateManyWithoutEquipmentNestedInput
+  lubrificacoes?: Prisma.LubrificacaoUncheckedUpdateManyWithoutEquipmentNestedInput
+  cargasComboio?: Prisma.ComboioReabastecimentoUncheckedUpdateManyWithoutEquipmentNestedInput
+  serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
+  fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
+  manuais?: Prisma.ManualEquipamentoUncheckedUpdateManyWithoutEquipmentNestedInput
+  checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
 export type EquipmentCreateManyCompanyInput = {
@@ -4162,6 +4465,7 @@ export type EquipmentUpdateWithoutCompanyInput = {
   serviceOrders?: Prisma.ServiceOrderUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -4217,6 +4521,7 @@ export type EquipmentUncheckedUpdateWithoutCompanyInput = {
   serviceOrders?: Prisma.ServiceOrderUncheckedUpdateManyWithoutEquipmentNestedInput
   fleetfuelIntencoes?: Prisma.FleetfuelIntencaoUncheckedUpdateManyWithoutEquipmentNestedInput
   manuais?: Prisma.ManualEquipamentoUncheckedUpdateManyWithoutEquipmentNestedInput
+  programadores?: Prisma.EquipmentProgramadorUncheckedUpdateManyWithoutEquipmentNestedInput
   checklistExecucoes?: Prisma.ChecklistExecucaoUncheckedUpdateManyWithoutEquipmentNestedInput
 }
 
@@ -4280,6 +4585,7 @@ export type EquipmentCountOutputType = {
   serviceOrders: number
   fleetfuelIntencoes: number
   manuais: number
+  programadores: number
   checklistExecucoes: number
 }
 
@@ -4293,6 +4599,7 @@ export type EquipmentCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensi
   serviceOrders?: boolean | EquipmentCountOutputTypeCountServiceOrdersArgs
   fleetfuelIntencoes?: boolean | EquipmentCountOutputTypeCountFleetfuelIntencoesArgs
   manuais?: boolean | EquipmentCountOutputTypeCountManuaisArgs
+  programadores?: boolean | EquipmentCountOutputTypeCountProgramadoresArgs
   checklistExecucoes?: boolean | EquipmentCountOutputTypeCountChecklistExecucoesArgs
 }
 
@@ -4372,6 +4679,13 @@ export type EquipmentCountOutputTypeCountManuaisArgs<ExtArgs extends runtime.Typ
 /**
  * EquipmentCountOutputType without action
  */
+export type EquipmentCountOutputTypeCountProgramadoresArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.EquipmentProgramadorWhereInput
+}
+
+/**
+ * EquipmentCountOutputType without action
+ */
 export type EquipmentCountOutputTypeCountChecklistExecucoesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ChecklistExecucaoWhereInput
 }
@@ -4431,6 +4745,7 @@ export type EquipmentSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   serviceOrders?: boolean | Prisma.Equipment$serviceOrdersArgs<ExtArgs>
   fleetfuelIntencoes?: boolean | Prisma.Equipment$fleetfuelIntencoesArgs<ExtArgs>
   manuais?: boolean | Prisma.Equipment$manuaisArgs<ExtArgs>
+  programadores?: boolean | Prisma.Equipment$programadoresArgs<ExtArgs>
   checklistExecucoes?: boolean | Prisma.Equipment$checklistExecucoesArgs<ExtArgs>
   _count?: boolean | Prisma.EquipmentCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["equipment"]>
@@ -4587,6 +4902,7 @@ export type EquipmentInclude<ExtArgs extends runtime.Types.Extensions.InternalAr
   serviceOrders?: boolean | Prisma.Equipment$serviceOrdersArgs<ExtArgs>
   fleetfuelIntencoes?: boolean | Prisma.Equipment$fleetfuelIntencoesArgs<ExtArgs>
   manuais?: boolean | Prisma.Equipment$manuaisArgs<ExtArgs>
+  programadores?: boolean | Prisma.Equipment$programadoresArgs<ExtArgs>
   checklistExecucoes?: boolean | Prisma.Equipment$checklistExecucoesArgs<ExtArgs>
   _count?: boolean | Prisma.EquipmentCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -4610,6 +4926,7 @@ export type $EquipmentPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     serviceOrders: Prisma.$ServiceOrderPayload<ExtArgs>[]
     fleetfuelIntencoes: Prisma.$FleetfuelIntencaoPayload<ExtArgs>[]
     manuais: Prisma.$ManualEquipamentoPayload<ExtArgs>[]
+    programadores: Prisma.$EquipmentProgramadorPayload<ExtArgs>[]
     checklistExecucoes: Prisma.$ChecklistExecucaoPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -5100,6 +5417,7 @@ export interface Prisma__EquipmentClient<T, Null = never, ExtArgs extends runtim
   serviceOrders<T extends Prisma.Equipment$serviceOrdersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$serviceOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   fleetfuelIntencoes<T extends Prisma.Equipment$fleetfuelIntencoesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$fleetfuelIntencoesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FleetfuelIntencaoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   manuais<T extends Prisma.Equipment$manuaisArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$manuaisArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ManualEquipamentoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  programadores<T extends Prisma.Equipment$programadoresArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$programadoresArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EquipmentProgramadorPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   checklistExecucoes<T extends Prisma.Equipment$checklistExecucoesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Equipment$checklistExecucoesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChecklistExecucaoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -5787,6 +6105,30 @@ export type Equipment$manuaisArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   distinct?: Prisma.ManualEquipamentoScalarFieldEnum | Prisma.ManualEquipamentoScalarFieldEnum[]
+}
+
+/**
+ * Equipment.programadores
+ */
+export type Equipment$programadoresArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EquipmentProgramador
+   */
+  select?: Prisma.EquipmentProgramadorSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the EquipmentProgramador
+   */
+  omit?: Prisma.EquipmentProgramadorOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EquipmentProgramadorInclude<ExtArgs> | null
+  where?: Prisma.EquipmentProgramadorWhereInput
+  orderBy?: Prisma.EquipmentProgramadorOrderByWithRelationInput | Prisma.EquipmentProgramadorOrderByWithRelationInput[]
+  cursor?: Prisma.EquipmentProgramadorWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.EquipmentProgramadorScalarFieldEnum | Prisma.EquipmentProgramadorScalarFieldEnum[]
 }
 
 /**

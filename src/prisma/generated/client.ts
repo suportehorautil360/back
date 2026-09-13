@@ -460,7 +460,7 @@ export type ManualEquipamento = Prisma.ManualEquipamentoModel
  */
 export type ChecklistExecucao = Prisma.ChecklistExecucaoModel
 /**
- * Model ProgramadorMecanico
+ * Model EquipmentProgramador
  * O mecânico que atende as máquinas de um programador.
  * 
  * Serve a UMA coisa: sugerir o responsável ao abrir uma OS. **Sugestão, não
@@ -471,6 +471,14 @@ export type ChecklistExecucao = Prisma.ChecklistExecucaoModel
  * 
  * `companyUserId` é a chave primária porque é UM mecânico por programador —
  * vários tornariam a sugestão ambígua justamente onde ela é automática.
+ * Espelho de `equipment_programadores` (a migration vive no horautil). O Nest
+ * precisa dele para descobrir o programador de um equipamento na hora de
+ * notificar a liberação da OS.
+ */
+export type EquipmentProgramador = Prisma.EquipmentProgramadorModel
+/**
+ * Model ProgramadorMecanico
+ * 
  */
 export type ProgramadorMecanico = Prisma.ProgramadorMecanicoModel
 /**
