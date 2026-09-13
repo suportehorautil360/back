@@ -79,6 +79,9 @@ function montarBancoFake() {
       findFirst: jest.fn(async () => ({
         ...requisicao,
         itens: [...itens.values()].map((i) => ({ ...i })),
+        // F4.1: o cancelamento lê a OS para os avisos; sem mecânico nem
+        // programador, a retratação não tem destinatário.
+        serviceOrder: { protocolo: 'OS-2026-047', equipmentId: null, equipmentNome: null, responsavelOperatorId: null },
       })),
       // A releitura FRESCA de `liberadaEm` que `executarEntrega` faz
       // (achado Important I2) — mesma fonte de verdade que `findFirst`.
@@ -142,6 +145,8 @@ function montarBancoFake() {
       count: jest.fn(async () => 0),
     },
     serviceOrder: { updateMany: jest.fn(async () => ({ count: 1 })) },
+    // F4.1: nenhuma solicitação de compra ligada às faltas deste cenário.
+    solicitacaoCompraItem: { findMany: jest.fn(async () => []) },
   };
 
   const prisma = {

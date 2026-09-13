@@ -1,4 +1,4 @@
-import { abrirSolicitacaoDasFaltas } from './solicitacao-de-falta';
+import { abrirSolicitacaoDasFaltas, cancelarSolicitacoesDasFaltas } from './solicitacao-de-falta';
 
 const COMPANY = '11111111-1111-1111-1111-111111111111';
 
@@ -67,5 +67,107 @@ describe('abrirSolicitacaoDasFaltas', () => {
     ]));
     expect(r).toBeNull();
     expect(tx.solicitacaoCompra.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('cancelarSolicitacoesDasFaltas', () => {
+  type Origem = { quantidade: number; quantidadeRecebida: number; ordemCompraItem: { ordemCompra: { numero: string; status: string } } };
+
+  /** Banco falso que PERSISTE: itens e cabeçalhos mudam de estado entre leituras. */
+  function banco() {
+    const itens: Array<{ id: string; solicitacaoId: string; requisicaoItemId: string; status: string; quantidade: number; companyId: string; origensOc: Origem[] }> = [
+      { id: 'sci-1', solicitacaoId: 'sc-1', requisicaoItemId: 'ri-1', status: 'aberta', quantidade: 2, companyId: COMPANY,
+        origensOc: [{ quantidade: 2, quantidadeRecebida: 0, ordemCompraItem: { ordemCompra: { numero: 'OC-2026-003', status: 'emitida' } } }] },
+      { id: 'sci-2', solicitacaoId: 'sc-2', requisicaoItemId: 'ri-2', status: 'aberta', quantidade: 1, companyId: COMPANY, origensOc: [] },
+      // Mesma SC, falta de OUTRA requisição: continua viva.
+      { id: 'sci-3', solicitacaoId: 'sc-2', requisicaoItemId: 'ri-outra', status: 'aberta', quantidade: 1, companyId: COMPANY, origensOc: [] },
+      // Item de solicitação de OUTRA empresa com o mesmo id de item de requisição.
+      { id: 'sci-x', solicitacaoId: 'sc-x', requisicaoItemId: 'ri-1', status: 'aberta', quantidade: 5, companyId: 'outra', origensOc: [] },
+    ];
+    const cabecalhos: Record<string, { numero: string; status: string; motivo: string | null; canceladaPor: string | null }> = {
+      'sc-1': { numero: 'SC-2026-001', status: 'aprovada', motivo: null, canceladaPor: null },
+      'sc-2': { numero: 'SC-2026-002', status: 'pendente', motivo: null, canceladaPor: null },
+      'sc-x': { numero: 'SC-2026-001', status: 'pendente', motivo: null, canceladaPor: null },
+    };
+    const chamadas: string[] = [];
+    const tx = {
+      $queryRaw: jest.fn(async (q: { text: string; values: unknown[] }) => {
+        chamadas.push(`LOCK ${JSON.stringify(q.values[0])}`);
+        return [];
+      }),
+      solicitacaoCompraItem: {
+        findMany: jest.fn(async ({ where }: { where: any }) =>
+          itens
+            .filter((i) => !where.requisicaoItemId || where.requisicaoItemId.in.includes(i.requisicaoItemId))
+            .filter((i) => !where.id || where.id.in.includes(i.id))
+            .filter((i) => !where.status || i.status === where.status)
+            .filter((i) => !where.solicitacao?.companyId || i.companyId === where.solicitacao.companyId)
+            .map((i) => ({ id: i.id, solicitacaoId: i.solicitacaoId, origensOc: i.origensOc })),
+        ),
+        updateMany: jest.fn(async ({ where, data }: { where: any; data: any }) => {
+          chamadas.push('UPDATE itens');
+          let count = 0;
+          for (const i of itens) {
+            if (where.id.in.includes(i.id) && i.status === where.status) { i.status = data.status; count++; }
+          }
+          return { count };
+        }),
+      },
+      solicitacaoCompra: {
+        findUniqueOrThrow: jest.fn(async ({ where }: { where: { id: string } }) => ({
+          numero: cabecalhos[where.id].numero,
+          status: cabecalhos[where.id].status,
+          itens: itens.filter((i) => i.solicitacaoId === where.id)
+            .map((i) => ({ status: i.status, quantidade: i.quantidade, origensOc: i.origensOc })),
+        })),
+        updateMany: jest.fn(async ({ where, data }: { where: any; data: any }) => {
+          const c = cabecalhos[where.id];
+          const casa = where.status?.notIn ? !where.status.notIn.includes(c.status) : c.status === where.status;
+          if (!casa) return { count: 0 };
+          c.status = data.status;
+          if (data.motivoCancelamento) c.motivo = data.motivoCancelamento;
+          if (data.canceladaPorCompanyUserId) c.canceladaPor = data.canceladaPorCompanyUserId;
+          return { count: 1 };
+        }),
+      },
+    };
+    return { tx, itens, cabecalhos, chamadas };
+  }
+
+  const cancelar = (tx: unknown, requisicaoItemIds: string[]) =>
+    cancelarSolicitacoesDasFaltas(tx as never, {
+      companyId: COMPANY, requisicaoItemIds, autorCompanyUserId: 'user-1', motivo: 'Requisição REQ-2026-001 cancelada: engano',
+    });
+
+  it('cancela só os itens vivos das faltas desta empresa, travando antes de escrever', async () => {
+    const { tx, itens, chamadas } = banco();
+    await cancelar(tx, ['ri-1', 'ri-2']);
+    const status = Object.fromEntries(itens.map((i) => [i.id, i.status]));
+    expect(status).toEqual({ 'sci-1': 'cancelada', 'sci-2': 'cancelada', 'sci-3': 'aberta', 'sci-x': 'aberta' });
+    expect(chamadas[0]).toBe('LOCK ["sci-1","sci-2"]');
+    expect(chamadas.indexOf('UPDATE itens')).toBeGreaterThan(0);
+  });
+
+  it('solicitação com todos os itens cancelados é cancelada com o motivo; a que tem item vivo só recalcula', async () => {
+    const { tx, cabecalhos } = banco();
+    await cancelar(tx, ['ri-1', 'ri-2']);
+    expect(cabecalhos['sc-1']).toMatchObject({
+      status: 'cancelada', motivo: 'Requisição REQ-2026-001 cancelada: engano', canceladaPor: 'user-1',
+    });
+    expect(cabecalhos['sc-2'].status).toBe('pendente');
+  });
+
+  it('devolve em que ordens de compra havia unidade de cada solicitação cancelada', async () => {
+    const { tx } = banco();
+    expect(await cancelar(tx, ['ri-1', 'ri-2'])).toEqual([
+      { solicitacaoId: 'sc-1', numero: 'SC-2026-001', ordensDeCompra: ['OC-2026-003'] },
+      { solicitacaoId: 'sc-2', numero: 'SC-2026-002', ordensDeCompra: [] },
+    ]);
+  });
+
+  it('sem item vivo para as faltas, não trava nem escreve nada', async () => {
+    const { tx, chamadas } = banco();
+    expect(await cancelar(tx, ['ri-inexistente'])).toEqual([]);
+    expect(chamadas).toEqual([]);
   });
 });

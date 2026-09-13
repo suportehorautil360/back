@@ -1,5 +1,6 @@
 import { Prisma } from '../../../prisma/generated/client';
 import { proximoNumeroDocumento } from '../helpers/numero-documento.helper';
+import { situacaoDoItemDeSolicitacao, statusDaSolicitacao } from '../regras/compras';
 
 /** Uma falta de um item de requisição, pronta para virar item de solicitação. */
 export interface FaltaParaSolicitar {
@@ -85,4 +86,150 @@ export async function abrirSolicitacaoDasFaltas(
   });
 
   return { id: sc.id, numero: sc.numero, prioridade, itens: faltas.length };
+}
+
+export interface SolicitacaoCanceladaPelaRequisicao {
+  solicitacaoId: string;
+  numero: string;
+  /** Números das OCs (não canceladas) onde havia unidade desta solicitação. */
+  ordensDeCompra: string[];
+}
+
+/**
+ * Cancela os itens de solicitação de compra VIVOS que cobriam faltas de itens
+ * de requisição que deixaram de existir — a requisição foi cancelada.
+ *
+ * Trava as linhas de item de solicitação em ordem de id (`ORDER BY id FOR
+ * UPDATE`), relê depois da trava e só então escreve. Em seguida recalcula o
+ * cabeçalho de cada solicitação tocada: se todos os itens dela ficaram
+ * cancelados, a solicitação é cancelada com o motivo; senão o estado dela é
+ * recalculado pelos itens que sobraram.
+ *
+ * Não mexe em ordem de compra. O que está numa OC em rascunho é barrado na
+ * confirmação dela (item de solicitação cancelado), e o que já foi comprado
+ * segue a caminho e vira estoque livre quando chegar — a distribuição do
+ * recebimento não acha mais a falta. Quem chama avisa Compras com a lista
+ * devolvida.
+ *
+ * Chamado com a requisição já travada, antes das travas de `peca_saldos`
+ * (ordem única de trava: requisição → linhas de solicitação → saldo).
+ */
+export async function cancelarSolicitacoesDasFaltas(
+  tx: Prisma.TransactionClient,
+  input: {
+    companyId: string;
+    requisicaoItemIds: string[];
+    autorCompanyUserId: string;
+    motivo: string;
+  },
+): Promise<SolicitacaoCanceladaPelaRequisicao[]> {
+  if (input.requisicaoItemIds.length === 0) return [];
+
+  const candidatos = await tx.solicitacaoCompraItem.findMany({
+    where: {
+      requisicaoItemId: { in: input.requisicaoItemIds },
+      status: 'aberta',
+      solicitacao: { companyId: input.companyId },
+    },
+    select: { id: true },
+  });
+  if (candidatos.length === 0) return [];
+
+  const ids = candidatos.map((c) => c.id).sort();
+  await tx.$queryRaw(Prisma.sql`
+    SELECT id FROM solicitacao_compra_itens
+     WHERE id = ANY(${ids}::uuid[])
+     ORDER BY id
+       FOR UPDATE
+  `);
+
+  const frescos = await tx.solicitacaoCompraItem.findMany({
+    where: { id: { in: ids }, status: 'aberta' },
+    select: {
+      id: true,
+      solicitacaoId: true,
+      origensOc: {
+        select: { ordemCompraItem: { select: { ordemCompra: { select: { numero: true, status: true } } } } },
+      },
+    },
+  });
+  if (frescos.length === 0) return [];
+
+  await tx.solicitacaoCompraItem.updateMany({
+    where: { id: { in: frescos.map((f) => f.id) }, status: 'aberta' },
+    data: { status: 'cancelada' },
+  });
+
+  const ordensPorSolicitacao = new Map<string, Set<string>>();
+  for (const f of frescos) {
+    const ordens = ordensPorSolicitacao.get(f.solicitacaoId) ?? new Set<string>();
+    for (const o of f.origensOc) {
+      if (o.ordemCompraItem.ordemCompra.status !== 'cancelada') ordens.add(o.ordemCompraItem.ordemCompra.numero);
+    }
+    ordensPorSolicitacao.set(f.solicitacaoId, ordens);
+  }
+
+  const resultado: SolicitacaoCanceladaPelaRequisicao[] = [];
+  for (const solicitacaoId of [...ordensPorSolicitacao.keys()].sort()) {
+    const sc = await tx.solicitacaoCompra.findUniqueOrThrow({
+      where: { id: solicitacaoId },
+      select: {
+        numero: true,
+        status: true,
+        itens: {
+          select: {
+            status: true,
+            quantidade: true,
+            origensOc: {
+              select: {
+                quantidade: true,
+                quantidadeRecebida: true,
+                ordemCompraItem: { select: { ordemCompra: { select: { status: true } } } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (sc.itens.every((i) => i.status === 'cancelada')) {
+      await tx.solicitacaoCompra.updateMany({
+        where: { id: solicitacaoId, status: { notIn: ['rejeitada', 'cancelada'] } },
+        data: {
+          status: 'cancelada',
+          canceladaEm: new Date(),
+          canceladaPorCompanyUserId: input.autorCompanyUserId,
+          motivoCancelamento: input.motivo,
+        },
+      });
+    } else {
+      const novo = statusDaSolicitacao(
+        sc.status,
+        sc.itens.map((i) => {
+          const s = situacaoDoItemDeSolicitacao(
+            Number(i.quantidade),
+            i.origensOc.map((o) => ({
+              statusOrdemCompra: o.ordemCompraItem.ordemCompra.status,
+              quantidade: Number(o.quantidade),
+              quantidadeRecebida: Number(o.quantidadeRecebida),
+            })),
+          );
+          return { status: i.status, quantidade: Number(i.quantidade), comprado: s.comprado, emCotacao: s.emCotacao };
+        }),
+      );
+      if (novo !== sc.status) {
+        await tx.solicitacaoCompra.updateMany({
+          where: { id: solicitacaoId, status: sc.status },
+          data: { status: novo },
+        });
+      }
+    }
+
+    resultado.push({
+      solicitacaoId,
+      numero: sc.numero,
+      ordensDeCompra: [...(ordensPorSolicitacao.get(solicitacaoId) ?? [])].sort(),
+    });
+  }
+  return resultado;
 }

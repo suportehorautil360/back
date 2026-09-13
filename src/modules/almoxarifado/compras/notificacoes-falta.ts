@@ -4,7 +4,7 @@ import {
   usuariosDoGrupo,
   type NotificacaoPronta,
 } from '../notificacoes/almoxarifado-notificacoes';
-import type { SolicitacaoAberta } from './solicitacao-de-falta';
+import type { SolicitacaoAberta, SolicitacaoCanceladaPelaRequisicao } from './solicitacao-de-falta';
 
 /**
  * Os avisos de uma falta de material que virou solicitação de compra (§9:
@@ -71,4 +71,90 @@ export async function montarNotificacoesDeFalta(
   );
 
   return [...paraProgramadores, ...paraCompras];
+}
+
+/**
+ * Os avisos do cancelamento de uma requisição (§9: "reserva/cotação
+ * cancelada"). Só MONTA as linhas — quem grava é o chamador, depois do commit.
+ *
+ * - Retratação à bancada: se o kit já tinha sido LIBERADO, o mecânico e os
+ *   programadores do equipamento receberam "OS liberada, retire o kit". Sem
+ *   este aviso, o mecânico vai ao balcão buscar um kit que foi desfeito.
+ * - Compras: só quando havia unidade de uma solicitação cancelada numa ordem
+ *   de compra não cancelada — é o comprador que precisa revisar a OC.
+ *   Solicitação que ninguém cotou some da fila sem precisar de aviso.
+ */
+export async function montarNotificacoesDeCancelamento(
+  tx: Prisma.TransactionClient,
+  input: {
+    companyId: string;
+    serviceOrderId: string;
+    numeroRequisicao: string;
+    motivo: string;
+    protocolo: string;
+    equipmentId: string | null;
+    equipmentNome: string | null;
+    responsavelOperatorId: string | null;
+    kitJaLiberado: boolean;
+    solicitacoesCanceladas: SolicitacaoCanceladaPelaRequisicao[];
+  },
+): Promise<NotificacaoPronta[]> {
+  const linhas: NotificacaoPronta[] = [];
+  const maquina = input.equipmentNome ? ` (${input.equipmentNome})` : '';
+
+  if (input.kitJaLiberado) {
+    const destinatarios: string[] = [];
+    if (input.responsavelOperatorId) {
+      const mecanico = await tx.operator.findFirst({
+        where: { id: input.responsavelOperatorId, companyId: input.companyId },
+        select: { companyUserId: true },
+      });
+      if (mecanico?.companyUserId) destinatarios.push(mecanico.companyUserId);
+    }
+    if (input.equipmentId) {
+      const programadores = await tx.equipmentProgramador.findMany({
+        where: { equipmentId: input.equipmentId, equipment: { companyId: input.companyId } },
+        select: { companyUserId: true },
+      });
+      destinatarios.push(...programadores.map((p) => p.companyUserId));
+    }
+    linhas.push(
+      ...(await montarLinhas(
+        tx,
+        input.companyId,
+        destinatarios.map((id) => ({
+          destinatarioId: id,
+          titulo: `${input.protocolo}: kit cancelado`,
+          mensagem: `A requisição ${input.numeroRequisicao}${maquina} foi cancelada (${input.motivo}). Não retire o kit.`,
+          referenciaTipo: 'service_order',
+          referenciaId: input.serviceOrderId,
+        })),
+      )),
+    );
+  }
+
+  const comOrdem = input.solicitacoesCanceladas.filter((s) => s.ordensDeCompra.length > 0);
+  if (comOrdem.length > 0) {
+    const compradores = await usuariosDoGrupo(tx, input.companyId, 'compras');
+    for (const s of comOrdem) {
+      linhas.push(
+        ...(await montarLinhas(
+          tx,
+          input.companyId,
+          compradores.map((id) => ({
+            destinatarioId: id,
+            titulo: `Solicitação ${s.numero} cancelada`,
+            mensagem:
+              `A requisição ${input.numeroRequisicao} da ${input.protocolo}${maquina} foi cancelada. ` +
+              `Itens desta solicitação estão em ${s.ordensDeCompra.join(', ')}: revise — ` +
+              `o que já foi comprado vai para o estoque livre quando chegar.`,
+            referenciaTipo: 'solicitacao_compra',
+            referenciaId: s.solicitacaoId,
+          })),
+        )),
+      );
+    }
+  }
+
+  return linhas;
 }

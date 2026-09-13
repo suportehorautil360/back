@@ -5,7 +5,17 @@ const COMPANY = '11111111-1111-1111-1111-111111111111';
 const REQ = '33333333-3333-3333-3333-333333333333';
 const AUTOR = '44444444-4444-4444-4444-444444444444';
 
-function montar(status: string, itens: unknown[], opts: { semSaldo?: boolean } = {}) {
+function montar(
+  status: string,
+  itens: unknown[],
+  opts: {
+    semSaldo?: boolean;
+    /** Kit já liberado (aviso de retratação à bancada). */
+    liberadaEm?: Date;
+    /** F4.1: a falta do `it-1` tem item de solicitação vivo; `ocStatus` nulo = nunca foi para OC. */
+    comSolicitacao?: { ocStatus: string | null };
+  } = {},
+) {
   const chamadas: string[] = [];
   const tx = {
     $queryRaw: jest.fn(async (query: { text: string }) => {
@@ -13,6 +23,11 @@ function montar(status: string, itens: unknown[], opts: { semSaldo?: boolean } =
       if (query.text.includes('requisicoes_material')) {
         chamadas.push('LOCK requisicao');
         return [{ id: REQ }];
+      }
+      // F4.1: trava das linhas de item de solicitação da falta.
+      if (query.text.includes('solicitacao_compra_itens')) {
+        chamadas.push('LOCK itens de solicitacao');
+        return [];
       }
       chamadas.push('LOCK');
       return opts.semSaldo ? [] : [{ saldo_reservado: '4' }];
@@ -24,6 +39,10 @@ function montar(status: string, itens: unknown[], opts: { semSaldo?: boolean } =
     requisicaoMaterial: {
       findFirst: jest.fn().mockResolvedValue({
         id: REQ, companyId: COMPANY, status, serviceOrderId: 'os-1', depositoId: 'dep-1', itens,
+        numero: 'REQ-2026-001', liberadaEm: opts.liberadaEm ?? null,
+        serviceOrder: {
+          protocolo: 'OS-2026-047', equipmentId: 'eq-1', equipmentNome: 'ESC-014', responsavelOperatorId: 'op-mec',
+        },
       }),
       updateMany: jest.fn(async () => { chamadas.push('UPDATE requisicao'); return { count: 1 }; }),
     },
@@ -38,8 +57,44 @@ function montar(status: string, itens: unknown[], opts: { semSaldo?: boolean } =
       }),
     },
     serviceOrder: { updateMany: jest.fn(async () => ({ count: 1 })) },
+    // F4.1: itens de solicitação da falta — `where.requisicaoItemId` é a busca
+    // dos candidatos, `where.id` é a releitura depois da trava.
+    solicitacaoCompraItem: {
+      findMany: jest.fn(async ({ where }: { where: { requisicaoItemId?: unknown; id?: unknown } }) => {
+        if (!opts.comSolicitacao) return [];
+        if (where.requisicaoItemId) return [{ id: 'sci-1' }];
+        return [{
+          id: 'sci-1', solicitacaoId: 'sc-1',
+          origensOc: opts.comSolicitacao.ocStatus
+            ? [{ ordemCompraItem: { ordemCompra: { numero: 'OC-2026-003', status: opts.comSolicitacao.ocStatus } } }]
+            : [],
+        }];
+      }),
+      updateMany: jest.fn(async () => { chamadas.push('UPDATE itens de solicitacao'); return { count: 1 }; }),
+    },
+    solicitacaoCompra: {
+      findUniqueOrThrow: jest.fn(async () => ({
+        numero: 'SC-2026-001', status: 'pendente',
+        itens: [{ status: 'cancelada', quantidade: 2, origensOc: [] }],
+      })),
+      updateMany: jest.fn(async () => { chamadas.push('UPDATE solicitacao'); return { count: 1 }; }),
+    },
+    // Destinatários dos avisos: mecânico responsável, programador do
+    // equipamento e quem tem o grupo Compras — três pessoas diferentes.
+    operator: {
+      findFirst: jest.fn().mockResolvedValue({ companyUserId: 'user-mec' }),
+      findMany: jest.fn().mockResolvedValue([{ companyUserId: 'user-compras' }]),
+    },
+    equipmentProgramador: { findMany: jest.fn().mockResolvedValue([{ companyUserId: 'user-prog' }]) },
+    companyRole: { findMany: jest.fn().mockResolvedValue([{ id: 'cargo-compras' }]) },
+    company: { findUnique: jest.fn().mockResolvedValue({ legacyId: 'leg-1' }) },
+    // NUNCA deve ser tocado: os avisos são gravados por `this.prisma`, depois do commit.
+    notificacao: { createMany: jest.fn().mockResolvedValue({ count: 1 }) },
   };
-  const prisma = { $transaction: jest.fn(async (fn: (t: typeof tx) => Promise<unknown>) => fn(tx)) };
+  const prisma = {
+    $transaction: jest.fn(async (fn: (t: typeof tx) => Promise<unknown>) => fn(tx)),
+    notificacao: { createMany: jest.fn().mockResolvedValue({ count: 1 }) },
+  };
   return { servico: new AlmoxarifadoService(prisma as never), prisma, tx, chamadas };
 }
 
@@ -230,5 +285,68 @@ describe('cancelarRequisicao', () => {
       companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR, motivo: 'engano',
     })).rejects.toThrow(/Saldo não encontrado/);
     expect(tx.$executeRaw).not.toHaveBeenCalled();
+  });
+
+  // --- F4.1: a compra acompanha o cancelamento ----------------------------
+
+  it('F4.1: cancela a solicitação de compra da falta — depois de travar a requisição e antes de travar saldo', async () => {
+    const { servico, tx, chamadas } = montar('pendente', [reservado()], { comSolicitacao: { ocStatus: null } });
+    await servico.cancelarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR, motivo: 'engano',
+    });
+    expect(chamadas.slice(0, 4)).toEqual([
+      'LOCK requisicao', 'LOCK itens de solicitacao', 'UPDATE itens de solicitacao', 'UPDATE solicitacao',
+    ]);
+    expect(chamadas.indexOf('LOCK')).toBeGreaterThan(chamadas.indexOf('UPDATE solicitacao'));
+    const sc = (tx.solicitacaoCompra.updateMany.mock.calls[0] as unknown as [{ data: Record<string, unknown> }])[0];
+    expect(sc.data).toMatchObject({
+      status: 'cancelada', canceladaPorCompanyUserId: AUTOR,
+      motivoCancelamento: 'Requisição REQ-2026-001 cancelada: engano',
+    });
+  });
+
+  it('F4.1: kit já liberado — mecânico e programador são avisados que o kit foi cancelado, depois do commit', async () => {
+    const { servico, tx, prisma } = montar('separada', [reservado()], { liberadaEm: new Date('2026-09-13T09:00:00Z') });
+    await servico.cancelarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR, motivo: 'máquina vendida',
+    });
+    expect(tx.notificacao.createMany).not.toHaveBeenCalled();
+    expect(prisma.notificacao.createMany).toHaveBeenCalledTimes(1);
+    const linhas = (prisma.notificacao.createMany.mock.calls[0] as unknown as [{
+      data: Array<{ destinatarioId: string; titulo: string; mensagem: string; referenciaTipo: string }>;
+    }])[0].data;
+    expect(linhas.map((l) => l.destinatarioId).sort()).toEqual(['user-mec', 'user-prog']);
+    expect(linhas[0].titulo).toBe('OS-2026-047: kit cancelado');
+    expect(linhas[0].mensagem).toContain('máquina vendida');
+    expect(linhas[0].referenciaTipo).toBe('service_order');
+  });
+
+  it('F4.1: kit ainda não liberado — ninguém da bancada é avisado (par negativo)', async () => {
+    const { servico, prisma } = montar('em_separacao', [reservado()]);
+    await servico.cancelarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR, motivo: 'engano',
+    });
+    expect(prisma.notificacao.createMany).not.toHaveBeenCalled();
+  });
+
+  it('F4.1: Compras é avisado quando havia peça da solicitação numa ordem de compra', async () => {
+    const { servico, prisma } = montar('pendente', [reservado()], { comSolicitacao: { ocStatus: 'emitida' } });
+    await servico.cancelarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR, motivo: 'engano',
+    });
+    const linhas = (prisma.notificacao.createMany.mock.calls[0] as unknown as [{
+      data: Array<{ destinatarioId: string; mensagem: string; referenciaTipo: string; referenciaId: string }>;
+    }])[0].data;
+    expect(linhas).toHaveLength(1);
+    expect(linhas[0]).toMatchObject({ destinatarioId: 'user-compras', referenciaTipo: 'solicitacao_compra', referenciaId: 'sc-1' });
+    expect(linhas[0].mensagem).toContain('OC-2026-003');
+  });
+
+  it('F4.1: solicitação que nunca foi para OC some sem aviso a Compras (par negativo)', async () => {
+    const { servico, prisma } = montar('pendente', [reservado()], { comSolicitacao: { ocStatus: null } });
+    await servico.cancelarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR, motivo: 'engano',
+    });
+    expect(prisma.notificacao.createMany).not.toHaveBeenCalled();
   });
 });

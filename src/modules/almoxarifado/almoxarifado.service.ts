@@ -23,8 +23,12 @@ import {
   type ItemDeTroca,
 } from './regras/plano-pecas';
 import { formatNumeroRequisicao, parseNumeroRequisicaoSeq } from './helpers/numero-requisicao.helper';
-import { abrirSolicitacaoDasFaltas, type FaltaParaSolicitar } from './compras/solicitacao-de-falta';
-import { montarNotificacoesDeFalta } from './compras/notificacoes-falta';
+import {
+  abrirSolicitacaoDasFaltas,
+  cancelarSolicitacoesDasFaltas,
+  type FaltaParaSolicitar,
+} from './compras/solicitacao-de-falta';
+import { montarNotificacoesDeCancelamento, montarNotificacoesDeFalta } from './compras/notificacoes-falta';
 import {
   MAX_TENTATIVAS_CONCORRENCIA,
   colisaoDeRequisicaoJaAberta,
@@ -1620,7 +1624,13 @@ export class AlmoxarifadoService {
     // cru.
     for (let tentativa = 1; tentativa <= MAX_TENTATIVAS_CONCORRENCIA; tentativa++) {
       try {
-        return await this.prisma.$transaction((tx) => this.executarCancelamento(tx, input, motivo));
+        const { notificacoes, ...resultado } = await this.prisma.$transaction((tx) =>
+          this.executarCancelamento(tx, input, motivo),
+        );
+        // F4.1: avisos do cancelamento (retratação à bancada e revisão de OC
+        // para Compras) — depois do commit, fora da transação e do retry.
+        await enviarNotificacoes(this.prisma, notificacoes);
+        return resultado;
       } catch (erro) {
         if (!erroDeContencaoTransitoria(erro) || tentativa === MAX_TENTATIVAS_CONCORRENCIA) {
           if (erroDeContencaoTransitoria(erro)) {
@@ -1649,7 +1659,7 @@ export class AlmoxarifadoService {
     tx: Prisma.TransactionClient,
     input: { companyId: string; requisicaoId: string; autorCompanyUserId: string },
     motivo: string,
-  ): Promise<{ statusMateriais: StatusMateriais }> {
+  ): Promise<{ statusMateriais: StatusMateriais; notificacoes: NotificacaoPronta[] }> {
     // Fundação da F4: trava a requisição ANTES de ler o status dela. Sem a
     // trava, este `findFirst` enxergava o estado de um instante qualquer (READ
     // COMMITTED), e uma entrega concorrente podia fechar a requisição entre a
@@ -1661,7 +1671,14 @@ export class AlmoxarifadoService {
     await travarRequisicao(tx, input.requisicaoId, input.companyId);
     const req = await tx.requisicaoMaterial.findFirst({
       where: { id: input.requisicaoId, companyId: input.companyId },
-      include: { itens: true },
+      include: {
+        itens: true,
+        // F4.1: os avisos do cancelamento citam a OS e a máquina, e a
+        // retratação vai para o mecânico responsável.
+        serviceOrder: {
+          select: { protocolo: true, equipmentId: true, equipmentNome: true, responsavelOperatorId: true },
+        },
+      },
     });
     if (!req) throw new NotFoundException('Requisição não encontrada para esta empresa.');
     if (req.status === 'entregue') {
@@ -1670,6 +1687,18 @@ export class AlmoxarifadoService {
     if (req.status === 'cancelada') {
       throw new ConflictException('Esta requisição já foi cancelada.');
     }
+
+    // F4.1: sem requisição, a falta deixa de existir — as solicitações de
+    // compra que a cobriam são canceladas aqui, ANTES das travas de saldo,
+    // pela ordem única de trava (requisição → linhas de solicitação →
+    // peca_saldos). O que já foi comprado continua a caminho e, quando chegar,
+    // vira estoque livre (a distribuição do recebimento não acha mais a falta).
+    const solicitacoesCanceladas = await cancelarSolicitacoesDasFaltas(tx, {
+      companyId: input.companyId,
+      requisicaoItemIds: req.itens.map((i) => i.id),
+      autorCompanyUserId: input.autorCompanyUserId,
+      motivo: `Requisição ${req.numero} cancelada: ${motivo}`,
+    });
 
     const aLiberar = req.itens.filter(
       (i) => i.pecaId && (Number(i.quantidadeReservada) > 0 || Number(i.quantidadeSeparada) > 0),
@@ -1776,7 +1805,22 @@ export class AlmoxarifadoService {
     // requisição vai rebobinar a OS por cima desse estado.
     await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, 'planejada');
 
-    return { statusMateriais: 'planejada' };
+    // F4.1: os avisos só são MONTADOS aqui — quem grava é `cancelarRequisicao`,
+    // depois do commit. `liberadaEm` vem da linha relida com a trava.
+    const notificacoes = await montarNotificacoesDeCancelamento(tx, {
+      companyId: input.companyId,
+      serviceOrderId: req.serviceOrderId,
+      numeroRequisicao: req.numero,
+      motivo,
+      protocolo: req.serviceOrder.protocolo,
+      equipmentId: req.serviceOrder.equipmentId,
+      equipmentNome: req.serviceOrder.equipmentNome,
+      responsavelOperatorId: req.serviceOrder.responsavelOperatorId,
+      kitJaLiberado: Boolean(req.liberadaEm),
+      solicitacoesCanceladas,
+    });
+
+    return { statusMateriais: 'planejada', notificacoes };
   }
 
   /**
