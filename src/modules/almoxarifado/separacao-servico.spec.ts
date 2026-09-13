@@ -46,6 +46,12 @@ function montar(itensIniciais: Array<Record<string, unknown>>, opts: { semSaldo?
         serviceOrderId: 'os-1',
         depositoId: 'dep-1',
         itens: itensIniciais,
+        numero: 'REQ-2026-001',
+        // Task 8: `executarSeparacao` lê `req.serviceOrder.protocolo` para
+        // `notificarKitCompleto` quando o kit fecha — sem isto o teste
+        // quebra com "Cannot read properties of undefined", não com uma
+        // asserção de negócio.
+        serviceOrder: { protocolo: 'OS-2026-047' },
       }),
       update: jest.fn(async () => {
         chamadas.push('UPDATE requisicao');
@@ -65,6 +71,14 @@ function montar(itensIniciais: Array<Record<string, unknown>>, opts: { semSaldo?
         return atualizado;
       }),
       findMany: jest.fn(async () => [...itensDb.values()].map((i) => ({ ...i }))),
+    },
+    // Task 8: `usuariosDoAlmoxarifado` (chamada por `notificarKitCompleto`
+    // quando o kit fecha) começa por aqui. `[]` mantém o comportamento
+    // atual destes testes (sem destinatário, sem `tx.company`/
+    // `tx.operator`/`tx.notificacao` — mesmo branch coberto em
+    // `almoxarifado-notificacoes.spec.ts`).
+    companyRole: {
+      findMany: jest.fn(async () => []),
     },
     serviceOrder: {
       updateMany: jest.fn(async () => {

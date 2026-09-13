@@ -46,6 +46,18 @@ function montar(status: string, itens: Array<Record<string, unknown>>, opts: { s
       findFirst: jest.fn().mockResolvedValue({
         id: REQ, companyId: COMPANY, status, serviceOrderId: 'os-1',
         depositoId: 'dep-1', itens,
+        // Task 8: `liberarRequisicao` lê `req.deposito.nome`/`req.serviceOrder.*`
+        // para `notificarOsLiberada` — sem isto o teste quebra com "Cannot
+        // read properties of undefined", não com uma asserção de negócio.
+        // `equipmentId`/`responsavelOperatorId` nulos mantêm a notificação
+        // sem destinatário (mesmo branch coberto em
+        // `almoxarifado-notificacoes.spec.ts`), então nenhum teste aqui
+        // precisa mockar `tx.company`/`tx.operator`/`tx.notificacao`.
+        deposito: { nome: 'Almoxarifado Central' },
+        serviceOrder: {
+          protocolo: 'OS-2026-047', equipmentId: null, equipmentNome: null,
+          responsavelOperatorId: null,
+        },
       }),
       update: jest.fn(async () => { chamadas.push('UPDATE requisicao'); return {}; }),
       // Achado Important I1 da revisão: o fechamento da ENTREGA usa
@@ -291,8 +303,10 @@ describe('entregarRequisicao', () => {
     // ficariam errados por 2 unidades — o mesmo defeito já corrigido na
     // entrada de estoque e na conferência do kit, desta vez na entrega.
     //
-    // `quantidadeReservada` continua 4 nos dois retratos (é imutável depois
-    // da criação do item) — por isso a asserção olha as POSIÇÕES 0 e 2 do
+    // `quantidadeReservada` continua 4 nos dois retratos NESTE teste, não
+    // porque seja imutável (a entrega ZERA no fim) — é só que este cenário
+    // não simula mudança nela, só em `quantidadeSeparada` — por isso a
+    // asserção olha as POSIÇÕES 0 e 2 do
     // `UPDATE` (saldo_fisico/saldo_separado, que usam a quantidade separada
     // FRESCA), não a posição 1 (saldo_reservado, que usa a reservada — 4 em
     // ambos os retratos, de propósito).

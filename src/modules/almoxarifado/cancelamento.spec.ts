@@ -75,11 +75,15 @@ describe('cancelarRequisicao', () => {
     // têm de divergir nos DOIS eixos (reservada E separada) — divergir só um
     // deixava uma implementação que lê `saldo_reservado` do retrato passar
     // igual, porque o valor coincidia por acaso. Aqui o retrato diz 4/0 e o
-    // banco diz 3/3; a asserção posicional (`slice(0, 2)`) reprova se
-    // QUALQUER um dos dois vier do retrato.
+    // banco diz 3/2 — reservada E separada DIFERENTES ENTRE SI, não só do
+    // retrato. Achado n1 da re-revisão: com o par fresco em 3/3 (valores
+    // IGUAIS entre si), trocar `saldo_reservado` por `saldo_separado` no
+    // `UPDATE` passa despercebido — a asserção posicional não reprova uma
+    // troca entre dois valores idênticos. Com 3/2, a mesma troca inverte o
+    // par e `toEqual([3, 2])` reprova.
     const { servico, tx } = montar('pendente', [reservado()]);
     tx.requisicaoMaterialItem.findUniqueOrThrow = jest.fn().mockResolvedValue({
-      status: 'separada', quantidadeReservada: 3, quantidadeSeparada: 3,
+      status: 'separada', quantidadeReservada: 3, quantidadeSeparada: 2,
     });
 
     await servico.cancelarRequisicao({
@@ -87,7 +91,34 @@ describe('cancelarRequisicao', () => {
     });
 
     const sql = tx.$executeRaw.mock.calls[0][0];
-    expect(sql.values.slice(0, 2)).toEqual([3, 3]);
+    expect(sql.values.slice(0, 2)).toEqual([3, 2]);
+    // Segunda rede contra a mesma troca, apagada pela correção do I1: fixa
+    // os NOMES das colunas no SQL, não só a posição dos valores — uma troca
+    // que movesse ambos (coluna E valor) juntos escaparia da asserção acima.
+    expect(sql.text).toMatch(/saldo_reservado\s*=\s*saldo_reservado\s*-/);
+    expect(sql.text).toMatch(/saldo_separado\s*=\s*saldo_separado\s*-/);
+  });
+
+  it('trava peca_saldos SEMPRE na mesma ordem por pecaId — evita deadlock com uma entrega concorrente (achado n2)', async () => {
+    // Os outros 8 testes deste arquivo usam um único item, então o
+    // comparador de ordem de trava (idêntico ao de `executarReserva`/
+    // `executarSeparacao`/`executarEntrega`: `pa < pb ? -1 : pa > pb ? 1 : 0`
+    // sobre `pecaId ?? ''`) nunca era exercido. Sem este teste, a próxima
+    // mudança nele passaria em silêncio — e é essa ordem única entre
+    // cancelamento e entrega concorrentes que evita deadlock (40P01).
+    // Mesmo padrão de `reserva.spec.ts:351`: o PEDIDO cita p-2 antes de
+    // p-1, a ordem oposta da ordenação por id.
+    const { servico, tx } = montar('pendente', [
+      { ...reservado(), id: 'it-2', pecaId: 'p-2' },
+      { ...reservado(), id: 'it-1', pecaId: 'p-1' },
+    ]);
+
+    await servico.cancelarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR, motivo: 'engano',
+    });
+
+    const primeiroValor = (chamada: unknown[]) => (chamada[0] as { values: unknown[] }).values[0];
+    expect(tx.$queryRaw.mock.calls.map(primeiroValor)).toEqual(['p-1', 'p-2']);
   });
 
   it('não devolve saldo de item que uma entrega concorrente já fechou', async () => {

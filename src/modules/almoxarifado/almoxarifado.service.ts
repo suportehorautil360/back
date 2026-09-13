@@ -23,6 +23,11 @@ import {
   type ItemDeTroca,
 } from './regras/plano-pecas';
 import { formatNumeroRequisicao, parseNumeroRequisicaoSeq } from './helpers/numero-requisicao.helper';
+import {
+  notificarKitCompleto,
+  notificarOsLiberada,
+  usuariosDoAlmoxarifado,
+} from './notificacoes/almoxarifado-notificacoes';
 
 export interface ItemReservado {
   linhaId: string;
@@ -732,7 +737,13 @@ export class AlmoxarifadoService {
   }): Promise<{ statusRequisicao: string; statusMateriais: StatusMateriais }> {
     const req = await this.prisma.requisicaoMaterial.findFirst({
       where: { id: input.requisicaoId, companyId: input.companyId },
-      include: { itens: true },
+      include: {
+        itens: true,
+        // Task 8: `notificarKitCompleto` cita o protocolo da OS na mensagem,
+        // quando o kit fecha. Carregar aqui evita uma segunda ida ao banco
+        // dentro da transação — mesmo raciocínio de `liberarRequisicao`.
+        serviceOrder: { select: { protocolo: true } },
+      },
     });
     if (!req) throw new NotFoundException('Requisição não encontrada para esta empresa.');
     if (req.status === 'entregue' || req.status === 'cancelada') {
@@ -789,7 +800,9 @@ export class AlmoxarifadoService {
     // `peca_saldos` chegava ao cliente como 500 cru.
     for (let tentativa = 1; tentativa <= MAX_TENTATIVAS_CONCORRENCIA; tentativa++) {
       try {
-        return await this.prisma.$transaction((tx) => this.executarSeparacao(tx, input, req, planejado));
+        return await this.prisma.$transaction((tx) =>
+          this.executarSeparacao(tx, input, req, planejado, req.serviceOrder.protocolo),
+        );
       } catch (erro) {
         if (!erroDeContencaoTransitoria(erro) || tentativa === MAX_TENTATIVAS_CONCORRENCIA) {
           if (erroDeContencaoTransitoria(erro)) {
@@ -818,6 +831,12 @@ export class AlmoxarifadoService {
     input: { companyId: string; autorCompanyUserId: string },
     req: RequisicaoComItens,
     planejado: PlanoDeSeparacao[],
+    // Task 8: protocolo da OS, para a mensagem de `notificarKitCompleto`.
+    // Passado à parte (em vez de lido de `req.serviceOrder`) porque
+    // `RequisicaoComItens` só inclui `itens` — alargar o type alcançaria
+    // `executarEntrega`/`executarCancelamento`, que reaproveitam o mesmo
+    // type e não carregam `serviceOrder`.
+    protocolo: string,
   ): Promise<{ statusRequisicao: string; statusMateriais: StatusMateriais }> {
     // Achado Important I1 da reserva, válido aqui pela mesma razão: trava
     // `peca_saldos` SEMPRE na mesma ordem — por `pecaId` — entre chamadas
@@ -952,8 +971,18 @@ export class AlmoxarifadoService {
 
     await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
 
-    // Task 8: quando `statusRequisicao === 'separada'`, é aqui que entra a
-    // chamada a `notificarKitCompleto` — o kit acabou de fechar.
+    // Kit fechou: avisa quem tem a tela do almoxarifado, na MESMA transação
+    // — se o fechamento der rollback, o aviso não pode ter saído.
+    if (statusRequisicao === 'separada') {
+      const destinatarios = await usuariosDoAlmoxarifado(tx, input.companyId);
+      await notificarKitCompleto(tx, {
+        companyId: input.companyId,
+        requisicaoId: req.id,
+        numero: req.numero,
+        protocolo,
+        destinatarios,
+      });
+    }
 
     return { statusRequisicao, statusMateriais };
   }
@@ -1033,21 +1062,19 @@ export class AlmoxarifadoService {
 
       await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, statusMateriais);
 
-      // TODO(Task 8): notificar que a OS foi liberada. `notificarOsLiberada`
-      // ainda não existe neste módulo — quem escreve é a Task 8. A chamada
-      // tem de ficar NA MESMA transação (a liberação dar rollback é pior que
-      // não avisar), por isso o lugar já está aqui, comentado, com os dados
-      // já carregados acima (req.serviceOrder.*, req.deposito.nome) — sem
-      // implementação provisória no meio tempo.
-      // await notificarOsLiberada(tx, {
-      //   companyId: input.companyId,
-      //   serviceOrderId: req.serviceOrderId,
-      //   protocolo: req.serviceOrder.protocolo,
-      //   equipmentNome: req.serviceOrder.equipmentNome,
-      //   equipmentId: req.serviceOrder.equipmentId,
-      //   responsavelOperatorId: req.serviceOrder.responsavelOperatorId,
-      //   local: req.deposito.nome,
-      // });
+      // OS liberada: avisa mecânico e programador, NA MESMA transação — a
+      // liberação dar rollback é pior que não avisar. Os dados já foram
+      // carregados acima (req.serviceOrder.*, req.deposito.nome), na mesma
+      // consulta que já acontecia de qualquer forma.
+      await notificarOsLiberada(tx, {
+        companyId: input.companyId,
+        serviceOrderId: req.serviceOrderId,
+        protocolo: req.serviceOrder.protocolo,
+        equipmentNome: req.serviceOrder.equipmentNome,
+        equipmentId: req.serviceOrder.equipmentId,
+        responsavelOperatorId: req.serviceOrder.responsavelOperatorId,
+        local: req.deposito.nome,
+      });
 
       return { statusMateriais };
     });
@@ -1106,10 +1133,14 @@ export class AlmoxarifadoService {
     // as 2 unidades ficavam presas em `saldo_reservado`/`saldo_separado`
     // sem tela nenhuma mostrando por quê.
     //
-    // `quantidadeReservada` nunca é escrita depois da criação do item — só
-    // `reservarParaOs` a grava — por isso é seguro usar o retrato de fora
-    // para decidir QUAIS linhas de `peca_saldos` travar; o quanto entregar
-    // ou devolver de cada uma continua sendo lido FRESCO dentro da transação
+    // `quantidadeReservada` nunca AUMENTA depois da criação do item: só
+    // `reservarParaOs` a grava para cima, e ela sempre CRIA o item (nunca
+    // soma em item existente). A entrega e o cancelamento a ZERAM. Por isso
+    // é seguro usar o retrato de fora para decidir QUAIS linhas de
+    // `peca_saldos` travar: um item pode SAIR desta lista entre o retrato e
+    // a trava (reserva zerada por chamada concorrente — barrada pelos guards
+    // frescos logo abaixo), nunca ENTRAR nela depois. O quanto entregar ou
+    // devolver de cada uma continua sendo lido FRESCO dentro da transação
     // (`executarEntrega`), nunca por um valor pré-calculado aqui fora.
     const candidatos = req.itens.filter((i) => i.pecaId && Number(i.quantidadeReservada) > 0);
 
