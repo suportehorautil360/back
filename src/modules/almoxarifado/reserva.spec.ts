@@ -93,12 +93,33 @@ function prismaFalso(saldoFisico: number, saldoReservado: number) {
       }),
     },
     requisicaoMaterialItem: {
+      // F4.1: o id do item criado vira o ponteiro do item de solicitação de
+      // compra da falta — `item-1`, `item-2`… na ordem da criação.
       create: jest.fn(async () => {
         chamadas.push('INSERT item');
-        return {};
+        return { id: `item-${chamadas.filter((c) => c === 'INSERT item').length}` };
       }),
     },
+    // F4.1: a solicitação de compra das faltas nasce na mesma transação.
+    solicitacaoCompra: {
+      findMany: jest.fn().mockResolvedValue([]),
+      create: jest.fn(async ({ data }: { data: { numero: string } }) => ({ id: 'sc-1', numero: data.numero })),
+    },
+    // Destinatários dos avisos da falta: um programador do equipamento e um
+    // usuário com o grupo Compras (pessoas diferentes, para as duas linhas).
+    equipmentProgramador: { findMany: jest.fn().mockResolvedValue([{ companyUserId: 'user-prog' }]) },
+    companyRole: { findMany: jest.fn().mockResolvedValue([{ id: 'cargo-compras' }]) },
+    operator: { findMany: jest.fn().mockResolvedValue([{ companyUserId: 'user-compras' }]) },
+    company: { findUnique: jest.fn().mockResolvedValue({ legacyId: 'leg-1' }) },
+    // NUNCA deve ser tocado: os avisos são gravados por `this.prisma`, depois
+    // do commit. Um `jest.fn()` diferente do de `prisma.notificacao`.
+    notificacao: { createMany: jest.fn().mockResolvedValue({ count: 1 }) },
     serviceOrder: {
+      // F4.1: protocolo, data agendada e equipamento, lidos quando há falta.
+      findFirst: jest.fn().mockResolvedValue({
+        protocolo: 'OS-2026-047', dataAgendamento: new Date('2026-09-20T00:00:00Z'),
+        equipmentId: 'eq-1', equipmentNome: 'ESC-014',
+      }),
       // Achado Important I4: `updateMany` (não `update`) — `count` vem de
       // quantas linhas casaram com `{ id, companyId }`.
       updateMany: jest.fn(async () => {
@@ -111,6 +132,8 @@ function prismaFalso(saldoFisico: number, saldoReservado: number) {
     $transaction: jest.fn(async (fn: (t: typeof tx) => Promise<unknown>) => fn(tx)),
     // Achado Important I2: depósito existe, é desta empresa, está ativo.
     deposito: { findFirst: jest.fn().mockResolvedValue({ id: DEPOSITO }) },
+    // F4.1: os avisos da falta são gravados com o client normal, fora da transação.
+    notificacao: { createMany: jest.fn().mockResolvedValue({ count: 1 }) },
     peca: { findMany: jest.fn().mockResolvedValue([]) },
     planoPreventivo: {
       findFirst: jest.fn().mockResolvedValue({
@@ -812,5 +835,62 @@ describe('darEntrada', () => {
     // duas contas quebra esta asserção.
     expect(r.custoMedio).toBe(12);
     expect(tx.peca.update.mock.calls[0][0].data.custoMedio).toBe(12);
+  });
+});
+
+describe('reservarParaOs — a falta abre solicitação de compra (F4.1)', () => {
+  const entrada = {
+    companyId: COMPANY, serviceOrderId: OS, depositoId: DEPOSITO,
+    autorCompanyUserId: AUTOR, categoriaPlanoId: 'cat-1', cicloId: 'c1',
+  };
+
+  it('estoque parcial: reserva o que tem e abre solicitação só da diferença, apontando para o item', async () => {
+    const { prisma, tx } = prismaFalso(3, 0);
+    const servico = new AlmoxarifadoService(prisma as never);
+    await servico.reservarParaOs(entrada, { itensDoPlano: [{ ...itemDeTroca, quantidade: 5 }] });
+
+    expect(tx.solicitacaoCompra.create).toHaveBeenCalledTimes(1);
+    const data = (tx.solicitacaoCompra.create.mock.calls[0] as unknown as [{ data: Record<string, any> }])[0].data;
+    expect(data).toMatchObject({
+      companyId: COMPANY, origem: 'falta_os', prioridade: 'critica', depositoId: DEPOSITO,
+      serviceOrderId: OS, requisicaoId: 'req-1', solicitanteCompanyUserId: AUTOR,
+    });
+    expect(data.itens.create).toEqual([{
+      pecaId: 'p-1', quantidade: 2, requisicaoItemId: 'item-1', prioridade: 'critica',
+      dataNecessidade: new Date('2026-09-20T00:00:00Z'),
+    }]);
+  });
+
+  it('estoque suficiente: nenhuma solicitação, nenhum aviso', async () => {
+    const { prisma, tx } = prismaFalso(10, 0);
+    const servico = new AlmoxarifadoService(prisma as never);
+    await servico.reservarParaOs(entrada, { itensDoPlano: [{ ...itemDeTroca, quantidade: 5 }] });
+    expect(tx.solicitacaoCompra.create).not.toHaveBeenCalled();
+    expect(prisma.notificacao.createMany).not.toHaveBeenCalled();
+  });
+
+  it('item não vinculado não vira solicitação — não dá para comprar o que ninguém sabe que peça é', async () => {
+    const { prisma, tx } = prismaFalso(0, 0);
+    const servico = new AlmoxarifadoService(prisma as never);
+    await servico.reservarParaOs(entrada, { itensDoPlano: [{ ...itemDeTroca, pecaId: null }] });
+    expect(tx.solicitacaoCompra.create).not.toHaveBeenCalled();
+  });
+
+  it('avisa programador e Compras DEPOIS do commit, com o client normal — e a resposta não ganha o campo', async () => {
+    const { prisma, tx } = prismaFalso(0, 0);
+    const servico = new AlmoxarifadoService(prisma as never);
+    const r = await servico.reservarParaOs(entrada, { itensDoPlano: [itemDeTroca] });
+
+    expect(tx.notificacao.createMany).not.toHaveBeenCalled();
+    expect(prisma.notificacao.createMany).toHaveBeenCalledTimes(1);
+    const linhas = (prisma.notificacao.createMany.mock.calls[0] as unknown as [{
+      data: Array<{ destinatarioId: string; referenciaTipo: string; referenciaId: string; titulo: string }>;
+    }])[0].data;
+    expect(linhas.map((l) => [l.destinatarioId, l.referenciaTipo, l.referenciaId]).sort()).toEqual([
+      ['user-compras', 'solicitacao_compra', 'sc-1'],
+      ['user-prog', 'service_order', OS],
+    ]);
+    expect(linhas.find((l) => l.destinatarioId === 'user-compras')?.titulo).toMatch(/crítica/);
+    expect('notificacoes' in r).toBe(false);
   });
 });

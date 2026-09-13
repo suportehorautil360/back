@@ -23,6 +23,8 @@ import {
   type ItemDeTroca,
 } from './regras/plano-pecas';
 import { formatNumeroRequisicao, parseNumeroRequisicaoSeq } from './helpers/numero-requisicao.helper';
+import { abrirSolicitacaoDasFaltas, type FaltaParaSolicitar } from './compras/solicitacao-de-falta';
+import { montarNotificacoesDeFalta } from './compras/notificacoes-falta';
 import {
   MAX_TENTATIVAS_CONCORRENCIA,
   colisaoDeRequisicaoJaAberta,
@@ -204,9 +206,15 @@ export class AlmoxarifadoService {
     // corrida) e recalcula tudo — inclusive o próximo número — do zero.
     for (let tentativa = 1; tentativa <= MAX_TENTATIVAS_CONCORRENCIA; tentativa++) {
       try {
-        return await this.prisma.$transaction((tx) =>
+        const { notificacoes, ...resultado } = await this.prisma.$transaction((tx) =>
           this.executarReserva(tx, input, itens),
         );
+        // F4.1: os avisos da falta saem DEPOIS do commit, com o client normal
+        // e fora da transação — mesmo contrato dos avisos da separação e da
+        // liberação. `enviarNotificacoes` nunca lança, então nenhum retry roda
+        // depois dele. A resposta pública não ganha o campo `notificacoes`.
+        await enviarNotificacoes(this.prisma, notificacoes);
+        return resultado;
       } catch (erro) {
         // Achado Important R1: a colisão no índice de requisição-única-por-OS
         // não é contenção transitória — é a MESMA regra de negócio do achado
@@ -252,7 +260,7 @@ export class AlmoxarifadoService {
       autorCompanyUserId: string;
     },
     itens: ItemDeTroca[],
-  ): Promise<ResultadoDaReserva> {
+  ): Promise<ResultadoDaReserva & { notificacoes: NotificacaoPronta[] }> {
     // Achado Important I3: clique repetido DEPOIS que a resposta já chegou
     // (o `IdempotencyInterceptor` nas rotas cobre o retry de rede da MESMA
     // requisição HTTP; isto cobre uma SEGUNDA requisição distinta pedindo
@@ -362,8 +370,9 @@ export class AlmoxarifadoService {
     // TODO item (não só o não vinculado): o catálogo muda depois, o retrato
     // da reserva não deveria — mesma razão de `ServiceOrder.equipmentNome`/
     // `equipmentPlaca` guardarem o snapshot do equipamento.
+    const faltas: FaltaParaSolicitar[] = [];
     for (const r of resultado) {
-      await tx.requisicaoMaterialItem.create({
+      const criado = await tx.requisicaoMaterialItem.create({
         data: {
           requisicaoId: req.id,
           pecaId: r.pecaId,
@@ -375,7 +384,55 @@ export class AlmoxarifadoService {
           impeditivo: r.impeditivo,
           status: r.status,
         },
+        select: { id: true },
       });
+      // F4.1: falta de peça CONHECIDA vira item de solicitação de compra, com
+      // a quantidade que faltou — critério 2 do §13 ("reserva o disponível e
+      // solicita só a diferença"). `nao_vinculado` não entra: não dá para
+      // comprar o que ninguém sabe que peça é.
+      if (r.status === 'faltante' && r.pecaId && r.quantidadeFaltante > 0) {
+        faltas.push({
+          requisicaoItemId: criado.id,
+          pecaId: r.pecaId,
+          quantidade: r.quantidadeFaltante,
+          impeditivo: r.impeditivo,
+        });
+      }
+    }
+
+    // F4.1: a falta e a solicitação de compra nascem na MESMA transação — uma
+    // OS nunca fica `aguardando_compra` sem uma solicitação que Compras veja.
+    // Os avisos só são MONTADOS aqui; quem grava é `reservarParaOs`, depois do
+    // commit.
+    let notificacoes: NotificacaoPronta[] = [];
+    if (faltas.length > 0) {
+      const os = await tx.serviceOrder.findFirst({
+        where: { id: input.serviceOrderId, companyId: input.companyId },
+        select: { protocolo: true, dataAgendamento: true, equipmentId: true, equipmentNome: true },
+      });
+      if (!os) throw new NotFoundException('OS não encontrada para esta empresa.');
+      const solicitacao = await abrirSolicitacaoDasFaltas(tx, {
+        companyId: input.companyId,
+        depositoId: input.depositoId,
+        serviceOrderId: input.serviceOrderId,
+        requisicaoId: req.id,
+        solicitanteCompanyUserId: input.autorCompanyUserId,
+        origem: 'falta_os',
+        // A data em que a OS está agendada é quando a peça precisa estar aqui
+        // — é o segundo critério da fila do recebimento (§8).
+        dataNecessidade: os.dataAgendamento,
+        faltas,
+      });
+      if (solicitacao) {
+        notificacoes = await montarNotificacoesDeFalta(tx, {
+          companyId: input.companyId,
+          serviceOrderId: input.serviceOrderId,
+          protocolo: os.protocolo,
+          equipmentId: os.equipmentId,
+          equipmentNome: os.equipmentNome,
+          solicitacao,
+        });
+      }
     }
 
     // TODOS os itens, inclusive `nao_vinculado` — filtrar por `pecaId` antes
@@ -387,7 +444,7 @@ export class AlmoxarifadoService {
 
     await this.atualizarStatusMateriaisDaOs(tx, input.serviceOrderId, input.companyId, statusMateriais);
 
-    return { requisicaoId: req.id, numero: req.numero, statusMateriais, itens: resultado };
+    return { requisicaoId: req.id, numero: req.numero, statusMateriais, itens: resultado, notificacoes };
   }
 
   /**
