@@ -1440,12 +1440,17 @@ export class AlmoxarifadoService {
   ): Promise<{ statusMateriais: StatusMateriais }> {
     // Diferente de `executarReserva`/`executarSeparacao`/`executarEntrega`, a
     // EXISTÊNCIA e o STATUS da requisição são conferidos AQUI DENTRO da
-    // transação, não antes dela. Checar fora e só então abrir a transação
-    // deixaria uma janela entre as duas leituras em que uma entrega
-    // concorrente muda o status para `entregue` — e este método devolveria
-    // saldo de uma peça que acabou de sair do depósito. O motivo, por não
-    // depender de estado nenhum do banco, já foi validado antes do laço de
-    // retry, em `cancelarRequisicao`.
+    // transação, não antes dela — mas isto sozinho NÃO fecha a corrida com uma
+    // entrega concorrente: não há `isolationLevel` neste `$transaction` (nem
+    // em nenhum outro deste arquivo), então o Postgres roda em READ COMMITTED
+    // e este `findFirst` enxerga o estado no instante em que roda, ANTES de
+    // qualquer `FOR UPDATE` em `peca_saldos`. Quem de fato fecha a janela são
+    // as duas guardas PÓS-TRAVA abaixo: o `if (fresco.status === …) continue`
+    // por item (espelha `executarEntrega`) e o `updateMany` condicionado ao
+    // fechar a requisição — o `throw` deste último desfaz por ROLLBACK
+    // qualquer decremento de saldo que o laço já tenha feito antes de
+    // descobrir o conflito. O motivo, por não depender de estado nenhum do
+    // banco, já foi validado antes do laço de retry, em `cancelarRequisicao`.
     const req = await tx.requisicaoMaterial.findFirst({
       where: { id: input.requisicaoId, companyId: input.companyId },
       include: { itens: true },
@@ -1465,14 +1470,32 @@ export class AlmoxarifadoService {
     // Mesma ordem ascendente por `pecaId` de `executarReserva`,
     // `executarSeparacao` e `executarEntrega`: travar `peca_saldos` sempre na
     // mesma direção entre chamadas concorrentes evita deadlock em vez de só
-    // detectá-lo depois.
-    for (const item of [...aLiberar].sort((a, b) => (a.pecaId ?? '').localeCompare(b.pecaId ?? ''))) {
-      await tx.$queryRaw(Prisma.sql`
+    // detectá-lo depois. Mesmo comparador dos três — não `localeCompare`, que
+    // diverge dele em UUID de case misto e depende do ICU do runtime.
+    const ordemDeTrava = [...aLiberar].sort((a, b) => {
+      const pa = a.pecaId ?? '';
+      const pb = b.pecaId ?? '';
+      return pa < pb ? -1 : pa > pb ? 1 : 0;
+    });
+
+    for (const item of ordemDeTrava) {
+      const linhas = await tx.$queryRaw<{ saldo_reservado: string }[]>(Prisma.sql`
         SELECT saldo_reservado FROM peca_saldos
          WHERE peca_id = ${item.pecaId}::uuid
            AND deposito_id = ${req.depositoId}::uuid
            FOR UPDATE
       `);
+      // Mesma guarda de `executarSeparacao`/`executarEntrega`: `FOR UPDATE`
+      // não trava linha que não existe. Sem isto, uma linha ausente em
+      // `peca_saldos` deixaria o laço seguir sem trava nenhuma adquirida, e o
+      // `UPDATE` abaixo casaria zero linhas em silêncio. Falhar alto é melhor
+      // que silenciar.
+      if (!linhas[0]) {
+        throw new Error(
+          `Saldo não encontrado para peça ${item.pecaId} no depósito ${req.depositoId} ` +
+            `ao cancelar — estado inconsistente com a reserva.`,
+        );
+      }
 
       // As quantidades a devolver vêm de uma leitura feita DEPOIS da trava.
       // Usar `item.quantidadeReservada`/`item.quantidadeSeparada` de
@@ -1484,8 +1507,17 @@ export class AlmoxarifadoService {
       // disponível que não existe na prateleira.
       const fresco = await tx.requisicaoMaterialItem.findUniqueOrThrow({
         where: { id: item.id },
-        select: { quantidadeReservada: true, quantidadeSeparada: true },
+        select: { status: true, quantidadeReservada: true, quantidadeSeparada: true },
       });
+      // Oitava ocorrência da mesma classe de defeito nesta frente — agora no
+      // STATUS, não na quantidade: uma entrega concorrente pode ter fechado
+      // ESTE item enquanto esperávamos a trava. `executarEntrega` (ramo
+      // `separado > 0`) NÃO zera `quantidadeReservada`/`quantidadeSeparada`
+      // do item que entrega, então os números lidos acima continuariam
+      // parecendo devolvíveis — e devolver o que já saiu do depósito cria
+      // saldo que não existe na prateleira. Mesmo critério e mesma razão do
+      // guard que `executarEntrega` já tem depois da sua trava.
+      if (fresco.status === 'entregue' || fresco.status === 'cancelada') continue;
 
       // Devolve reservado E separado: o que estava na caixa volta à
       // prateleira. Aritmética RELATIVA no banco — nunca "leia, some em JS,
@@ -1513,8 +1545,16 @@ export class AlmoxarifadoService {
       data: { status: 'cancelada', quantidadeReservada: 0, quantidadeSeparada: 0 },
     });
 
-    await tx.requisicaoMaterial.update({
-      where: { id: req.id },
+    // Achado Critical C1: um `update` incondicional sobrescrevia uma
+    // requisição que uma entrega concorrente já tivesse fechado como
+    // `entregue` enquanto este cancelamento trabalhava — sem erro nenhum, e
+    // depois de o laço acima já ter decrementado o saldo dela. `updateMany`
+    // condicionado ao mesmo `notIn` do fechamento dos itens fecha a corrida:
+    // quando não casa nenhuma linha, o `throw` abaixo reverte por ROLLBACK os
+    // decrementos que já rodaram neste laço. Mesmo padrão do `updateMany`
+    // guardado de `executarEntrega`.
+    const fechada = await tx.requisicaoMaterial.updateMany({
+      where: { id: req.id, status: { notIn: ['entregue', 'cancelada'] } },
       data: {
         status: 'cancelada',
         canceladaEm: new Date(),
@@ -1522,11 +1562,20 @@ export class AlmoxarifadoService {
         motivoCancelamento: motivo,
       },
     });
+    if (fechada.count === 0) {
+      throw new ConflictException(
+        'A requisição foi fechada por outra operação enquanto este cancelamento rodava.',
+      );
+    }
 
     // A OS volta ao começo: sem materiais reservados, ela não promete nada.
+    // Achado minor m6 da revisão: hoje é seguro fixar `'planejada'` porque
+    // nenhum outro código deste repo escreve `em_execucao`/`concluida` em
+    // `statusMateriais` — no dia em que passar a escrever, cancelar uma
+    // requisição vai rebobinar a OS por cima desse estado.
     await this.atualizarStatusMateriaisDaOs(tx, req.serviceOrderId, input.companyId, 'planejada');
 
-    return { statusMateriais: 'planejada' as StatusMateriais };
+    return { statusMateriais: 'planejada' };
   }
 
   /**
