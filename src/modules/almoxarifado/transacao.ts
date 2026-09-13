@@ -12,6 +12,27 @@ import { Prisma } from '../../prisma/generated/client';
  */
 
 /**
+ * A ORDEM ÚNICA DE TRAVA do módulo, do primeiro ao último lock de uma
+ * transação — quem precisa de menos pula etapas, nunca inverte:
+ *
+ *   ordem de compra (cabeçalho)
+ *   → requisições (por id)
+ *   → linhas de item de solicitação de compra (por id)
+ *   → `peca_saldos` (por `pecaId`, `compararPorPeca`)
+ *   → cabeçalhos de solicitação de compra (por id)
+ *   → OS
+ *
+ * Recebimento e os atos da ordem de compra seguem a lista inteira. Exceção
+ * conhecida: o cancelamento de requisição (`cancelarSolicitacoesDasFaltas`)
+ * grava o cabeçalho da solicitação ANTES do saldo. Não abre deadlock porque a
+ * solicitação que ele toca é sempre de falta da própria requisição — uma por
+ * requisição — e todo outro escritor desse cabeçalho (recebimento, atos da OC)
+ * trava essa requisição antes. Uma solicitação que junte faltas de requisições
+ * diferentes quebra esse argumento: aí o cancelamento precisa passar a gravar
+ * o cabeçalho depois do saldo.
+ */
+
+/**
  * Quantas vezes recalcular `numero`/reler o saldo antes de desistir.
  *
  * O brief original dizia "o unique de (company_id, numero) absorve a
