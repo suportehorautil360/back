@@ -230,9 +230,16 @@ export interface EntradaDeExpedicao {
  * documento cancelado.
  *
  * Ordem de trava: cabeçalho da transferência, depois `peca_saldos` por
- * `compararPorPecaEDeposito`. Aqui só se trava o depósito de ORIGEM, mas o
- * comparador é o mesmo do recebimento — que trava o destino — para que as duas
- * pontas de transferências cruzadas nunca peguem linhas em ordens opostas.
+ * `compararPorPecaEDeposito`. Dito com precisão, para não prometer mais do que
+ * entrega: AQUI, sozinho, o desempate por depósito da função é código morto —
+ * todo item desta chamada tem o MESMO `depositoOrigemId` (só se trava a
+ * origem), e dois itens da MESMA transferência nunca têm o mesmo `pecaId`
+ * (`@@unique([transferenciaId, pecaId])` no schema), então `compararPorPeca`
+ * sozinho já decide toda a ordem antes do desempate ser sequer avaliado. Uso o
+ * comparador composto mesmo assim só para ficar IGUAL ao do recebimento (que
+ * trava o destino) — não porque a parte composta compre garantia alguma
+ * dentro desta função. É a mesma função em ambas as pontas que evita que um
+ * dia elas divirjam, não o desempate em si.
  *
  * A origem pode estar INATIVA — de propósito (ver `criarTransferencia`): não
  * acrescente checagem de `ativo` aqui.
@@ -284,10 +291,30 @@ export async function expedirTransferencia(
          FOR UPDATE
     `);
 
-    const saldo = await tx.pecaSaldo.findUniqueOrThrow({
+    // A leitura vem DEPOIS da trava, e não é um detalhe: a escrita abaixo
+    // (`data: { saldoFisico: depois }`) é um valor ABSOLUTO, não um
+    // `decrement`. Sem a linha já travada aqui, duas expedições concorrentes
+    // da MESMA peça leem o mesmo `saldoFisico` as duas, as duas passam em
+    // `cabeNoDisponivel` contra o mesmo valor, e a que grava por último
+    // sobrescreve com um absoluto calculado sobre um saldo que já não é mais
+    // verdade — *lost update* clássico, e o CHECK do banco não pega porque o
+    // resultado gravado continua ≥ 0.
+    const saldo = await tx.pecaSaldo.findUnique({
       where: { pecaId_depositoId: { pecaId: item.pecaId, depositoId: transferencia.depositoOrigemId } },
       select: { saldoFisico: true, saldoReservado: true, custoMedio: true },
     });
+    // Sem `upsert`: expedir NUNCA cria linha de saldo — só uma entrada
+    // anterior (compra, ajuste, contagem) cria a linha na origem.
+    // `criarTransferencia` só garante que a peça existe e está ativa na
+    // EMPRESA, nunca que ela tem saldo no depósito de ORIGEM — uma peça
+    // cadastrada mas nunca recebida ali chega aqui sem linha nenhuma. Recusa
+    // de domínio, nomeando a peça, em vez de deixar um `findUniqueOrThrow`
+    // estourar P2025 cru como 500 na cara do almoxarife.
+    if (!saldo) {
+      throw new NotFoundException(
+        `A peça ${item.peca.codigoInterno} não tem saldo no depósito de origem.`,
+      );
+    }
     const quantidade = Number(item.quantidade);
     const atual = {
       saldoFisico: Number(saldo.saldoFisico),
@@ -322,7 +349,15 @@ export async function expedirTransferencia(
       },
     });
 
-    // Congela o custo da origem: é ele que vai ponderar a média do destino.
+    // Congela o custo da origem FIELMENTE — zero inclusive. `custoMedio` é
+    // `NOT NULL DEFAULT 0`: uma peça que só entrou por contagem de inventário
+    // ou por entrada sem custo chega aqui com média zero DE VERDADE, não
+    // "custo desconhecido". Não vire esse zero em nulo: `custoUnit` nulo no
+    // item já significa outra coisa ("ainda não expedido"), e achatar os dois
+    // destruiria essa distinção. A regra do que fazer com um zero congelado
+    // mora no RECEBIMENTO (Task 7), onde a média do destino é calculada — lá,
+    // zero significa "nenhuma informação de custo viajou", e a média do
+    // destino se mantém como está, em vez de ser achatada para zero.
     await tx.transferenciaItem.update({
       where: { id: item.id },
       data: { custoUnit: saldo.custoMedio },

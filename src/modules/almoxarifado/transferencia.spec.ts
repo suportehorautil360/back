@@ -370,9 +370,12 @@ function montarExpedicao(opts: { status?: string; reservado?: number; itens?: Li
     depositoOrigemId: 'dep-a', depositoDestinoId: 'dep-b',
     status: opts.status ?? 'rascunho', expedidaEm: null, expedidaPorCompanyUserId: null,
   };
-  const itens: Linha[] = opts.itens ?? [
-    { id: 'ti-1', pecaId: 'p-1', quantidade: 4, custoUnit: null },
-  ];
+  // `transferenciaId` tem DEFAULT (`transferencia.id`), mas pode ser
+  // sobrescrito por item — é assim que o teste de escopo planta um item de
+  // OUTRA transferência dentro da mesma lista fixture.
+  const itens: Linha[] = (
+    opts.itens ?? [{ id: 'ti-1', pecaId: 'p-1', quantidade: 4, custoUnit: null }]
+  ).map((i) => ({ transferenciaId: transferencia.id, ...i }));
   const saldos = new Map<string, Linha>([
     ['p-1|dep-a', { saldoFisico: 10, saldoReservado: opts.reservado ?? 0, custoMedio: 7 }],
     ['p-2|dep-a', { saldoFisico: 6, saldoReservado: 0, custoMedio: 3 }],
@@ -382,6 +385,27 @@ function montarExpedicao(opts: { status?: string; reservado?: number; itens?: Li
   const estado = { log, transferencia, itens, saldos, movimentos, auditoria };
 
   const chave = (p: string, d: string) => `${p}|${d}`;
+
+  // Desfazimento: cada escrita empilha como reverter A SI MESMA — mesmo
+  // padrão de `inventario.spec.ts` (`gravar`/`criar`/`comoTransacao`). Existe
+  // só para o teste de atomicidade poder provar que uma exceção no MEIO do
+  // laço de itens desfaz o que um item anterior já tinha gravado — a
+  // garantia que um `ROLLBACK` de transação real dá de graça e que estes
+  // objetos JS, sozinhos, não dão.
+  const desfazer: Array<() => void> = [];
+  function gravar<T extends object>(alvo: T, dados: Partial<T>): void {
+    const antes = {} as Partial<T>;
+    for (const k of Object.keys(dados) as (keyof T)[]) antes[k] = alvo[k];
+    Object.assign(alvo, dados);
+    desfazer.push(() => Object.assign(alvo, antes));
+  }
+  function criar<T>(lista: T[], linha: T): void {
+    lista.push(linha);
+    desfazer.push(() => {
+      const i = lista.indexOf(linha);
+      if (i >= 0) lista.splice(i, 1);
+    });
+  }
 
   const tx = {
     $queryRaw: jest.fn(async (q: { text: string; values: unknown[] }) => {
@@ -411,28 +435,49 @@ function montarExpedicao(opts: { status?: string; reservado?: number; itens?: Li
           ? { ...transferencia }
           : null;
       }),
-      update: jest.fn(async ({ data }: { data: Linha }) => {
-        Object.assign(transferencia, data);
+      update: jest.fn(async ({ where, data }: { where: { id: string }; data: Linha }) => {
+        // Confere o `where.id`, não só a presença da chamada — mesma dureza
+        // de `inventario.spec.ts` (`inventario.update`), para que um `id`
+        // errado não seja silenciosamente aceito.
+        if (where.id !== transferencia.id) throw new Error('P2025');
+        gravar(transferencia, data);
         log.push('update:transferencia');
         return {};
       }),
     },
     transferenciaItem: {
-      findMany: jest.fn(async () =>
-        itens.map((i) => ({ ...i, peca: { codigoInterno: `ALM-${i.pecaId}` } })),
-      ),
+      findMany: jest.fn(async ({ where }: { where: { transferenciaId?: string } }) => {
+        if (!where.transferenciaId) {
+          throw new Error('banco falso: transferenciaItem.findMany sem escopo de transferência.');
+        }
+        // Filtra pelo VALOR do `where.transferenciaId` — não devolve a lista
+        // inteira sem olhar o filtro. É o que prova que um item de OUTRA
+        // transferência plantado na mesma fixture não vaza para cá.
+        return itens
+          .filter((i) => i.transferenciaId === where.transferenciaId)
+          .map((i) => ({ ...i, peca: { codigoInterno: `ALM-${i.pecaId}` } }));
+      }),
       update: jest.fn(async ({ where, data }: { where: { id: string }; data: Linha }) => {
-        Object.assign(itens.find((i) => i.id === where.id)!, data);
+        const item = itens.find((i) => i.id === where.id);
+        if (!item) throw new Error('P2025');
+        gravar(item, data);
         return {};
       }),
     },
     pecaSaldo: {
-      findUniqueOrThrow: jest.fn(
+      // SEM `upsert`: expedir NUNCA cria linha de saldo. Devolve `null`
+      // quando a origem não tem a peça — como o Prisma real devolveria de
+      // `findUnique` — ao contrário de `findUniqueOrThrow`, que estouraria
+      // P2025 cru se a produção ainda o chamasse.
+      findUnique: jest.fn(
         async ({ where }: { where: { pecaId_depositoId: { pecaId: string; depositoId: string } } }) => {
           const k = where.pecaId_depositoId;
+          // Empilha DEPOIS da trava correspondente (`trava:saldo:...`) — é
+          // o que o teste de ordem lê para provar que a leitura não foi
+          // içada para antes do `FOR UPDATE`.
+          log.push(`ler:saldo:${k.pecaId}|${k.depositoId}`);
           const linha = saldos.get(chave(k.pecaId, k.depositoId));
-          if (!linha) throw new Error('P2025');
-          return { ...linha };
+          return linha ? { ...linha } : null;
         },
       ),
       update: jest.fn(
@@ -440,7 +485,7 @@ function montarExpedicao(opts: { status?: string; reservado?: number; itens?: Li
           const k = where.pecaId_depositoId;
           const linha = saldos.get(chave(k.pecaId, k.depositoId));
           if (!linha) throw new Error('P2025');
-          Object.assign(linha, data);
+          gravar(linha, data);
           return {};
         },
       ),
@@ -448,19 +493,33 @@ function montarExpedicao(opts: { status?: string; reservado?: number; itens?: Li
     estoqueMovimento: {
       create: jest.fn(async ({ data }: { data: Linha }) => {
         const m = { id: `mov-${movimentos.length + 1}`, ...data };
-        movimentos.push(m);
+        criar(movimentos, m);
         return m;
       }),
     },
     companyUser: { findFirst: jest.fn(async () => ({ name: 'Ana', email: 'a@x.com' })) },
     pontoAuditoria: {
       create: jest.fn(async ({ data }: { data: Linha }) => {
-        auditoria.push({ ...data });
+        criar(auditoria, { ...data });
         return data;
       }),
     },
   };
-  return { tx, estado };
+
+  // Roda `fn` (a chamada de `expedirTransferencia`) como se fosse a
+  // transação real: se `fn` lança, desfaz TUDO que o `tx` já tinha gravado,
+  // na ordem inversa — o `ROLLBACK` que o `$transaction` do chamador dá de
+  // graça e que este fake, sozinho, não dá.
+  async function comoTransacao<T>(fn: () => Promise<T>): Promise<T> {
+    try {
+      return await fn();
+    } catch (erro) {
+      while (desfazer.length) desfazer.pop()!();
+      throw erro;
+    }
+  }
+
+  return { tx, estado, comoTransacao };
 }
 
 const expedicao = (extra: Partial<Record<string, unknown>> = {}) => ({
@@ -480,6 +539,10 @@ describe('expedirTransferencia', () => {
         pecaId: 'p-1', depositoId: 'dep-a', tipo: 'transferencia',
         quantidade: -4, saldoApos: 6, custoUnit: 7,
         origemTipo: 'transferencia', origemId: 'trf-1',
+        // A observação carrega o número do documento — apagar essa linha da
+        // produção não muda saldo nem quantidade, e sem esta asserção
+        // passaria despercebido.
+        observacao: 'TRF-2026-001',
       }),
     ]);
   });
@@ -505,6 +568,32 @@ describe('expedirTransferencia', () => {
     expect(estado.saldos.get('p-1|dep-a')!.custoMedio).toBe(7);
   });
 
+  it('lê o saldo DEPOIS de travar a linha — a escrita é absoluta, não um decrement', async () => {
+    // Sem esta ordem, duas expedições concorrentes da mesma peça leriam o
+    // mesmo físico e a segunda sobrescreveria a baixa da primeira
+    // (lost update) — içar a leitura para antes do `FOR UPDATE` deixaria a
+    // suíte inteira verde do mesmo jeito, então só esta asserção de ORDEM
+    // pega essa regressão.
+    const { tx, estado } = montarExpedicao();
+    await expedirTransferencia(tx as never, expedicao());
+    expect(estado.log.indexOf('trava:saldo:p-1|dep-a')).toBeLessThan(
+      estado.log.indexOf('ler:saldo:p-1|dep-a'),
+    );
+  });
+
+  it('peça sem saldo na origem recusa nomeando a peça, não estoura erro cru', async () => {
+    // Alcançável de verdade: `criarTransferencia` só garante que a peça
+    // existe e está ATIVA na empresa, nunca que ela tem saldo no depósito de
+    // ORIGEM. Uma peça estocada só no depósito B, posta num rascunho A→B,
+    // chega aqui sem linha nenhuma de `peca_saldos` em A.
+    const { tx, estado } = montarExpedicao({
+      itens: [{ id: 'ti-1', pecaId: 'p-sem-saldo', quantidade: 1, custoUnit: null }],
+    });
+    await expect(expedirTransferencia(tx as never, expedicao())).rejects.toThrow(NotFoundException);
+    await expect(expedirTransferencia(tx as never, expedicao())).rejects.toThrow(/ALM-p-sem-saldo/);
+    expect(estado.movimentos).toHaveLength(0);
+  });
+
   it('o que está reservado não viaja, e nada é gravado', async () => {
     const { tx, estado } = montarExpedicao({ reservado: 8 });
     await expect(expedirTransferencia(tx as never, expedicao())).rejects.toThrow(ConflictException);
@@ -515,6 +604,37 @@ describe('expedirTransferencia', () => {
   it('a recusa por reserva identifica a peça', async () => {
     const { tx } = montarExpedicao({ reservado: 8 });
     await expect(expedirTransferencia(tx as never, expedicao())).rejects.toThrow(/ALM-p-1/);
+  });
+
+  it('recusa no SEGUNDO item desfaz o que o primeiro já tinha gravado', async () => {
+    // `p-1` (travado primeiro, por `compararPorPeca`) baixa sem problema; é
+    // `p-2` que esbarra no reservado. Isto prova que a função não segue em
+    // frente fechando a expedição com o que deu certo: a exceção propaga, a
+    // transferência não muda de status, e o que `p-1` já tinha gravado não
+    // sobrevive — a mesma garantia que, numa transação real, o `ROLLBACK` do
+    // `$transaction` do chamador dá; `comoTransacao` simula esse `ROLLBACK`
+    // aqui, no molde de `inventario.spec.ts`.
+    const { tx, estado, comoTransacao } = montarExpedicao({
+      itens: [
+        { id: 'ti-1', pecaId: 'p-1', quantidade: 4, custoUnit: null },
+        { id: 'ti-2', pecaId: 'p-2', quantidade: 1, custoUnit: null },
+      ],
+    });
+    estado.saldos.get('p-2|dep-a')!.saldoReservado = 6; // físico 6, reservado 6: nada livre.
+
+    let capturado: unknown;
+    try {
+      await comoTransacao(() => expedirTransferencia(tx as never, expedicao()));
+    } catch (erro) {
+      capturado = erro;
+    }
+    expect(capturado).toBeInstanceOf(ConflictException);
+    expect((capturado as Error).message).toMatch(/ALM-p-2/);
+
+    expect(estado.movimentos).toHaveLength(0);
+    expect(estado.itens[0].custoUnit).toBeNull();
+    expect(estado.saldos.get('p-1|dep-a')!.saldoFisico).toBe(10);
+    expect(estado.transferencia.status).toBe('rascunho');
   });
 
   it('trava a transferência e depois os saldos, na ordem do comparador', async () => {
@@ -531,9 +651,45 @@ describe('expedirTransferencia', () => {
     expect(saldos).toEqual([...saldos].sort());
   });
 
-  it('transferência que não é rascunho não expede de novo', async () => {
-    const { tx } = montarExpedicao({ status: 'em_transito' });
-    await expect(expedirTransferencia(tx as never, expedicao())).rejects.toThrow(ConflictException);
+  it('lê só os itens desta transferência, não os de outra plantados na mesma fixture', async () => {
+    const { tx, estado } = montarExpedicao({
+      itens: [
+        { id: 'ti-1', pecaId: 'p-1', quantidade: 4, custoUnit: null },
+        { id: 'ti-outra', transferenciaId: 'trf-outra', pecaId: 'p-2', quantidade: 1, custoUnit: null },
+      ],
+    });
+    const r = await expedirTransferencia(tx as never, expedicao());
+    expect(r.itens).toBe(1);
+    // A peça e o item da OUTRA transferência não foram tocados.
+    expect(estado.saldos.get('p-2|dep-a')!.saldoFisico).toBe(6);
+    expect(estado.itens.find((i) => i.id === 'ti-outra')!.custoUnit).toBeNull();
+  });
+
+  it('sem item nenhum não expede', async () => {
+    const { tx } = montarExpedicao({ itens: [] });
+    await expect(expedirTransferencia(tx as never, expedicao())).rejects.toThrow(BadRequestException);
+  });
+
+  it.each(['em_transito', 'recebida', 'cancelada'])(
+    'transferência %s não expede de novo',
+    async (status) => {
+      const { tx } = montarExpedicao({ status });
+      await expect(expedirTransferencia(tx as never, expedicao())).rejects.toThrow(ConflictException);
+    },
+  );
+
+  it('transferência de outra empresa não é encontrada', async () => {
+    const { tx } = montarExpedicao();
+    await expect(
+      expedirTransferencia(tx as never, expedicao({ companyId: OUTRA })),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('transferência inexistente não é encontrada', async () => {
+    const { tx } = montarExpedicao();
+    await expect(
+      expedirTransferencia(tx as never, expedicao({ transferenciaId: 'trf-fantasma' })),
+    ).rejects.toThrow(NotFoundException);
   });
 
   it('fecha como em_transito, com quem expediu e quando', async () => {
@@ -545,7 +701,7 @@ describe('expedirTransferencia', () => {
     expect(estado.transferencia.expedidaEm).toBeInstanceOf(Date);
   });
 
-  it('grava o rastro da expedição', async () => {
+  it('grava o rastro da expedição, com QUEM expediu', async () => {
     const { tx, estado } = montarExpedicao();
     await expedirTransferencia(tx as never, expedicao());
     expect(estado.auditoria).toEqual([
@@ -553,6 +709,10 @@ describe('expedirTransferencia', () => {
         acao: 'transferencia.expedir',
         alvoTipo: 'suprimentos.transferencia',
         alvoId: 'trf-1',
+        // Trocar `atorCompanyUserId` por um UUID fixo na produção passaria
+        // verde sem esta asserção — o teste irmão de `cancelarTransferencia`
+        // já afirma o mesmo campo.
+        atorId: AUTOR,
       }),
     ]);
   });
