@@ -16,6 +16,7 @@ import { PedirPecaAdicionalDto } from './dto/peca-adicional.dto';
 import { VerificarEstoqueMinimoDto } from './dto/estoque-minimo.dto';
 import { DevolverSobraDto } from './dto/devolucao.dto';
 import { AbrirInventarioDto, ApurarInventarioDto, CancelarInventarioDto, RegistrarContagemDto } from './dto/inventario.dto';
+import { CancelarTransferenciaDto, CriarTransferenciaDto, ReceberTransferenciaDto } from './dto/transferencia.dto';
 
 @ApiTags('almoxarifado')
 @Controller('almoxarifado')
@@ -412,6 +413,69 @@ export class AlmoxarifadoController {
       motivo: dto.motivo,
       recebidoDe: dto.recebidoDe?.trim() || null,
       itens: dto.itens.map((i) => ({ itemId: i.itemId, quantidade: i.quantidade })),
+    });
+  }
+
+  @Post('transferencias')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Monta o rascunho de uma transferência entre depósitos' })
+  async criarTransferencia(@Req() req: RequestComPainel, @Body() dto: CriarTransferenciaDto) {
+    return this.servico.criarTransferencia({
+      companyId: req.painel.companyId,
+      depositoOrigemId: dto.depositoOrigemId,
+      depositoDestinoId: dto.depositoDestinoId,
+      itens: dto.itens.map((i) => ({ pecaId: i.pecaId, quantidade: i.quantidade })),
+      autorCompanyUserId: req.painel.companyUserId,
+      observacao: dto.observacao ?? null,
+    });
+  }
+
+  @Post('transferencias/:id/expedir')
+  // Mexe em saldo: reenvio sem a chave tiraria a quantidade da origem duas
+  // vezes se o status ainda não tivesse virado.
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Despacha a carga: a peça sai da origem' })
+  async expedirTransferencia(@Req() req: RequestComPainel, @Param('id') id: string) {
+    return this.servico.expedirTransferencia({
+      companyId: req.painel.companyId,
+      transferenciaId: id,
+      autorCompanyUserId: req.painel.companyUserId,
+    });
+  }
+
+  @Post('transferencias/:id/receber')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Confirma no destino o que chegou' })
+  async receberTransferencia(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: ReceberTransferenciaDto,
+  ) {
+    return this.servico.receberTransferencia({
+      companyId: req.painel.companyId,
+      transferenciaId: id,
+      autorCompanyUserId: req.painel.companyUserId,
+      itens: dto.itens.map((i) => ({
+        itemId: i.itemId,
+        quantidadeRecebida: i.quantidadeRecebida,
+        motivoDivergencia: i.motivoDivergencia ?? null,
+      })),
+    });
+  }
+
+  @Post('transferencias/:id/cancelar')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Desiste do rascunho enquanto nada saiu' })
+  async cancelarTransferencia(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: CancelarTransferenciaDto,
+  ) {
+    return this.servico.cancelarTransferencia({
+      companyId: req.painel.companyId,
+      transferenciaId: id,
+      autorCompanyUserId: req.painel.companyUserId,
+      motivo: dto.motivo,
     });
   }
 }

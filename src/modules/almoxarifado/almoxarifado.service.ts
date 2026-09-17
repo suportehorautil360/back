@@ -45,6 +45,16 @@ import { decidirEquivalente, proporEquivalente, type EntradaDeDecisao, type Entr
 import { refinarPelaCompra } from './compras/cobertura';
 import { abrirInventario, apurarInventario, cancelarInventario, registrarContagem, type EntradaDeAbertura, type EntradaDeApuracao, type EntradaDeCancelamento, type EntradaDeContagem } from './inventario';
 import {
+  cancelarTransferencia,
+  criarTransferencia,
+  expedirTransferencia,
+  receberTransferencia,
+  type EntradaDeCancelamentoDeTransferencia,
+  type EntradaDeCriacao,
+  type EntradaDeExpedicao,
+  type EntradaDeRecebimento as EntradaDeRecebimentoDeTransferencia,
+} from './transferencia';
+import {
   MAX_TENTATIVAS_CONCORRENCIA,
   colisaoDeContagemJaAberta,
   colisaoDeRequisicaoJaAberta,
@@ -2586,6 +2596,34 @@ export class AlmoxarifadoService {
   async apurarContagem(input: EntradaDeApuracao) {
     return comRetryDeContencao('a apuração da contagem', () =>
       this.prisma.$transaction((tx) => apurarInventario(tx, input)),
+    );
+  }
+
+  /** Monta o rascunho da transferência — nada sai de lugar nenhum ainda. */
+  async criarTransferencia(input: EntradaDeCriacao) {
+    return comRetryDeContencao('a criação da transferência', () =>
+      this.prisma.$transaction((tx) => criarTransferencia(tx, input)),
+    );
+  }
+
+  /** Despacha: a peça sai da origem e fica no caminhão. */
+  async expedirTransferencia(input: EntradaDeExpedicao) {
+    return comRetryDeContencao('a expedição da transferência', () =>
+      this.prisma.$transaction((tx) => expedirTransferencia(tx, input)),
+    );
+  }
+
+  /** O destino confirma o que chegou, e o valor entra junto. */
+  async receberTransferencia(input: EntradaDeRecebimentoDeTransferencia) {
+    return comRetryDeContencao('o recebimento da transferência', () =>
+      this.prisma.$transaction((tx) => receberTransferencia(tx, input)),
+    );
+  }
+
+  /** Desiste do rascunho enquanto nada saiu. */
+  async cancelarTransferencia(input: EntradaDeCancelamentoDeTransferencia) {
+    return comRetryDeContencao('o cancelamento da transferência', () =>
+      this.prisma.$transaction((tx) => cancelarTransferencia(tx, input)),
     );
   }
 
