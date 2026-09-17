@@ -40,6 +40,7 @@ import {
   type ResultadoDoRecebimento,
 } from './compras/recebimento';
 import { acaoPermitida } from './regras/compras';
+import { alterarPrioridadeDoItem, type EntradaDePrioridade, type ResultadoDePrioridade } from './compras/prioridade';
 import { decidirEquivalente, proporEquivalente, type EntradaDeDecisao, type EntradaDeProposta, type ResultadoDaDecisao, type ResultadoDaProposta } from './equivalente';
 import { refinarPelaCompra } from './compras/cobertura';
 import {
@@ -2527,6 +2528,16 @@ export class AlmoxarifadoService {
   async decidirTroca(input: EntradaDeDecisao): Promise<ResultadoDaDecisao> {
     return comRetryDeContencao('a decisão do equivalente', () =>
       this.prisma.$transaction((tx) => decidirEquivalente(tx, input)),
+    );
+  }
+
+  /**
+   * Critério 10: mudar a prioridade de um item da fila de compra. Permissão é
+   * o gate da rota; motivo e log são exigência deste ato.
+   */
+  async alterarPrioridade(input: EntradaDePrioridade): Promise<ResultadoDePrioridade> {
+    return comRetryDeContencao('a mudança de prioridade', () =>
+      this.prisma.$transaction((tx) => alterarPrioridadeDoItem(tx, input)),
     );
   }
 

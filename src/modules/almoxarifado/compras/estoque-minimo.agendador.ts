@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { varrerEstoqueMinimo } from './estoque-minimo';
+import { varrerAtrasos } from './varrer-atrasos';
 
 /**
  * A varredura diária do estoque mínimo. Pega o que nenhum ato disparou: mínimo
@@ -32,6 +33,30 @@ export class EstoqueMinimoAgendador {
     } catch (erro) {
       this.logger.error(
         'Falha na varredura diária de estoque mínimo',
+        erro instanceof Error ? erro.stack : String(erro),
+      );
+    }
+  }
+
+  /**
+   * Critério 12: a mesma janela das 7h, logo depois do mínimo. Mesmo horário
+   * de propósito — quem abre o painel de manhã encontra os dois avisos do dia
+   * juntos, em vez de ser interrompido duas vezes.
+   *
+   * Cron próprio, e não uma chamada dentro do de cima: uma varredura que
+   * estoure não pode levar a outra junto.
+   */
+  @Cron('5 7 * * *', { timeZone: 'America/Sao_Paulo' })
+  async varrerAtrasosDiariamente(): Promise<void> {
+    try {
+      const r = await varrerAtrasos(this.prisma);
+      this.logger.log(
+        `Ordens atrasadas: ${r.empresas} empresa(s), ${r.atrasadas} ordem(ns) atrasada(s), ` +
+          `${r.avisos} aviso(s), ${r.falhas} falha(s).`,
+      );
+    } catch (erro) {
+      this.logger.error(
+        'Falha na varredura diária de ordens atrasadas',
         erro instanceof Error ? erro.stack : String(erro),
       );
     }

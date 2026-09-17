@@ -8,6 +8,7 @@ import { ReservarDto } from './dto/reserva.dto';
 import { EntradaDto } from './dto/entrada.dto';
 import { SepararDto } from './dto/separacao.dto';
 import { DecidirEquivalenteDto, ProporEquivalenteDto } from './dto/equivalente.dto';
+import { AlterarPrioridadeDto } from './dto/prioridade.dto';
 import { EntregarDto } from './dto/entrega.dto';
 import { CancelarRequisicaoDto } from './dto/cancelamento.dto';
 import { ReceberDto } from './dto/recebimento.dto';
@@ -212,6 +213,23 @@ export class AlmoxarifadoController {
       requisicaoId: id,
       itemId: dto.itemId,
       aprovar: dto.aprovar,
+      autorCompanyUserId: req.painel.companyUserId,
+      motivo: dto.motivo,
+    });
+  }
+
+  @Post('compras/prioridade')
+  // Quem muda a ordem da fila é quem COMPRA — o gate da classe é
+  // `almoxarifado`, e esta rota o sobrescreve. Prioridade decide quem recebe
+  // a peça que chega (§8), então é decisão de quem responde pela compra.
+  @ModuloComercial('suprimentos', 'compras')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Muda a prioridade de um item da fila de compra' })
+  async alterarPrioridade(@Req() req: RequestComPainel, @Body() dto: AlterarPrioridadeDto) {
+    return this.servico.alterarPrioridade({
+      companyId: req.painel.companyId,
+      solicitacaoItemId: dto.solicitacaoItemId,
+      prioridade: dto.prioridade,
       autorCompanyUserId: req.painel.companyUserId,
       motivo: dto.motivo,
     });
