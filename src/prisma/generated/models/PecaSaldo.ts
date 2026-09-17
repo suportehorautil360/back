@@ -33,6 +33,7 @@ export type PecaSaldoAvgAggregateOutputType = {
   saldoReservado: runtime.Decimal | null
   saldoSeparado: runtime.Decimal | null
   saldoEmCompra: runtime.Decimal | null
+  custoMedio: runtime.Decimal | null
 }
 
 export type PecaSaldoSumAggregateOutputType = {
@@ -40,6 +41,7 @@ export type PecaSaldoSumAggregateOutputType = {
   saldoReservado: runtime.Decimal | null
   saldoSeparado: runtime.Decimal | null
   saldoEmCompra: runtime.Decimal | null
+  custoMedio: runtime.Decimal | null
 }
 
 export type PecaSaldoMinAggregateOutputType = {
@@ -49,6 +51,7 @@ export type PecaSaldoMinAggregateOutputType = {
   saldoReservado: runtime.Decimal | null
   saldoSeparado: runtime.Decimal | null
   saldoEmCompra: runtime.Decimal | null
+  custoMedio: runtime.Decimal | null
   localizacao: string | null
   updatedAt: Date | null
 }
@@ -60,6 +63,7 @@ export type PecaSaldoMaxAggregateOutputType = {
   saldoReservado: runtime.Decimal | null
   saldoSeparado: runtime.Decimal | null
   saldoEmCompra: runtime.Decimal | null
+  custoMedio: runtime.Decimal | null
   localizacao: string | null
   updatedAt: Date | null
 }
@@ -71,6 +75,7 @@ export type PecaSaldoCountAggregateOutputType = {
   saldoReservado: number
   saldoSeparado: number
   saldoEmCompra: number
+  custoMedio: number
   localizacao: number
   updatedAt: number
   _all: number
@@ -82,6 +87,7 @@ export type PecaSaldoAvgAggregateInputType = {
   saldoReservado?: true
   saldoSeparado?: true
   saldoEmCompra?: true
+  custoMedio?: true
 }
 
 export type PecaSaldoSumAggregateInputType = {
@@ -89,6 +95,7 @@ export type PecaSaldoSumAggregateInputType = {
   saldoReservado?: true
   saldoSeparado?: true
   saldoEmCompra?: true
+  custoMedio?: true
 }
 
 export type PecaSaldoMinAggregateInputType = {
@@ -98,6 +105,7 @@ export type PecaSaldoMinAggregateInputType = {
   saldoReservado?: true
   saldoSeparado?: true
   saldoEmCompra?: true
+  custoMedio?: true
   localizacao?: true
   updatedAt?: true
 }
@@ -109,6 +117,7 @@ export type PecaSaldoMaxAggregateInputType = {
   saldoReservado?: true
   saldoSeparado?: true
   saldoEmCompra?: true
+  custoMedio?: true
   localizacao?: true
   updatedAt?: true
 }
@@ -120,6 +129,7 @@ export type PecaSaldoCountAggregateInputType = {
   saldoReservado?: true
   saldoSeparado?: true
   saldoEmCompra?: true
+  custoMedio?: true
   localizacao?: true
   updatedAt?: true
   _all?: true
@@ -218,6 +228,7 @@ export type PecaSaldoGroupByOutputType = {
   saldoReservado: runtime.Decimal
   saldoSeparado: runtime.Decimal
   saldoEmCompra: runtime.Decimal
+  custoMedio: runtime.Decimal
   localizacao: string | null
   updatedAt: Date
   _count: PecaSaldoCountAggregateOutputType | null
@@ -252,6 +263,7 @@ export type PecaSaldoWhereInput = {
   saldoReservado?: Prisma.DecimalFilter<"PecaSaldo"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: Prisma.DecimalFilter<"PecaSaldo"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: Prisma.DecimalFilter<"PecaSaldo"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: Prisma.DecimalFilter<"PecaSaldo"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: Prisma.StringNullableFilter<"PecaSaldo"> | string | null
   updatedAt?: Prisma.DateTimeFilter<"PecaSaldo"> | Date | string
   peca?: Prisma.XOR<Prisma.PecaScalarRelationFilter, Prisma.PecaWhereInput>
@@ -265,6 +277,7 @@ export type PecaSaldoOrderByWithRelationInput = {
   saldoReservado?: Prisma.SortOrder
   saldoSeparado?: Prisma.SortOrder
   saldoEmCompra?: Prisma.SortOrder
+  custoMedio?: Prisma.SortOrder
   localizacao?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   peca?: Prisma.PecaOrderByWithRelationInput
@@ -282,6 +295,7 @@ export type PecaSaldoWhereUniqueInput = Prisma.AtLeast<{
   saldoReservado?: Prisma.DecimalFilter<"PecaSaldo"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: Prisma.DecimalFilter<"PecaSaldo"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: Prisma.DecimalFilter<"PecaSaldo"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: Prisma.DecimalFilter<"PecaSaldo"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: Prisma.StringNullableFilter<"PecaSaldo"> | string | null
   updatedAt?: Prisma.DateTimeFilter<"PecaSaldo"> | Date | string
   peca?: Prisma.XOR<Prisma.PecaScalarRelationFilter, Prisma.PecaWhereInput>
@@ -295,6 +309,7 @@ export type PecaSaldoOrderByWithAggregationInput = {
   saldoReservado?: Prisma.SortOrder
   saldoSeparado?: Prisma.SortOrder
   saldoEmCompra?: Prisma.SortOrder
+  custoMedio?: Prisma.SortOrder
   localizacao?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.PecaSaldoCountOrderByAggregateInput
@@ -314,6 +329,7 @@ export type PecaSaldoScalarWhereWithAggregatesInput = {
   saldoReservado?: Prisma.DecimalWithAggregatesFilter<"PecaSaldo"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: Prisma.DecimalWithAggregatesFilter<"PecaSaldo"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: Prisma.DecimalWithAggregatesFilter<"PecaSaldo"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: Prisma.DecimalWithAggregatesFilter<"PecaSaldo"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: Prisma.StringNullableWithAggregatesFilter<"PecaSaldo"> | string | null
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"PecaSaldo"> | Date | string
 }
@@ -323,6 +339,7 @@ export type PecaSaldoCreateInput = {
   saldoReservado?: runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: string | null
   updatedAt?: Date | string
   peca: Prisma.PecaCreateNestedOneWithoutSaldosInput
@@ -336,6 +353,7 @@ export type PecaSaldoUncheckedCreateInput = {
   saldoReservado?: runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: string | null
   updatedAt?: Date | string
 }
@@ -345,6 +363,7 @@ export type PecaSaldoUpdateInput = {
   saldoReservado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   peca?: Prisma.PecaUpdateOneRequiredWithoutSaldosNestedInput
@@ -358,6 +377,7 @@ export type PecaSaldoUncheckedUpdateInput = {
   saldoReservado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -369,6 +389,7 @@ export type PecaSaldoCreateManyInput = {
   saldoReservado?: runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: string | null
   updatedAt?: Date | string
 }
@@ -378,6 +399,7 @@ export type PecaSaldoUpdateManyMutationInput = {
   saldoReservado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -389,6 +411,7 @@ export type PecaSaldoUncheckedUpdateManyInput = {
   saldoReservado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -415,6 +438,7 @@ export type PecaSaldoCountOrderByAggregateInput = {
   saldoReservado?: Prisma.SortOrder
   saldoSeparado?: Prisma.SortOrder
   saldoEmCompra?: Prisma.SortOrder
+  custoMedio?: Prisma.SortOrder
   localizacao?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -424,6 +448,7 @@ export type PecaSaldoAvgOrderByAggregateInput = {
   saldoReservado?: Prisma.SortOrder
   saldoSeparado?: Prisma.SortOrder
   saldoEmCompra?: Prisma.SortOrder
+  custoMedio?: Prisma.SortOrder
 }
 
 export type PecaSaldoMaxOrderByAggregateInput = {
@@ -433,6 +458,7 @@ export type PecaSaldoMaxOrderByAggregateInput = {
   saldoReservado?: Prisma.SortOrder
   saldoSeparado?: Prisma.SortOrder
   saldoEmCompra?: Prisma.SortOrder
+  custoMedio?: Prisma.SortOrder
   localizacao?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -444,6 +470,7 @@ export type PecaSaldoMinOrderByAggregateInput = {
   saldoReservado?: Prisma.SortOrder
   saldoSeparado?: Prisma.SortOrder
   saldoEmCompra?: Prisma.SortOrder
+  custoMedio?: Prisma.SortOrder
   localizacao?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -453,6 +480,7 @@ export type PecaSaldoSumOrderByAggregateInput = {
   saldoReservado?: Prisma.SortOrder
   saldoSeparado?: Prisma.SortOrder
   saldoEmCompra?: Prisma.SortOrder
+  custoMedio?: Prisma.SortOrder
 }
 
 export type PecaSaldoCreateNestedManyWithoutDepositoInput = {
@@ -544,6 +572,7 @@ export type PecaSaldoCreateWithoutDepositoInput = {
   saldoReservado?: runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: string | null
   updatedAt?: Date | string
   peca: Prisma.PecaCreateNestedOneWithoutSaldosInput
@@ -555,6 +584,7 @@ export type PecaSaldoUncheckedCreateWithoutDepositoInput = {
   saldoReservado?: runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: string | null
   updatedAt?: Date | string
 }
@@ -595,6 +625,7 @@ export type PecaSaldoScalarWhereInput = {
   saldoReservado?: Prisma.DecimalFilter<"PecaSaldo"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: Prisma.DecimalFilter<"PecaSaldo"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: Prisma.DecimalFilter<"PecaSaldo"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: Prisma.DecimalFilter<"PecaSaldo"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: Prisma.StringNullableFilter<"PecaSaldo"> | string | null
   updatedAt?: Prisma.DateTimeFilter<"PecaSaldo"> | Date | string
 }
@@ -604,6 +635,7 @@ export type PecaSaldoCreateWithoutPecaInput = {
   saldoReservado?: runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: string | null
   updatedAt?: Date | string
   deposito: Prisma.DepositoCreateNestedOneWithoutSaldosInput
@@ -615,6 +647,7 @@ export type PecaSaldoUncheckedCreateWithoutPecaInput = {
   saldoReservado?: runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: string | null
   updatedAt?: Date | string
 }
@@ -651,6 +684,7 @@ export type PecaSaldoCreateManyDepositoInput = {
   saldoReservado?: runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: string | null
   updatedAt?: Date | string
 }
@@ -660,6 +694,7 @@ export type PecaSaldoUpdateWithoutDepositoInput = {
   saldoReservado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   peca?: Prisma.PecaUpdateOneRequiredWithoutSaldosNestedInput
@@ -671,6 +706,7 @@ export type PecaSaldoUncheckedUpdateWithoutDepositoInput = {
   saldoReservado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -681,6 +717,7 @@ export type PecaSaldoUncheckedUpdateManyWithoutDepositoInput = {
   saldoReservado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -691,6 +728,7 @@ export type PecaSaldoCreateManyPecaInput = {
   saldoReservado?: runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: string | null
   updatedAt?: Date | string
 }
@@ -700,6 +738,7 @@ export type PecaSaldoUpdateWithoutPecaInput = {
   saldoReservado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deposito?: Prisma.DepositoUpdateOneRequiredWithoutSaldosNestedInput
@@ -711,6 +750,7 @@ export type PecaSaldoUncheckedUpdateWithoutPecaInput = {
   saldoReservado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -721,6 +761,7 @@ export type PecaSaldoUncheckedUpdateManyWithoutPecaInput = {
   saldoReservado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoSeparado?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   saldoEmCompra?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   localizacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -734,6 +775,7 @@ export type PecaSaldoSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   saldoReservado?: boolean
   saldoSeparado?: boolean
   saldoEmCompra?: boolean
+  custoMedio?: boolean
   localizacao?: boolean
   updatedAt?: boolean
   peca?: boolean | Prisma.PecaDefaultArgs<ExtArgs>
@@ -747,6 +789,7 @@ export type PecaSaldoSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   saldoReservado?: boolean
   saldoSeparado?: boolean
   saldoEmCompra?: boolean
+  custoMedio?: boolean
   localizacao?: boolean
   updatedAt?: boolean
   peca?: boolean | Prisma.PecaDefaultArgs<ExtArgs>
@@ -760,6 +803,7 @@ export type PecaSaldoSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   saldoReservado?: boolean
   saldoSeparado?: boolean
   saldoEmCompra?: boolean
+  custoMedio?: boolean
   localizacao?: boolean
   updatedAt?: boolean
   peca?: boolean | Prisma.PecaDefaultArgs<ExtArgs>
@@ -773,11 +817,12 @@ export type PecaSaldoSelectScalar = {
   saldoReservado?: boolean
   saldoSeparado?: boolean
   saldoEmCompra?: boolean
+  custoMedio?: boolean
   localizacao?: boolean
   updatedAt?: boolean
 }
 
-export type PecaSaldoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"pecaId" | "depositoId" | "saldoFisico" | "saldoReservado" | "saldoSeparado" | "saldoEmCompra" | "localizacao" | "updatedAt", ExtArgs["result"]["pecaSaldo"]>
+export type PecaSaldoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"pecaId" | "depositoId" | "saldoFisico" | "saldoReservado" | "saldoSeparado" | "saldoEmCompra" | "custoMedio" | "localizacao" | "updatedAt", ExtArgs["result"]["pecaSaldo"]>
 export type PecaSaldoInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   peca?: boolean | Prisma.PecaDefaultArgs<ExtArgs>
   deposito?: boolean | Prisma.DepositoDefaultArgs<ExtArgs>
@@ -810,6 +855,12 @@ export type $PecaSaldoPayload<ExtArgs extends runtime.Types.Extensions.InternalA
      * Em OC não recebida. NÃO integra o disponível.
      */
     saldoEmCompra: runtime.Decimal
+    /**
+     * A média ponderada DESTE depósito. Mora aqui, e não em `Peca`, porque é
+     * o `saldoFisico` da linha que a pondera: custo da empresa ponderado pela
+     * quantidade de um depósito erra nos dois assim que existe o segundo.
+     */
+    custoMedio: runtime.Decimal
     /**
      * Endereço na prateleira — é por depósito, não por peça.
      */
@@ -1246,6 +1297,7 @@ export interface PecaSaldoFieldRefs {
   readonly saldoReservado: Prisma.FieldRef<"PecaSaldo", 'Decimal'>
   readonly saldoSeparado: Prisma.FieldRef<"PecaSaldo", 'Decimal'>
   readonly saldoEmCompra: Prisma.FieldRef<"PecaSaldo", 'Decimal'>
+  readonly custoMedio: Prisma.FieldRef<"PecaSaldo", 'Decimal'>
   readonly localizacao: Prisma.FieldRef<"PecaSaldo", 'String'>
   readonly updatedAt: Prisma.FieldRef<"PecaSaldo", 'DateTime'>
 }

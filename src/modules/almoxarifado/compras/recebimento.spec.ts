@@ -83,7 +83,10 @@ function montarBanco(opts: Opcoes = {}) {
     }],
   ]);
   const saldos = new Map<string, Linha>([
-    ['p-1|dep-1', { pecaId: 'p-1', depositoId: 'dep-1', saldoFisico: 0, saldoReservado: 0, saldoSeparado: 0, saldoEmCompra: opts.origemCritica ? 8 : 5 }],
+    ['p-1|dep-1', { pecaId: 'p-1', depositoId: 'dep-1', saldoFisico: 0, saldoReservado: 0, saldoSeparado: 0, saldoEmCompra: opts.origemCritica ? 8 : 5, custoMedio: 10 }],
+    // A MESMA peça em outro depósito, com média própria e bem diferente: é
+    // contra esta linha que se prova que o custo não é da empresa.
+    ['p-1|dep-2', { pecaId: 'p-1', depositoId: 'dep-2', saldoFisico: 7, saldoReservado: 0, saldoSeparado: 0, saldoEmCompra: 0, custoMedio: 99 }],
   ]);
   const pecas = new Map<string, Linha>([['p-1', { id: 'p-1', companyId: COMPANY, custoMedio: 10 }]]);
 
@@ -130,7 +133,7 @@ function montarBanco(opts: Opcoes = {}) {
     });
     pecas.set('p-0', { id: 'p-0', companyId: COMPANY, custoMedio: 0 });
     // Primeira compra da peça neste depósito: a emissão criou a linha só com o `em_compra`.
-    saldos.set('p-0|dep-1', { pecaId: 'p-0', depositoId: 'dep-1', saldoFisico: 0, saldoReservado: 0, saldoSeparado: 0, saldoEmCompra: 2 });
+    saldos.set('p-0|dep-1', { pecaId: 'p-0', depositoId: 'dep-1', saldoFisico: 0, saldoReservado: 0, saldoSeparado: 0, saldoEmCompra: 2, custoMedio: 0 });
   }
 
   const recebimentos: Linha[] = [];
@@ -347,6 +350,13 @@ function montarBanco(opts: Opcoes = {}) {
         if (!s) throw new Error('P2025');
         return { ...s };
       }),
+      update: jest.fn(async ({ where, data }: { where: { pecaId_depositoId: { pecaId: string; depositoId: string } }; data: Linha }) => {
+        const chave = `${where.pecaId_depositoId.pecaId}|${where.pecaId_depositoId.depositoId}`;
+        const s = saldos.get(chave);
+        if (!s) throw new Error('P2025');
+        Object.assign(s, data);
+        return {};
+      }),
     },
     peca: {
       findFirstOrThrow: jest.fn(async ({ where }: { where: { id: string; companyId: string } }) => {
@@ -464,8 +474,10 @@ describe('executarRecebimento — o que fica gravado', () => {
       companyId: COMPANY, pecaId: 'p-1', depositoId: 'dep-1', tipo: 'entrada', quantidade: 5, saldoApos: 5,
       custoUnit: 12, origemTipo: 'recebimento', origemId: 'rec-1', autorCompanyUserId: AUTOR, observacao: 'OC-2026-001',
     })]);
-    // Saldo anterior zero: a média vira o preço da entrada.
-    expect(estado.pecas.get('p-1')!.custoMedio).toBe(12);
+    // Saldo anterior zero NESTE depósito: a média dele vira o preço da entrada.
+    expect(estado.saldos.get('p-1|dep-1')!.custoMedio).toBe(12);
+    // E a mesma peça no outro depósito não sentiu nada: custo é por depósito.
+    expect(estado.saldos.get('p-1|dep-2')!.custoMedio).toBe(99);
     expect(estado.recebimentos).toEqual([expect.objectContaining({
       companyId: COMPANY, ordemCompraId: 'oc-1', depositoId: 'dep-1', notaFiscalNumero: 'NF 123', recebidoPorCompanyUserId: AUTOR,
     })]);
@@ -514,7 +526,7 @@ describe('executarRecebimento — o que fica gravado', () => {
     expect(estado.oss.get('os-1')!.statusMateriais).toBe('recebimento_parcial');
     // Preço da nota vale sobre o da OC.
     expect(estado.movimentos[0]).toMatchObject({ quantidade: 2, custoUnit: 11 });
-    expect(estado.pecas.get('p-1')!.custoMedio).toBe(11);
+    expect(estado.saldos.get('p-1|dep-1')!.custoMedio).toBe(11);
     expect(notificacoes.map((n) => [n.destinatarioId, n.titulo])).toEqual([
       ['cu-prog', 'OS-2026-047: chegou parte das peças'],
       ['cu-alm', 'REQ-2026-001: chegou parte das peças'],
@@ -592,7 +604,7 @@ describe('executarRecebimento — o que fica gravado', () => {
 
     expect(estado.log.filter((l) => l.startsWith('trava:saldo'))).toEqual(['trava:saldo:p-0', 'trava:saldo:p-1']);
     expect(estado.saldos.get('p-0|dep-1')).toMatchObject({ saldoFisico: 2, saldoReservado: 0, saldoEmCompra: 0 });
-    expect(estado.pecas.get('p-0')!.custoMedio).toBe(30);
+    expect(estado.saldos.get('p-0|dep-1')!.custoMedio).toBe(30);
     expect(estado.scItens.get('sci-0')!.status).toBe('atendida');
     expect(estado.ocs.get('oc-1')!.status).toBe('recebida');
   });

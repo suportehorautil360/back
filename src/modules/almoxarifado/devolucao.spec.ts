@@ -42,9 +42,11 @@ function montar(opts: Opcoes = {}) {
       quantidadeEntregue: 3, quantidadeDevolvida: 0,
     });
   }
+  // `custoMedio` é o DO DEPÓSITO, e diferente do custo da peça de propósito:
+  // é o que distingue as duas fontes quando o crédito cai no ramo de queda.
   const saldos = new Map<string, Linha>([
-    ['p-1|dep-1', { saldoFisico: 4 }],
-    ['p-2|dep-1', { saldoFisico: 1 }],
+    ['p-1|dep-1', { saldoFisico: 4, custoMedio: 29 }],
+    ['p-2|dep-1', { saldoFisico: 1, custoMedio: 37 }],
   ]);
   const pecas = new Map<string, Linha>([
     ['p-1', { id: 'p-1', companyId: COMPANY, codigoInterno: 'ALM-000001', descricao: 'Filtro de óleo', marca: 'Mann', unidade: 'un', custoMedio: 31 }],
@@ -196,7 +198,7 @@ describe('devolverSobra — o que fica gravado', () => {
 
     const r = await devolver(servico, { recebidoDe: 'João (mecânico)' });
 
-    expect(estado.saldos.get('p-2|dep-1')).toEqual({ saldoFisico: 3 });
+    expect(estado.saldos.get('p-2|dep-1')).toEqual({ saldoFisico: 3, custoMedio: 37 });
     expect(estado.itens.get('it-1')).toMatchObject({ quantidadeDevolvida: 2, status: 'entregue' });
     expect(estado.movimentos).toEqual([expect.objectContaining({
       companyId: COMPANY, pecaId: 'p-2', depositoId: 'dep-1', tipo: 'devolucao', quantidade: 2,
@@ -227,12 +229,15 @@ describe('devolverSobra — o que fica gravado', () => {
     expect(db.estoqueMovimento.create.mock.calls[0][0].data.custoUnit).toBeNull();
   });
 
-  it('sem insumo lançado pela entrega, credita pelo custo médio atual', async () => {
+  it('sem insumo lançado pela entrega, credita pelo custo médio DO DEPÓSITO', async () => {
+    // Fatia 0 do desenho de 2026-09-16. O fake serve os dois números: a linha
+    // de saldo diz 37, o cadastro da peça diz 44. Creditar 44 é devolver a
+    // sobra pela média da empresa, que é a mistura dos depósitos.
     const { servico, estado } = montar({ semInsumoDaEntrega: true });
 
     await devolver(servico);
 
-    expect(estado.insumos.at(-1)).toMatchObject({ quantidade: -2, valorUnit: 44, ordem: 0 });
+    expect(estado.insumos.at(-1)).toMatchObject({ quantidade: -2, valorUnit: 37, ordem: 0 });
   });
 
   it('trava a requisição antes do saldo e devolve peça a peça na ordem de trava', async () => {
@@ -247,8 +252,8 @@ describe('devolverSobra — o que fica gravado', () => {
     expect(estado.log.filter((l) => l.startsWith('trava') || l.startsWith('saldo'))).toEqual([
       'trava:req', 'trava:saldo:p-1', 'saldo:p-1', 'trava:saldo:p-2', 'saldo:p-2',
     ]);
-    expect(estado.saldos.get('p-1|dep-1')).toEqual({ saldoFisico: 7 });
-    expect(estado.saldos.get('p-2|dep-1')).toEqual({ saldoFisico: 2 });
+    expect(estado.saldos.get('p-1|dep-1')).toEqual({ saldoFisico: 7, custoMedio: 29 });
+    expect(estado.saldos.get('p-2|dep-1')).toEqual({ saldoFisico: 2, custoMedio: 37 });
   });
 
   it('o que já voltou antes não volta de novo: só o resto pode ser devolvido', async () => {
@@ -267,7 +272,7 @@ describe('devolverSobra — o que fica gravado', () => {
     await expect(devolver(servico, { itens: [{ itemId: 'it-1', quantidade: 6 }] }))
       .rejects.toThrow(/restam 5/);
 
-    expect(estado.saldos.get('p-2|dep-1')).toEqual({ saldoFisico: 1 });
+    expect(estado.saldos.get('p-2|dep-1')).toEqual({ saldoFisico: 1, custoMedio: 37 });
     expect(estado.movimentos).toEqual([]);
     expect(estado.insumos).toHaveLength(2);
   });

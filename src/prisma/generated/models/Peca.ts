@@ -29,13 +29,11 @@ export type AggregatePeca = {
 export type PecaAvgAggregateOutputType = {
   estoqueMinimo: runtime.Decimal | null
   loteReposicao: runtime.Decimal | null
-  custoMedio: runtime.Decimal | null
 }
 
 export type PecaSumAggregateOutputType = {
   estoqueMinimo: runtime.Decimal | null
   loteReposicao: runtime.Decimal | null
-  custoMedio: runtime.Decimal | null
 }
 
 export type PecaMinAggregateOutputType = {
@@ -50,7 +48,6 @@ export type PecaMinAggregateOutputType = {
   categoria: string | null
   estoqueMinimo: runtime.Decimal | null
   loteReposicao: runtime.Decimal | null
-  custoMedio: runtime.Decimal | null
   ativo: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -68,7 +65,6 @@ export type PecaMaxAggregateOutputType = {
   categoria: string | null
   estoqueMinimo: runtime.Decimal | null
   loteReposicao: runtime.Decimal | null
-  custoMedio: runtime.Decimal | null
   ativo: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -87,7 +83,6 @@ export type PecaCountAggregateOutputType = {
   equivalentes: number
   estoqueMinimo: number
   loteReposicao: number
-  custoMedio: number
   ativo: number
   createdAt: number
   updatedAt: number
@@ -98,13 +93,11 @@ export type PecaCountAggregateOutputType = {
 export type PecaAvgAggregateInputType = {
   estoqueMinimo?: true
   loteReposicao?: true
-  custoMedio?: true
 }
 
 export type PecaSumAggregateInputType = {
   estoqueMinimo?: true
   loteReposicao?: true
-  custoMedio?: true
 }
 
 export type PecaMinAggregateInputType = {
@@ -119,7 +112,6 @@ export type PecaMinAggregateInputType = {
   categoria?: true
   estoqueMinimo?: true
   loteReposicao?: true
-  custoMedio?: true
   ativo?: true
   createdAt?: true
   updatedAt?: true
@@ -137,7 +129,6 @@ export type PecaMaxAggregateInputType = {
   categoria?: true
   estoqueMinimo?: true
   loteReposicao?: true
-  custoMedio?: true
   ativo?: true
   createdAt?: true
   updatedAt?: true
@@ -156,7 +147,6 @@ export type PecaCountAggregateInputType = {
   equivalentes?: true
   estoqueMinimo?: true
   loteReposicao?: true
-  custoMedio?: true
   ativo?: true
   createdAt?: true
   updatedAt?: true
@@ -262,7 +252,6 @@ export type PecaGroupByOutputType = {
   equivalentes: runtime.JsonValue
   estoqueMinimo: runtime.Decimal
   loteReposicao: runtime.Decimal
-  custoMedio: runtime.Decimal
   ativo: boolean
   createdAt: Date
   updatedAt: Date
@@ -304,7 +293,6 @@ export type PecaWhereInput = {
   equivalentes?: Prisma.JsonFilter<"Peca">
   estoqueMinimo?: Prisma.DecimalFilter<"Peca"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFilter<"Peca"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFilter<"Peca"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFilter<"Peca"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Peca"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Peca"> | Date | string
@@ -331,7 +319,6 @@ export type PecaOrderByWithRelationInput = {
   equivalentes?: Prisma.SortOrder
   estoqueMinimo?: Prisma.SortOrder
   loteReposicao?: Prisma.SortOrder
-  custoMedio?: Prisma.SortOrder
   ativo?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -362,7 +349,6 @@ export type PecaWhereUniqueInput = Prisma.AtLeast<{
   equivalentes?: Prisma.JsonFilter<"Peca">
   estoqueMinimo?: Prisma.DecimalFilter<"Peca"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFilter<"Peca"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFilter<"Peca"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFilter<"Peca"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Peca"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Peca"> | Date | string
@@ -389,7 +375,6 @@ export type PecaOrderByWithAggregationInput = {
   equivalentes?: Prisma.SortOrder
   estoqueMinimo?: Prisma.SortOrder
   loteReposicao?: Prisma.SortOrder
-  custoMedio?: Prisma.SortOrder
   ativo?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -416,7 +401,6 @@ export type PecaScalarWhereWithAggregatesInput = {
   equivalentes?: Prisma.JsonWithAggregatesFilter<"Peca">
   estoqueMinimo?: Prisma.DecimalWithAggregatesFilter<"Peca"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalWithAggregatesFilter<"Peca"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalWithAggregatesFilter<"Peca"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolWithAggregatesFilter<"Peca"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Peca"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Peca"> | Date | string
@@ -434,7 +418,6 @@ export type PecaCreateInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -461,7 +444,6 @@ export type PecaUncheckedCreateInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -486,7 +468,6 @@ export type PecaUpdateInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -513,7 +494,6 @@ export type PecaUncheckedUpdateInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -539,7 +519,6 @@ export type PecaCreateManyInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -557,7 +536,6 @@ export type PecaUpdateManyMutationInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -576,7 +554,6 @@ export type PecaUncheckedUpdateManyInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -610,7 +587,6 @@ export type PecaCountOrderByAggregateInput = {
   equivalentes?: Prisma.SortOrder
   estoqueMinimo?: Prisma.SortOrder
   loteReposicao?: Prisma.SortOrder
-  custoMedio?: Prisma.SortOrder
   ativo?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -619,7 +595,6 @@ export type PecaCountOrderByAggregateInput = {
 export type PecaAvgOrderByAggregateInput = {
   estoqueMinimo?: Prisma.SortOrder
   loteReposicao?: Prisma.SortOrder
-  custoMedio?: Prisma.SortOrder
 }
 
 export type PecaMaxOrderByAggregateInput = {
@@ -634,7 +609,6 @@ export type PecaMaxOrderByAggregateInput = {
   categoria?: Prisma.SortOrder
   estoqueMinimo?: Prisma.SortOrder
   loteReposicao?: Prisma.SortOrder
-  custoMedio?: Prisma.SortOrder
   ativo?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -652,7 +626,6 @@ export type PecaMinOrderByAggregateInput = {
   categoria?: Prisma.SortOrder
   estoqueMinimo?: Prisma.SortOrder
   loteReposicao?: Prisma.SortOrder
-  custoMedio?: Prisma.SortOrder
   ativo?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -661,7 +634,6 @@ export type PecaMinOrderByAggregateInput = {
 export type PecaSumOrderByAggregateInput = {
   estoqueMinimo?: Prisma.SortOrder
   loteReposicao?: Prisma.SortOrder
-  custoMedio?: Prisma.SortOrder
 }
 
 export type PecaScalarRelationFilter = {
@@ -830,7 +802,6 @@ export type PecaCreateWithoutCompanyInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -855,7 +826,6 @@ export type PecaUncheckedCreateWithoutCompanyInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -910,7 +880,6 @@ export type PecaScalarWhereInput = {
   equivalentes?: Prisma.JsonFilter<"Peca">
   estoqueMinimo?: Prisma.DecimalFilter<"Peca"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFilter<"Peca"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFilter<"Peca"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFilter<"Peca"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Peca"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Peca"> | Date | string
@@ -928,7 +897,6 @@ export type PecaCreateWithoutSaldosInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -954,7 +922,6 @@ export type PecaUncheckedCreateWithoutSaldosInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -994,7 +961,6 @@ export type PecaUpdateWithoutSaldosInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1020,7 +986,6 @@ export type PecaUncheckedUpdateWithoutSaldosInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1044,7 +1009,6 @@ export type PecaCreateWithoutMovimentosInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1070,7 +1034,6 @@ export type PecaUncheckedCreateWithoutMovimentosInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1110,7 +1073,6 @@ export type PecaUpdateWithoutMovimentosInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1136,7 +1098,6 @@ export type PecaUncheckedUpdateWithoutMovimentosInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1160,7 +1121,6 @@ export type PecaCreateWithoutRequisicaoItensInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1186,7 +1146,6 @@ export type PecaUncheckedCreateWithoutRequisicaoItensInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1215,7 +1174,6 @@ export type PecaCreateWithoutPecasEquivalentesInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1241,7 +1199,6 @@ export type PecaUncheckedCreateWithoutPecasEquivalentesInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1281,7 +1238,6 @@ export type PecaUpdateWithoutRequisicaoItensInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1307,7 +1263,6 @@ export type PecaUncheckedUpdateWithoutRequisicaoItensInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1342,7 +1297,6 @@ export type PecaUpdateWithoutPecasEquivalentesInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1368,7 +1322,6 @@ export type PecaUncheckedUpdateWithoutPecasEquivalentesInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1392,7 +1345,6 @@ export type PecaCreateWithoutSolicitacaoCompraItensInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1418,7 +1370,6 @@ export type PecaUncheckedCreateWithoutSolicitacaoCompraItensInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1458,7 +1409,6 @@ export type PecaUpdateWithoutSolicitacaoCompraItensInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1484,7 +1434,6 @@ export type PecaUncheckedUpdateWithoutSolicitacaoCompraItensInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1508,7 +1457,6 @@ export type PecaCreateWithoutOrdemCompraItensInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1534,7 +1482,6 @@ export type PecaUncheckedCreateWithoutOrdemCompraItensInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1574,7 +1521,6 @@ export type PecaUpdateWithoutOrdemCompraItensInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1600,7 +1546,6 @@ export type PecaUncheckedUpdateWithoutOrdemCompraItensInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1624,7 +1569,6 @@ export type PecaCreateWithoutCatalogosDeFornecedorInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1650,7 +1594,6 @@ export type PecaUncheckedCreateWithoutCatalogosDeFornecedorInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1690,7 +1633,6 @@ export type PecaUpdateWithoutCatalogosDeFornecedorInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1716,7 +1658,6 @@ export type PecaUncheckedUpdateWithoutCatalogosDeFornecedorInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1740,7 +1681,6 @@ export type PecaCreateManyCompanyInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1758,7 +1698,6 @@ export type PecaUpdateWithoutCompanyInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1783,7 +1722,6 @@ export type PecaUncheckedUpdateWithoutCompanyInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1808,7 +1746,6 @@ export type PecaUncheckedUpdateManyWithoutCompanyInput = {
   equivalentes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   estoqueMinimo?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   loteReposicao?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  custoMedio?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1912,7 +1849,6 @@ export type PecaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   equivalentes?: boolean
   estoqueMinimo?: boolean
   loteReposicao?: boolean
-  custoMedio?: boolean
   ativo?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1940,7 +1876,6 @@ export type PecaSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   equivalentes?: boolean
   estoqueMinimo?: boolean
   loteReposicao?: boolean
-  custoMedio?: boolean
   ativo?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1960,7 +1895,6 @@ export type PecaSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   equivalentes?: boolean
   estoqueMinimo?: boolean
   loteReposicao?: boolean
-  custoMedio?: boolean
   ativo?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1980,13 +1914,12 @@ export type PecaSelectScalar = {
   equivalentes?: boolean
   estoqueMinimo?: boolean
   loteReposicao?: boolean
-  custoMedio?: boolean
   ativo?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type PecaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "companyId" | "codigoInterno" | "codigoFabricante" | "descricao" | "especificacao" | "marca" | "unidade" | "categoria" | "equivalentes" | "estoqueMinimo" | "loteReposicao" | "custoMedio" | "ativo" | "createdAt" | "updatedAt", ExtArgs["result"]["peca"]>
+export type PecaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "companyId" | "codigoInterno" | "codigoFabricante" | "descricao" | "especificacao" | "marca" | "unidade" | "categoria" | "equivalentes" | "estoqueMinimo" | "loteReposicao" | "ativo" | "createdAt" | "updatedAt", ExtArgs["result"]["peca"]>
 export type PecaInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   saldos?: boolean | Prisma.Peca$saldosArgs<ExtArgs>
@@ -2051,7 +1984,6 @@ export type $PecaPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      * 0 = comprar só o que falta para voltar ao mínimo.
      */
     loteReposicao: runtime.Decimal
-    custoMedio: runtime.Decimal
     ativo: boolean
     createdAt: Date
     updatedAt: Date
@@ -2498,7 +2430,6 @@ export interface PecaFieldRefs {
   readonly equivalentes: Prisma.FieldRef<"Peca", 'Json'>
   readonly estoqueMinimo: Prisma.FieldRef<"Peca", 'Decimal'>
   readonly loteReposicao: Prisma.FieldRef<"Peca", 'Decimal'>
-  readonly custoMedio: Prisma.FieldRef<"Peca", 'Decimal'>
   readonly ativo: Prisma.FieldRef<"Peca", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Peca", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Peca", 'DateTime'>

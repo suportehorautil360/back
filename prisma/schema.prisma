@@ -2253,7 +2253,6 @@ model Peca {
   estoqueMinimo Decimal @default(0) @map("estoque_minimo") @db.Decimal(12, 3)
   /// 0 = comprar só o que falta para voltar ao mínimo.
   loteReposicao Decimal @default(0) @map("lote_reposicao") @db.Decimal(12, 3)
-  custoMedio    Decimal @default(0) @map("custo_medio") @db.Decimal(12, 4)
 
   ativo     Boolean  @default(true)
   createdAt DateTime @default(now()) @map("created_at")
@@ -2290,6 +2289,10 @@ model PecaSaldo {
   saldoSeparado  Decimal @default(0) @map("saldo_separado") @db.Decimal(12, 3)
   /// Em OC não recebida. NÃO integra o disponível.
   saldoEmCompra  Decimal @default(0) @map("saldo_em_compra") @db.Decimal(12, 3)
+  /// A média ponderada DESTE depósito. Mora aqui, e não em `Peca`, porque é
+  /// o `saldoFisico` da linha que a pondera: custo da empresa ponderado pela
+  /// quantidade de um depósito erra nos dois assim que existe o segundo.
+  custoMedio     Decimal @default(0) @map("custo_medio") @db.Decimal(12, 4)
   /// Endereço na prateleira — é por depósito, não por peça.
   localizacao    String?
 

@@ -800,28 +800,22 @@ describe('darEntrada', () => {
    * `FOR UPDATE` não trava linha que ainda não existe, e travar uma linha que
    * não existe não protege nada.
    */
-  function prismaFalsoEntrada(saldoFisico: number) {
+  function prismaFalsoEntrada(saldoFisico: number, custoMedio = 10) {
     const chamadas: string[] = [];
     const tx = {
       $executeRaw: jest.fn(async () => {
         chamadas.push('SELECT FOR UPDATE');
         return 1;
       }),
-      peca: {
-        findFirstOrThrow: jest.fn(async () => ({ custoMedio: 10 })),
-        update: jest.fn(async () => {
-          chamadas.push('UPDATE peca');
-          return {};
-        }),
-      },
       pecaSaldo: {
         upsert: jest.fn(async () => {
           chamadas.push('UPSERT garante linha');
           return {};
         }),
+        // Saldo e custo vêm da mesma linha travada: o custo é por depósito.
         findUniqueOrThrow: jest.fn(async () => {
           chamadas.push('READ saldo travado');
-          return { saldoFisico };
+          return { saldoFisico, custoMedio };
         }),
         update: jest.fn(async () => {
           chamadas.push('UPDATE saldo');
@@ -950,8 +944,7 @@ describe('darEntrada', () => {
     // caminho a média não muda, e trocar `anterior` por `depois` no serviço
     // não quebraria aquele teste. Este usa números que DISTINGUEM as duas
     // contas de propósito.
-    const { prisma, tx } = prismaFalsoEntrada(10); // saldoFisico ANTERIOR = 10
-    tx.peca.findFirstOrThrow = jest.fn(async () => ({ custoMedio: 8 }));
+    const { prisma, tx } = prismaFalsoEntrada(10, 8); // saldoFisico ANTERIOR = 10, custo do depósito = 8
     const servico = new AlmoxarifadoService(prisma as never);
 
     const r = await servico.darEntrada({
@@ -964,7 +957,75 @@ describe('darEntrada', () => {
     // Os dois números são diferentes de propósito — qualquer troca entre as
     // duas contas quebra esta asserção.
     expect(r.custoMedio).toBe(12);
-    expect(tx.peca.update.mock.calls[0][0].data.custoMedio).toBe(12);
+    expect(tx.pecaSaldo.update.mock.calls[0][0].data.custoMedio).toBe(12);
+  });
+
+  it('o custo médio é POR DEPÓSITO: entrada cara no segundo não contamina o primeiro', async () => {
+    // Fatia 0 do desenho de 2026-09-16. O custo mora em `peca_saldos`, junto
+    // da quantidade que o pondera — não em `pecas`, que é da empresa inteira.
+    //
+    // O fake abaixo oferece as DUAS casas de propósito: quem ler de `pecas`
+    // acha o número da empresa, quem ler de `peca_saldos` acha o do depósito.
+    // Assim o teste falha com um VALOR errado (a prova do defeito), e não com
+    // um erro de fake ausente.
+    const DEPOSITO_2 = '66666666-6666-6666-6666-666666666666';
+    const saldos = new Map<string, { saldoFisico: number; custoMedio: number }>();
+    let custoDaPeca = 0; // o campo antigo, da empresa
+    const chave = (d: string) => `${PECA}|${d}`;
+
+    const tx = {
+      $executeRaw: jest.fn(async () => 1),
+      peca: {
+        findFirstOrThrow: jest.fn(async () => ({ custoMedio: custoDaPeca })),
+        update: jest.fn(async ({ data }: { data: { custoMedio: number } }) => {
+          custoDaPeca = data.custoMedio;
+          return {};
+        }),
+      },
+      pecaSaldo: {
+        upsert: jest.fn(async ({ create }: { create: { depositoId: string } }) => {
+          const k = chave(create.depositoId);
+          if (!saldos.has(k)) saldos.set(k, { saldoFisico: 0, custoMedio: 0 });
+          return {};
+        }),
+        findUniqueOrThrow: jest.fn(
+          async ({ where }: { where: { pecaId_depositoId: { depositoId: string } } }) => {
+            const linha = saldos.get(chave(where.pecaId_depositoId.depositoId));
+            if (!linha) throw new Error('linha de saldo inexistente no fake');
+            return { ...linha };
+          },
+        ),
+        update: jest.fn(
+          async ({ where, data }: { where: { pecaId_depositoId: { depositoId: string } }; data: Record<string, number> }) => {
+            const k = chave(where.pecaId_depositoId.depositoId);
+            saldos.set(k, { ...saldos.get(k)!, ...data });
+            return {};
+          },
+        ),
+      },
+      estoqueMovimento: { create: jest.fn(async () => ({})) },
+    };
+    const prisma = {
+      deposito: { findFirst: jest.fn(async ({ where }: { where: { id: string } }) => ({ id: where.id })) },
+      $transaction: jest.fn(async (fn: (t: typeof tx) => Promise<unknown>) => fn(tx)),
+    };
+    const servico = new AlmoxarifadoService(prisma as never);
+    const entrada = (depositoId: string, quantidade: number, custoUnit: number) =>
+      servico.darEntrada({ companyId: COMPANY, pecaId: PECA, depositoId, quantidade, custoUnit, autorCompanyUserId: AUTOR });
+
+    // Depósito 1 recebe barato; depósito 2 recebe caro.
+    const primeira = await entrada(DEPOSITO, 10, 20);
+    expect(primeira.custoMedio).toBe(20);
+    const segunda = await entrada(DEPOSITO_2, 10, 40);
+    expect(segunda.custoMedio).toBe(40);
+
+    // Nova entrada no depósito 1, ao MESMO preço da primeira: a média dele não
+    // tem por que se mexer. Lendo o custo da empresa, a conta seria
+    // (10*40 + 10*20) / 20 = 30 — o preço do outro depósito vazando para cá.
+    const terceira = await entrada(DEPOSITO, 10, 20);
+    expect(terceira.custoMedio).toBe(20);
+    expect(saldos.get(chave(DEPOSITO))!.custoMedio).toBe(20);
+    expect(saldos.get(chave(DEPOSITO_2))!.custoMedio).toBe(40);
   });
 });
 

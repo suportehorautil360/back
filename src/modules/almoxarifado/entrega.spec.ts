@@ -78,7 +78,10 @@ function montar(
       }
       chamadas.push(`LOCK ${query.values[0]}`);
       if (opts.semSaldo) return [];
-      return [{ saldo_fisico: '10', saldo_reservado: '4', saldo_separado: '4' }];
+      // `custo_medio` vem da MESMA linha travada que as quantidades, e é
+      // diferente do custo da peça de propósito: é o que distingue as duas
+      // fontes quando o teste pergunta de onde saiu o valor da entrega.
+      return [{ saldo_fisico: '10', saldo_reservado: '4', saldo_separado: '4', custo_medio: '31' }];
     }),
     $executeRaw: jest.fn(async () => {
       chamadas.push('UPDATE saldo');
@@ -521,7 +524,21 @@ describe('entregarRequisicao', () => {
     const insumo = tx.serviceOrderInsumo.create.mock.calls[0][0].data;
     expect(insumo.serviceOrderId).toBe('os-1');
     expect(Number(insumo.quantidade)).toBe(4);
-    expect(Number(insumo.valorUnit)).toBe(25);
+    expect(Number(insumo.valorUnit)).toBe(31);
+  });
+
+  it('o custo da entrega é o do DEPÓSITO de onde a peça saiu, não o da peça', async () => {
+    // Fatia 0 do desenho de 2026-09-16. O fake serve os dois números: a linha
+    // travada de `peca_saldos` diz 31, o cadastro da peça diz 25. Sair com 25
+    // é valorizar a OS pela média da empresa — que é a mistura dos depósitos.
+    const { servico, tx } = montar('separada', [separado()]);
+    await servico.entregarRequisicao({
+      companyId: COMPANY, requisicaoId: REQ, autorCompanyUserId: AUTOR,
+      recebedorOperatorId: MECANICO, confirmacaoTipo: 'pin',
+    });
+
+    expect(Number(tx.serviceOrderInsumo.create.mock.calls[0][0].data.valorUnit)).toBe(31);
+    expect(Number(tx.estoqueMovimento.create.mock.calls[0][0].data.custoUnit)).toBe(31);
   });
 
   it('grava saldoApos como o saldo físico DEPOIS do decremento, não o lido antes dele', async () => {

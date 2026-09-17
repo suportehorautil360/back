@@ -303,7 +303,7 @@ export async function executarRecebimento(
       }
       const saldo = await tx.pecaSaldo.findUniqueOrThrow({
         where: { pecaId_depositoId: { pecaId: item.pecaId, depositoId: oc.depositoId } },
-        select: { saldoFisico: true },
+        select: { saldoFisico: true, custoMedio: true },
       });
       const saldoAnterior = Number(saldo.saldoFisico);
 
@@ -350,13 +350,11 @@ export async function executarRecebimento(
       `);
 
       const custoUnit = entrada.valorUnit ?? Number(item.valorUnit);
-      const peca = await tx.peca.findFirstOrThrow({
-        where: { id: item.pecaId, companyId: input.companyId },
-        select: { custoMedio: true },
-      });
-      await tx.peca.update({
-        where: { id: item.pecaId },
-        data: { custoMedio: novoCustoMedio(Number(peca.custoMedio), saldoAnterior, quantidade, custoUnit) },
+      // A média é DO DEPÓSITO que recebeu: ela é ponderada pelo `saldoAnterior`
+      // desta linha, então tem de sair e voltar para esta mesma linha.
+      await tx.pecaSaldo.update({
+        where: { pecaId_depositoId: { pecaId: item.pecaId, depositoId: oc.depositoId } },
+        data: { custoMedio: novoCustoMedio(Number(saldo.custoMedio), saldoAnterior, quantidade, custoUnit) },
       });
       await tx.estoqueMovimento.create({
         data: {

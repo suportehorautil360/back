@@ -1315,7 +1315,6 @@ export const PecaScalarFieldEnum = {
   equivalentes: 'equivalentes',
   estoqueMinimo: 'estoqueMinimo',
   loteReposicao: 'loteReposicao',
-  custoMedio: 'custoMedio',
   ativo: 'ativo',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1331,6 +1330,7 @@ export const PecaSaldoScalarFieldEnum = {
   saldoReservado: 'saldoReservado',
   saldoSeparado: 'saldoSeparado',
   saldoEmCompra: 'saldoEmCompra',
+  custoMedio: 'custoMedio',
   localizacao: 'localizacao',
   updatedAt: 'updatedAt'
 } as const

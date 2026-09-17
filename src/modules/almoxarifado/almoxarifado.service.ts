@@ -724,28 +724,22 @@ export class AlmoxarifadoService {
            FOR UPDATE
       `);
 
+      // Saldo e custo saem da MESMA linha travada: a média é ponderada pelo
+      // `saldoFisico` que está ao lado dela, e não pelo custo da empresa.
       const saldo = await tx.pecaSaldo.findUniqueOrThrow({
         where: { pecaId_depositoId: { pecaId: input.pecaId, depositoId: input.depositoId } },
-        select: { saldoFisico: true },
+        select: { saldoFisico: true, custoMedio: true },
       });
       const anterior = Number(saldo.saldoFisico);
       const depois = anterior + input.quantidade;
 
-      const peca = await tx.peca.findFirstOrThrow({
-        where: { id: input.pecaId, companyId: input.companyId },
-        select: { custoMedio: true },
-      });
       const custoMedio = novoCustoMedio(
-        Number(peca.custoMedio), anterior, input.quantidade, input.custoUnit,
+        Number(saldo.custoMedio), anterior, input.quantidade, input.custoUnit,
       );
 
       await tx.pecaSaldo.update({
         where: { pecaId_depositoId: { pecaId: input.pecaId, depositoId: input.depositoId } },
-        data: { saldoFisico: depois },
-      });
-      await tx.peca.update({
-        where: { id: input.pecaId },
-        data: { custoMedio },
+        data: { saldoFisico: depois, custoMedio },
       });
       await tx.estoqueMovimento.create({
         data: {
@@ -1466,9 +1460,9 @@ export class AlmoxarifadoService {
       // Trava a linha do saldo ANTES de decidir o que fazer com ela — mesma
       // regra de `executarReserva`/`executarSeparacao`.
       const linhas = await tx.$queryRaw<
-        { saldo_fisico: string; saldo_reservado: string; saldo_separado: string }[]
+        { saldo_fisico: string; saldo_reservado: string; saldo_separado: string; custo_medio: string }[]
       >(Prisma.sql`
-        SELECT saldo_fisico, saldo_reservado, saldo_separado FROM peca_saldos
+        SELECT saldo_fisico, saldo_reservado, saldo_separado, custo_medio FROM peca_saldos
          WHERE peca_id = ${item.pecaId}::uuid
            AND deposito_id = ${req.depositoId}::uuid
            FOR UPDATE
@@ -1533,8 +1527,11 @@ export class AlmoxarifadoService {
         // quanto tem na caixa.
         const peca = await tx.peca.findFirstOrThrow({
           where: { id: item.pecaId, companyId: input.companyId },
-          select: { custoMedio: true, descricao: true, codigoInterno: true, marca: true, unidade: true },
+          select: { descricao: true, codigoInterno: true, marca: true, unidade: true },
         });
+        // O custo sai da linha JÁ TRAVADA acima, não do cadastro da peça: é a
+        // média deste depósito que valoriza o que saiu desta prateleira.
+        const custoMedio = Number(linhas[0].custo_medio);
 
         await tx.estoqueMovimento.create({
           data: {
@@ -1546,7 +1543,7 @@ export class AlmoxarifadoService {
             // conferir o saldo é um SUM.
             quantidade: -separado,
             saldoApos: fisicoDepois,
-            custoUnit: peca.custoMedio,
+            custoUnit: custoMedio,
             origemTipo: 'requisicao',
             origemId: req.id,
             autorCompanyUserId: input.autorCompanyUserId,
@@ -1562,7 +1559,7 @@ export class AlmoxarifadoService {
             marca: peca.marca,
             quantidade: separado,
             unidade: peca.unidade,
-            valorUnit: peca.custoMedio,
+            valorUnit: custoMedio,
           },
         });
         proximaOrdem += 1;
@@ -2579,7 +2576,7 @@ export class AlmoxarifadoService {
       }
       const saldo = await tx.pecaSaldo.findUniqueOrThrow({
         where: { pecaId_depositoId: { pecaId, depositoId: req.depositoId } },
-        select: { saldoFisico: true },
+        select: { saldoFisico: true, custoMedio: true },
       });
       const saldoAnterior = Number(saldo.saldoFisico);
 
@@ -2603,7 +2600,7 @@ export class AlmoxarifadoService {
 
       const peca = await tx.peca.findFirstOrThrow({
         where: { id: pecaId, companyId: input.companyId },
-        select: { codigoInterno: true, descricao: true, marca: true, unidade: true, custoMedio: true },
+        select: { codigoInterno: true, descricao: true, marca: true, unidade: true },
       });
       // O valor da entrega, não o custo médio de hoje: creditar a OS por outro
       // preço deixaria um resíduo em quem entregou e devolveu a mesma peça.
@@ -2639,7 +2636,7 @@ export class AlmoxarifadoService {
           marca: peca.marca,
           quantidade: -pedido.quantidade,
           unidade: peca.unidade,
-          valorUnit: insumoDaEntrega?.valorUnit ?? peca.custoMedio,
+          valorUnit: insumoDaEntrega?.valorUnit ?? saldo.custoMedio,
         },
       });
       proximaOrdem += 1;
