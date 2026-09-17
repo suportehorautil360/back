@@ -460,6 +460,8 @@ export const ModelName = {
   Peca: 'Peca',
   PecaSaldo: 'PecaSaldo',
   EstoqueMovimento: 'EstoqueMovimento',
+  Inventario: 'Inventario',
+  InventarioItem: 'InventarioItem',
   RequisicaoMaterial: 'RequisicaoMaterial',
   RequisicaoMaterialItem: 'RequisicaoMaterialItem',
   SolicitacaoCompra: 'SolicitacaoCompra',
@@ -486,7 +488,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken" | "checklistModelo" | "manualEquipamento" | "checklistExecucao" | "equipmentProgramador" | "programadorMecanico" | "serviceOrderAuditoria" | "deposito" | "peca" | "pecaSaldo" | "estoqueMovimento" | "requisicaoMaterial" | "requisicaoMaterialItem" | "solicitacaoCompra" | "solicitacaoCompraItem" | "ordemCompra" | "ordemCompraItem" | "ordemCompraItemOrigem" | "recebimento" | "recebimentoItem" | "pontoAuditoria" | "fornecedorPeca"
+    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken" | "checklistModelo" | "manualEquipamento" | "checklistExecucao" | "equipmentProgramador" | "programadorMecanico" | "serviceOrderAuditoria" | "deposito" | "peca" | "pecaSaldo" | "estoqueMovimento" | "inventario" | "inventarioItem" | "requisicaoMaterial" | "requisicaoMaterialItem" | "solicitacaoCompra" | "solicitacaoCompraItem" | "ordemCompra" | "ordemCompraItem" | "ordemCompraItemOrigem" | "recebimento" | "recebimentoItem" | "pontoAuditoria" | "fornecedorPeca"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -5152,6 +5154,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Inventario: {
+      payload: Prisma.$InventarioPayload<ExtArgs>
+      fields: Prisma.InventarioFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.InventarioFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.InventarioFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioPayload>
+        }
+        findFirst: {
+          args: Prisma.InventarioFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.InventarioFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioPayload>
+        }
+        findMany: {
+          args: Prisma.InventarioFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioPayload>[]
+        }
+        create: {
+          args: Prisma.InventarioCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioPayload>
+        }
+        createMany: {
+          args: Prisma.InventarioCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.InventarioCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioPayload>[]
+        }
+        delete: {
+          args: Prisma.InventarioDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioPayload>
+        }
+        update: {
+          args: Prisma.InventarioUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioPayload>
+        }
+        deleteMany: {
+          args: Prisma.InventarioDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.InventarioUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.InventarioUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioPayload>[]
+        }
+        upsert: {
+          args: Prisma.InventarioUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioPayload>
+        }
+        aggregate: {
+          args: Prisma.InventarioAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateInventario>
+        }
+        groupBy: {
+          args: Prisma.InventarioGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InventarioGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.InventarioCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InventarioCountAggregateOutputType> | number
+        }
+      }
+    }
+    InventarioItem: {
+      payload: Prisma.$InventarioItemPayload<ExtArgs>
+      fields: Prisma.InventarioItemFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.InventarioItemFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioItemPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.InventarioItemFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioItemPayload>
+        }
+        findFirst: {
+          args: Prisma.InventarioItemFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioItemPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.InventarioItemFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioItemPayload>
+        }
+        findMany: {
+          args: Prisma.InventarioItemFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioItemPayload>[]
+        }
+        create: {
+          args: Prisma.InventarioItemCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioItemPayload>
+        }
+        createMany: {
+          args: Prisma.InventarioItemCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.InventarioItemCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioItemPayload>[]
+        }
+        delete: {
+          args: Prisma.InventarioItemDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioItemPayload>
+        }
+        update: {
+          args: Prisma.InventarioItemUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioItemPayload>
+        }
+        deleteMany: {
+          args: Prisma.InventarioItemDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.InventarioItemUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.InventarioItemUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioItemPayload>[]
+        }
+        upsert: {
+          args: Prisma.InventarioItemUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InventarioItemPayload>
+        }
+        aggregate: {
+          args: Prisma.InventarioItemAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateInventarioItem>
+        }
+        groupBy: {
+          args: Prisma.InventarioItemGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InventarioItemGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.InventarioItemCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InventarioItemCountAggregateOutputType> | number
+        }
+      }
+    }
     RequisicaoMaterial: {
       payload: Prisma.$RequisicaoMaterialPayload<ExtArgs>
       fields: Prisma.RequisicaoMaterialFieldRefs
@@ -7219,6 +7369,44 @@ export const EstoqueMovimentoScalarFieldEnum = {
 export type EstoqueMovimentoScalarFieldEnum = (typeof EstoqueMovimentoScalarFieldEnum)[keyof typeof EstoqueMovimentoScalarFieldEnum]
 
 
+export const InventarioScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  numero: 'numero',
+  depositoId: 'depositoId',
+  status: 'status',
+  abertaPorCompanyUserId: 'abertaPorCompanyUserId',
+  abertaEm: 'abertaEm',
+  apuradaPorCompanyUserId: 'apuradaPorCompanyUserId',
+  apuradaEm: 'apuradaEm',
+  canceladaEm: 'canceladaEm',
+  canceladaPorCompanyUserId: 'canceladaPorCompanyUserId',
+  motivoCancelamento: 'motivoCancelamento',
+  observacao: 'observacao',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InventarioScalarFieldEnum = (typeof InventarioScalarFieldEnum)[keyof typeof InventarioScalarFieldEnum]
+
+
+export const InventarioItemScalarFieldEnum = {
+  id: 'id',
+  inventarioId: 'inventarioId',
+  pecaId: 'pecaId',
+  quantidadeContada: 'quantidadeContada',
+  saldoNaContagem: 'saldoNaContagem',
+  contadaPorCompanyUserId: 'contadaPorCompanyUserId',
+  contadaEm: 'contadaEm',
+  ajuste: 'ajuste',
+  movimentoId: 'movimentoId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InventarioItemScalarFieldEnum = (typeof InventarioItemScalarFieldEnum)[keyof typeof InventarioItemScalarFieldEnum]
+
+
 export const RequisicaoMaterialScalarFieldEnum = {
   id: 'id',
   companyId: 'companyId',
@@ -7914,6 +8102,8 @@ export type GlobalOmitConfig = {
   peca?: Prisma.PecaOmit
   pecaSaldo?: Prisma.PecaSaldoOmit
   estoqueMovimento?: Prisma.EstoqueMovimentoOmit
+  inventario?: Prisma.InventarioOmit
+  inventarioItem?: Prisma.InventarioItemOmit
   requisicaoMaterial?: Prisma.RequisicaoMaterialOmit
   requisicaoMaterialItem?: Prisma.RequisicaoMaterialItemOmit
   solicitacaoCompra?: Prisma.SolicitacaoCompraOmit

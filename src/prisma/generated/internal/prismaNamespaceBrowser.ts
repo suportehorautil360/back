@@ -114,6 +114,8 @@ export const ModelName = {
   Peca: 'Peca',
   PecaSaldo: 'PecaSaldo',
   EstoqueMovimento: 'EstoqueMovimento',
+  Inventario: 'Inventario',
+  InventarioItem: 'InventarioItem',
   RequisicaoMaterial: 'RequisicaoMaterial',
   RequisicaoMaterialItem: 'RequisicaoMaterialItem',
   SolicitacaoCompra: 'SolicitacaoCompra',
@@ -1355,6 +1357,44 @@ export const EstoqueMovimentoScalarFieldEnum = {
 } as const
 
 export type EstoqueMovimentoScalarFieldEnum = (typeof EstoqueMovimentoScalarFieldEnum)[keyof typeof EstoqueMovimentoScalarFieldEnum]
+
+
+export const InventarioScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  numero: 'numero',
+  depositoId: 'depositoId',
+  status: 'status',
+  abertaPorCompanyUserId: 'abertaPorCompanyUserId',
+  abertaEm: 'abertaEm',
+  apuradaPorCompanyUserId: 'apuradaPorCompanyUserId',
+  apuradaEm: 'apuradaEm',
+  canceladaEm: 'canceladaEm',
+  canceladaPorCompanyUserId: 'canceladaPorCompanyUserId',
+  motivoCancelamento: 'motivoCancelamento',
+  observacao: 'observacao',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InventarioScalarFieldEnum = (typeof InventarioScalarFieldEnum)[keyof typeof InventarioScalarFieldEnum]
+
+
+export const InventarioItemScalarFieldEnum = {
+  id: 'id',
+  inventarioId: 'inventarioId',
+  pecaId: 'pecaId',
+  quantidadeContada: 'quantidadeContada',
+  saldoNaContagem: 'saldoNaContagem',
+  contadaPorCompanyUserId: 'contadaPorCompanyUserId',
+  contadaEm: 'contadaEm',
+  ajuste: 'ajuste',
+  movimentoId: 'movimentoId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InventarioItemScalarFieldEnum = (typeof InventarioItemScalarFieldEnum)[keyof typeof InventarioItemScalarFieldEnum]
 
 
 export const RequisicaoMaterialScalarFieldEnum = {

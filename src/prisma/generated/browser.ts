@@ -499,6 +499,18 @@ export type PecaSaldo = Prisma.PecaSaldoModel
  */
 export type EstoqueMovimento = Prisma.EstoqueMovimentoModel
 /**
+ * Model Inventario
+ * A contagem cíclica de um depósito (§5.2 do desenho de 16/09). Documento
+ * próprio porque contagem tem escopo, autor e histórico — um ajuste avulso
+ * diria que o saldo mudou, nunca quem contou.
+ */
+export type Inventario = Prisma.InventarioModel
+/**
+ * Model InventarioItem
+ * 
+ */
+export type InventarioItem = Prisma.InventarioItemModel
+/**
  * Model RequisicaoMaterial
  * O trabalho do almoxarife. NÃO é uma `ServiceOrder`: OS é conserto de
  * máquina, e sobrecarregar aquele modelo com "separe três filtros" faria a

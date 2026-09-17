@@ -294,6 +294,7 @@ export type EstoqueMovimentoWhereInput = {
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   peca?: Prisma.XOR<Prisma.PecaScalarRelationFilter, Prisma.PecaWhereInput>
   deposito?: Prisma.XOR<Prisma.DepositoScalarRelationFilter, Prisma.DepositoWhereInput>
+  inventarioItens?: Prisma.InventarioItemListRelationFilter
 }
 
 export type EstoqueMovimentoOrderByWithRelationInput = {
@@ -313,6 +314,7 @@ export type EstoqueMovimentoOrderByWithRelationInput = {
   company?: Prisma.CompanyOrderByWithRelationInput
   peca?: Prisma.PecaOrderByWithRelationInput
   deposito?: Prisma.DepositoOrderByWithRelationInput
+  inventarioItens?: Prisma.InventarioItemOrderByRelationAggregateInput
 }
 
 export type EstoqueMovimentoWhereUniqueInput = Prisma.AtLeast<{
@@ -335,6 +337,7 @@ export type EstoqueMovimentoWhereUniqueInput = Prisma.AtLeast<{
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   peca?: Prisma.XOR<Prisma.PecaScalarRelationFilter, Prisma.PecaWhereInput>
   deposito?: Prisma.XOR<Prisma.DepositoScalarRelationFilter, Prisma.DepositoWhereInput>
+  inventarioItens?: Prisma.InventarioItemListRelationFilter
 }, "id">
 
 export type EstoqueMovimentoOrderByWithAggregationInput = {
@@ -391,6 +394,7 @@ export type EstoqueMovimentoCreateInput = {
   company: Prisma.CompanyCreateNestedOneWithoutEstoqueMovimentosInput
   peca: Prisma.PecaCreateNestedOneWithoutMovimentosInput
   deposito: Prisma.DepositoCreateNestedOneWithoutMovimentosInput
+  inventarioItens?: Prisma.InventarioItemCreateNestedManyWithoutMovimentoInput
 }
 
 export type EstoqueMovimentoUncheckedCreateInput = {
@@ -407,6 +411,7 @@ export type EstoqueMovimentoUncheckedCreateInput = {
   autorCompanyUserId: string
   observacao?: string | null
   createdAt?: Date | string
+  inventarioItens?: Prisma.InventarioItemUncheckedCreateNestedManyWithoutMovimentoInput
 }
 
 export type EstoqueMovimentoUpdateInput = {
@@ -423,6 +428,7 @@ export type EstoqueMovimentoUpdateInput = {
   company?: Prisma.CompanyUpdateOneRequiredWithoutEstoqueMovimentosNestedInput
   peca?: Prisma.PecaUpdateOneRequiredWithoutMovimentosNestedInput
   deposito?: Prisma.DepositoUpdateOneRequiredWithoutMovimentosNestedInput
+  inventarioItens?: Prisma.InventarioItemUpdateManyWithoutMovimentoNestedInput
 }
 
 export type EstoqueMovimentoUncheckedUpdateInput = {
@@ -439,6 +445,7 @@ export type EstoqueMovimentoUncheckedUpdateInput = {
   autorCompanyUserId?: Prisma.StringFieldUpdateOperationsInput | string
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inventarioItens?: Prisma.InventarioItemUncheckedUpdateManyWithoutMovimentoNestedInput
 }
 
 export type EstoqueMovimentoCreateManyInput = {
@@ -554,6 +561,11 @@ export type EstoqueMovimentoSumOrderByAggregateInput = {
   quantidade?: Prisma.SortOrder
   saldoApos?: Prisma.SortOrder
   custoUnit?: Prisma.SortOrder
+}
+
+export type EstoqueMovimentoNullableScalarRelationFilter = {
+  is?: Prisma.EstoqueMovimentoWhereInput | null
+  isNot?: Prisma.EstoqueMovimentoWhereInput | null
 }
 
 export type EstoqueMovimentoCreateNestedManyWithoutCompanyInput = {
@@ -682,6 +694,22 @@ export type EstoqueMovimentoUncheckedUpdateManyWithoutPecaNestedInput = {
   deleteMany?: Prisma.EstoqueMovimentoScalarWhereInput | Prisma.EstoqueMovimentoScalarWhereInput[]
 }
 
+export type EstoqueMovimentoCreateNestedOneWithoutInventarioItensInput = {
+  create?: Prisma.XOR<Prisma.EstoqueMovimentoCreateWithoutInventarioItensInput, Prisma.EstoqueMovimentoUncheckedCreateWithoutInventarioItensInput>
+  connectOrCreate?: Prisma.EstoqueMovimentoCreateOrConnectWithoutInventarioItensInput
+  connect?: Prisma.EstoqueMovimentoWhereUniqueInput
+}
+
+export type EstoqueMovimentoUpdateOneWithoutInventarioItensNestedInput = {
+  create?: Prisma.XOR<Prisma.EstoqueMovimentoCreateWithoutInventarioItensInput, Prisma.EstoqueMovimentoUncheckedCreateWithoutInventarioItensInput>
+  connectOrCreate?: Prisma.EstoqueMovimentoCreateOrConnectWithoutInventarioItensInput
+  upsert?: Prisma.EstoqueMovimentoUpsertWithoutInventarioItensInput
+  disconnect?: Prisma.EstoqueMovimentoWhereInput | boolean
+  delete?: Prisma.EstoqueMovimentoWhereInput | boolean
+  connect?: Prisma.EstoqueMovimentoWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EstoqueMovimentoUpdateToOneWithWhereWithoutInventarioItensInput, Prisma.EstoqueMovimentoUpdateWithoutInventarioItensInput>, Prisma.EstoqueMovimentoUncheckedUpdateWithoutInventarioItensInput>
+}
+
 export type EstoqueMovimentoCreateWithoutCompanyInput = {
   id?: string
   tipo: string
@@ -695,6 +723,7 @@ export type EstoqueMovimentoCreateWithoutCompanyInput = {
   createdAt?: Date | string
   peca: Prisma.PecaCreateNestedOneWithoutMovimentosInput
   deposito: Prisma.DepositoCreateNestedOneWithoutMovimentosInput
+  inventarioItens?: Prisma.InventarioItemCreateNestedManyWithoutMovimentoInput
 }
 
 export type EstoqueMovimentoUncheckedCreateWithoutCompanyInput = {
@@ -710,6 +739,7 @@ export type EstoqueMovimentoUncheckedCreateWithoutCompanyInput = {
   autorCompanyUserId: string
   observacao?: string | null
   createdAt?: Date | string
+  inventarioItens?: Prisma.InventarioItemUncheckedCreateNestedManyWithoutMovimentoInput
 }
 
 export type EstoqueMovimentoCreateOrConnectWithoutCompanyInput = {
@@ -770,6 +800,7 @@ export type EstoqueMovimentoCreateWithoutDepositoInput = {
   createdAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutEstoqueMovimentosInput
   peca: Prisma.PecaCreateNestedOneWithoutMovimentosInput
+  inventarioItens?: Prisma.InventarioItemCreateNestedManyWithoutMovimentoInput
 }
 
 export type EstoqueMovimentoUncheckedCreateWithoutDepositoInput = {
@@ -785,6 +816,7 @@ export type EstoqueMovimentoUncheckedCreateWithoutDepositoInput = {
   autorCompanyUserId: string
   observacao?: string | null
   createdAt?: Date | string
+  inventarioItens?: Prisma.InventarioItemUncheckedCreateNestedManyWithoutMovimentoInput
 }
 
 export type EstoqueMovimentoCreateOrConnectWithoutDepositoInput = {
@@ -826,6 +858,7 @@ export type EstoqueMovimentoCreateWithoutPecaInput = {
   createdAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutEstoqueMovimentosInput
   deposito: Prisma.DepositoCreateNestedOneWithoutMovimentosInput
+  inventarioItens?: Prisma.InventarioItemCreateNestedManyWithoutMovimentoInput
 }
 
 export type EstoqueMovimentoUncheckedCreateWithoutPecaInput = {
@@ -841,6 +874,7 @@ export type EstoqueMovimentoUncheckedCreateWithoutPecaInput = {
   autorCompanyUserId: string
   observacao?: string | null
   createdAt?: Date | string
+  inventarioItens?: Prisma.InventarioItemUncheckedCreateNestedManyWithoutMovimentoInput
 }
 
 export type EstoqueMovimentoCreateOrConnectWithoutPecaInput = {
@@ -867,6 +901,86 @@ export type EstoqueMovimentoUpdateWithWhereUniqueWithoutPecaInput = {
 export type EstoqueMovimentoUpdateManyWithWhereWithoutPecaInput = {
   where: Prisma.EstoqueMovimentoScalarWhereInput
   data: Prisma.XOR<Prisma.EstoqueMovimentoUpdateManyMutationInput, Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutPecaInput>
+}
+
+export type EstoqueMovimentoCreateWithoutInventarioItensInput = {
+  id?: string
+  tipo: string
+  quantidade: runtime.Decimal | runtime.DecimalJsLike | number | string
+  saldoApos: runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoUnit?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  origemTipo: string
+  origemId?: string | null
+  autorCompanyUserId: string
+  observacao?: string | null
+  createdAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutEstoqueMovimentosInput
+  peca: Prisma.PecaCreateNestedOneWithoutMovimentosInput
+  deposito: Prisma.DepositoCreateNestedOneWithoutMovimentosInput
+}
+
+export type EstoqueMovimentoUncheckedCreateWithoutInventarioItensInput = {
+  id?: string
+  companyId: string
+  pecaId: string
+  depositoId: string
+  tipo: string
+  quantidade: runtime.Decimal | runtime.DecimalJsLike | number | string
+  saldoApos: runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoUnit?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  origemTipo: string
+  origemId?: string | null
+  autorCompanyUserId: string
+  observacao?: string | null
+  createdAt?: Date | string
+}
+
+export type EstoqueMovimentoCreateOrConnectWithoutInventarioItensInput = {
+  where: Prisma.EstoqueMovimentoWhereUniqueInput
+  create: Prisma.XOR<Prisma.EstoqueMovimentoCreateWithoutInventarioItensInput, Prisma.EstoqueMovimentoUncheckedCreateWithoutInventarioItensInput>
+}
+
+export type EstoqueMovimentoUpsertWithoutInventarioItensInput = {
+  update: Prisma.XOR<Prisma.EstoqueMovimentoUpdateWithoutInventarioItensInput, Prisma.EstoqueMovimentoUncheckedUpdateWithoutInventarioItensInput>
+  create: Prisma.XOR<Prisma.EstoqueMovimentoCreateWithoutInventarioItensInput, Prisma.EstoqueMovimentoUncheckedCreateWithoutInventarioItensInput>
+  where?: Prisma.EstoqueMovimentoWhereInput
+}
+
+export type EstoqueMovimentoUpdateToOneWithWhereWithoutInventarioItensInput = {
+  where?: Prisma.EstoqueMovimentoWhereInput
+  data: Prisma.XOR<Prisma.EstoqueMovimentoUpdateWithoutInventarioItensInput, Prisma.EstoqueMovimentoUncheckedUpdateWithoutInventarioItensInput>
+}
+
+export type EstoqueMovimentoUpdateWithoutInventarioItensInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tipo?: Prisma.StringFieldUpdateOperationsInput | string
+  quantidade?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  saldoApos?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoUnit?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  origemTipo?: Prisma.StringFieldUpdateOperationsInput | string
+  origemId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autorCompanyUserId?: Prisma.StringFieldUpdateOperationsInput | string
+  observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutEstoqueMovimentosNestedInput
+  peca?: Prisma.PecaUpdateOneRequiredWithoutMovimentosNestedInput
+  deposito?: Prisma.DepositoUpdateOneRequiredWithoutMovimentosNestedInput
+}
+
+export type EstoqueMovimentoUncheckedUpdateWithoutInventarioItensInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  pecaId?: Prisma.StringFieldUpdateOperationsInput | string
+  depositoId?: Prisma.StringFieldUpdateOperationsInput | string
+  tipo?: Prisma.StringFieldUpdateOperationsInput | string
+  quantidade?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  saldoApos?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  custoUnit?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  origemTipo?: Prisma.StringFieldUpdateOperationsInput | string
+  origemId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autorCompanyUserId?: Prisma.StringFieldUpdateOperationsInput | string
+  observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type EstoqueMovimentoCreateManyCompanyInput = {
@@ -897,6 +1011,7 @@ export type EstoqueMovimentoUpdateWithoutCompanyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   peca?: Prisma.PecaUpdateOneRequiredWithoutMovimentosNestedInput
   deposito?: Prisma.DepositoUpdateOneRequiredWithoutMovimentosNestedInput
+  inventarioItens?: Prisma.InventarioItemUpdateManyWithoutMovimentoNestedInput
 }
 
 export type EstoqueMovimentoUncheckedUpdateWithoutCompanyInput = {
@@ -912,6 +1027,7 @@ export type EstoqueMovimentoUncheckedUpdateWithoutCompanyInput = {
   autorCompanyUserId?: Prisma.StringFieldUpdateOperationsInput | string
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inventarioItens?: Prisma.InventarioItemUncheckedUpdateManyWithoutMovimentoNestedInput
 }
 
 export type EstoqueMovimentoUncheckedUpdateManyWithoutCompanyInput = {
@@ -957,6 +1073,7 @@ export type EstoqueMovimentoUpdateWithoutDepositoInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutEstoqueMovimentosNestedInput
   peca?: Prisma.PecaUpdateOneRequiredWithoutMovimentosNestedInput
+  inventarioItens?: Prisma.InventarioItemUpdateManyWithoutMovimentoNestedInput
 }
 
 export type EstoqueMovimentoUncheckedUpdateWithoutDepositoInput = {
@@ -972,6 +1089,7 @@ export type EstoqueMovimentoUncheckedUpdateWithoutDepositoInput = {
   autorCompanyUserId?: Prisma.StringFieldUpdateOperationsInput | string
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inventarioItens?: Prisma.InventarioItemUncheckedUpdateManyWithoutMovimentoNestedInput
 }
 
 export type EstoqueMovimentoUncheckedUpdateManyWithoutDepositoInput = {
@@ -1017,6 +1135,7 @@ export type EstoqueMovimentoUpdateWithoutPecaInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutEstoqueMovimentosNestedInput
   deposito?: Prisma.DepositoUpdateOneRequiredWithoutMovimentosNestedInput
+  inventarioItens?: Prisma.InventarioItemUpdateManyWithoutMovimentoNestedInput
 }
 
 export type EstoqueMovimentoUncheckedUpdateWithoutPecaInput = {
@@ -1032,6 +1151,7 @@ export type EstoqueMovimentoUncheckedUpdateWithoutPecaInput = {
   autorCompanyUserId?: Prisma.StringFieldUpdateOperationsInput | string
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inventarioItens?: Prisma.InventarioItemUncheckedUpdateManyWithoutMovimentoNestedInput
 }
 
 export type EstoqueMovimentoUncheckedUpdateManyWithoutPecaInput = {
@@ -1049,6 +1169,35 @@ export type EstoqueMovimentoUncheckedUpdateManyWithoutPecaInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+
+/**
+ * Count Type EstoqueMovimentoCountOutputType
+ */
+
+export type EstoqueMovimentoCountOutputType = {
+  inventarioItens: number
+}
+
+export type EstoqueMovimentoCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  inventarioItens?: boolean | EstoqueMovimentoCountOutputTypeCountInventarioItensArgs
+}
+
+/**
+ * EstoqueMovimentoCountOutputType without action
+ */
+export type EstoqueMovimentoCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EstoqueMovimentoCountOutputType
+   */
+  select?: Prisma.EstoqueMovimentoCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * EstoqueMovimentoCountOutputType without action
+ */
+export type EstoqueMovimentoCountOutputTypeCountInventarioItensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.InventarioItemWhereInput
+}
 
 
 export type EstoqueMovimentoSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1068,6 +1217,8 @@ export type EstoqueMovimentoSelect<ExtArgs extends runtime.Types.Extensions.Inte
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   peca?: boolean | Prisma.PecaDefaultArgs<ExtArgs>
   deposito?: boolean | Prisma.DepositoDefaultArgs<ExtArgs>
+  inventarioItens?: boolean | Prisma.EstoqueMovimento$inventarioItensArgs<ExtArgs>
+  _count?: boolean | Prisma.EstoqueMovimentoCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["estoqueMovimento"]>
 
 export type EstoqueMovimentoSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1129,6 +1280,8 @@ export type EstoqueMovimentoInclude<ExtArgs extends runtime.Types.Extensions.Int
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   peca?: boolean | Prisma.PecaDefaultArgs<ExtArgs>
   deposito?: boolean | Prisma.DepositoDefaultArgs<ExtArgs>
+  inventarioItens?: boolean | Prisma.EstoqueMovimento$inventarioItensArgs<ExtArgs>
+  _count?: boolean | Prisma.EstoqueMovimentoCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type EstoqueMovimentoIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
@@ -1147,6 +1300,7 @@ export type $EstoqueMovimentoPayload<ExtArgs extends runtime.Types.Extensions.In
     company: Prisma.$CompanyPayload<ExtArgs>
     peca: Prisma.$PecaPayload<ExtArgs>
     deposito: Prisma.$DepositoPayload<ExtArgs>
+    inventarioItens: Prisma.$InventarioItemPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1578,6 +1732,7 @@ export interface Prisma__EstoqueMovimentoClient<T, Null = never, ExtArgs extends
   company<T extends Prisma.CompanyDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CompanyDefaultArgs<ExtArgs>>): Prisma.Prisma__CompanyClient<runtime.Types.Result.GetResult<Prisma.$CompanyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   peca<T extends Prisma.PecaDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PecaDefaultArgs<ExtArgs>>): Prisma.Prisma__PecaClient<runtime.Types.Result.GetResult<Prisma.$PecaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   deposito<T extends Prisma.DepositoDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DepositoDefaultArgs<ExtArgs>>): Prisma.Prisma__DepositoClient<runtime.Types.Result.GetResult<Prisma.$DepositoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  inventarioItens<T extends Prisma.EstoqueMovimento$inventarioItensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EstoqueMovimento$inventarioItensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InventarioItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2018,6 +2173,30 @@ export type EstoqueMovimentoDeleteManyArgs<ExtArgs extends runtime.Types.Extensi
    * Limit how many EstoqueMovimentos to delete.
    */
   limit?: number
+}
+
+/**
+ * EstoqueMovimento.inventarioItens
+ */
+export type EstoqueMovimento$inventarioItensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the InventarioItem
+   */
+  select?: Prisma.InventarioItemSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the InventarioItem
+   */
+  omit?: Prisma.InventarioItemOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InventarioItemInclude<ExtArgs> | null
+  where?: Prisma.InventarioItemWhereInput
+  orderBy?: Prisma.InventarioItemOrderByWithRelationInput | Prisma.InventarioItemOrderByWithRelationInput[]
+  cursor?: Prisma.InventarioItemWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.InventarioItemScalarFieldEnum | Prisma.InventarioItemScalarFieldEnum[]
 }
 
 /**

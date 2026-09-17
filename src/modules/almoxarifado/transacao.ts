@@ -53,6 +53,14 @@ export const MAX_TENTATIVAS_CONCORRENCIA = 5;
 export const INDICE_REQUISICAO_UNICA_POR_OS = 'requisicoes_material_uma_aberta_por_os';
 
 /**
+ * Nome do índice único parcial que garante NO MÁXIMO uma contagem de
+ * inventário aberta por depósito (migration `20260917100000_inventario_
+ * ciclico`). Mesma situação de `INDICE_REQUISICAO_UNICA_POR_OS`: não existe
+ * em `schema.prisma` — Prisma não expressa índice parcial (`WHERE`).
+ */
+export const INDICE_CONTAGEM_UNICA_POR_DEPOSITO = 'inventarios_uma_aberta_por_deposito';
+
+/**
  * A causa que o `@prisma/adapter-pg` pendura no erro do Prisma 7, em
  * `meta.driverAdapterError.cause`. Conferido no código instalado do adapter
  * (`mapDriverError`) e do client (`We`/`fp`/`gp`):
@@ -117,14 +125,39 @@ export function colisaoDeRequisicaoJaAberta(erro: unknown): boolean {
 }
 
 /**
+ * Achado Important I1 (revisão final do inventário cíclico): o MESMO caso de
+ * `colisaoDeRequisicaoJaAberta`, agora para `inventarios_uma_aberta_por_
+ * deposito` — a checagem de `abrirInventario` (`findFirst` por
+ * `depositoId`+`status: 'aberta'`) é TOCTOU sob READ COMMITTED: dois cliques
+ * simultâneos no mesmo depósito leem "não há contagem aberta" os dois, e só o
+ * INSERT que perde a corrida esbarra no índice. Não é contenção — repetir a
+ * transação não resolve nada (o depósito SEMPRE vai ter a contagem da outra
+ * transação) — e por isso o chamador precisa traduzir isto em
+ * `ConflictException` em vez de deixar o `P2002` cru virar 500.
+ */
+export function colisaoDeContagemJaAberta(erro: unknown): boolean {
+  if (!(erro instanceof Prisma.PrismaClientKnownRequestError) || erro.code !== 'P2002') {
+    return false;
+  }
+  const alvo = alvoDaViolacao(erro);
+  return (
+    alvo.includes(INDICE_CONTAGEM_UNICA_POR_DEPOSITO) ||
+    alvo.includes('depositoId') ||
+    alvo.includes('deposito_id')
+  );
+}
+
+/**
  * Verdadeiro para os erros de CONTENÇÃO que vale a pena tentar de novo com a
  * transação inteira do zero:
  *
  * - `P2002` no índice de NÚMERO (`companyId, numero`) — duas transações
  *   calculando o mesmo MAX+1 ao mesmo tempo. Não confundir com o `P2002` do
  *   índice de requisição-única-por-OS (`colisaoDeRequisicaoJaAberta`, achado
- *   R1): aquele não é retentável, e por isso o chamador confere
- *   `colisaoDeRequisicaoJaAberta` ANTES desta função.
+ *   R1) nem com o de contagem-única-por-depósito
+ *   (`colisaoDeContagemJaAberta`, achado I1 do inventário cíclico): nenhum
+ *   dos dois é retentável, e por isso o chamador confere os dois ANTES desta
+ *   função.
  * - SQLSTATE `40P01` (deadlock) ou `40001` (falha de serialização). Com o
  *   adapter, uma raw query (`$queryRaw`/`$executeRaw`, as travas `FOR
  *   UPDATE`) que falha chega SEMPRE como `P2010`, e o SQLSTATE está em
