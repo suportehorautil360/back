@@ -5,6 +5,8 @@ import {
   formatNumeroInventario,
   parseNumeroInventarioSeq,
 } from './helpers/numero-inventario.helper';
+import { ajusteCabeNoSaldo, ajusteDoItem, podeApurar } from './regras/inventario';
+import { compararPorPeca } from './transacao';
 
 type ClienteDaTransacao = Prisma.TransactionClient;
 
@@ -168,4 +170,163 @@ export async function registrarContagem(
     quantidadeContada: input.quantidadeContada,
     saldoNaContagem,
   };
+}
+
+export interface EntradaDeApuracao {
+  companyId: string;
+  inventarioId: string;
+  autorCompanyUserId: string;
+  motivo: string;
+}
+
+/**
+ * Fecha a contagem: a diferença de cada item vira movimento de ajuste.
+ *
+ * A diferença é aplicada como DELTA ao saldo de AGORA, não como valor
+ * absoluto. Ela é um fato sobre o instante da contagem, e o que se moveu no
+ * meio continua valendo — é isso que permite contar sem parar a operação.
+ *
+ * Ordem única de trava: o cabeçalho do inventário e depois `peca_saldos` por
+ * `pecaId` (`compararPorPeca`). Todos os saldos são do MESMO depósito, então
+ * `pecaId` já dá ordem total — o desempate por depósito que a transferência
+ * exige não é necessário aqui.
+ */
+export async function apurarInventario(
+  tx: ClienteDaTransacao,
+  input: EntradaDeApuracao,
+): Promise<{ inventarioId: string; ajustados: number; semDiferenca: number }> {
+  const motivo = (input.motivo ?? '').trim();
+  if (!motivo) {
+    throw new BadRequestException('Diga o que esta contagem apurou — fica na auditoria.');
+  }
+
+  await tx.$queryRaw(Prisma.sql`
+    SELECT id FROM inventarios
+     WHERE id = ${input.inventarioId}::uuid
+       AND company_id = ${input.companyId}::uuid
+       FOR UPDATE
+  `);
+
+  const inventario = await tx.inventario.findFirst({
+    where: { id: input.inventarioId, companyId: input.companyId },
+    select: { id: true, numero: true, status: true, depositoId: true },
+  });
+  if (!inventario) {
+    throw new NotFoundException('Contagem não encontrada nesta empresa.');
+  }
+  if (inventario.status !== 'aberta') {
+    throw new ConflictException(`Contagem ${inventario.status} não apura de novo.`);
+  }
+
+  const itens = await tx.inventarioItem.findMany({
+    where: { inventarioId: inventario.id },
+    select: { id: true, pecaId: true, quantidadeContada: true, saldoNaContagem: true },
+  });
+  const comoNumero = itens.map((i) => ({
+    ...i,
+    quantidadeContada: i.quantidadeContada === null ? null : Number(i.quantidadeContada),
+    saldoNaContagem: i.saldoNaContagem === null ? null : Number(i.saldoNaContagem),
+  }));
+  if (!podeApurar(comoNumero)) {
+    throw new BadRequestException('Nenhum item foi contado — não há o que apurar.');
+  }
+
+  const contados = comoNumero
+    .filter((i) => ajusteDoItem(i) !== null)
+    .sort((a, b) => compararPorPeca(a.pecaId, b.pecaId));
+
+  let ajustados = 0;
+  let semDiferenca = 0;
+
+  for (const item of contados) {
+    const ajuste = ajusteDoItem(item) as number;
+
+    if (ajuste === 0) {
+      semDiferenca += 1;
+      await tx.inventarioItem.update({ where: { id: item.id }, data: { ajuste: 0 } });
+      continue;
+    }
+
+    // Garante a linha antes de travar: `FOR UPDATE` não trava linha que não
+    // existe — mesmo achado (C2) de `darEntrada`.
+    await tx.pecaSaldo.upsert({
+      where: { pecaId_depositoId: { pecaId: item.pecaId, depositoId: inventario.depositoId } },
+      create: { pecaId: item.pecaId, depositoId: inventario.depositoId },
+      update: {},
+    });
+    await tx.$queryRaw(Prisma.sql`
+      SELECT peca_id FROM peca_saldos
+       WHERE peca_id = ${item.pecaId}::uuid
+         AND deposito_id = ${inventario.depositoId}::uuid
+         FOR UPDATE
+    `);
+
+    const saldo = await tx.pecaSaldo.findUniqueOrThrow({
+      where: { pecaId_depositoId: { pecaId: item.pecaId, depositoId: inventario.depositoId } },
+      select: { saldoFisico: true, saldoReservado: true, custoMedio: true },
+    });
+    const atual = {
+      saldoFisico: Number(saldo.saldoFisico),
+      saldoReservado: Number(saldo.saldoReservado),
+    };
+    if (!ajusteCabeNoSaldo(atual, ajuste)) {
+      throw new ConflictException(
+        `A contagem desta peça achou menos do que já está reservado para uma OS. ` +
+          `Trate a reserva antes de acertar o saldo.`,
+      );
+    }
+
+    const depois = Math.round((atual.saldoFisico + ajuste) * 1000) / 1000;
+    await tx.pecaSaldo.update({
+      where: { pecaId_depositoId: { pecaId: item.pecaId, depositoId: inventario.depositoId } },
+      data: { saldoFisico: depois },
+    });
+
+    // A média NÃO muda: achar unidade a mais é erro de contagem, não compra a
+    // preço novo. `custoUnit` sai da média do depósito só para o razão poder
+    // valorizar o movimento.
+    const movimento = await tx.estoqueMovimento.create({
+      data: {
+        companyId: input.companyId,
+        pecaId: item.pecaId,
+        depositoId: inventario.depositoId,
+        tipo: 'ajuste',
+        quantidade: ajuste,
+        saldoApos: depois,
+        custoUnit: saldo.custoMedio,
+        origemTipo: 'inventario',
+        origemId: inventario.id,
+        autorCompanyUserId: input.autorCompanyUserId,
+        observacao: `${inventario.numero}: ${motivo}`,
+      },
+      select: { id: true },
+    });
+
+    await tx.inventarioItem.update({
+      where: { id: item.id },
+      data: { ajuste, movimentoId: movimento.id },
+    });
+    ajustados += 1;
+  }
+
+  await tx.inventario.update({
+    where: { id: inventario.id },
+    data: {
+      status: 'apurada',
+      apuradaPorCompanyUserId: input.autorCompanyUserId,
+      apuradaEm: new Date(),
+    },
+  });
+
+  await registrarAuditoriaSuprimentos(tx, {
+    companyId: input.companyId,
+    acao: 'inventario.apurar',
+    alvoTipo: 'suprimentos.inventario',
+    alvoId: inventario.id,
+    atorCompanyUserId: input.autorCompanyUserId,
+    motivo,
+    depois: { numero: inventario.numero, ajustados, semDiferenca },
+  });
+
+  return { inventarioId: inventario.id, ajustados, semDiferenca };
 }
