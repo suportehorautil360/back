@@ -15,7 +15,7 @@ import { ReceberDto } from './dto/recebimento.dto';
 import { PedirPecaAdicionalDto } from './dto/peca-adicional.dto';
 import { VerificarEstoqueMinimoDto } from './dto/estoque-minimo.dto';
 import { DevolverSobraDto } from './dto/devolucao.dto';
-import { AbrirInventarioDto, ApurarInventarioDto, RegistrarContagemDto } from './dto/inventario.dto';
+import { AbrirInventarioDto, ApurarInventarioDto, CancelarInventarioDto, RegistrarContagemDto } from './dto/inventario.dto';
 
 @ApiTags('almoxarifado')
 @Controller('almoxarifado')
@@ -263,6 +263,24 @@ export class AlmoxarifadoController {
       inventarioItemId: id,
       quantidadeContada: dto.quantidadeContada,
       autorCompanyUserId: req.painel.companyUserId,
+    });
+  }
+
+  @Post('inventarios/:id/cancelar')
+  // Idempotência como nos outros atos que mudam o estado do documento: o
+  // reenvio bate na recusa de "não está aberta", mas a chave fecha a corrida.
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Desiste da contagem sem apurar, liberando o depósito' })
+  async cancelarInventario(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: CancelarInventarioDto,
+  ) {
+    return this.servico.cancelarContagem({
+      companyId: req.painel.companyId,
+      inventarioId: id,
+      autorCompanyUserId: req.painel.companyUserId,
+      motivo: dto.motivo,
     });
   }
 

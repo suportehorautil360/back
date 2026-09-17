@@ -43,7 +43,7 @@ import { acaoPermitida } from './regras/compras';
 import { alterarPrioridadeDoItem, type EntradaDePrioridade, type ResultadoDePrioridade } from './compras/prioridade';
 import { decidirEquivalente, proporEquivalente, type EntradaDeDecisao, type EntradaDeProposta, type ResultadoDaDecisao, type ResultadoDaProposta } from './equivalente';
 import { refinarPelaCompra } from './compras/cobertura';
-import { abrirInventario, apurarInventario, registrarContagem, type EntradaDeAbertura, type EntradaDeApuracao, type EntradaDeContagem } from './inventario';
+import { abrirInventario, apurarInventario, cancelarInventario, registrarContagem, type EntradaDeAbertura, type EntradaDeApuracao, type EntradaDeCancelamento, type EntradaDeContagem } from './inventario';
 import {
   MAX_TENTATIVAS_CONCORRENCIA,
   colisaoDeContagemJaAberta,
@@ -2572,6 +2572,13 @@ export class AlmoxarifadoService {
   async registrarContagemDeItem(input: EntradaDeContagem) {
     return comRetryDeContencao('o registro da contagem', () =>
       this.prisma.$transaction((tx) => registrarContagem(tx, input)),
+    );
+  }
+
+  /** Desiste da contagem sem apurar, liberando o depósito. */
+  async cancelarContagem(input: EntradaDeCancelamento) {
+    return comRetryDeContencao('o cancelamento da contagem', () =>
+      this.prisma.$transaction((tx) => cancelarInventario(tx, input)),
     );
   }
 

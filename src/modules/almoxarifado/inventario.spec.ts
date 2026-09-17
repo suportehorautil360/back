@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { abrirInventario, apurarInventario, registrarContagem } from './inventario';
+import { abrirInventario, apurarInventario, cancelarInventario, registrarContagem } from './inventario';
 
 const COMPANY = '11111111-1111-1111-1111-111111111111';
 const AUTOR = '44444444-4444-4444-4444-444444444444';
@@ -656,6 +656,160 @@ describe('apurarInventario', () => {
         alvoTipo: 'suprimentos.inventario',
         alvoId: 'inv-1',
         motivo: 'contagem de setembro',
+      }),
+    ]);
+  });
+});
+
+/**
+ * Cancelar: desistir da contagem sem apurar. O que ele NÃO faz é metade do
+ * ponto — não toca saldo, não grava movimento, não mexe nos itens contados.
+ */
+function montarCancelamento(opts: { statusInventario?: string; comItensContados?: boolean } = {}) {
+  const log: string[] = [];
+  const inventario: Linha = {
+    id: 'inv-1', companyId: COMPANY, numero: 'INV-2026-001', depositoId: 'dep-1',
+    status: opts.statusInventario ?? 'aberta',
+    canceladaEm: null, canceladaPorCompanyUserId: null, motivoCancelamento: null,
+  };
+  const itens: Linha[] = opts.comItensContados
+    ? [{ id: 'ii-1', pecaId: 'p-1', quantidadeContada: 8, saldoNaContagem: 10, ajuste: null, movimentoId: null }]
+    : [{ id: 'ii-1', pecaId: 'p-1', quantidadeContada: null, saldoNaContagem: null, ajuste: null, movimentoId: null }];
+  const movimentos: Linha[] = [];
+  const saldos = new Map<string, Linha>([['p-1|dep-1', { saldoFisico: 10, saldoReservado: 0, custoMedio: 4 }]]);
+  const auditoria: Linha[] = [];
+  const estado = { log, inventario, itens, movimentos, saldos, auditoria };
+
+  const tx = {
+    $queryRaw: jest.fn(async (q: { text: string; values: unknown[] }) => {
+      if (!q.text.includes('FROM inventarios')) {
+        throw new Error(`banco falso: SQL não reconhecido neste ato — ${q.text}`);
+      }
+      log.push('trava:inventario');
+      return inventario.id === q.values[0] && inventario.companyId === q.values[1] ? [{ id: 'inv-1' }] : [];
+    }),
+    inventario: {
+      findFirst: jest.fn(async ({ where }: { where: { id: string; companyId: string } }) => {
+        if (!where.companyId) throw new Error('banco falso: findFirst sem escopo de empresa.');
+        return where.id === inventario.id && where.companyId === inventario.companyId
+          ? { ...inventario }
+          : null;
+      }),
+      update: jest.fn(async ({ data }: { data: Linha }) => {
+        Object.assign(inventario, data);
+        log.push('update:inventario');
+        return {};
+      }),
+    },
+    inventarioItem: {
+      findMany: jest.fn(async () => itens.map((i) => ({ ...i }))),
+      update: jest.fn(async () => {
+        throw new Error('cancelar NÃO pode mexer em item contado');
+      }),
+    },
+    pecaSaldo: {
+      update: jest.fn(async () => {
+        throw new Error('cancelar NÃO pode mexer em saldo');
+      }),
+    },
+    estoqueMovimento: {
+      create: jest.fn(async () => {
+        throw new Error('cancelar NÃO pode gravar movimento');
+      }),
+    },
+    companyUser: { findFirst: jest.fn(async () => ({ name: 'Ana', email: 'a@x.com' })) },
+    pontoAuditoria: {
+      create: jest.fn(async ({ data }: { data: Linha }) => {
+        auditoria.push({ ...data });
+        return data;
+      }),
+    },
+  };
+  return { tx, estado };
+}
+
+const cancelamento = (extra: Partial<Record<string, unknown>> = {}) => ({
+  companyId: COMPANY, inventarioId: 'inv-1',
+  autorCompanyUserId: AUTOR, motivo: 'aberta no depósito errado', ...extra,
+});
+
+describe('cancelarInventario', () => {
+  it('fecha a contagem vazia como cancelada, com quem e por quê', async () => {
+    const { tx, estado } = montarCancelamento();
+
+    const r = await cancelarInventario(tx as never, cancelamento());
+
+    expect(r).toMatchObject({ inventarioId: 'inv-1', numero: 'INV-2026-001' });
+    expect(estado.inventario).toMatchObject({
+      status: 'cancelada',
+      canceladaPorCompanyUserId: AUTOR,
+      motivoCancelamento: 'aberta no depósito errado',
+    });
+    expect(estado.inventario.canceladaEm).toBeInstanceOf(Date);
+  });
+
+  it('cancela contagem COM itens contados, e não desfaz nada', async () => {
+    // Contar não mexe em saldo, então não há o que desfazer: as linhas
+    // contadas ficam gravadas, elas só nunca viram ajuste. Os fakes de saldo,
+    // movimento e item LANÇAM se forem tocados — é assim que este teste prova
+    // a ausência, e não só a presença.
+    const { tx, estado } = montarCancelamento({ comItensContados: true });
+
+    await cancelarInventario(tx as never, cancelamento());
+
+    expect(estado.inventario.status).toBe('cancelada');
+    expect(estado.movimentos).toHaveLength(0);
+    expect(estado.itens[0]).toMatchObject({ quantidadeContada: 8, ajuste: null });
+    expect(estado.saldos.get('p-1|dep-1')!.saldoFisico).toBe(10);
+  });
+
+  it('trava o cabeçalho ANTES de escrever', async () => {
+    const { tx, estado } = montarCancelamento();
+    await cancelarInventario(tx as never, cancelamento());
+    expect(estado.log.indexOf('trava:inventario')).toBeLessThan(estado.log.indexOf('update:inventario'));
+  });
+
+  it('sem motivo não cancela, e não gasta trava', async () => {
+    // O CHECK `inventario_cancelamento_com_motivo` recusaria de qualquer
+    // jeito, mas 500 cru não ajuda quem esqueceu de preencher.
+    const { tx, estado } = montarCancelamento();
+    await expect(cancelarInventario(tx as never, cancelamento({ motivo: '   ' }))).rejects.toThrow(
+      BadRequestException,
+    );
+    expect(estado.inventario.status).toBe('aberta');
+    expect(estado.log).toEqual([]);
+  });
+
+  it('contagem já apurada não cancela — apurar não volta atrás', async () => {
+    const { tx, estado } = montarCancelamento({ statusInventario: 'apurada' });
+    await expect(cancelarInventario(tx as never, cancelamento())).rejects.toThrow(ConflictException);
+    expect(estado.inventario.status).toBe('apurada');
+  });
+
+  it('cancelar de novo é recusado', async () => {
+    const { tx } = montarCancelamento({ statusInventario: 'cancelada' });
+    await expect(cancelarInventario(tx as never, cancelamento())).rejects.toThrow(ConflictException);
+  });
+
+  it('contagem de outra empresa não é encontrada', async () => {
+    const { tx } = montarCancelamento();
+    await expect(
+      cancelarInventario(tx as never, cancelamento({ companyId: '99999999-9999-9999-9999-999999999999' })),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('grava o rastro com o motivo e o estado de antes', async () => {
+    const { tx, estado } = montarCancelamento({ comItensContados: true });
+    await cancelarInventario(tx as never, cancelamento());
+    expect(estado.auditoria).toEqual([
+      expect.objectContaining({
+        companyId: COMPANY,
+        acao: 'inventario.cancelar',
+        alvoTipo: 'suprimentos.inventario',
+        alvoId: 'inv-1',
+        atorId: AUTOR,
+        motivo: 'aberta no depósito errado',
+        antes: expect.objectContaining({ status: 'aberta' }),
       }),
     ]);
   });

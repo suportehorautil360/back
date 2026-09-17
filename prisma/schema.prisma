@@ -2372,6 +2372,13 @@ model Inventario {
   abertaEm                DateTime  @default(now()) @map("aberta_em")
   apuradaPorCompanyUserId String?   @map("apurada_por_company_user_id") @db.Uuid
   apuradaEm               DateTime? @map("apurada_em")
+  /// Desistir da contagem sem apurar. O trio espelha `RequisicaoMaterial`, e o
+  /// CHECK `inventario_cancelamento_com_motivo` exige o motivo no BANCO: sem
+  /// ele, quem for entender depois por que o depósito ficou sem contagem no
+  /// mês não tem o que ler.
+  canceladaEm                 DateTime? @map("cancelada_em")
+  canceladaPorCompanyUserId   String?   @map("cancelada_por_company_user_id") @db.Uuid
+  motivoCancelamento          String?   @map("motivo_cancelamento")
   observacao              String?
 
   createdAt DateTime @default(now()) @map("created_at")

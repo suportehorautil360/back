@@ -7379,6 +7379,9 @@ export const InventarioScalarFieldEnum = {
   abertaEm: 'abertaEm',
   apuradaPorCompanyUserId: 'apuradaPorCompanyUserId',
   apuradaEm: 'apuradaEm',
+  canceladaEm: 'canceladaEm',
+  canceladaPorCompanyUserId: 'canceladaPorCompanyUserId',
+  motivoCancelamento: 'motivoCancelamento',
   observacao: 'observacao',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

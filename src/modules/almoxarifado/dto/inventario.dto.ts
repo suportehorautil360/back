@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsNumber, IsOptional, IsString, IsUUID, MaxLength, Min } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsNumber, IsOptional, IsString, IsUUID, MaxLength, Min, MinLength } from 'class-validator';
 
 /** Abrir a contagem de um depósito. */
 export class AbrirInventarioDto {
@@ -35,6 +35,15 @@ export class RegistrarContagemDto {
 export class ApurarInventarioDto {
   @ApiProperty({ description: 'O que a contagem apurou. Obrigatório — vai para a auditoria.' })
   @IsString()
+  @MaxLength(500)
+  motivo!: string;
+}
+
+/** Desistir da contagem sem apurar. */
+export class CancelarInventarioDto {
+  @ApiProperty({ description: 'Por que a contagem foi abandonada. Obrigatório — há CHECK no banco.' })
+  @IsString()
+  @MinLength(1)
   @MaxLength(500)
   motivo!: string;
 }

@@ -55,7 +55,7 @@ export async function abrirInventario(
     // tira do diálogo os depósitos que já têm contagem aberta). A mensagem
     // diz o que o sistema realmente oferece — apurar a contagem aberta.
     throw new ConflictException(
-      `Este depósito já tem a contagem ${aberta.numero} aberta. Apure-a antes de abrir outra.`,
+      `Este depósito já tem a contagem ${aberta.numero} aberta. Apure ou cancele antes de abrir outra.`,
     );
   }
 
@@ -359,4 +359,85 @@ export async function apurarInventario(
   });
 
   return { inventarioId: inventario.id, ajustados, semDiferenca };
+}
+
+export interface EntradaDeCancelamento {
+  companyId: string;
+  inventarioId: string;
+  autorCompanyUserId: string;
+  motivo: string;
+}
+
+/**
+ * Desistir da contagem sem apurar.
+ *
+ * O ato existe porque a saída anterior não era saída: contagem aberta no
+ * depósito errado e abandonada sem contar nada não tinha como sair — a
+ * apuração recusa contagem sem item contado, e a tela tira do diálogo os
+ * depósitos que já têm contagem aberta.
+ *
+ * O que ele NÃO faz é metade do ponto: não toca saldo, não grava movimento e
+ * não mexe nos itens. Contar não mexeu em estoque, então não há o que desfazer
+ * — as linhas contadas ficam gravadas, elas só nunca viram ajuste. Cancelar é
+ * desistir da contagem, não desfazer nada.
+ *
+ * O efeito que interessa é automático: o índice único é parcial
+ * (`WHERE status = 'aberta'`), então cancelar libera o depósito na hora.
+ */
+export async function cancelarInventario(
+  tx: ClienteDaTransacao,
+  input: EntradaDeCancelamento,
+): Promise<{ inventarioId: string; numero: string }> {
+  // Valida ANTES de tocar o banco: o CHECK `inventario_cancelamento_com_motivo`
+  // recusaria de qualquer jeito, mas 500 cru não ajuda quem esqueceu de
+  // preencher. Mesma postura de `cancelarRequisicao`.
+  const motivo = (input.motivo ?? '').trim();
+  if (!motivo) {
+    throw new BadRequestException('Cancelar contagem exige motivo.');
+  }
+
+  // Mesmo primeiro lock dos outros dois atos do inventário — não cria ordem
+  // nova.
+  await tx.$queryRaw(Prisma.sql`
+    SELECT id FROM inventarios
+     WHERE id = ${input.inventarioId}::uuid
+       AND company_id = ${input.companyId}::uuid
+       FOR UPDATE
+  `);
+
+  const inventario = await tx.inventario.findFirst({
+    where: { id: input.inventarioId, companyId: input.companyId },
+    select: { id: true, numero: true, status: true, depositoId: true },
+  });
+  if (!inventario) {
+    throw new NotFoundException('Contagem não encontrada nesta empresa.');
+  }
+  if (inventario.status !== 'aberta') {
+    throw new ConflictException(
+      `Contagem ${inventario.status} não pode ser cancelada.`,
+    );
+  }
+
+  await tx.inventario.update({
+    where: { id: inventario.id },
+    data: {
+      status: 'cancelada',
+      canceladaEm: new Date(),
+      canceladaPorCompanyUserId: input.autorCompanyUserId,
+      motivoCancelamento: motivo,
+    },
+  });
+
+  await registrarAuditoriaSuprimentos(tx, {
+    companyId: input.companyId,
+    acao: 'inventario.cancelar',
+    alvoTipo: 'suprimentos.inventario',
+    alvoId: inventario.id,
+    atorCompanyUserId: input.autorCompanyUserId,
+    motivo,
+    antes: { numero: inventario.numero, status: 'aberta', depositoId: inventario.depositoId },
+    depois: { numero: inventario.numero, status: 'cancelada' },
+  });
+
+  return { inventarioId: inventario.id, numero: inventario.numero };
 }

@@ -36,6 +36,9 @@ export type InventarioMinAggregateOutputType = {
   abertaEm: Date | null
   apuradaPorCompanyUserId: string | null
   apuradaEm: Date | null
+  canceladaEm: Date | null
+  canceladaPorCompanyUserId: string | null
+  motivoCancelamento: string | null
   observacao: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -51,6 +54,9 @@ export type InventarioMaxAggregateOutputType = {
   abertaEm: Date | null
   apuradaPorCompanyUserId: string | null
   apuradaEm: Date | null
+  canceladaEm: Date | null
+  canceladaPorCompanyUserId: string | null
+  motivoCancelamento: string | null
   observacao: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -66,6 +72,9 @@ export type InventarioCountAggregateOutputType = {
   abertaEm: number
   apuradaPorCompanyUserId: number
   apuradaEm: number
+  canceladaEm: number
+  canceladaPorCompanyUserId: number
+  motivoCancelamento: number
   observacao: number
   createdAt: number
   updatedAt: number
@@ -83,6 +92,9 @@ export type InventarioMinAggregateInputType = {
   abertaEm?: true
   apuradaPorCompanyUserId?: true
   apuradaEm?: true
+  canceladaEm?: true
+  canceladaPorCompanyUserId?: true
+  motivoCancelamento?: true
   observacao?: true
   createdAt?: true
   updatedAt?: true
@@ -98,6 +110,9 @@ export type InventarioMaxAggregateInputType = {
   abertaEm?: true
   apuradaPorCompanyUserId?: true
   apuradaEm?: true
+  canceladaEm?: true
+  canceladaPorCompanyUserId?: true
+  motivoCancelamento?: true
   observacao?: true
   createdAt?: true
   updatedAt?: true
@@ -113,6 +128,9 @@ export type InventarioCountAggregateInputType = {
   abertaEm?: true
   apuradaPorCompanyUserId?: true
   apuradaEm?: true
+  canceladaEm?: true
+  canceladaPorCompanyUserId?: true
+  motivoCancelamento?: true
   observacao?: true
   createdAt?: true
   updatedAt?: true
@@ -201,6 +219,9 @@ export type InventarioGroupByOutputType = {
   abertaEm: Date
   apuradaPorCompanyUserId: string | null
   apuradaEm: Date | null
+  canceladaEm: Date | null
+  canceladaPorCompanyUserId: string | null
+  motivoCancelamento: string | null
   observacao: string | null
   createdAt: Date
   updatedAt: Date
@@ -237,6 +258,9 @@ export type InventarioWhereInput = {
   abertaEm?: Prisma.DateTimeFilter<"Inventario"> | Date | string
   apuradaPorCompanyUserId?: Prisma.UuidNullableFilter<"Inventario"> | string | null
   apuradaEm?: Prisma.DateTimeNullableFilter<"Inventario"> | Date | string | null
+  canceladaEm?: Prisma.DateTimeNullableFilter<"Inventario"> | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.UuidNullableFilter<"Inventario"> | string | null
+  motivoCancelamento?: Prisma.StringNullableFilter<"Inventario"> | string | null
   observacao?: Prisma.StringNullableFilter<"Inventario"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Inventario"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Inventario"> | Date | string
@@ -255,6 +279,9 @@ export type InventarioOrderByWithRelationInput = {
   abertaEm?: Prisma.SortOrder
   apuradaPorCompanyUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   apuradaEm?: Prisma.SortOrderInput | Prisma.SortOrder
+  canceladaEm?: Prisma.SortOrderInput | Prisma.SortOrder
+  canceladaPorCompanyUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  motivoCancelamento?: Prisma.SortOrderInput | Prisma.SortOrder
   observacao?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -277,6 +304,9 @@ export type InventarioWhereUniqueInput = Prisma.AtLeast<{
   abertaEm?: Prisma.DateTimeFilter<"Inventario"> | Date | string
   apuradaPorCompanyUserId?: Prisma.UuidNullableFilter<"Inventario"> | string | null
   apuradaEm?: Prisma.DateTimeNullableFilter<"Inventario"> | Date | string | null
+  canceladaEm?: Prisma.DateTimeNullableFilter<"Inventario"> | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.UuidNullableFilter<"Inventario"> | string | null
+  motivoCancelamento?: Prisma.StringNullableFilter<"Inventario"> | string | null
   observacao?: Prisma.StringNullableFilter<"Inventario"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Inventario"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Inventario"> | Date | string
@@ -295,6 +325,9 @@ export type InventarioOrderByWithAggregationInput = {
   abertaEm?: Prisma.SortOrder
   apuradaPorCompanyUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   apuradaEm?: Prisma.SortOrderInput | Prisma.SortOrder
+  canceladaEm?: Prisma.SortOrderInput | Prisma.SortOrder
+  canceladaPorCompanyUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  motivoCancelamento?: Prisma.SortOrderInput | Prisma.SortOrder
   observacao?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -316,6 +349,9 @@ export type InventarioScalarWhereWithAggregatesInput = {
   abertaEm?: Prisma.DateTimeWithAggregatesFilter<"Inventario"> | Date | string
   apuradaPorCompanyUserId?: Prisma.UuidNullableWithAggregatesFilter<"Inventario"> | string | null
   apuradaEm?: Prisma.DateTimeNullableWithAggregatesFilter<"Inventario"> | Date | string | null
+  canceladaEm?: Prisma.DateTimeNullableWithAggregatesFilter<"Inventario"> | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.UuidNullableWithAggregatesFilter<"Inventario"> | string | null
+  motivoCancelamento?: Prisma.StringNullableWithAggregatesFilter<"Inventario"> | string | null
   observacao?: Prisma.StringNullableWithAggregatesFilter<"Inventario"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Inventario"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Inventario"> | Date | string
@@ -329,6 +365,9 @@ export type InventarioCreateInput = {
   abertaEm?: Date | string
   apuradaPorCompanyUserId?: string | null
   apuradaEm?: Date | string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   observacao?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -347,6 +386,9 @@ export type InventarioUncheckedCreateInput = {
   abertaEm?: Date | string
   apuradaPorCompanyUserId?: string | null
   apuradaEm?: Date | string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   observacao?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -361,6 +403,9 @@ export type InventarioUpdateInput = {
   abertaEm?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   apuradaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   apuradaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -379,6 +424,9 @@ export type InventarioUncheckedUpdateInput = {
   abertaEm?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   apuradaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   apuradaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -395,6 +443,9 @@ export type InventarioCreateManyInput = {
   abertaEm?: Date | string
   apuradaPorCompanyUserId?: string | null
   apuradaEm?: Date | string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   observacao?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -408,6 +459,9 @@ export type InventarioUpdateManyMutationInput = {
   abertaEm?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   apuradaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   apuradaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -423,6 +477,9 @@ export type InventarioUncheckedUpdateManyInput = {
   abertaEm?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   apuradaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   apuradaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -453,6 +510,9 @@ export type InventarioCountOrderByAggregateInput = {
   abertaEm?: Prisma.SortOrder
   apuradaPorCompanyUserId?: Prisma.SortOrder
   apuradaEm?: Prisma.SortOrder
+  canceladaEm?: Prisma.SortOrder
+  canceladaPorCompanyUserId?: Prisma.SortOrder
+  motivoCancelamento?: Prisma.SortOrder
   observacao?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -468,6 +528,9 @@ export type InventarioMaxOrderByAggregateInput = {
   abertaEm?: Prisma.SortOrder
   apuradaPorCompanyUserId?: Prisma.SortOrder
   apuradaEm?: Prisma.SortOrder
+  canceladaEm?: Prisma.SortOrder
+  canceladaPorCompanyUserId?: Prisma.SortOrder
+  motivoCancelamento?: Prisma.SortOrder
   observacao?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -483,6 +546,9 @@ export type InventarioMinOrderByAggregateInput = {
   abertaEm?: Prisma.SortOrder
   apuradaPorCompanyUserId?: Prisma.SortOrder
   apuradaEm?: Prisma.SortOrder
+  canceladaEm?: Prisma.SortOrder
+  canceladaPorCompanyUserId?: Prisma.SortOrder
+  motivoCancelamento?: Prisma.SortOrder
   observacao?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -599,6 +665,9 @@ export type InventarioCreateWithoutCompanyInput = {
   abertaEm?: Date | string
   apuradaPorCompanyUserId?: string | null
   apuradaEm?: Date | string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   observacao?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -615,6 +684,9 @@ export type InventarioUncheckedCreateWithoutCompanyInput = {
   abertaEm?: Date | string
   apuradaPorCompanyUserId?: string | null
   apuradaEm?: Date | string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   observacao?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -660,6 +732,9 @@ export type InventarioScalarWhereInput = {
   abertaEm?: Prisma.DateTimeFilter<"Inventario"> | Date | string
   apuradaPorCompanyUserId?: Prisma.UuidNullableFilter<"Inventario"> | string | null
   apuradaEm?: Prisma.DateTimeNullableFilter<"Inventario"> | Date | string | null
+  canceladaEm?: Prisma.DateTimeNullableFilter<"Inventario"> | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.UuidNullableFilter<"Inventario"> | string | null
+  motivoCancelamento?: Prisma.StringNullableFilter<"Inventario"> | string | null
   observacao?: Prisma.StringNullableFilter<"Inventario"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Inventario"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Inventario"> | Date | string
@@ -673,6 +748,9 @@ export type InventarioCreateWithoutDepositoInput = {
   abertaEm?: Date | string
   apuradaPorCompanyUserId?: string | null
   apuradaEm?: Date | string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   observacao?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -689,6 +767,9 @@ export type InventarioUncheckedCreateWithoutDepositoInput = {
   abertaEm?: Date | string
   apuradaPorCompanyUserId?: string | null
   apuradaEm?: Date | string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   observacao?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -729,6 +810,9 @@ export type InventarioCreateWithoutItensInput = {
   abertaEm?: Date | string
   apuradaPorCompanyUserId?: string | null
   apuradaEm?: Date | string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   observacao?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -746,6 +830,9 @@ export type InventarioUncheckedCreateWithoutItensInput = {
   abertaEm?: Date | string
   apuradaPorCompanyUserId?: string | null
   apuradaEm?: Date | string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   observacao?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -775,6 +862,9 @@ export type InventarioUpdateWithoutItensInput = {
   abertaEm?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   apuradaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   apuradaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -792,6 +882,9 @@ export type InventarioUncheckedUpdateWithoutItensInput = {
   abertaEm?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   apuradaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   apuradaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -806,6 +899,9 @@ export type InventarioCreateManyCompanyInput = {
   abertaEm?: Date | string
   apuradaPorCompanyUserId?: string | null
   apuradaEm?: Date | string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   observacao?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -819,6 +915,9 @@ export type InventarioUpdateWithoutCompanyInput = {
   abertaEm?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   apuradaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   apuradaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -835,6 +934,9 @@ export type InventarioUncheckedUpdateWithoutCompanyInput = {
   abertaEm?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   apuradaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   apuradaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -850,6 +952,9 @@ export type InventarioUncheckedUpdateManyWithoutCompanyInput = {
   abertaEm?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   apuradaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   apuradaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -864,6 +969,9 @@ export type InventarioCreateManyDepositoInput = {
   abertaEm?: Date | string
   apuradaPorCompanyUserId?: string | null
   apuradaEm?: Date | string | null
+  canceladaEm?: Date | string | null
+  canceladaPorCompanyUserId?: string | null
+  motivoCancelamento?: string | null
   observacao?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -877,6 +985,9 @@ export type InventarioUpdateWithoutDepositoInput = {
   abertaEm?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   apuradaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   apuradaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -893,6 +1004,9 @@ export type InventarioUncheckedUpdateWithoutDepositoInput = {
   abertaEm?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   apuradaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   apuradaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -908,6 +1022,9 @@ export type InventarioUncheckedUpdateManyWithoutDepositoInput = {
   abertaEm?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   apuradaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   apuradaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  canceladaPorCompanyUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  motivoCancelamento?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   observacao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -954,6 +1071,9 @@ export type InventarioSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   abertaEm?: boolean
   apuradaPorCompanyUserId?: boolean
   apuradaEm?: boolean
+  canceladaEm?: boolean
+  canceladaPorCompanyUserId?: boolean
+  motivoCancelamento?: boolean
   observacao?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -973,6 +1093,9 @@ export type InventarioSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   abertaEm?: boolean
   apuradaPorCompanyUserId?: boolean
   apuradaEm?: boolean
+  canceladaEm?: boolean
+  canceladaPorCompanyUserId?: boolean
+  motivoCancelamento?: boolean
   observacao?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -990,6 +1113,9 @@ export type InventarioSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   abertaEm?: boolean
   apuradaPorCompanyUserId?: boolean
   apuradaEm?: boolean
+  canceladaEm?: boolean
+  canceladaPorCompanyUserId?: boolean
+  motivoCancelamento?: boolean
   observacao?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1007,12 +1133,15 @@ export type InventarioSelectScalar = {
   abertaEm?: boolean
   apuradaPorCompanyUserId?: boolean
   apuradaEm?: boolean
+  canceladaEm?: boolean
+  canceladaPorCompanyUserId?: boolean
+  motivoCancelamento?: boolean
   observacao?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type InventarioOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "companyId" | "numero" | "depositoId" | "status" | "abertaPorCompanyUserId" | "abertaEm" | "apuradaPorCompanyUserId" | "apuradaEm" | "observacao" | "createdAt" | "updatedAt", ExtArgs["result"]["inventario"]>
+export type InventarioOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "companyId" | "numero" | "depositoId" | "status" | "abertaPorCompanyUserId" | "abertaEm" | "apuradaPorCompanyUserId" | "apuradaEm" | "canceladaEm" | "canceladaPorCompanyUserId" | "motivoCancelamento" | "observacao" | "createdAt" | "updatedAt", ExtArgs["result"]["inventario"]>
 export type InventarioInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   deposito?: boolean | Prisma.DepositoDefaultArgs<ExtArgs>
@@ -1052,6 +1181,15 @@ export type $InventarioPayload<ExtArgs extends runtime.Types.Extensions.Internal
     abertaEm: Date
     apuradaPorCompanyUserId: string | null
     apuradaEm: Date | null
+    /**
+     * Desistir da contagem sem apurar. O trio espelha `RequisicaoMaterial`, e o
+     * CHECK `inventario_cancelamento_com_motivo` exige o motivo no BANCO: sem
+     * ele, quem for entender depois por que o depósito ficou sem contagem no
+     * mês não tem o que ler.
+     */
+    canceladaEm: Date | null
+    canceladaPorCompanyUserId: string | null
+    motivoCancelamento: string | null
     observacao: string | null
     createdAt: Date
     updatedAt: Date
@@ -1490,6 +1628,9 @@ export interface InventarioFieldRefs {
   readonly abertaEm: Prisma.FieldRef<"Inventario", 'DateTime'>
   readonly apuradaPorCompanyUserId: Prisma.FieldRef<"Inventario", 'String'>
   readonly apuradaEm: Prisma.FieldRef<"Inventario", 'DateTime'>
+  readonly canceladaEm: Prisma.FieldRef<"Inventario", 'DateTime'>
+  readonly canceladaPorCompanyUserId: Prisma.FieldRef<"Inventario", 'String'>
+  readonly motivoCancelamento: Prisma.FieldRef<"Inventario", 'String'>
   readonly observacao: Prisma.FieldRef<"Inventario", 'String'>
   readonly createdAt: Prisma.FieldRef<"Inventario", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Inventario", 'DateTime'>
