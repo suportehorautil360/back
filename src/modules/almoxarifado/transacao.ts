@@ -17,6 +17,7 @@ import { Prisma } from '../../prisma/generated/client';
  *
  *   ordem de compra (cabeçalho)
  *   → requisições (por id)
+ *   → cabeçalho de inventário ou de transferência (por id)
  *   → linhas de item de solicitação de compra (por id)
  *   → `peca_saldos` (por `pecaId`, `compararPorPeca`; quando a transação toca
  *     duas linhas da MESMA peça em depósitos diferentes — só a transferência —
@@ -234,10 +235,9 @@ export function compararPorPecaEDeposito(
  * o recebimento de compra passa a SUBIR a reserva de um item faltante, e esse
  * argumento deixou de valer.
  *
- * Ordem única de trava — a mesma em todo método, senão é deadlock:
- * cabeçalho da ordem de compra → requisições (por id) → linhas de solicitação
- * de compra → `peca_saldos` (por `pecaId`, `compararPorPeca`) → ordem de
- * serviço.
+ * Segue a ordem única de trava documentada no topo deste arquivo, segundo
+ * passo: trava a requisição DEPOIS do cabeçalho da ordem de compra, e ANTES do
+ * cabeçalho de inventário ou de transferência.
  *
  * Trava e só. Quem chama relê os campos de que precisa com o client da
  * transação, DEPOIS desta chamada — nunca decide pelo retrato lido fora dela.
