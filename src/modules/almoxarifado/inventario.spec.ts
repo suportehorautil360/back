@@ -22,15 +22,45 @@ function montar(opts: { jaAberta?: boolean; depositoDeOutra?: boolean } = {}) {
       ),
     },
     peca: {
-      findMany: jest.fn(async ({ where }: { where: { id: { in: string[] } } }) =>
-        where.id.in.filter((id) => id !== 'p-inexistente').map((id) => ({ id })),
+      findMany: jest.fn(
+        async ({
+          where,
+        }: {
+          where: { id: { in: string[] }; companyId?: string; ativo?: boolean };
+        }) => {
+          if (where.companyId === undefined) {
+            throw new Error('banco falso: peca.findMany sem escopo de empresa — onde é isso?');
+          }
+          if (where.ativo === undefined) {
+            throw new Error('banco falso: peca.findMany sem filtro de ativo — onde é isso?');
+          }
+          if (where.companyId !== COMPANY || where.ativo !== true) return [];
+          return where.id.in.filter((id) => id !== 'p-inexistente').map((id) => ({ id }));
+        },
       ),
     },
     inventario: {
       findFirst: jest.fn(async ({ where }: { where: { depositoId: string; status: string } }) =>
         inventarios.find((i) => i.depositoId === where.depositoId && i.status === where.status) ?? null,
       ),
-      findMany: jest.fn(async () => inventarios.map((i) => ({ numero: i.numero }))),
+      findMany: jest.fn(
+        async ({
+          where,
+        }: {
+          where: { companyId?: string; numero?: { startsWith?: string } };
+        }) => {
+          if (where.companyId === undefined) {
+            throw new Error('banco falso: inventario.findMany sem escopo de empresa — onde é isso?');
+          }
+          const prefixo = where.numero?.startsWith;
+          if (typeof prefixo !== 'string') {
+            throw new Error('banco falso: inventario.findMany sem prefixo de número — onde é isso?');
+          }
+          return inventarios
+            .filter((i) => i.companyId === where.companyId && (i.numero as string).startsWith(prefixo))
+            .map((i) => ({ numero: i.numero }));
+        },
+      ),
       create: jest.fn(async ({ data }: { data: Linha }) => {
         const novo = { id: 'inv-1', ...data };
         inventarios.push(novo);
@@ -60,6 +90,17 @@ const entrada = (extra: Partial<Record<string, unknown>> = {}) => ({
 });
 
 describe('abrirInventario', () => {
+  // A numeração (`INV-2026-...`) depende do ano corrente — sem congelar o
+  // relógio, a suíte quebra sozinha em 2027-01-01. Mesmo padrão de
+  // `uploads.service.spec.ts` (`uploadSelfiePonto`).
+  beforeEach(() => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-09-17T12:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('nasce aberta, numerada, com um item por peça', async () => {
     const { tx, estado } = montar();
     const r = await abrirInventario(tx as never, entrada());
