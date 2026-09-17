@@ -457,20 +457,45 @@ export async function receberTransferencia(
   // não de conteúdo, então não precisa esperar a vez de ninguém na ordem de
   // trava. Item de fora desta transferência é recusado antes de tocar
   // `peca_saldos`.
+  //
+  // Mesmo molde de `criarTransferencia` (peça repetida "some as quantidades
+  // numa linha só"): recusa `itemId` repetido, e — o que falta ali por não
+  // fazer sentido lá — exige que o conjunto informado seja EXATAMENTE o
+  // conjunto de itens do documento. Sem isto, os dois lados escapavam: pedido
+  // PARCIAL (informa só parte dos itens, ou lista vazia) fechava a
+  // transferência como recebida, com o resto tratado como "chegou tudo" —
+  // silêncio, não divergência —, e a origem já tinha baixado o físico dessa
+  // peça: ela não entra em depósito nenhum, não vira divergência, e o
+  // documento nunca mais pode ser reaberto para corrigir, porque o ato
+  // recusa qualquer status diferente de `em_transito`. E `itemId` repetido
+  // credita a MESMA peça duas vezes — dois movimentos no razão APPEND-ONLY
+  // que ninguém pode apagar depois.
+  const vistos = new Set<string>();
   const pedidos = input.itens.map((entrada) => {
     const item = porId.get(entrada.itemId);
     if (!item) {
       throw new BadRequestException('Item não pertence a esta transferência.');
     }
+    if (vistos.has(item.id)) {
+      throw new BadRequestException(
+        `A peça ${item.peca.codigoInterno} foi informada mais de uma vez neste recebimento.`,
+      );
+    }
+    vistos.add(item.id);
     return { item, entrada };
   });
+  const faltando = itens.filter((i) => !vistos.has(i.id));
+  if (faltando.length > 0) {
+    throw new BadRequestException(
+      `Faltou confirmar o recebimento de: ${faltando.map((i) => i.peca.codigoInterno).join(', ')}.`,
+    );
+  }
 
-  // Mesmo comparador de `expedirTransferencia`, e por razão simétrica: aqui
-  // quem se repete entre itens é o DESTINO (todo item desta chamada tem o
-  // mesmo `depositoDestinoId`), então `compararPorPeca` sozinho decide a
-  // ordem — o desempate por depósito nunca dispara dentro desta função. Uso o
-  // comparador composto mesmo assim para ser a MESMA função dos dois lados da
-  // viagem, não porque a parte composta compre garantia aqui.
+  // Mesmo comparador de `expedirTransferencia` (ver o comentário de
+  // `compararPorPecaEDeposito` em `transacao.ts`): expedição e recebimento
+  // tocam linhas em comum de peças que viajam nos dois sentidos entre os
+  // mesmos dois depósitos, e é ordenar por `pecaId` PRIMEIRO que garante que
+  // os dois lados peguem essas linhas na mesma ordem relativa.
   const ordenados = [...pedidos].sort((a, b) =>
     compararPorPecaEDeposito(
       { pecaId: a.item.pecaId, depositoId: transferencia.depositoDestinoId },
@@ -479,7 +504,6 @@ export async function receberTransferencia(
   );
 
   let comDivergencia = 0;
-  const processados: Array<{ quantidade: number; quantidadeRecebida: number }> = [];
 
   for (const { item, entrada } of ordenados) {
     const quantidade = Number(item.quantidade);
@@ -503,7 +527,6 @@ export async function receberTransferencia(
       );
     }
     if (divergiu) comDivergencia += 1;
-    processados.push({ quantidade, quantidadeRecebida: recebida });
 
     await tx.transferenciaItem.update({
       where: { id: item.id },
@@ -589,11 +612,25 @@ export async function receberTransferencia(
     });
   }
 
+  // Calculado uma vez, e usado nos DOIS lugares abaixo (escrita e rastro):
+  // hoje `statusAposRecebimento` sempre devolve `'recebida'`, mas gravar a
+  // string cravada no rastro enquanto a escrita usa o valor calculado é uma
+  // mentira esperando o dia em que a regra devolver outra coisa, sem teste
+  // nenhum para pegar a divergência. A lista vem de `ordenados` — os mesmos
+  // itens que o laço acima já processou, e não uma cópia paralela feita só
+  // para alimentar este parâmetro (que a regra hoje ignora).
+  const status = statusAposRecebimento(
+    ordenados.map(({ item, entrada }) => ({
+      quantidade: Number(item.quantidade),
+      quantidadeRecebida: entrada.quantidadeRecebida,
+    })),
+  );
+
   // Status sempre explícito na escrita — nunca herdado do default do schema.
   await tx.transferencia.update({
     where: { id: transferencia.id },
     data: {
-      status: statusAposRecebimento(processados),
+      status,
       recebidaEm: new Date(),
       recebidaPorCompanyUserId: input.autorCompanyUserId,
     },
@@ -606,7 +643,7 @@ export async function receberTransferencia(
     alvoId: transferencia.id,
     atorCompanyUserId: input.autorCompanyUserId,
     antes: { numero: transferencia.numero, status: 'em_transito' },
-    depois: { numero: transferencia.numero, status: 'recebida', comDivergencia },
+    depois: { numero: transferencia.numero, status, comDivergencia },
   });
 
   return { transferenciaId: transferencia.id, numero: transferencia.numero, comDivergencia };

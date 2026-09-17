@@ -19,9 +19,15 @@ import { Prisma } from '../../prisma/generated/client';
  *   → requisições (por id)
  *   → cabeçalho de inventário ou de transferência (por id)
  *   → linhas de item de solicitação de compra (por id)
- *   → `peca_saldos` (por `pecaId`, `compararPorPeca`; quando a transação toca
- *     duas linhas da MESMA peça em depósitos diferentes — só a transferência —
- *     por `compararPorPecaEDeposito`)
+ *   → `peca_saldos` (por `pecaId`, `compararPorPeca`; na transferência, por
+ *     `compararPorPecaEDeposito` — não porque uma MESMA transação toque duas
+ *     linhas da MESMA peça em depósitos diferentes, ela não toca: a expedição
+ *     trava só a ORIGEM, o recebimento só o DESTINO. A razão é outra: uma
+ *     expedição A→B e um recebimento de B→A concorrentes tocam linhas EM
+ *     COMUM — peças que viajam nos dois sentidos entre os mesmos dois
+ *     depósitos —, e ordenar por `pecaId` PRIMEIRO é o que garante que as
+ *     duas transações peguem essas linhas na MESMA ordem relativa, para que
+ *     não se esperem em círculo)
  *   → cabeçalhos de solicitação de compra (por id)
  *   → OS
  *

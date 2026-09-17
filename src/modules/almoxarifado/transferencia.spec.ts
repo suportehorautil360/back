@@ -829,6 +829,12 @@ function montarRecebimento(
       // de novo.
       upsert: jest.fn(async ({ create }: { create: { pecaId: string; depositoId: string } }) => {
         const k = chave(create.pecaId, create.depositoId);
+        // Empilha SEMPRE, exista a linha ou não — é o que prova que o
+        // `upsert` (garantir a linha) acontece ANTES do `FOR UPDATE`, não só
+        // que ele funciona. Sem este `log.push`, a asserção de ordem não era
+        // nem exprimível: inverter `upsert` e trava na produção passava
+        // verde do mesmo jeito.
+        log.push(`upsert:saldo:${k}`);
         if (!saldos.has(k)) {
           saldos.set(k, { saldoFisico: 0, saldoReservado: 0, custoMedio: 0 });
           desfazer.push(() => saldos.delete(k));
@@ -918,13 +924,21 @@ describe('receberTransferencia', () => {
     ]);
   });
 
-  it('o valor viaja: a média do destino é ponderada pelo custo que saiu da origem', async () => {
-    // Destino tinha 2 a R$10; chegam 4 a R$7 → (2*10 + 4*7) / 6 = 8.
+  it('o valor viaja: a média do destino é ponderada pela quantidade RECEBIDA, não a expedida', async () => {
+    // Destino tinha 2 a R$10. Saíram 4 a R$7 da origem, mas só 3 chegaram
+    // (divergência). A conta certa pesa pela RECEBIDA: (2*10 + 3*7) / 5 =
+    // 8.2. Pesar pela EXPEDIDA (4, a `quantidade` do item) daria
+    // (2*10 + 4*7) / 6 = 8.0 — um número DIFERENTE, de propósito: uma
+    // fixture com destino zerado (`custoMedio: 0`) não discrimina os dois
+    // caminhos, porque `(0*x + N*7) / N = 7` para qualquer N recebido.
+    // Conferido rodando antes de fixar o número: `node -e "console.log((2*10+3*7)/5)"` → 8.2.
     const { tx, estado } = montarRecebimento({
       saldos: [['p-1|dep-b', { saldoFisico: 2, saldoReservado: 0, custoMedio: 10 }]],
     });
-    await receberTransferencia(tx as never, recebimento());
-    expect(estado.saldos.get('p-1|dep-b')!.custoMedio).toBe(8);
+    await receberTransferencia(tx as never, recebimento({
+      itens: [{ itemId: 'ti-1', quantidadeRecebida: 3, motivoDivergencia: 'uma caixa amassada' }],
+    }));
+    expect(estado.saldos.get('p-1|dep-b')!.custoMedio).toBe(8.2);
   });
 
   it('peça que nunca existiu no destino entra com o custo da origem', async () => {
@@ -1011,16 +1025,76 @@ describe('receberTransferencia', () => {
     expect(estado.itens[0].quantidadeRecebida).toBeNull();
   });
 
-  it('transferência que não está em trânsito não recebe', async () => {
-    const { tx } = montarRecebimento({ status: 'rascunho' });
-    await expect(receberTransferencia(tx as never, recebimento())).rejects.toThrow(ConflictException);
-  });
+  it.each(['rascunho', 'recebida', 'cancelada'])(
+    'transferência %s não recebe de novo',
+    async (status) => {
+      const { tx } = montarRecebimento({ status });
+      await expect(receberTransferencia(tx as never, recebimento())).rejects.toThrow(ConflictException);
+    },
+  );
 
   it('item de fora da transferência é recusado', async () => {
     const { tx } = montarRecebimento();
     await expect(
       receberTransferencia(tx as never, recebimento({ itens: [{ itemId: 'ti-9', quantidadeRecebida: 1 }] })),
     ).rejects.toThrow(BadRequestException);
+  });
+
+  it('recebimento incompleto é recusado, nomeando a peça que faltou', async () => {
+    // Sondagem da revisão: documento com `ti-1` (4 un) e `ti-2` (5 un),
+    // informando só `ti-1`. Sem esta guarda, o documento fechava como
+    // `recebida`, com `ti-2` tratado em SILÊNCIO como "chegou tudo" — e a
+    // origem já tinha baixado as 5 unidades de `p-2` na expedição: elas não
+    // entrariam em depósito nenhum, não virariam divergência, e o documento
+    // nunca mais poderia ser reaberto para corrigir (o ato recusa qualquer
+    // status diferente de `em_transito`).
+    const { tx, estado } = montarRecebimento({
+      itens: [
+        { id: 'ti-1', pecaId: 'p-1', quantidade: 4, custoUnit: 7, quantidadeRecebida: null, motivoDivergencia: null },
+        { id: 'ti-2', pecaId: 'p-2', quantidade: 5, custoUnit: 3, quantidadeRecebida: null, motivoDivergencia: null },
+      ],
+    });
+    await expect(
+      receberTransferencia(tx as never, recebimento({ itens: [{ itemId: 'ti-1', quantidadeRecebida: 4 }] })),
+    ).rejects.toThrow(/ALM-p-2/);
+    expect(estado.movimentos).toHaveLength(0);
+    expect(estado.transferencia.status).toBe('em_transito');
+    // Nem o item INFORMADO (ti-1) foi tocado: a checagem de completude
+    // acontece antes de qualquer escrita, não no meio do laço.
+    expect(estado.itens.find((i) => i.id === 'ti-1')!.quantidadeRecebida).toBeNull();
+  });
+
+  it('lista vazia é recusada — a carga inteira do caminhão não evapora de uma vez', async () => {
+    const { tx, estado } = montarRecebimento();
+    await expect(
+      receberTransferencia(tx as never, recebimento({ itens: [] })),
+    ).rejects.toThrow(/ALM-p-1/);
+    expect(estado.movimentos).toHaveLength(0);
+    expect(estado.transferencia.status).toBe('em_transito');
+  });
+
+  it('o mesmo item informado duas vezes é recusado, nomeando a peça repetida', async () => {
+    // Sondagem: `[{ti-1, 4}, {ti-1, 4}]` sobre uma expedição de 4 creditava
+    // DUAS vezes — `saldoFisico` dobrava, dois movimentos no razão
+    // APPEND-ONLY que ninguém pode apagar depois, e a média ponderada do
+    // destino era poluída duas vezes. O pior detalhe (a razão de a suíte
+    // antiga não pegar isto sozinha): `saldoApos` das duas linhas fica
+    // internamente coerente com o saldo errado, então uma reconciliação
+    // razão × `peca_saldos` fecharia — só o documento da transferência
+    // (`quantidade` expedida vs. soma recebida) denuncia a diferença.
+    const { tx, estado } = montarRecebimento({
+      saldos: [['p-1|dep-b', { saldoFisico: 2, saldoReservado: 0, custoMedio: 10 }]],
+    });
+    await expect(
+      receberTransferencia(tx as never, recebimento({
+        itens: [
+          { itemId: 'ti-1', quantidadeRecebida: 4 },
+          { itemId: 'ti-1', quantidadeRecebida: 4 },
+        ],
+      })),
+    ).rejects.toThrow(/ALM-p-1/);
+    expect(estado.movimentos).toHaveLength(0);
+    expect(estado.saldos.get('p-1|dep-b')).toMatchObject({ saldoFisico: 2, custoMedio: 10 });
   });
 
   it('trava o cabeçalho e depois os saldos, na ordem do comparador', async () => {
@@ -1046,19 +1120,27 @@ describe('receberTransferencia', () => {
     expect(saldosTravados).toEqual([...saldosTravados].sort());
   });
 
-  it('lê o saldo DEPOIS de travar a linha — a escrita é absoluta, não soma cega', async () => {
-    // Sem esta ordem, dois recebimentos concorrentes da mesma peça no mesmo
-    // destino leriam o mesmo físico e o segundo sobrescreveria a entrada do
-    // primeiro (lost update) — içar a leitura para antes do `FOR UPDATE`
-    // deixaria a suíte inteira verde do mesmo jeito, então só esta asserção
-    // de ORDEM pega essa regressão.
+  it('garante a linha (upsert) ANTES de travar, e trava ANTES de ler — a ordem inteira', async () => {
+    // Sem a ordem upsert→trava→leitura, duas falhas diferentes se escondem:
+    // içar a LEITURA para antes do `FOR UPDATE` reabre o lost update clássico
+    // (dois recebimentos leem o mesmo físico, o segundo sobrescreve o
+    // primeiro); e inverter TRAVA e `upsert` reabre o mesmo lost update para
+    // a peça que chega ao destino pela PRIMEIRA vez — a linha ainda não
+    // existe, `FOR UPDATE` não trava nada, e dois recebimentos concorrentes
+    // fazem `upsert`, leem zero e gravam um absoluto os dois. Içar qualquer
+    // uma das duas deixaria a suíte inteira verde do mesmo jeito, então só
+    // esta asserção de ORDEM (as três etapas, não só duas pontas) pega as
+    // duas regressões.
     const { tx, estado } = montarRecebimento({
       saldos: [['p-1|dep-b', { saldoFisico: 2, saldoReservado: 0, custoMedio: 10 }]],
     });
     await receberTransferencia(tx as never, recebimento());
-    expect(estado.log.indexOf('trava:saldo:p-1|dep-b')).toBeLessThan(
-      estado.log.indexOf('ler:saldo:p-1|dep-b'),
-    );
+    const idxUpsert = estado.log.indexOf('upsert:saldo:p-1|dep-b');
+    const idxTrava = estado.log.indexOf('trava:saldo:p-1|dep-b');
+    const idxLer = estado.log.indexOf('ler:saldo:p-1|dep-b');
+    expect(idxUpsert).toBeGreaterThanOrEqual(0);
+    expect(idxUpsert).toBeLessThan(idxTrava);
+    expect(idxTrava).toBeLessThan(idxLer);
   });
 
   it('recusa no item que vem SEGUNDO na ordem de trava desfaz o que o primeiro já tinha gravado', async () => {
