@@ -41,7 +41,11 @@ describe('temDivergencia', () => {
   });
 
   it('a comparação é em milésimos', () => {
-    expect(temDivergencia({ quantidade: 0.3, quantidadeRecebida: 0.1 + 0.2 })).toBe(false);
+    // `0.7 - 0.4` é 0.29999999999999993 — um fio ABAIXO de 0.3. A comparação
+    // ingênua chamaria isso de divergência e pediria motivo para uma carga que
+    // chegou inteira. Com `0.1 + 0.2` este teste passava dos dois jeitos: aquele
+    // valor cai ACIMA de 0.3, e o `<` ingênuo já devolvia false sozinho.
+    expect(temDivergencia({ quantidade: 0.3, quantidadeRecebida: 0.7 - 0.4 })).toBe(false);
   });
 });
 
