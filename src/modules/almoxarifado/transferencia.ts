@@ -124,6 +124,14 @@ export interface EntradaDeCancelamentoDeTransferencia {
  * uma volta que ninguém dirigiu. Carga perdida se resolve confirmando o
  * recebimento com quantidade zero — aí o razão conta a verdade (saiu 10,
  * entrou 0) em vez de fingir que nada aconteceu.
+ *
+ * Trava o cabeçalho (posição da ORDEM ÚNICA DE TRAVA reservada a inventário
+ * ou transferência, topo de `transacao.ts`) ANTES de ler o status. Sem ela,
+ * um cancelamento e uma expedição concorrentes (Task 6) sobre o MESMO
+ * rascunho leem "rascunho" os dois, passam na checagem os dois, e escrevem
+ * os dois — se a expedição comitar por último, a peça sai da origem sob um
+ * documento que o razão diz "cancelado": não está na origem, não está no
+ * destino, e não há transferência aberta para alguém ir atrás dela.
  */
 export async function cancelarTransferencia(
   tx: ClienteDaTransacao,
@@ -133,6 +141,18 @@ export async function cancelarTransferencia(
   if (!motivo) {
     throw new BadRequestException('Cancelar transferência exige motivo.');
   }
+
+  // Mesma trava do cancelamento de inventário, e na posição que a ORDEM ÚNICA
+  // DE TRAVA (topo de `transacao.ts`) reserva ao cabeçalho de transferência.
+  // Sem ela, cancelar e expedir correm juntos: os dois leem "rascunho", os
+  // dois escrevem, e se a expedição commitar por último a peça sai da origem
+  // sob um documento cancelado — some do razão sem ninguém para procurá-la.
+  await tx.$queryRaw(Prisma.sql`
+    SELECT id FROM transferencias
+     WHERE id = ${input.transferenciaId}::uuid
+       AND company_id = ${input.companyId}::uuid
+       FOR UPDATE
+  `);
 
   const transferencia = await tx.transferencia.findFirst({
     where: { id: input.transferenciaId, companyId: input.companyId },

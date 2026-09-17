@@ -11,9 +11,21 @@ function montarCriacao(opts: { pecaDeOutra?: boolean } = {}) {
   ];
   const itens: Linha[] = [];
   const auditoria: Linha[] = [];
-  const estado = { transferencias, itens, auditoria };
+  // Espia a ordem trava→escrita, mesmo padrão de `inventario.spec.ts`
+  // (`'trava o cabeçalho ANTES de escrever'`): prova que a trava existe e
+  // acontece antes do UPDATE, não só que ela não quebra nada.
+  const log: string[] = [];
+  const estado = { transferencias, itens, auditoria, log };
 
   const tx = {
+    $queryRaw: jest.fn(async (q: { text: string; values: unknown[] }) => {
+      if (!q.text.includes('FROM transferencias')) {
+        throw new Error(`banco falso: SQL não reconhecido — ${q.text}`);
+      }
+      log.push('trava:transferencia');
+      const t = transferencias.find((x) => x.id === q.values[0] && x.companyId === q.values[1]);
+      return t ? [{ id: t.id }] : [];
+    }),
     deposito: {
       findMany: jest.fn(async ({ where }: { where: { id: { in: string[] }; companyId?: string } }) => {
         if (!where.companyId) throw new Error('banco falso: deposito.findMany sem escopo de empresa.');
@@ -50,6 +62,7 @@ function montarCriacao(opts: { pecaDeOutra?: boolean } = {}) {
       }),
       update: jest.fn(async ({ where, data }: { where: { id: string }; data: Linha }) => {
         Object.assign(transferencias.find((t) => t.id === where.id)!, data);
+        log.push('update:transferencia');
         return {};
       }),
     },
@@ -162,12 +175,13 @@ describe('cancelarTransferencia', () => {
     await expect(cancelarTransferencia(tx as never, cancelamento())).rejects.toThrow(ConflictException);
   });
 
-  it('sem motivo não cancela', async () => {
-    const { tx } = montarCriacao();
+  it('sem motivo não cancela, e não gasta trava', async () => {
+    const { tx, estado } = montarCriacao();
     await criarTransferencia(tx as never, criacao());
     await expect(
       cancelarTransferencia(tx as never, cancelamento({ motivo: '  ' })),
     ).rejects.toThrow(BadRequestException);
+    expect(estado.log).toEqual([]);
   });
 
   it('transferência de outra empresa não é encontrada', async () => {
@@ -176,5 +190,34 @@ describe('cancelarTransferencia', () => {
     await expect(
       cancelarTransferencia(tx as never, cancelamento({ companyId: '99999999-9999-9999-9999-999999999999' })),
     ).rejects.toThrow(NotFoundException);
+  });
+
+  it('trava o cabeçalho ANTES de escrever', async () => {
+    // Prova que a trava existe e é tomada antes do UPDATE — não só que ela
+    // não quebra o caminho feliz. Sem esta trava, cancelar e expedir (Task 6)
+    // concorrentes sobre o mesmo rascunho podiam ler "rascunho" os dois e
+    // escrever os dois; se a expedição comitasse por último, a peça sairia
+    // da origem sob um documento que o razão diz "cancelado".
+    const { tx, estado } = montarCriacao();
+    await criarTransferencia(tx as never, criacao());
+
+    await cancelarTransferencia(tx as never, cancelamento());
+
+    expect(estado.log).toContain('trava:transferencia');
+    expect(estado.log.indexOf('trava:transferencia')).toBeLessThan(
+      estado.log.indexOf('update:transferencia'),
+    );
+  });
+
+  it('a trava usa o id da transferência e a empresa do pedido, nessa ordem', async () => {
+    // Espiona os `values` do `$queryRaw`: prova que o WHERE do FOR UPDATE é
+    // escopado por empresa, não só por id — um id certo de OUTRA empresa não
+    // pode travar a linha.
+    const { tx } = montarCriacao();
+    await criarTransferencia(tx as never, criacao());
+    await cancelarTransferencia(tx as never, cancelamento());
+    expect(tx.$queryRaw).toHaveBeenCalledWith(
+      expect.objectContaining({ values: ['trf-1', COMPANY] }),
+    );
   });
 });
