@@ -186,7 +186,24 @@ function montarContagem(opts: { statusInventario?: string; semSaldo?: boolean } 
       }),
     },
     pecaSaldo: {
-      findUnique: jest.fn(async () => (opts.semSaldo ? null : { saldoFisico: 7 })),
+      findUnique: jest.fn(
+        async ({
+          where,
+        }: {
+          where: { pecaId_depositoId: { pecaId: string; depositoId: string } };
+        }) => {
+          const chave = where.pecaId_depositoId;
+          if (!chave?.pecaId || !chave?.depositoId) {
+            throw new Error('banco falso: pecaSaldo.findUnique sem chave composta — onde é isso?');
+          }
+          if (chave.pecaId !== item.pecaId || chave.depositoId !== inventario.depositoId) {
+            throw new Error(
+              `banco falso: pecaSaldo.findUnique com chave errada (pecaId=${chave.pecaId}, depositoId=${chave.depositoId}) — esperava pecaId=${item.pecaId}, depositoId=${inventario.depositoId}.`,
+            );
+          }
+          return opts.semSaldo ? null : { saldoFisico: 7 };
+        },
+      ),
     },
   };
   return { tx, estado };
