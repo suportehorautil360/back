@@ -25,8 +25,19 @@ describe('cabeNoDisponivel', () => {
   });
 
   it('quantidade que não é número não viaja', () => {
+    // Estes dois passariam mesmo sem a guarda — `NaN <= 10000` e
+    // `Infinity <= 10000` já são false sozinhos. Ficam como documentação da
+    // intenção; quem exercita a guarda é o teste abaixo.
     expect(cabeNoDisponivel({ saldoFisico: 10, saldoReservado: 0 }, NaN)).toBe(false);
     expect(cabeNoDisponivel({ saldoFisico: 10, saldoReservado: 0 }, Infinity)).toBe(false);
+  });
+
+  it('saldo corrompido não abençoa qualquer quantidade', () => {
+    // Este é o caso perigoso, e o único que observa a guarda: sem ela,
+    // `saldoFisico: Infinity` faz o disponível virar Infinity e TODA quantidade
+    // cabe — 10, mil, o que for. Um saldo sujo liberaria a peça inteira.
+    expect(cabeNoDisponivel({ saldoFisico: Infinity, saldoReservado: 0 }, 10)).toBe(false);
+    expect(cabeNoDisponivel({ saldoFisico: NaN, saldoReservado: 0 }, 10)).toBe(false);
   });
 });
 
