@@ -220,7 +220,13 @@ export async function apurarInventario(
 
   const itens = await tx.inventarioItem.findMany({
     where: { inventarioId: inventario.id },
-    select: { id: true, pecaId: true, quantidadeContada: true, saldoNaContagem: true },
+    select: {
+      id: true, pecaId: true, quantidadeContada: true, saldoNaContagem: true,
+      // Só para a `ConflictException` abaixo identificar a peça — numa
+      // contagem de 50 itens, "trate a reserva" sem dizer qual delas não
+      // ajuda ninguém. Vem no MESMO `findMany` (join), sem consulta a mais.
+      peca: { select: { codigoInterno: true } },
+    },
   });
   const comoNumero = itens.map((i) => ({
     ...i,
@@ -271,8 +277,8 @@ export async function apurarInventario(
     };
     if (!ajusteCabeNoSaldo(atual, ajuste)) {
       throw new ConflictException(
-        `A contagem desta peça achou menos do que já está reservado para uma OS. ` +
-          `Trate a reserva antes de acertar o saldo.`,
+        `A contagem da peça ${item.peca.codigoInterno} achou menos do que já ` +
+          `está reservado para uma OS. Trate a reserva antes de acertar o saldo.`,
       );
     }
 

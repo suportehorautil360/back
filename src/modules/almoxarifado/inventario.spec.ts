@@ -294,9 +294,38 @@ function montarApuracao(opts: { itens?: Linha[]; reservado?: number; statusInven
     [chave('p-1', 'dep-1'), { saldoFisico: 10, saldoReservado: opts.reservado ?? 0, custoMedio: 4 }],
     [chave('p-2', 'dep-1'), { saldoFisico: 5, saldoReservado: 0, custoMedio: 9 }],
   ]);
+  // Cadastro de peça — só o que a apuração lê pra identificar a peça na
+  // mensagem de recusa (`codigoInterno`, via join no MESMO `findMany`).
+  // `p-3` de propósito SEM linha em `saldos`: é a peça "nunca existiu neste
+  // depósito" que o teste de entrada exercita.
+  const pecas = new Map<string, Linha>([
+    ['p-1', { codigoInterno: 'ALM-0001' }],
+    ['p-2', { codigoInterno: 'ALM-0002' }],
+    ['p-3', { codigoInterno: 'ALM-0003' }],
+  ]);
   const movimentos: Linha[] = [];
   const auditoria: Linha[] = [];
   const estado = { log, inventario, itens, saldos, movimentos, auditoria };
+
+  // Log de desfazimento: cada escrita empilha como reverter A SI MESMA.
+  // Existe só para o teste de atomicidade (`comoTransacao` abaixo) poder
+  // provar que uma exceção no MEIO do laço desfaz o que um item anterior já
+  // tinha gravado — a garantia que, numa transação real, o `ROLLBACK` do
+  // Postgres dá de graça e que um objeto JS simples, sozinho, não dá.
+  const desfazer: Array<() => void> = [];
+  function gravar<T extends object>(alvo: T, dados: Partial<T>): void {
+    const antes = {} as Partial<T>;
+    for (const k of Object.keys(dados) as (keyof T)[]) antes[k] = alvo[k];
+    Object.assign(alvo, dados);
+    desfazer.push(() => Object.assign(alvo, antes));
+  }
+  function criar<T>(lista: T[], linha: T): void {
+    lista.push(linha);
+    desfazer.push(() => {
+      const i = lista.indexOf(linha);
+      if (i >= 0) lista.splice(i, 1);
+    });
+  }
 
   const tx = {
     $queryRaw: jest.fn(async (q: { text: string; values: unknown[] }) => {
@@ -321,23 +350,43 @@ function montarApuracao(opts: { itens?: Linha[]; reservado?: number; statusInven
       ),
       update: jest.fn(async ({ where, data }: { where: { id: string }; data: Linha }) => {
         if (where.id !== inventario.id) throw new Error('P2025');
-        Object.assign(inventario, data);
+        gravar(inventario, data);
         return {};
       }),
     },
     inventarioItem: {
-      findMany: jest.fn(async ({ where }: { where: { inventarioId: string } }) =>
-        where.inventarioId === inventario.id ? itens.map((i) => ({ ...i })) : [],
-      ),
+      findMany: jest.fn(async ({ where }: { where: { inventarioId: string } }) => {
+        if (where.inventarioId !== inventario.id) return [];
+        return itens.map((i) => {
+          const peca = pecas.get(i.pecaId);
+          if (!peca) {
+            throw new Error(`banco falso: peça ${i.pecaId} sem cadastro no fixture de pecas — onde é isso?`);
+          }
+          return { ...i, peca: { ...peca } };
+        });
+      }),
       update: jest.fn(async ({ where, data }: { where: { id: string }; data: Linha }) => {
         const item = itens.find((i) => i.id === where.id);
         if (!item) throw new Error('P2025');
-        Object.assign(item, data);
+        gravar(item, data);
         return {};
       }),
     },
     pecaSaldo: {
-      upsert: jest.fn(async () => ({})),
+      // Cria a linha do `create` quando ela ainda não existe — mesmo
+      // comportamento de um `upsert` de verdade. Sem isto, apagar o upsert
+      // da produção não quebraria teste nenhum: a peça "nunca contada
+      // neste depósito" (Achado 2 do round 1) precisa dele para existir.
+      upsert: jest.fn(
+        async ({ create }: { create: { pecaId: string; depositoId: string } }) => {
+          const k = chave(create.pecaId, create.depositoId);
+          if (!saldos.has(k)) {
+            saldos.set(k, { saldoFisico: 0, saldoReservado: 0, custoMedio: 0 });
+            desfazer.push(() => saldos.delete(k));
+          }
+          return {};
+        },
+      ),
       findUniqueOrThrow: jest.fn(
         async ({ where }: { where: { pecaId_depositoId: { pecaId: string; depositoId: string } } }) => {
           const s = saldos.get(chave(where.pecaId_depositoId.pecaId, where.pecaId_depositoId.depositoId));
@@ -355,7 +404,7 @@ function montarApuracao(opts: { itens?: Linha[]; reservado?: number; statusInven
         }) => {
           const s = saldos.get(chave(where.pecaId_depositoId.pecaId, where.pecaId_depositoId.depositoId));
           if (!s) throw new Error('P2025');
-          Object.assign(s, data);
+          gravar(s, data);
           return {};
         },
       ),
@@ -363,19 +412,33 @@ function montarApuracao(opts: { itens?: Linha[]; reservado?: number; statusInven
     estoqueMovimento: {
       create: jest.fn(async ({ data }: { data: Linha }) => {
         const m = { id: `mov-${movimentos.length + 1}`, ...data };
-        movimentos.push(m);
+        criar(movimentos, m);
         return m;
       }),
     },
     companyUser: { findFirst: jest.fn(async () => ({ name: 'Ana', email: 'a@x.com' })) },
     pontoAuditoria: {
       create: jest.fn(async ({ data }: { data: Linha }) => {
-        auditoria.push({ ...data });
+        criar(auditoria, { ...data });
         return data;
       }),
     },
   };
-  return { tx, estado };
+
+  // Roda `fn` (a chamada de `apurarInventario`) como se fosse a transação
+  // real: se `fn` lança, desfaz TUDO que as chamadas de `tx` já tinham
+  // gravado no banco falso, na ordem inversa — o `ROLLBACK` que o
+  // `$transaction` de verdade dá de graça.
+  async function comoTransacao<T>(fn: () => Promise<T>): Promise<T> {
+    try {
+      return await fn();
+    } catch (erro) {
+      while (desfazer.length) desfazer.pop()!();
+      throw erro;
+    }
+  }
+
+  return { tx, estado, comoTransacao };
 }
 
 const apuracao = (extra: Partial<Record<string, unknown>> = {}) => ({
@@ -387,6 +450,13 @@ describe('apurarInventario', () => {
   it('aplica a diferença como DELTA ao saldo de agora', async () => {
     // Contado 8 contra saldo-na-contagem 10 → ajuste −2. Se o saldo de agora
     // fosse 12 (entrou peça no meio), o certo é 10, não 8.
+    //
+    // Acha-de propósito uma implementação que gravasse `saldoApos` como o
+    // PRÓPRIO `quantidadeContada` (8) passaria despercebida se este teste só
+    // olhasse o saldo final: aqui, 12−2=10 coincide numericamente com o
+    // saldo do OUTRO teste (10−2=8, que por acaso é igual à quantidadeContada
+    // de lá). É por isso que o movimento entra na asserção AQUI, com números
+    // que não repetem essa coincidência.
     const { tx, estado } = montarApuracao();
     estado.saldos.get('p-1|dep-1')!.saldoFisico = 12;
 
@@ -394,6 +464,7 @@ describe('apurarInventario', () => {
 
     expect(r).toMatchObject({ ajustados: 1 });
     expect(estado.saldos.get('p-1|dep-1')!.saldoFisico).toBe(10);
+    expect(estado.movimentos[0]).toMatchObject({ quantidade: -2, saldoApos: 10 });
   });
 
   it('grava movimento de ajuste com sinal, saldoApos e a origem', async () => {
@@ -415,6 +486,22 @@ describe('apurarInventario', () => {
     await apurarInventario(tx as never, apuracao());
     expect(estado.movimentos[0].custoUnit).toBe(4);
     expect(estado.saldos.get('p-1|dep-1')!.custoMedio).toBe(4);
+  });
+
+  it('peça sem linha de saldo no depósito conta como ENTRADA, com custo zero', async () => {
+    // Mesmo raciocínio que `registrarContagem` já documenta: "conta contra
+    // ZERO — ela nunca existiu ali". `p-3` não tem linha em `saldos`: o
+    // `upsert` tem de criá-la (Achado 2 do round 1 de correção) para o
+    // `FOR UPDATE` seguinte ter o que travar.
+    const { tx, estado } = montarApuracao({
+      itens: [{ id: 'ii-3', pecaId: 'p-3', quantidadeContada: 3, saldoNaContagem: 0, ajuste: null, movimentoId: null }],
+    });
+    const r = await apurarInventario(tx as never, apuracao());
+    expect(r).toMatchObject({ ajustados: 1 });
+    expect(estado.saldos.get('p-3|dep-1')).toMatchObject({ saldoFisico: 3, custoMedio: 0 });
+    expect(estado.movimentos[0]).toMatchObject({
+      pecaId: 'p-3', tipo: 'ajuste', quantidade: 3, saldoApos: 3, custoUnit: 0,
+    });
   });
 
   it('item contado que BATE não gera movimento, e fica registrado como conferido', async () => {
@@ -443,8 +530,50 @@ describe('apurarInventario', () => {
     // A contagem achou menos do que já está comprometido com uma OS. Isso se
     // trata na reserva antes de se tratar no saldo.
     const { tx, estado } = montarApuracao({ reservado: 9 });
-    await expect(apurarInventario(tx as never, apuracao())).rejects.toThrow(ConflictException);
+    let capturado: unknown;
+    try {
+      await apurarInventario(tx as never, apuracao());
+    } catch (erro) {
+      capturado = erro;
+    }
+    expect(capturado).toBeInstanceOf(ConflictException);
+    // A recusa identifica a peça — numa contagem de 50 itens, "trate a
+    // reserva" sem dizer qual delas não ajuda ninguém (Achado 4 do round 1).
+    expect((capturado as Error).message).toMatch(/ALM-0001/);
     expect(estado.movimentos).toHaveLength(0);
+    expect(estado.inventario.status).toBe('aberta');
+  });
+
+  it('recusa por reservado no SEGUNDO item desfaz o que o primeiro já tinha gravado', async () => {
+    // `p-1` (travado primeiro, por `compararPorPeca`) ajusta sem problema;
+    // é o `p-2` que esbarra no reservado. Isto prova que a função não
+    // COLETA o erro do item que falhou e segue em frente fechando a
+    // contagem com o que deu certo: a exceção propaga, o inventário não
+    // fecha, e o que o item `p-1` já tinha gravado não sobrevive — a mesma
+    // garantia que, numa transação real, o `ROLLBACK` do `$transaction` do
+    // chamador dá; `comoTransacao` simula esse `ROLLBACK` aqui.
+    const { tx, estado, comoTransacao } = montarApuracao({
+      itens: [
+        { id: 'ii-1', pecaId: 'p-1', quantidadeContada: 8, saldoNaContagem: 10, ajuste: null, movimentoId: null },
+        { id: 'ii-2', pecaId: 'p-2', quantidadeContada: 1, saldoNaContagem: 5, ajuste: null, movimentoId: null },
+      ],
+    });
+    // Físico 5 + ajuste (1−5=−4) = 1, abaixo do reservado 4.
+    estado.saldos.get('p-2|dep-1')!.saldoReservado = 4;
+
+    let capturado: unknown;
+    try {
+      await comoTransacao(() => apurarInventario(tx as never, apuracao()));
+    } catch (erro) {
+      capturado = erro;
+    }
+    expect(capturado).toBeInstanceOf(ConflictException);
+    expect((capturado as Error).message).toMatch(/ALM-0002/);
+
+    // Nada do que o item `p-1` já tinha gravado sobrevive à exceção do `p-2`.
+    expect(estado.movimentos).toHaveLength(0);
+    expect(estado.itens[0].ajuste).toBeNull();
+    expect(estado.saldos.get('p-1|dep-1')!.saldoFisico).toBe(10);
     expect(estado.inventario.status).toBe('aberta');
   });
 
