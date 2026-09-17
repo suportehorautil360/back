@@ -5,7 +5,8 @@ import {
   formatNumeroTransferencia,
   parseNumeroTransferenciaSeq,
 } from './helpers/numero-transferencia.helper';
-import { cabeNoDisponivel } from './regras/transferencia';
+import { novoCustoMedio } from './regras/movimento';
+import { cabeNoDisponivel, statusAposRecebimento, temDivergencia } from './regras/transferencia';
 import { compararPorPecaEDeposito } from './transacao';
 
 type ClienteDaTransacao = Prisma.TransactionClient;
@@ -384,4 +385,229 @@ export async function expedirTransferencia(
   });
 
   return { transferenciaId: transferencia.id, numero: transferencia.numero, itens: itens.length };
+}
+
+export interface EntradaDeRecebimento {
+  companyId: string;
+  transferenciaId: string;
+  autorCompanyUserId: string;
+  itens: Array<{ itemId: string; quantidadeRecebida: number; motivoDivergencia?: string | null }>;
+}
+
+/**
+ * O responsável pelo destino confirma o que chegou. A quantidade entra no
+ * físico de lá, e o VALOR viaja junto: o custo que a expedição congelou no
+ * item pondera a média do destino (§5.5).
+ *
+ * Divergência é esperada e NÃO inventa movimento de acerto: o razão já conta
+ * a história inteira — saída de 4 em A, entrada de 3 em B —, e gravar uma
+ * terceira linha para "fechar a conta" seria inventar uma peça que ninguém
+ * viu (§5.3). Confirmar sempre FECHA a transferência, com ou sem divergência:
+ * o que não chegou não vem depois.
+ *
+ * Trava o cabeçalho ANTES de tudo — mesma forma e mesma posição de
+ * `cancelarTransferencia`/`expedirTransferencia` — e trava `peca_saldos` do
+ * DESTINO ordenando por `compararPorPecaEDeposito`, que desempata por
+ * `pecaId` PRIMEIRO. É essa ordem, igual à de `expedirTransferencia`, que
+ * impede uma expedição A→B e um recebimento de B→A (peças em comum, saldos
+ * em depósitos trocados) de travarem em sentidos contrários e se esperarem
+ * em círculo.
+ */
+export async function receberTransferencia(
+  tx: ClienteDaTransacao,
+  input: EntradaDeRecebimento,
+): Promise<{ transferenciaId: string; numero: string; comDivergencia: number }> {
+  // Mesma trava de `cancelarTransferencia`/`expedirTransferencia`, na mesma
+  // posição (ORDEM ÚNICA DE TRAVA, topo de `transacao.ts`): sem ela, um
+  // recebimento e outro ato sobre o MESMO cabeçalho leem o mesmo status e
+  // escrevem os dois.
+  await tx.$queryRaw(Prisma.sql`
+    SELECT id FROM transferencias
+     WHERE id = ${input.transferenciaId}::uuid
+       AND company_id = ${input.companyId}::uuid
+       FOR UPDATE
+  `);
+
+  const transferencia = await tx.transferencia.findFirst({
+    where: { id: input.transferenciaId, companyId: input.companyId },
+    select: { id: true, numero: true, status: true, depositoDestinoId: true },
+  });
+  if (!transferencia) {
+    throw new NotFoundException('Transferência não encontrada nesta empresa.');
+  }
+  if (transferencia.status !== 'em_transito') {
+    throw new ConflictException(
+      `Transferência ${transferencia.status} não está a caminho para ser recebida.`,
+    );
+  }
+
+  const itens = await tx.transferenciaItem.findMany({
+    where: { transferenciaId: transferencia.id },
+    select: {
+      id: true,
+      pecaId: true,
+      quantidade: true,
+      custoUnit: true,
+      peca: { select: { codigoInterno: true } },
+    },
+  });
+  const porId = new Map(itens.map((i) => [i.id, i]));
+
+  // Casa cada entrada do pedido com o item persistido — checagem de FORMA,
+  // não de conteúdo, então não precisa esperar a vez de ninguém na ordem de
+  // trava. Item de fora desta transferência é recusado antes de tocar
+  // `peca_saldos`.
+  const pedidos = input.itens.map((entrada) => {
+    const item = porId.get(entrada.itemId);
+    if (!item) {
+      throw new BadRequestException('Item não pertence a esta transferência.');
+    }
+    return { item, entrada };
+  });
+
+  // Mesmo comparador de `expedirTransferencia`, e por razão simétrica: aqui
+  // quem se repete entre itens é o DESTINO (todo item desta chamada tem o
+  // mesmo `depositoDestinoId`), então `compararPorPeca` sozinho decide a
+  // ordem — o desempate por depósito nunca dispara dentro desta função. Uso o
+  // comparador composto mesmo assim para ser a MESMA função dos dois lados da
+  // viagem, não porque a parte composta compre garantia aqui.
+  const ordenados = [...pedidos].sort((a, b) =>
+    compararPorPecaEDeposito(
+      { pecaId: a.item.pecaId, depositoId: transferencia.depositoDestinoId },
+      { pecaId: b.item.pecaId, depositoId: transferencia.depositoDestinoId },
+    ),
+  );
+
+  let comDivergencia = 0;
+  const processados: Array<{ quantidade: number; quantidadeRecebida: number }> = [];
+
+  for (const { item, entrada } of ordenados) {
+    const quantidade = Number(item.quantidade);
+    const recebida = entrada.quantidadeRecebida;
+    // `!(x >= 0)` e não `x < 0`: `NaN` falha em qualquer comparação e um
+    // `x < 0` sozinho deixaria `NaN` passar como "não negativo". Mesma
+    // postura de `criarTransferencia`.
+    if (!Number.isFinite(recebida) || !(recebida >= 0)) {
+      throw new BadRequestException('Quantidade recebida não pode ser negativa.');
+    }
+    if (Math.round(recebida * 1000) > Math.round(quantidade * 1000)) {
+      throw new BadRequestException(
+        `A peça ${item.peca.codigoInterno} não pode chegar em quantidade maior do que saiu.`,
+      );
+    }
+    const motivo = (entrada.motivoDivergencia ?? '').trim();
+    const divergiu = temDivergencia({ quantidade, quantidadeRecebida: recebida });
+    if (divergiu && !motivo) {
+      throw new BadRequestException(
+        `A peça ${item.peca.codigoInterno} chegou em quantidade menor — diga por quê.`,
+      );
+    }
+    if (divergiu) comDivergencia += 1;
+    processados.push({ quantidade, quantidadeRecebida: recebida });
+
+    await tx.transferenciaItem.update({
+      where: { id: item.id },
+      data: { quantidadeRecebida: recebida, motivoDivergencia: motivo || null },
+    });
+
+    // Chegou zero: não há entrada a gravar em `peca_saldos`, nem movimento —
+    // o razão já mostra a saída em A, e é essa a história verdadeira de uma
+    // carga perdida. Inventar um movimento de entrada zero não documentaria
+    // nada que a saída não documente sozinha.
+    if (Math.round(recebida * 1000) === 0) continue;
+
+    // Garante a linha antes de travar — `FOR UPDATE` não trava linha que não
+    // existe (mesmo achado de `inventario.ts`/`almoxarifado.service.ts`). Ao
+    // contrário da expedição (só entrada anterior cria linha na origem), no
+    // DESTINO a peça pode estar chegando pela primeira vez: aqui `upsert` é o
+    // certo porque ENTRADA cria linha, ao contrário da SAÍDA.
+    await tx.pecaSaldo.upsert({
+      where: { pecaId_depositoId: { pecaId: item.pecaId, depositoId: transferencia.depositoDestinoId } },
+      create: { pecaId: item.pecaId, depositoId: transferencia.depositoDestinoId },
+      update: {},
+    });
+    await tx.$queryRaw(Prisma.sql`
+      SELECT peca_id FROM peca_saldos
+       WHERE peca_id = ${item.pecaId}::uuid
+         AND deposito_id = ${transferencia.depositoDestinoId}::uuid
+         FOR UPDATE
+    `);
+
+    // A leitura vem DEPOIS da trava, e não é um detalhe: a escrita abaixo
+    // (`saldoFisico: depois`) é um valor ABSOLUTO, não um `increment`. Sem a
+    // linha já travada aqui, dois recebimentos concorrentes da MESMA peça no
+    // MESMO destino leem o mesmo `saldoFisico` os dois, e o que grava por
+    // último sobrescreve com um absoluto calculado sobre um saldo que já não
+    // é mais verdade — *lost update*, e nenhum CHECK do banco pega, porque o
+    // resultado gravado continua ≥ 0.
+    const saldo = await tx.pecaSaldo.findUniqueOrThrow({
+      where: { pecaId_depositoId: { pecaId: item.pecaId, depositoId: transferencia.depositoDestinoId } },
+      select: { saldoFisico: true, custoMedio: true },
+    });
+    const anterior = Number(saldo.saldoFisico);
+    const depois = Math.round((anterior + recebida) * 1000) / 1000;
+
+    // `item.custoUnit` é o que a expedição congelou da origem — zero
+    // inclusive, de propósito (comentário em `expedirTransferencia`). Mas
+    // zero AQUI, na hora de ponderar a média do DESTINO, significa "nenhuma
+    // informação de custo viajou" — não "a peça não vale nada". `custoMedio`
+    // é `Decimal @default(0)`: uma peça que só entrou por contagem de
+    // inventário, ou por `darEntrada` sem custo, chega com média zero DE
+    // VERDADE. `novoCustoMedio` só tem um caminho que MANTÉM a média do
+    // destino: `custoEntrada === null`. Zero não é `null` — se passássemos o
+    // zero adiante, a média do destino cairia em silêncio a cada peça sem
+    // custo conhecido que chegasse. Por isso ausente OU zero viram `null`
+    // aqui: mantém a média do destino como está, em vez de achatá-la.
+    const custoQueViajou = item.custoUnit === null ? null : Number(item.custoUnit);
+    const custoParaMedia = custoQueViajou === null || custoQueViajou === 0 ? null : custoQueViajou;
+
+    await tx.pecaSaldo.update({
+      where: { pecaId_depositoId: { pecaId: item.pecaId, depositoId: transferencia.depositoDestinoId } },
+      data: {
+        saldoFisico: depois,
+        custoMedio: novoCustoMedio(Number(saldo.custoMedio), anterior, recebida, custoParaMedia),
+      },
+    });
+
+    await tx.estoqueMovimento.create({
+      data: {
+        companyId: input.companyId,
+        pecaId: item.pecaId,
+        depositoId: transferencia.depositoDestinoId,
+        tipo: 'transferencia',
+        quantidade: recebida,
+        saldoApos: depois,
+        // O movimento registra o valor que de fato viajou, zero inclusive —
+        // mesma fidelidade de `expedirTransferencia`. É só na ponderação da
+        // média (acima) que o zero vira "sem informação".
+        custoUnit: custoQueViajou,
+        origemTipo: 'transferencia',
+        origemId: transferencia.id,
+        autorCompanyUserId: input.autorCompanyUserId,
+        observacao: transferencia.numero,
+      },
+    });
+  }
+
+  // Status sempre explícito na escrita — nunca herdado do default do schema.
+  await tx.transferencia.update({
+    where: { id: transferencia.id },
+    data: {
+      status: statusAposRecebimento(processados),
+      recebidaEm: new Date(),
+      recebidaPorCompanyUserId: input.autorCompanyUserId,
+    },
+  });
+
+  await registrarAuditoriaSuprimentos(tx, {
+    companyId: input.companyId,
+    acao: 'transferencia.receber',
+    alvoTipo: 'suprimentos.transferencia',
+    alvoId: transferencia.id,
+    atorCompanyUserId: input.autorCompanyUserId,
+    antes: { numero: transferencia.numero, status: 'em_transito' },
+    depois: { numero: transferencia.numero, status: 'recebida', comDivergencia },
+  });
+
+  return { transferenciaId: transferencia.id, numero: transferencia.numero, comDivergencia };
 }
