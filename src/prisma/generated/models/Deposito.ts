@@ -223,6 +223,7 @@ export type DepositoWhereInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraListRelationFilter
   ordensCompra?: Prisma.OrdemCompraListRelationFilter
   recebimentos?: Prisma.RecebimentoListRelationFilter
+  inventarios?: Prisma.InventarioListRelationFilter
 }
 
 export type DepositoOrderByWithRelationInput = {
@@ -243,6 +244,7 @@ export type DepositoOrderByWithRelationInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraOrderByRelationAggregateInput
   ordensCompra?: Prisma.OrdemCompraOrderByRelationAggregateInput
   recebimentos?: Prisma.RecebimentoOrderByRelationAggregateInput
+  inventarios?: Prisma.InventarioOrderByRelationAggregateInput
 }
 
 export type DepositoWhereUniqueInput = Prisma.AtLeast<{
@@ -267,6 +269,7 @@ export type DepositoWhereUniqueInput = Prisma.AtLeast<{
   solicitacoesCompra?: Prisma.SolicitacaoCompraListRelationFilter
   ordensCompra?: Prisma.OrdemCompraListRelationFilter
   recebimentos?: Prisma.RecebimentoListRelationFilter
+  inventarios?: Prisma.InventarioListRelationFilter
 }, "id" | "companyId_nome">
 
 export type DepositoOrderByWithAggregationInput = {
@@ -315,6 +318,7 @@ export type DepositoCreateInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutDepositoInput
   ordensCompra?: Prisma.OrdemCompraCreateNestedManyWithoutDepositoInput
   recebimentos?: Prisma.RecebimentoCreateNestedManyWithoutDepositoInput
+  inventarios?: Prisma.InventarioCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoUncheckedCreateInput = {
@@ -333,6 +337,7 @@ export type DepositoUncheckedCreateInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutDepositoInput
   ordensCompra?: Prisma.OrdemCompraUncheckedCreateNestedManyWithoutDepositoInput
   recebimentos?: Prisma.RecebimentoUncheckedCreateNestedManyWithoutDepositoInput
+  inventarios?: Prisma.InventarioUncheckedCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoUpdateInput = {
@@ -351,6 +356,7 @@ export type DepositoUpdateInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutDepositoNestedInput
   ordensCompra?: Prisma.OrdemCompraUpdateManyWithoutDepositoNestedInput
   recebimentos?: Prisma.RecebimentoUpdateManyWithoutDepositoNestedInput
+  inventarios?: Prisma.InventarioUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoUncheckedUpdateInput = {
@@ -369,6 +375,7 @@ export type DepositoUncheckedUpdateInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutDepositoNestedInput
   ordensCompra?: Prisma.OrdemCompraUncheckedUpdateManyWithoutDepositoNestedInput
   recebimentos?: Prisma.RecebimentoUncheckedUpdateManyWithoutDepositoNestedInput
+  inventarios?: Prisma.InventarioUncheckedUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoCreateManyInput = {
@@ -573,6 +580,20 @@ export type DepositoUpdateOneRequiredWithoutMovimentosNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.DepositoUpdateToOneWithWhereWithoutMovimentosInput, Prisma.DepositoUpdateWithoutMovimentosInput>, Prisma.DepositoUncheckedUpdateWithoutMovimentosInput>
 }
 
+export type DepositoCreateNestedOneWithoutInventariosInput = {
+  create?: Prisma.XOR<Prisma.DepositoCreateWithoutInventariosInput, Prisma.DepositoUncheckedCreateWithoutInventariosInput>
+  connectOrCreate?: Prisma.DepositoCreateOrConnectWithoutInventariosInput
+  connect?: Prisma.DepositoWhereUniqueInput
+}
+
+export type DepositoUpdateOneRequiredWithoutInventariosNestedInput = {
+  create?: Prisma.XOR<Prisma.DepositoCreateWithoutInventariosInput, Prisma.DepositoUncheckedCreateWithoutInventariosInput>
+  connectOrCreate?: Prisma.DepositoCreateOrConnectWithoutInventariosInput
+  upsert?: Prisma.DepositoUpsertWithoutInventariosInput
+  connect?: Prisma.DepositoWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DepositoUpdateToOneWithWhereWithoutInventariosInput, Prisma.DepositoUpdateWithoutInventariosInput>, Prisma.DepositoUncheckedUpdateWithoutInventariosInput>
+}
+
 export type DepositoCreateNestedOneWithoutRequisicoesInput = {
   create?: Prisma.XOR<Prisma.DepositoCreateWithoutRequisicoesInput, Prisma.DepositoUncheckedCreateWithoutRequisicoesInput>
   connectOrCreate?: Prisma.DepositoCreateOrConnectWithoutRequisicoesInput
@@ -644,6 +665,7 @@ export type DepositoCreateWithoutCompanyInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutDepositoInput
   ordensCompra?: Prisma.OrdemCompraCreateNestedManyWithoutDepositoInput
   recebimentos?: Prisma.RecebimentoCreateNestedManyWithoutDepositoInput
+  inventarios?: Prisma.InventarioCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoUncheckedCreateWithoutCompanyInput = {
@@ -661,6 +683,7 @@ export type DepositoUncheckedCreateWithoutCompanyInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutDepositoInput
   ordensCompra?: Prisma.OrdemCompraUncheckedCreateNestedManyWithoutDepositoInput
   recebimentos?: Prisma.RecebimentoUncheckedCreateNestedManyWithoutDepositoInput
+  inventarios?: Prisma.InventarioUncheckedCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoCreateOrConnectWithoutCompanyInput = {
@@ -719,6 +742,7 @@ export type DepositoCreateWithoutResponsavelInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutDepositoInput
   ordensCompra?: Prisma.OrdemCompraCreateNestedManyWithoutDepositoInput
   recebimentos?: Prisma.RecebimentoCreateNestedManyWithoutDepositoInput
+  inventarios?: Prisma.InventarioCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoUncheckedCreateWithoutResponsavelInput = {
@@ -736,6 +760,7 @@ export type DepositoUncheckedCreateWithoutResponsavelInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutDepositoInput
   ordensCompra?: Prisma.OrdemCompraUncheckedCreateNestedManyWithoutDepositoInput
   recebimentos?: Prisma.RecebimentoUncheckedCreateNestedManyWithoutDepositoInput
+  inventarios?: Prisma.InventarioUncheckedCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoCreateOrConnectWithoutResponsavelInput = {
@@ -779,6 +804,7 @@ export type DepositoCreateWithoutSaldosInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutDepositoInput
   ordensCompra?: Prisma.OrdemCompraCreateNestedManyWithoutDepositoInput
   recebimentos?: Prisma.RecebimentoCreateNestedManyWithoutDepositoInput
+  inventarios?: Prisma.InventarioCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoUncheckedCreateWithoutSaldosInput = {
@@ -796,6 +822,7 @@ export type DepositoUncheckedCreateWithoutSaldosInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutDepositoInput
   ordensCompra?: Prisma.OrdemCompraUncheckedCreateNestedManyWithoutDepositoInput
   recebimentos?: Prisma.RecebimentoUncheckedCreateNestedManyWithoutDepositoInput
+  inventarios?: Prisma.InventarioUncheckedCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoCreateOrConnectWithoutSaldosInput = {
@@ -829,6 +856,7 @@ export type DepositoUpdateWithoutSaldosInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutDepositoNestedInput
   ordensCompra?: Prisma.OrdemCompraUpdateManyWithoutDepositoNestedInput
   recebimentos?: Prisma.RecebimentoUpdateManyWithoutDepositoNestedInput
+  inventarios?: Prisma.InventarioUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoUncheckedUpdateWithoutSaldosInput = {
@@ -846,6 +874,7 @@ export type DepositoUncheckedUpdateWithoutSaldosInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutDepositoNestedInput
   ordensCompra?: Prisma.OrdemCompraUncheckedUpdateManyWithoutDepositoNestedInput
   recebimentos?: Prisma.RecebimentoUncheckedUpdateManyWithoutDepositoNestedInput
+  inventarios?: Prisma.InventarioUncheckedUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoCreateWithoutMovimentosInput = {
@@ -863,6 +892,7 @@ export type DepositoCreateWithoutMovimentosInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutDepositoInput
   ordensCompra?: Prisma.OrdemCompraCreateNestedManyWithoutDepositoInput
   recebimentos?: Prisma.RecebimentoCreateNestedManyWithoutDepositoInput
+  inventarios?: Prisma.InventarioCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoUncheckedCreateWithoutMovimentosInput = {
@@ -880,6 +910,7 @@ export type DepositoUncheckedCreateWithoutMovimentosInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutDepositoInput
   ordensCompra?: Prisma.OrdemCompraUncheckedCreateNestedManyWithoutDepositoInput
   recebimentos?: Prisma.RecebimentoUncheckedCreateNestedManyWithoutDepositoInput
+  inventarios?: Prisma.InventarioUncheckedCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoCreateOrConnectWithoutMovimentosInput = {
@@ -913,6 +944,7 @@ export type DepositoUpdateWithoutMovimentosInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutDepositoNestedInput
   ordensCompra?: Prisma.OrdemCompraUpdateManyWithoutDepositoNestedInput
   recebimentos?: Prisma.RecebimentoUpdateManyWithoutDepositoNestedInput
+  inventarios?: Prisma.InventarioUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoUncheckedUpdateWithoutMovimentosInput = {
@@ -926,6 +958,95 @@ export type DepositoUncheckedUpdateWithoutMovimentosInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   saldos?: Prisma.PecaSaldoUncheckedUpdateManyWithoutDepositoNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutDepositoNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutDepositoNestedInput
+  ordensCompra?: Prisma.OrdemCompraUncheckedUpdateManyWithoutDepositoNestedInput
+  recebimentos?: Prisma.RecebimentoUncheckedUpdateManyWithoutDepositoNestedInput
+  inventarios?: Prisma.InventarioUncheckedUpdateManyWithoutDepositoNestedInput
+}
+
+export type DepositoCreateWithoutInventariosInput = {
+  id?: string
+  nome: string
+  unidadeObra?: string | null
+  endereco?: string | null
+  ativo?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutDepositosInput
+  responsavel?: Prisma.OperatorCreateNestedOneWithoutDepositosSobResponsabilidadeInput
+  saldos?: Prisma.PecaSaldoCreateNestedManyWithoutDepositoInput
+  movimentos?: Prisma.EstoqueMovimentoCreateNestedManyWithoutDepositoInput
+  requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutDepositoInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutDepositoInput
+  ordensCompra?: Prisma.OrdemCompraCreateNestedManyWithoutDepositoInput
+  recebimentos?: Prisma.RecebimentoCreateNestedManyWithoutDepositoInput
+}
+
+export type DepositoUncheckedCreateWithoutInventariosInput = {
+  id?: string
+  companyId: string
+  nome: string
+  unidadeObra?: string | null
+  endereco?: string | null
+  responsavelOperatorId?: string | null
+  ativo?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  saldos?: Prisma.PecaSaldoUncheckedCreateNestedManyWithoutDepositoInput
+  movimentos?: Prisma.EstoqueMovimentoUncheckedCreateNestedManyWithoutDepositoInput
+  requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutDepositoInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutDepositoInput
+  ordensCompra?: Prisma.OrdemCompraUncheckedCreateNestedManyWithoutDepositoInput
+  recebimentos?: Prisma.RecebimentoUncheckedCreateNestedManyWithoutDepositoInput
+}
+
+export type DepositoCreateOrConnectWithoutInventariosInput = {
+  where: Prisma.DepositoWhereUniqueInput
+  create: Prisma.XOR<Prisma.DepositoCreateWithoutInventariosInput, Prisma.DepositoUncheckedCreateWithoutInventariosInput>
+}
+
+export type DepositoUpsertWithoutInventariosInput = {
+  update: Prisma.XOR<Prisma.DepositoUpdateWithoutInventariosInput, Prisma.DepositoUncheckedUpdateWithoutInventariosInput>
+  create: Prisma.XOR<Prisma.DepositoCreateWithoutInventariosInput, Prisma.DepositoUncheckedCreateWithoutInventariosInput>
+  where?: Prisma.DepositoWhereInput
+}
+
+export type DepositoUpdateToOneWithWhereWithoutInventariosInput = {
+  where?: Prisma.DepositoWhereInput
+  data: Prisma.XOR<Prisma.DepositoUpdateWithoutInventariosInput, Prisma.DepositoUncheckedUpdateWithoutInventariosInput>
+}
+
+export type DepositoUpdateWithoutInventariosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  unidadeObra?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  endereco?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutDepositosNestedInput
+  responsavel?: Prisma.OperatorUpdateOneWithoutDepositosSobResponsabilidadeNestedInput
+  saldos?: Prisma.PecaSaldoUpdateManyWithoutDepositoNestedInput
+  movimentos?: Prisma.EstoqueMovimentoUpdateManyWithoutDepositoNestedInput
+  requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutDepositoNestedInput
+  solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutDepositoNestedInput
+  ordensCompra?: Prisma.OrdemCompraUpdateManyWithoutDepositoNestedInput
+  recebimentos?: Prisma.RecebimentoUpdateManyWithoutDepositoNestedInput
+}
+
+export type DepositoUncheckedUpdateWithoutInventariosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  unidadeObra?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  endereco?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  responsavelOperatorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  saldos?: Prisma.PecaSaldoUncheckedUpdateManyWithoutDepositoNestedInput
+  movimentos?: Prisma.EstoqueMovimentoUncheckedUpdateManyWithoutDepositoNestedInput
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutDepositoNestedInput
   solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutDepositoNestedInput
   ordensCompra?: Prisma.OrdemCompraUncheckedUpdateManyWithoutDepositoNestedInput
@@ -947,6 +1068,7 @@ export type DepositoCreateWithoutRequisicoesInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutDepositoInput
   ordensCompra?: Prisma.OrdemCompraCreateNestedManyWithoutDepositoInput
   recebimentos?: Prisma.RecebimentoCreateNestedManyWithoutDepositoInput
+  inventarios?: Prisma.InventarioCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoUncheckedCreateWithoutRequisicoesInput = {
@@ -964,6 +1086,7 @@ export type DepositoUncheckedCreateWithoutRequisicoesInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutDepositoInput
   ordensCompra?: Prisma.OrdemCompraUncheckedCreateNestedManyWithoutDepositoInput
   recebimentos?: Prisma.RecebimentoUncheckedCreateNestedManyWithoutDepositoInput
+  inventarios?: Prisma.InventarioUncheckedCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoCreateOrConnectWithoutRequisicoesInput = {
@@ -997,6 +1120,7 @@ export type DepositoUpdateWithoutRequisicoesInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutDepositoNestedInput
   ordensCompra?: Prisma.OrdemCompraUpdateManyWithoutDepositoNestedInput
   recebimentos?: Prisma.RecebimentoUpdateManyWithoutDepositoNestedInput
+  inventarios?: Prisma.InventarioUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoUncheckedUpdateWithoutRequisicoesInput = {
@@ -1014,6 +1138,7 @@ export type DepositoUncheckedUpdateWithoutRequisicoesInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutDepositoNestedInput
   ordensCompra?: Prisma.OrdemCompraUncheckedUpdateManyWithoutDepositoNestedInput
   recebimentos?: Prisma.RecebimentoUncheckedUpdateManyWithoutDepositoNestedInput
+  inventarios?: Prisma.InventarioUncheckedUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoCreateWithoutSolicitacoesCompraInput = {
@@ -1031,6 +1156,7 @@ export type DepositoCreateWithoutSolicitacoesCompraInput = {
   requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutDepositoInput
   ordensCompra?: Prisma.OrdemCompraCreateNestedManyWithoutDepositoInput
   recebimentos?: Prisma.RecebimentoCreateNestedManyWithoutDepositoInput
+  inventarios?: Prisma.InventarioCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoUncheckedCreateWithoutSolicitacoesCompraInput = {
@@ -1048,6 +1174,7 @@ export type DepositoUncheckedCreateWithoutSolicitacoesCompraInput = {
   requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutDepositoInput
   ordensCompra?: Prisma.OrdemCompraUncheckedCreateNestedManyWithoutDepositoInput
   recebimentos?: Prisma.RecebimentoUncheckedCreateNestedManyWithoutDepositoInput
+  inventarios?: Prisma.InventarioUncheckedCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoCreateOrConnectWithoutSolicitacoesCompraInput = {
@@ -1081,6 +1208,7 @@ export type DepositoUpdateWithoutSolicitacoesCompraInput = {
   requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutDepositoNestedInput
   ordensCompra?: Prisma.OrdemCompraUpdateManyWithoutDepositoNestedInput
   recebimentos?: Prisma.RecebimentoUpdateManyWithoutDepositoNestedInput
+  inventarios?: Prisma.InventarioUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoUncheckedUpdateWithoutSolicitacoesCompraInput = {
@@ -1098,6 +1226,7 @@ export type DepositoUncheckedUpdateWithoutSolicitacoesCompraInput = {
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutDepositoNestedInput
   ordensCompra?: Prisma.OrdemCompraUncheckedUpdateManyWithoutDepositoNestedInput
   recebimentos?: Prisma.RecebimentoUncheckedUpdateManyWithoutDepositoNestedInput
+  inventarios?: Prisma.InventarioUncheckedUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoCreateWithoutOrdensCompraInput = {
@@ -1115,6 +1244,7 @@ export type DepositoCreateWithoutOrdensCompraInput = {
   requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutDepositoInput
   solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutDepositoInput
   recebimentos?: Prisma.RecebimentoCreateNestedManyWithoutDepositoInput
+  inventarios?: Prisma.InventarioCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoUncheckedCreateWithoutOrdensCompraInput = {
@@ -1132,6 +1262,7 @@ export type DepositoUncheckedCreateWithoutOrdensCompraInput = {
   requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutDepositoInput
   solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutDepositoInput
   recebimentos?: Prisma.RecebimentoUncheckedCreateNestedManyWithoutDepositoInput
+  inventarios?: Prisma.InventarioUncheckedCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoCreateOrConnectWithoutOrdensCompraInput = {
@@ -1165,6 +1296,7 @@ export type DepositoUpdateWithoutOrdensCompraInput = {
   requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutDepositoNestedInput
   solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutDepositoNestedInput
   recebimentos?: Prisma.RecebimentoUpdateManyWithoutDepositoNestedInput
+  inventarios?: Prisma.InventarioUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoUncheckedUpdateWithoutOrdensCompraInput = {
@@ -1182,6 +1314,7 @@ export type DepositoUncheckedUpdateWithoutOrdensCompraInput = {
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutDepositoNestedInput
   solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutDepositoNestedInput
   recebimentos?: Prisma.RecebimentoUncheckedUpdateManyWithoutDepositoNestedInput
+  inventarios?: Prisma.InventarioUncheckedUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoCreateWithoutRecebimentosInput = {
@@ -1199,6 +1332,7 @@ export type DepositoCreateWithoutRecebimentosInput = {
   requisicoes?: Prisma.RequisicaoMaterialCreateNestedManyWithoutDepositoInput
   solicitacoesCompra?: Prisma.SolicitacaoCompraCreateNestedManyWithoutDepositoInput
   ordensCompra?: Prisma.OrdemCompraCreateNestedManyWithoutDepositoInput
+  inventarios?: Prisma.InventarioCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoUncheckedCreateWithoutRecebimentosInput = {
@@ -1216,6 +1350,7 @@ export type DepositoUncheckedCreateWithoutRecebimentosInput = {
   requisicoes?: Prisma.RequisicaoMaterialUncheckedCreateNestedManyWithoutDepositoInput
   solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedCreateNestedManyWithoutDepositoInput
   ordensCompra?: Prisma.OrdemCompraUncheckedCreateNestedManyWithoutDepositoInput
+  inventarios?: Prisma.InventarioUncheckedCreateNestedManyWithoutDepositoInput
 }
 
 export type DepositoCreateOrConnectWithoutRecebimentosInput = {
@@ -1249,6 +1384,7 @@ export type DepositoUpdateWithoutRecebimentosInput = {
   requisicoes?: Prisma.RequisicaoMaterialUpdateManyWithoutDepositoNestedInput
   solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutDepositoNestedInput
   ordensCompra?: Prisma.OrdemCompraUpdateManyWithoutDepositoNestedInput
+  inventarios?: Prisma.InventarioUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoUncheckedUpdateWithoutRecebimentosInput = {
@@ -1266,6 +1402,7 @@ export type DepositoUncheckedUpdateWithoutRecebimentosInput = {
   requisicoes?: Prisma.RequisicaoMaterialUncheckedUpdateManyWithoutDepositoNestedInput
   solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutDepositoNestedInput
   ordensCompra?: Prisma.OrdemCompraUncheckedUpdateManyWithoutDepositoNestedInput
+  inventarios?: Prisma.InventarioUncheckedUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoCreateManyCompanyInput = {
@@ -1294,6 +1431,7 @@ export type DepositoUpdateWithoutCompanyInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutDepositoNestedInput
   ordensCompra?: Prisma.OrdemCompraUpdateManyWithoutDepositoNestedInput
   recebimentos?: Prisma.RecebimentoUpdateManyWithoutDepositoNestedInput
+  inventarios?: Prisma.InventarioUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoUncheckedUpdateWithoutCompanyInput = {
@@ -1311,6 +1449,7 @@ export type DepositoUncheckedUpdateWithoutCompanyInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutDepositoNestedInput
   ordensCompra?: Prisma.OrdemCompraUncheckedUpdateManyWithoutDepositoNestedInput
   recebimentos?: Prisma.RecebimentoUncheckedUpdateManyWithoutDepositoNestedInput
+  inventarios?: Prisma.InventarioUncheckedUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoUncheckedUpdateManyWithoutCompanyInput = {
@@ -1350,6 +1489,7 @@ export type DepositoUpdateWithoutResponsavelInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraUpdateManyWithoutDepositoNestedInput
   ordensCompra?: Prisma.OrdemCompraUpdateManyWithoutDepositoNestedInput
   recebimentos?: Prisma.RecebimentoUpdateManyWithoutDepositoNestedInput
+  inventarios?: Prisma.InventarioUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoUncheckedUpdateWithoutResponsavelInput = {
@@ -1367,6 +1507,7 @@ export type DepositoUncheckedUpdateWithoutResponsavelInput = {
   solicitacoesCompra?: Prisma.SolicitacaoCompraUncheckedUpdateManyWithoutDepositoNestedInput
   ordensCompra?: Prisma.OrdemCompraUncheckedUpdateManyWithoutDepositoNestedInput
   recebimentos?: Prisma.RecebimentoUncheckedUpdateManyWithoutDepositoNestedInput
+  inventarios?: Prisma.InventarioUncheckedUpdateManyWithoutDepositoNestedInput
 }
 
 export type DepositoUncheckedUpdateManyWithoutResponsavelInput = {
@@ -1392,6 +1533,7 @@ export type DepositoCountOutputType = {
   solicitacoesCompra: number
   ordensCompra: number
   recebimentos: number
+  inventarios: number
 }
 
 export type DepositoCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1401,6 +1543,7 @@ export type DepositoCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensio
   solicitacoesCompra?: boolean | DepositoCountOutputTypeCountSolicitacoesCompraArgs
   ordensCompra?: boolean | DepositoCountOutputTypeCountOrdensCompraArgs
   recebimentos?: boolean | DepositoCountOutputTypeCountRecebimentosArgs
+  inventarios?: boolean | DepositoCountOutputTypeCountInventariosArgs
 }
 
 /**
@@ -1455,6 +1598,13 @@ export type DepositoCountOutputTypeCountRecebimentosArgs<ExtArgs extends runtime
   where?: Prisma.RecebimentoWhereInput
 }
 
+/**
+ * DepositoCountOutputType without action
+ */
+export type DepositoCountOutputTypeCountInventariosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.InventarioWhereInput
+}
+
 
 export type DepositoSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1474,6 +1624,7 @@ export type DepositoSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   solicitacoesCompra?: boolean | Prisma.Deposito$solicitacoesCompraArgs<ExtArgs>
   ordensCompra?: boolean | Prisma.Deposito$ordensCompraArgs<ExtArgs>
   recebimentos?: boolean | Prisma.Deposito$recebimentosArgs<ExtArgs>
+  inventarios?: boolean | Prisma.Deposito$inventariosArgs<ExtArgs>
   _count?: boolean | Prisma.DepositoCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["deposito"]>
 
@@ -1527,6 +1678,7 @@ export type DepositoInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   solicitacoesCompra?: boolean | Prisma.Deposito$solicitacoesCompraArgs<ExtArgs>
   ordensCompra?: boolean | Prisma.Deposito$ordensCompraArgs<ExtArgs>
   recebimentos?: boolean | Prisma.Deposito$recebimentosArgs<ExtArgs>
+  inventarios?: boolean | Prisma.Deposito$inventariosArgs<ExtArgs>
   _count?: boolean | Prisma.DepositoCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type DepositoIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1549,6 +1701,7 @@ export type $DepositoPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     solicitacoesCompra: Prisma.$SolicitacaoCompraPayload<ExtArgs>[]
     ordensCompra: Prisma.$OrdemCompraPayload<ExtArgs>[]
     recebimentos: Prisma.$RecebimentoPayload<ExtArgs>[]
+    inventarios: Prisma.$InventarioPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1962,6 +2115,7 @@ export interface Prisma__DepositoClient<T, Null = never, ExtArgs extends runtime
   solicitacoesCompra<T extends Prisma.Deposito$solicitacoesCompraArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Deposito$solicitacoesCompraArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SolicitacaoCompraPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   ordensCompra<T extends Prisma.Deposito$ordensCompraArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Deposito$ordensCompraArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrdemCompraPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   recebimentos<T extends Prisma.Deposito$recebimentosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Deposito$recebimentosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecebimentoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  inventarios<T extends Prisma.Deposito$inventariosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Deposito$inventariosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InventarioPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2561,6 +2715,30 @@ export type Deposito$recebimentosArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.RecebimentoScalarFieldEnum | Prisma.RecebimentoScalarFieldEnum[]
+}
+
+/**
+ * Deposito.inventarios
+ */
+export type Deposito$inventariosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Inventario
+   */
+  select?: Prisma.InventarioSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Inventario
+   */
+  omit?: Prisma.InventarioOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InventarioInclude<ExtArgs> | null
+  where?: Prisma.InventarioWhereInput
+  orderBy?: Prisma.InventarioOrderByWithRelationInput | Prisma.InventarioOrderByWithRelationInput[]
+  cursor?: Prisma.InventarioWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.InventarioScalarFieldEnum | Prisma.InventarioScalarFieldEnum[]
 }
 
 /**

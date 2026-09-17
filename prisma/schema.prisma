@@ -126,6 +126,7 @@ model Company {
   solicitacoesCompra      SolicitacaoCompra[]
   ordensCompra            OrdemCompra[]
   recebimentos            Recebimento[]
+  inventarios             Inventario[]
 
   @@map("clients")
   fornecedorPecas FornecedorPeca[]
@@ -2225,6 +2226,7 @@ model Deposito {
   solicitacoesCompra SolicitacaoCompra[]
   ordensCompra       OrdemCompra[]
   recebimentos       Recebimento[]
+  inventarios        Inventario[]
 
   @@unique([companyId, nome])
   @@map("depositos")
@@ -2268,6 +2270,7 @@ model Peca {
   pecasEquivalentes RequisicaoMaterialItem[] @relation("PecaEquivalente")
   solicitacaoCompraItens SolicitacaoCompraItem[]
   ordemCompraItens       OrdemCompraItem[]
+  inventarioItens        InventarioItem[]
 
   @@unique([companyId, codigoInterno])
   @@index([companyId, codigoFabricante])
@@ -2343,11 +2346,78 @@ model EstoqueMovimento {
   company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   peca     Peca     @relation(fields: [pecaId], references: [id], onDelete: Restrict)
   deposito Deposito @relation(fields: [depositoId], references: [id], onDelete: Restrict)
+  inventarioItens InventarioItem[]
 
   @@index([companyId, pecaId, createdAt])
   @@index([companyId, createdAt])
   @@index([origemTipo, origemId])
   @@map("estoque_movimentos")
+}
+
+/// A contagem cíclica de um depósito (§5.2 do desenho de 16/09). Documento
+/// próprio porque contagem tem escopo, autor e histórico — um ajuste avulso
+/// diria que o saldo mudou, nunca quem contou.
+model Inventario {
+  id        String @id @default(uuid()) @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+  /// "INV-2026-001". MAX+1 por empresa, tirado em NÚMERO e não por
+  /// `ORDER BY` textual — ver `numero-inventario.helper.ts`.
+  numero     String
+  depositoId String @map("deposito_id") @db.Uuid
+
+  /// "aberta" | "apurada" | "cancelada"
+  status String @default("aberta")
+
+  abertaPorCompanyUserId  String    @map("aberta_por_company_user_id") @db.Uuid
+  abertaEm                DateTime  @default(now()) @map("aberta_em")
+  apuradaPorCompanyUserId String?   @map("apurada_por_company_user_id") @db.Uuid
+  apuradaEm               DateTime? @map("apurada_em")
+  observacao              String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company  Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  deposito Deposito         @relation(fields: [depositoId], references: [id], onDelete: Restrict)
+  itens    InventarioItem[]
+
+  @@unique([companyId, numero])
+  @@index([companyId, status, createdAt])
+  /// "Uma contagem aberta por depósito" é índice único PARCIAL aplicado em SQL
+  /// puro (Prisma não expressa índice parcial), na migration
+  /// `20260917100000_inventario_ciclico`.
+  @@map("inventarios")
+}
+
+model InventarioItem {
+  id           String @id @default(uuid()) @db.Uuid
+  inventarioId String @map("inventario_id") @db.Uuid
+  pecaId       String @map("peca_id") @db.Uuid
+
+  /// Nulo até alguém contar — contagem de ZERO é um número, não ausência.
+  quantidadeContada Decimal? @map("quantidade_contada") @db.Decimal(12, 3)
+  /// O saldo físico no INSTANTE da contagem: é contra ele que a diferença é
+  /// apurada, e é o que permite a contagem correr junto com a operação.
+  saldoNaContagem   Decimal? @map("saldo_na_contagem") @db.Decimal(12, 3)
+
+  contadaPorCompanyUserId String?   @map("contada_por_company_user_id") @db.Uuid
+  contadaEm               DateTime? @map("contada_em")
+
+  /// `quantidadeContada − saldoNaContagem`, gravado na apuração.
+  ajuste      Decimal? @db.Decimal(12, 3)
+  /// O movimento que este item gerou. Nulo quando o ajuste deu zero.
+  movimentoId String?  @map("movimento_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  inventario Inventario        @relation(fields: [inventarioId], references: [id], onDelete: Cascade)
+  peca       Peca              @relation(fields: [pecaId], references: [id], onDelete: Restrict)
+  movimento  EstoqueMovimento? @relation(fields: [movimentoId], references: [id], onDelete: SetNull)
+
+  @@unique([inventarioId, pecaId])
+  @@index([inventarioId])
+  @@map("inventario_itens")
 }
 
 /// O trabalho do almoxarife. NÃO é uma `ServiceOrder`: OS é conserto de
