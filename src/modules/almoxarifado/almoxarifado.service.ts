@@ -40,6 +40,7 @@ import {
   type ResultadoDoRecebimento,
 } from './compras/recebimento';
 import { acaoPermitida } from './regras/compras';
+import { decidirEquivalente, proporEquivalente, type EntradaDeDecisao, type EntradaDeProposta, type ResultadoDaDecisao, type ResultadoDaProposta } from './equivalente';
 import { refinarPelaCompra } from './compras/cobertura';
 import {
   MAX_TENTATIVAS_CONCORRENCIA,
@@ -2506,6 +2507,26 @@ export class AlmoxarifadoService {
 
     return comRetryDeContencao('a devolução de sobra', () =>
       this.prisma.$transaction((tx) => this.executarDevolucao(tx, { ...input, motivo })),
+    );
+  }
+
+  /**
+   * O almoxarife propõe trocar a peça que falta por uma equivalente da
+   * prateleira. Quem decide se ela serve é a mecânica — ver `decidirTroca`.
+   */
+  async proporTroca(input: EntradaDeProposta): Promise<ResultadoDaProposta> {
+    return comRetryDeContencao('a proposta de equivalente', () =>
+      this.prisma.$transaction((tx) => proporEquivalente(tx, input)),
+    );
+  }
+
+  /**
+   * A aprovação técnica do critério 11. Reserva DENTRO da transação: aprovar
+   * contra um saldo lido antes deixaria o item reservado sem nada reservado.
+   */
+  async decidirTroca(input: EntradaDeDecisao): Promise<ResultadoDaDecisao> {
+    return comRetryDeContencao('a decisão do equivalente', () =>
+      this.prisma.$transaction((tx) => decidirEquivalente(tx, input)),
     );
   }
 

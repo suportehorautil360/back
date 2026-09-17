@@ -49,6 +49,16 @@ describe('validarConferencia', () => {
     expect(validarConferencia(item({ status: 'nao_vinculado' }), { quantidade: 1 }).ok).toBe(false);
   });
 
+  it('item esperando aprovação do equivalente não pode ser separado', () => {
+    // Critério 11. Enquanto o mecânico da OS não disser que a peça de outra
+    // marca serve naquela máquina, não há o que conferir: a troca ainda não
+    // aconteceu, e o que está reservado (se algo está) é da peça original.
+    expect(validarConferencia(item({ status: 'aguardando_equivalente' }), { quantidade: 1 })).toEqual({
+      ok: false,
+      erro: 'Item ainda não reservado não pode ser separado.',
+    });
+  });
+
   it('separar zero é permitido e é como se anula uma conferência', () => {
     expect(validarConferencia(item(), { quantidade: 0 })).toEqual({ ok: true, quantidade: 0 });
   });
@@ -109,6 +119,18 @@ describe('requisicaoEstaSeparada', () => {
       item({ status: 'entregue' }),
       item({ status: 'reservada' }),
     ])).toBe(false);
+  });
+
+  it('impeditivo esperando aprovação do equivalente NÃO fecha o kit', () => {
+    // Critério 11: a proposta de troca é uma pendência viva, não um item
+    // resolvido. Tratá-la como resolvida liberaria a OS com a peça que o
+    // mecânico ainda não aceitou.
+    expect(
+      requisicaoEstaSeparada([
+        item({ status: 'aguardando_equivalente', impeditivo: true }),
+        item({ status: 'separada', impeditivo: true }),
+      ]),
+    ).toBe(false);
   });
 
   it('requisição sem item nenhum não está separada', () => {

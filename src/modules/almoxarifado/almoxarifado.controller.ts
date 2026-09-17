@@ -7,6 +7,7 @@ import { AlmoxarifadoService } from './almoxarifado.service';
 import { ReservarDto } from './dto/reserva.dto';
 import { EntradaDto } from './dto/entrada.dto';
 import { SepararDto } from './dto/separacao.dto';
+import { DecidirEquivalenteDto, ProporEquivalenteDto } from './dto/equivalente.dto';
 import { EntregarDto } from './dto/entrega.dto';
 import { CancelarRequisicaoDto } from './dto/cancelamento.dto';
 import { ReceberDto } from './dto/recebimento.dto';
@@ -168,6 +169,51 @@ export class AlmoxarifadoController {
       recebedorOperatorId: dto.recebedorOperatorId,
       confirmacaoTipo: dto.confirmacaoTipo,
       assinatura: dto.assinatura ?? null,
+    });
+  }
+
+  @Post('requisicoes/:id/equivalentes')
+  // Quem PROPÕE é o almoxarife: é ele que está com a prateleira na frente e
+  // vê que a equivalente existe. O gate da classe (`almoxarifado`) já serve.
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Propõe trocar a peça que falta por uma equivalente' })
+  async proporEquivalente(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: ProporEquivalenteDto,
+  ) {
+    return this.servico.proporTroca({
+      companyId: req.painel.companyId,
+      requisicaoId: id,
+      itemId: dto.itemId,
+      pecaEquivalenteId: dto.pecaEquivalenteId,
+      autorCompanyUserId: req.painel.companyUserId,
+      motivo: dto.motivo,
+    });
+  }
+
+  @Post('requisicoes/:id/equivalentes/decidir')
+  // Quem DECIDE é a mecânica — só ela sabe se a peça de outra marca serve
+  // naquela máquina (critério 11). Mesmo gate do pedido de peça adicional,
+  // que é o outro ato do mecânico neste módulo; a rota sobrescreve o da
+  // classe. Por que não o responsável da OS: `responsavelOperatorId` é nulo
+  // em OS parceira por definição e opcional na interna — gatear por ele
+  // travaria a troca em toda OS sem mecânico designado, que hoje são todas.
+  @ModuloComercial('suprimentos', 'mecanica')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Aprova ou recusa tecnicamente a peça equivalente proposta' })
+  async decidirEquivalente(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: DecidirEquivalenteDto,
+  ) {
+    return this.servico.decidirTroca({
+      companyId: req.painel.companyId,
+      requisicaoId: id,
+      itemId: dto.itemId,
+      aprovar: dto.aprovar,
+      autorCompanyUserId: req.painel.companyUserId,
+      motivo: dto.motivo,
     });
   }
 
