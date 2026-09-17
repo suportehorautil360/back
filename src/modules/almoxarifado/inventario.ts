@@ -48,8 +48,14 @@ export async function abrirInventario(
     select: { numero: true },
   });
   if (aberta) {
+    // Achado Important I5 (revisão final): "cancele" era um verbo que não
+    // existe — não há ato, rota nem tela de cancelar contagem. Pior: uma
+    // contagem aberta por engano e abandonada sem nada contado ficava sem
+    // saída nenhuma (`podeApurar` recusa apurar sem item contado, e a página
+    // tira do diálogo os depósitos que já têm contagem aberta). A mensagem
+    // diz o que o sistema realmente oferece — apurar a contagem aberta.
     throw new ConflictException(
-      `Este depósito já tem a contagem ${aberta.numero} aberta. Apure ou cancele antes de abrir outra.`,
+      `Este depósito já tem a contagem ${aberta.numero} aberta. Apure-a antes de abrir outra.`,
     );
   }
 
@@ -122,8 +128,18 @@ export interface EntradaDeContagem {
  * diferença. Ler na apuração daria a diferença contra um saldo que já mudou, e
  * a contagem passaria a exigir que nada se movesse no meio (§5.2).
  *
- * Sem trava: a contagem é uma anotação, não mexe em saldo. Quem trava é a
- * apuração.
+ * Achado Important I2 (revisão final): trava o CABEÇALHO (`inventarios`)
+ * ANTES de ler o item — a MESMA trava que `apurarInventario` toma primeiro.
+ * Sob READ COMMITTED, sem ela uma contagem concorrente com uma apuração
+ * podia aterrissar DEPOIS do commit da apuração: `quantidadeContada` e
+ * `saldoNaContagem` ficavam sobrescritos com a contagem nova, enquanto
+ * `ajuste`/`movimentoId` (já gravados pela apuração) continuavam contando a
+ * história da contagem VELHA — o saldo e o razão continuam certos, quem
+ * passa a mentir é o registro da contagem. Não recebemos `inventarioId` de
+ * entrada (só `inventarioItemId`), então a trava é pelo JOIN até
+ * `inventarios`: é a MESMA linha que `apurarInventario` trava, na mesma
+ * posição da ordem de trava do módulo — não cria ordem nova e não abre
+ * deadlock.
  */
 export async function registrarContagem(
   tx: ClienteDaTransacao,
@@ -133,6 +149,14 @@ export async function registrarContagem(
   if (!(input.quantidadeContada >= 0)) {
     throw new BadRequestException('Quantidade contada não pode ser negativa.');
   }
+
+  await tx.$queryRaw(Prisma.sql`
+    SELECT i.id FROM inventarios i
+      JOIN inventario_itens ii ON ii.inventario_id = i.id
+     WHERE ii.id = ${input.inventarioItemId}::uuid
+       AND i.company_id = ${input.companyId}::uuid
+       FOR UPDATE OF i
+  `);
 
   const item = await tx.inventarioItem.findFirst({
     where: { id: input.inventarioItemId, inventario: { companyId: input.companyId } },

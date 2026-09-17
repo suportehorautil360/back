@@ -46,6 +46,7 @@ import { refinarPelaCompra } from './compras/cobertura';
 import { abrirInventario, apurarInventario, registrarContagem, type EntradaDeAbertura, type EntradaDeApuracao, type EntradaDeContagem } from './inventario';
 import {
   MAX_TENTATIVAS_CONCORRENCIA,
+  colisaoDeContagemJaAberta,
   colisaoDeRequisicaoJaAberta,
   comRetryDeContencao,
   compararPorPeca,
@@ -2544,9 +2545,27 @@ export class AlmoxarifadoService {
 
   /** Abre a contagem cíclica de um depósito. */
   async abrirContagem(input: EntradaDeAbertura) {
-    return comRetryDeContencao('a abertura da contagem', () =>
-      this.prisma.$transaction((tx) => abrirInventario(tx, input)),
-    );
+    try {
+      return await comRetryDeContencao('a abertura da contagem', () =>
+        this.prisma.$transaction((tx) => abrirInventario(tx, input)),
+      );
+    } catch (erro) {
+      // Achado Important I1 (revisão final): a colisão no índice único
+      // parcial `inventarios_uma_aberta_por_deposito` não é contenção — é a
+      // MESMA regra de negócio que a checagem de `abrirInventario` já tenta
+      // impor (TOCTOU sob concorrência de verdade: dois cliques simultâneos
+      // no mesmo depósito passam os dois pelo `findFirst`, e só o INSERT que
+      // perde a corrida esbarra no índice). Sem isto, o `P2002` cru subia
+      // como 500 — "Internal server error" na tela, em vez de uma recusa
+      // legível. `erroDeContencaoTransitoria` já não tenta de novo este
+      // caso (o alvo não é `numero`), então nenhum retry é gasto à toa.
+      if (colisaoDeContagemJaAberta(erro)) {
+        throw new ConflictException(
+          'Este depósito já tem uma contagem aberta. Apure-a antes de abrir outra.',
+        );
+      }
+      throw erro;
+    }
   }
 
   /** Registra o que o almoxarife achou numa peça. */

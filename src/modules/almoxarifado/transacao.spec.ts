@@ -1,5 +1,10 @@
 import { Prisma } from '../../prisma/generated/client';
-import { alvoDaViolacao, colisaoDeRequisicaoJaAberta, erroDeContencaoTransitoria } from './transacao';
+import {
+  alvoDaViolacao,
+  colisaoDeContagemJaAberta,
+  colisaoDeRequisicaoJaAberta,
+  erroDeContencaoTransitoria,
+} from './transacao';
 
 /**
  * Os erros no formato que o Prisma 7 com `@prisma/adapter-pg` entrega em
@@ -42,6 +47,13 @@ describe('predicados de retry — formato do adapter (produção)', () => {
     expect(erroDeContencaoTransitoria(erro)).toBe(false);
   });
 
+  it('achado I1 do inventário cíclico: P2002 no índice de contagem aberta por depósito é colisão de regra, não contenção', () => {
+    const erro = unique(['deposito_id']);
+    expect(colisaoDeContagemJaAberta(erro)).toBe(true);
+    expect(colisaoDeRequisicaoJaAberta(erro)).toBe(false);
+    expect(erroDeContencaoTransitoria(erro)).toBe(false);
+  });
+
   it.each([
     ['deadlock numa trava (raw)', 'P2010', '40P01'],
     ['serialização numa trava (raw)', 'P2010', '40001'],
@@ -76,6 +88,8 @@ describe('predicados de retry — formato sem adapter continua aceito', () => {
   it('meta.target em campos do schema ou nome do índice', () => {
     expect(erroDeContencaoTransitoria(comMeta('P2002', { target: ['companyId', 'numero'] }))).toBe(true);
     expect(colisaoDeRequisicaoJaAberta(comMeta('P2002', { target: 'requisicoes_material_uma_aberta_por_os' }))).toBe(true);
+    expect(colisaoDeContagemJaAberta(comMeta('P2002', { target: 'inventarios_uma_aberta_por_deposito' }))).toBe(true);
+    expect(colisaoDeContagemJaAberta(comMeta('P2002', { target: ['depositoId'] }))).toBe(true);
   });
 
   it('meta.code no P2010', () => {

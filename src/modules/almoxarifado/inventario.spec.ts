@@ -170,10 +170,22 @@ function montarContagem(opts: { statusInventario?: string; semSaldo?: boolean } 
     id: 'inv-1', companyId: COMPANY, depositoId: 'dep-1',
     status: opts.statusInventario ?? 'aberta',
   };
-  const estado = { item, inventario };
+  // Achado Important I2 (revisão final): log de ORDEM das chamadas — a prova
+  // de que a trava do cabeçalho acontece ANTES da leitura do item, mesmo
+  // padrão de `montarApuracao` abaixo (`log`).
+  const log: string[] = [];
+  const estado = { item, inventario, log };
   const tx = {
+    $queryRaw: jest.fn(async (q: { text: string; values: unknown[] }) => {
+      if (q.text.includes('FROM inventarios')) {
+        log.push('trava:inventario');
+        return q.values[0] === item.id && q.values[1] === COMPANY ? [{ id: inventario.id }] : [];
+      }
+      throw new Error(`SQL não reconhecido: ${q.text}`);
+    }),
     inventarioItem: {
       findFirst: jest.fn(async ({ where }: { where: { id: string; inventario: { companyId: string } } }) => {
+        log.push('ler:item');
         if (!where.inventario?.companyId) {
           throw new Error('findFirst sem filtro de empresa — o escopo é obrigatório.');
         }
@@ -218,6 +230,32 @@ describe('registrarContagem', () => {
     });
     expect(r).toMatchObject({ quantidadeContada: 5, saldoNaContagem: 7 });
     expect(estado.item).toMatchObject({ quantidadeContada: 5, saldoNaContagem: 7 });
+  });
+
+  it('achado Important I2 da revisão final: trava o cabeçalho ANTES de ler o item', async () => {
+    // Sob READ COMMITTED, sem esta trava uma contagem concorrente com uma
+    // apuração pode aterrissar DEPOIS do commit da apuração, sobrescrevendo
+    // `quantidadeContada`/`saldoNaContagem` enquanto `ajuste`/`movimentoId`
+    // continuam contando a história da contagem velha. A trava (mesmo
+    // `SELECT ... FOR UPDATE` que `apurarInventario` toma primeiro) tem de
+    // vir ANTES da leitura do item — é isto que o log de chamadas prova.
+    const { tx, estado } = montarContagem();
+    await registrarContagem(tx as never, {
+      companyId: COMPANY, inventarioItemId: 'ii-1', quantidadeContada: 5,
+      autorCompanyUserId: AUTOR,
+    });
+    expect(estado.log).toEqual(['trava:inventario', 'ler:item']);
+  });
+
+  it('quantidade negativa é recusada ANTES de travar — não gasta lock com entrada inválida', async () => {
+    const { tx, estado } = montarContagem();
+    await expect(
+      registrarContagem(tx as never, {
+        companyId: COMPANY, inventarioItemId: 'ii-1', quantidadeContada: -1,
+        autorCompanyUserId: AUTOR,
+      }),
+    ).rejects.toThrow(BadRequestException);
+    expect(estado.log).toEqual([]);
   });
 
   it('contar ZERO é contagem, não ausência de contagem', async () => {
