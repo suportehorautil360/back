@@ -9,8 +9,20 @@ describe('parseNumeroTransferenciaSeq', () => {
     expect(parseNumeroTransferenciaSeq('TRF-2025-999', 2026)).toBeNull();
   });
 
-  it('texto que não é numeração devolve null em vez de NaN', () => {
+  it('texto fora do padrão devolve null', () => {
     expect(parseNumeroTransferenciaSeq('TRF-2026-abc', 2026)).toBeNull();
+  });
+
+  it('sequência grande demais para um double devolve null, não Infinity', () => {
+    // `Number('9'.repeat(400))` é Infinity. O guard existe para isto, e até
+    // agora nenhum teste dos helpers-irmãos o exercia.
+    expect(parseNumeroTransferenciaSeq(`TRF-2026-${'9'.repeat(400)}`, 2026)).toBeNull();
+  });
+
+  it('ano não inteiro não vira curinga na regex', () => {
+    // `2026.5` interpolado faria o `.` casar qualquer caractere, e
+    // 'TRF-2026X5-047' passaria por número do ano certo.
+    expect(parseNumeroTransferenciaSeq('TRF-2026X5-047', 2026.5)).toBeNull();
   });
 
   it('passa dos 999 sem truncar, nas DUAS funções', () => {
