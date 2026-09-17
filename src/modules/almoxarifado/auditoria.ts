@@ -18,7 +18,8 @@ export type AlvoSuprimentos =
   | 'suprimentos.solicitacao_compra'
   | 'suprimentos.recebimento'
   | 'suprimentos.requisicao'
-  | 'suprimentos.inventario';
+  | 'suprimentos.inventario'
+  | 'suprimentos.transferencia';
 
 export async function registrarAuditoriaSuprimentos(
   tx: Prisma.TransactionClient,
