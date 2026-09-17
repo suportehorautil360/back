@@ -18,7 +18,9 @@ import { Prisma } from '../../prisma/generated/client';
  *   ordem de compra (cabeçalho)
  *   → requisições (por id)
  *   → linhas de item de solicitação de compra (por id)
- *   → `peca_saldos` (por `pecaId`, `compararPorPeca`)
+ *   → `peca_saldos` (por `pecaId`, `compararPorPeca`; quando a transação toca
+ *     duas linhas da MESMA peça em depósitos diferentes — só a transferência —
+ *     por `compararPorPecaEDeposito`)
  *   → cabeçalhos de solicitação de compra (por id)
  *   → OS
  *
@@ -194,6 +196,27 @@ export function compararPorPeca(
   const pa = a ?? '';
   const pb = b ?? '';
   return pa < pb ? -1 : pa > pb ? 1 : 0;
+}
+
+/**
+ * A ordem de trava quando a transação toca DUAS linhas de `peca_saldos` da
+ * mesma peça — o caso da transferência entre depósitos, e só dele.
+ *
+ * `compararPorPeca` devolve 0 para esse par, e 0 deixa a ordem ao acaso: duas
+ * transferências simultâneas da mesma peça em sentidos opostos (A→B e B→A)
+ * travariam em ordens contrárias e esperariam uma pela outra.
+ *
+ * Por que uma função nova em vez de mudar `compararPorPeca`: os dez chamadores
+ * dele travam num depósito só, onde o desempate nunca dispara. Compõem sem
+ * ciclo porque os dois ordenam por `pecaId` PRIMEIRO.
+ */
+export function compararPorPecaEDeposito(
+  a: { pecaId: string; depositoId: string },
+  b: { pecaId: string; depositoId: string },
+): number {
+  const porPeca = compararPorPeca(a.pecaId, b.pecaId);
+  if (porPeca !== 0) return porPeca;
+  return a.depositoId < b.depositoId ? -1 : a.depositoId > b.depositoId ? 1 : 0;
 }
 
 /**
