@@ -116,6 +116,8 @@ export const ModelName = {
   EstoqueMovimento: 'EstoqueMovimento',
   Inventario: 'Inventario',
   InventarioItem: 'InventarioItem',
+  Transferencia: 'Transferencia',
+  TransferenciaItem: 'TransferenciaItem',
   RequisicaoMaterial: 'RequisicaoMaterial',
   RequisicaoMaterialItem: 'RequisicaoMaterialItem',
   SolicitacaoCompra: 'SolicitacaoCompra',
@@ -1395,6 +1397,44 @@ export const InventarioItemScalarFieldEnum = {
 } as const
 
 export type InventarioItemScalarFieldEnum = (typeof InventarioItemScalarFieldEnum)[keyof typeof InventarioItemScalarFieldEnum]
+
+
+export const TransferenciaScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  numero: 'numero',
+  depositoOrigemId: 'depositoOrigemId',
+  depositoDestinoId: 'depositoDestinoId',
+  status: 'status',
+  criadaPorCompanyUserId: 'criadaPorCompanyUserId',
+  expedidaPorCompanyUserId: 'expedidaPorCompanyUserId',
+  expedidaEm: 'expedidaEm',
+  recebidaPorCompanyUserId: 'recebidaPorCompanyUserId',
+  recebidaEm: 'recebidaEm',
+  canceladaPorCompanyUserId: 'canceladaPorCompanyUserId',
+  canceladaEm: 'canceladaEm',
+  motivoCancelamento: 'motivoCancelamento',
+  observacao: 'observacao',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TransferenciaScalarFieldEnum = (typeof TransferenciaScalarFieldEnum)[keyof typeof TransferenciaScalarFieldEnum]
+
+
+export const TransferenciaItemScalarFieldEnum = {
+  id: 'id',
+  transferenciaId: 'transferenciaId',
+  pecaId: 'pecaId',
+  quantidade: 'quantidade',
+  quantidadeRecebida: 'quantidadeRecebida',
+  motivoDivergencia: 'motivoDivergencia',
+  custoUnit: 'custoUnit',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TransferenciaItemScalarFieldEnum = (typeof TransferenciaItemScalarFieldEnum)[keyof typeof TransferenciaItemScalarFieldEnum]
 
 
 export const RequisicaoMaterialScalarFieldEnum = {

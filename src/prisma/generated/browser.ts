@@ -511,6 +511,18 @@ export type Inventario = Prisma.InventarioModel
  */
 export type InventarioItem = Prisma.InventarioItemModel
 /**
+ * Model Transferencia
+ * A peça mudando de depósito (§5.3). Documento com três estados porque entre
+ * sair de um e chegar no outro existe um tempo real — a peça está no caminhão,
+ * e nesse intervalo ela não está em `peca_saldos` nenhum.
+ */
+export type Transferencia = Prisma.TransferenciaModel
+/**
+ * Model TransferenciaItem
+ * 
+ */
+export type TransferenciaItem = Prisma.TransferenciaItemModel
+/**
  * Model RequisicaoMaterial
  * O trabalho do almoxarife. NÃO é uma `ServiceOrder`: OS é conserto de
  * máquina, e sobrecarregar aquele modelo com "separe três filtros" faria a
