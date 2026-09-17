@@ -15,6 +15,7 @@ import { ReceberDto } from './dto/recebimento.dto';
 import { PedirPecaAdicionalDto } from './dto/peca-adicional.dto';
 import { VerificarEstoqueMinimoDto } from './dto/estoque-minimo.dto';
 import { DevolverSobraDto } from './dto/devolucao.dto';
+import { AbrirInventarioDto, ApurarInventarioDto, RegistrarContagemDto } from './dto/inventario.dto';
 
 @ApiTags('almoxarifado')
 @Controller('almoxarifado')
@@ -230,6 +231,54 @@ export class AlmoxarifadoController {
       companyId: req.painel.companyId,
       solicitacaoItemId: dto.solicitacaoItemId,
       prioridade: dto.prioridade,
+      autorCompanyUserId: req.painel.companyUserId,
+      motivo: dto.motivo,
+    });
+  }
+
+  @Post('inventarios')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Abre a contagem cíclica de um depósito' })
+  async abrirInventario(@Req() req: RequestComPainel, @Body() dto: AbrirInventarioDto) {
+    return this.servico.abrirContagem({
+      companyId: req.painel.companyId,
+      depositoId: dto.depositoId,
+      pecaIds: dto.pecaIds,
+      autorCompanyUserId: req.painel.companyUserId,
+      observacao: dto.observacao ?? null,
+    });
+  }
+
+  @Post('inventarios/itens/:id/contagem')
+  // Sem idempotência: recontar é o fluxo LEGÍTIMO, e a rota grava valor
+  // absoluto (não incrementa). Reenvio grava o mesmo número de novo.
+  @ApiOperation({ summary: 'Registra o que foi achado na prateleira' })
+  async registrarContagem(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: RegistrarContagemDto,
+  ) {
+    return this.servico.registrarContagemDeItem({
+      companyId: req.painel.companyId,
+      inventarioItemId: id,
+      quantidadeContada: dto.quantidadeContada,
+      autorCompanyUserId: req.painel.companyUserId,
+    });
+  }
+
+  @Post('inventarios/:id/apurar')
+  // Idempotência aqui SIM: apurar mexe em saldo, e um reenvio aplicaria os
+  // ajustes duas vezes se o status ainda não tivesse virado.
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Fecha a contagem: as diferenças viram ajuste' })
+  async apurarInventario(
+    @Req() req: RequestComPainel,
+    @Param('id') id: string,
+    @Body() dto: ApurarInventarioDto,
+  ) {
+    return this.servico.apurarContagem({
+      companyId: req.painel.companyId,
+      inventarioId: id,
       autorCompanyUserId: req.painel.companyUserId,
       motivo: dto.motivo,
     });

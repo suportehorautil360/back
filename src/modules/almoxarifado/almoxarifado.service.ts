@@ -43,6 +43,7 @@ import { acaoPermitida } from './regras/compras';
 import { alterarPrioridadeDoItem, type EntradaDePrioridade, type ResultadoDePrioridade } from './compras/prioridade';
 import { decidirEquivalente, proporEquivalente, type EntradaDeDecisao, type EntradaDeProposta, type ResultadoDaDecisao, type ResultadoDaProposta } from './equivalente';
 import { refinarPelaCompra } from './compras/cobertura';
+import { abrirInventario, apurarInventario, registrarContagem, type EntradaDeAbertura, type EntradaDeApuracao, type EntradaDeContagem } from './inventario';
 import {
   MAX_TENTATIVAS_CONCORRENCIA,
   colisaoDeRequisicaoJaAberta,
@@ -2538,6 +2539,27 @@ export class AlmoxarifadoService {
   async alterarPrioridade(input: EntradaDePrioridade): Promise<ResultadoDePrioridade> {
     return comRetryDeContencao('a mudança de prioridade', () =>
       this.prisma.$transaction((tx) => alterarPrioridadeDoItem(tx, input)),
+    );
+  }
+
+  /** Abre a contagem cíclica de um depósito. */
+  async abrirContagem(input: EntradaDeAbertura) {
+    return comRetryDeContencao('a abertura da contagem', () =>
+      this.prisma.$transaction((tx) => abrirInventario(tx, input)),
+    );
+  }
+
+  /** Registra o que o almoxarife achou numa peça. */
+  async registrarContagemDeItem(input: EntradaDeContagem) {
+    return comRetryDeContencao('o registro da contagem', () =>
+      this.prisma.$transaction((tx) => registrarContagem(tx, input)),
+    );
+  }
+
+  /** Fecha a contagem: as diferenças viram movimento de ajuste. */
+  async apurarContagem(input: EntradaDeApuracao) {
+    return comRetryDeContencao('a apuração da contagem', () =>
+      this.prisma.$transaction((tx) => apurarInventario(tx, input)),
     );
   }
 
