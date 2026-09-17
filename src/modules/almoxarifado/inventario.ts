@@ -105,3 +105,67 @@ export async function abrirInventario(
 
   return { id: inventario.id, numero: inventario.numero, itens: pecaIds.length };
 }
+
+export interface EntradaDeContagem {
+  companyId: string;
+  inventarioItemId: string;
+  quantidadeContada: number;
+  autorCompanyUserId: string;
+}
+
+/**
+ * O almoxarife registra o que achou na prateleira.
+ *
+ * `saldoNaContagem` é lido AQUI, no instante da contagem — é ele que ancora a
+ * diferença. Ler na apuração daria a diferença contra um saldo que já mudou, e
+ * a contagem passaria a exigir que nada se movesse no meio (§5.2).
+ *
+ * Sem trava: a contagem é uma anotação, não mexe em saldo. Quem trava é a
+ * apuração.
+ */
+export async function registrarContagem(
+  tx: ClienteDaTransacao,
+  input: EntradaDeContagem,
+): Promise<{ itemId: string; quantidadeContada: number; saldoNaContagem: number }> {
+  // `!(x >= 0)` e não `x < 0`: NaN falha em qualquer comparação e passaria.
+  if (!(input.quantidadeContada >= 0)) {
+    throw new BadRequestException('Quantidade contada não pode ser negativa.');
+  }
+
+  const item = await tx.inventarioItem.findFirst({
+    where: { id: input.inventarioItemId, inventario: { companyId: input.companyId } },
+    include: { inventario: { select: { id: true, status: true, depositoId: true } } },
+  });
+  if (!item) {
+    throw new NotFoundException('Item de contagem não encontrado nesta empresa.');
+  }
+  if (item.inventario.status !== 'aberta') {
+    throw new ConflictException(
+      `Contagem ${item.inventario.status} não aceita mais registro.`,
+    );
+  }
+
+  // Peça sem linha de saldo conta contra ZERO: ela nunca existiu neste
+  // depósito, e achar três unidades dela é uma entrada de três.
+  const saldo = await tx.pecaSaldo.findUnique({
+    where: { pecaId_depositoId: { pecaId: item.pecaId, depositoId: item.inventario.depositoId } },
+    select: { saldoFisico: true },
+  });
+  const saldoNaContagem = Number(saldo?.saldoFisico ?? 0);
+
+  await tx.inventarioItem.update({
+    where: { id: item.id },
+    data: {
+      quantidadeContada: input.quantidadeContada,
+      saldoNaContagem,
+      contadaPorCompanyUserId: input.autorCompanyUserId,
+      contadaEm: new Date(),
+    },
+  });
+
+  return {
+    itemId: item.id,
+    quantidadeContada: input.quantidadeContada,
+    saldoNaContagem,
+  };
+}

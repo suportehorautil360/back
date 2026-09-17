@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { abrirInventario } from './inventario';
+import { abrirInventario, registrarContagem } from './inventario';
 
 const COMPANY = '11111111-1111-1111-1111-111111111111';
 const AUTOR = '44444444-4444-4444-4444-444444444444';
@@ -158,5 +158,99 @@ describe('abrirInventario', () => {
         atorId: AUTOR,
       }),
     ]);
+  });
+});
+
+function montarContagem(opts: { statusInventario?: string; semSaldo?: boolean } = {}) {
+  const item: Linha = {
+    id: 'ii-1', inventarioId: 'inv-1', pecaId: 'p-1',
+    quantidadeContada: null, saldoNaContagem: null,
+  };
+  const inventario = {
+    id: 'inv-1', companyId: COMPANY, depositoId: 'dep-1',
+    status: opts.statusInventario ?? 'aberta',
+  };
+  const estado = { item, inventario };
+  const tx = {
+    inventarioItem: {
+      findFirst: jest.fn(async ({ where }: { where: { id: string; inventario: { companyId: string } } }) => {
+        if (!where.inventario?.companyId) {
+          throw new Error('findFirst sem filtro de empresa — o escopo é obrigatório.');
+        }
+        if (where.id !== item.id || inventario.companyId !== where.inventario.companyId) return null;
+        return { ...item, inventario: { ...inventario } };
+      }),
+      update: jest.fn(async ({ data }: { data: Linha }) => {
+        Object.assign(item, data);
+        return { ...item };
+      }),
+    },
+    pecaSaldo: {
+      findUnique: jest.fn(async () => (opts.semSaldo ? null : { saldoFisico: 7 })),
+    },
+  };
+  return { tx, estado };
+}
+
+describe('registrarContagem', () => {
+  it('grava o contado e o saldo do INSTANTE da contagem', async () => {
+    const { tx, estado } = montarContagem();
+    const r = await registrarContagem(tx as never, {
+      companyId: COMPANY, inventarioItemId: 'ii-1', quantidadeContada: 5,
+      autorCompanyUserId: AUTOR,
+    });
+    expect(r).toMatchObject({ quantidadeContada: 5, saldoNaContagem: 7 });
+    expect(estado.item).toMatchObject({ quantidadeContada: 5, saldoNaContagem: 7 });
+  });
+
+  it('contar ZERO é contagem, não ausência de contagem', async () => {
+    const { tx, estado } = montarContagem();
+    await registrarContagem(tx as never, {
+      companyId: COMPANY, inventarioItemId: 'ii-1', quantidadeContada: 0,
+      autorCompanyUserId: AUTOR,
+    });
+    expect(estado.item.quantidadeContada).toBe(0);
+  });
+
+  it('peça sem linha de saldo conta contra ZERO — nunca existiu ali', async () => {
+    const { tx, estado } = montarContagem({ semSaldo: true });
+    await registrarContagem(tx as never, {
+      companyId: COMPANY, inventarioItemId: 'ii-1', quantidadeContada: 3,
+      autorCompanyUserId: AUTOR,
+    });
+    expect(estado.item.saldoNaContagem).toBe(0);
+  });
+
+  it('recontar substitui, e o saldo do instante acompanha', async () => {
+    const { tx, estado } = montarContagem();
+    await registrarContagem(tx as never, {
+      companyId: COMPANY, inventarioItemId: 'ii-1', quantidadeContada: 5,
+      autorCompanyUserId: AUTOR,
+    });
+    await registrarContagem(tx as never, {
+      companyId: COMPANY, inventarioItemId: 'ii-1', quantidadeContada: 6,
+      autorCompanyUserId: AUTOR,
+    });
+    expect(estado.item).toMatchObject({ quantidadeContada: 6, saldoNaContagem: 7 });
+  });
+
+  it('quantidade negativa é recusada', async () => {
+    const { tx } = montarContagem();
+    await expect(
+      registrarContagem(tx as never, {
+        companyId: COMPANY, inventarioItemId: 'ii-1', quantidadeContada: -1,
+        autorCompanyUserId: AUTOR,
+      }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('contagem já apurada não aceita mais contagem', async () => {
+    const { tx } = montarContagem({ statusInventario: 'apurada' });
+    await expect(
+      registrarContagem(tx as never, {
+        companyId: COMPANY, inventarioItemId: 'ii-1', quantidadeContada: 5,
+        autorCompanyUserId: AUTOR,
+      }),
+    ).rejects.toThrow(ConflictException);
   });
 });
