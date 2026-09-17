@@ -23,6 +23,11 @@ describe('cabeNoDisponivel', () => {
   it('compara em milésimos — a coluna é NUMERIC(12,3)', () => {
     expect(cabeNoDisponivel({ saldoFisico: 0.3, saldoReservado: 0 }, 0.1 + 0.2)).toBe(true);
   });
+
+  it('quantidade que não é número não viaja', () => {
+    expect(cabeNoDisponivel({ saldoFisico: 10, saldoReservado: 0 }, NaN)).toBe(false);
+    expect(cabeNoDisponivel({ saldoFisico: 10, saldoReservado: 0 }, Infinity)).toBe(false);
+  });
 });
 
 describe('temDivergencia', () => {
@@ -46,6 +51,13 @@ describe('temDivergencia', () => {
     // chegou inteira. Com `0.1 + 0.2` este teste passava dos dois jeitos: aquele
     // valor cai ACIMA de 0.3, e o `<` ingênuo já devolvia false sozinho.
     expect(temDivergencia({ quantidade: 0.3, quantidadeRecebida: 0.7 - 0.4 })).toBe(false);
+  });
+
+  it('recebida corrompida é divergência, não carga perfeita', () => {
+    // Sem a guarda isto devolvia false — "chegou tudo" — e a transferência
+    // fechava sem ninguém olhar.
+    expect(temDivergencia({ quantidade: 10, quantidadeRecebida: NaN })).toBe(true);
+    expect(temDivergencia({ quantidade: 10, quantidadeRecebida: Infinity })).toBe(true);
   });
 });
 

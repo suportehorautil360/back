@@ -19,6 +19,15 @@ export interface SaldoDaOrigem {
  * do §7 do desenho original sobre não expirar reserva sozinho.
  */
 export function cabeNoDisponivel(saldo: SaldoDaOrigem, quantidade: number): boolean {
+  // Falha fechada, e agora dito em voz alta em vez de depender de `NaN`
+  // devolver false em toda comparação: valor que não é número não viaja.
+  if (
+    !Number.isFinite(saldo.saldoFisico) ||
+    !Number.isFinite(saldo.saldoReservado) ||
+    !Number.isFinite(quantidade)
+  ) {
+    return false;
+  }
   const livre = milesimos(saldo.saldoFisico) - milesimos(saldo.saldoReservado);
   return milesimos(quantidade) <= livre;
 }
@@ -30,6 +39,14 @@ export interface ItemRecebido {
 
 /** Chegou menos do que saiu — inclusive quando chegou zero. */
 export function temDivergencia(item: ItemRecebido): boolean {
+  // Número que não é finito NÃO é "chegou tudo". `NaN` faz toda comparação em
+  // JS devolver false, e sem esta guarda a função devolveria "sem divergência"
+  // para um dado corrompido — exatamente o que ela existe para sinalizar.
+  // Divergência obriga motivo, e o CHECK do banco recusa motivo vazio: o valor
+  // sujo trava o recebimento em vez de virar carga perfeita.
+  if (!Number.isFinite(item.quantidade) || !Number.isFinite(item.quantidadeRecebida)) {
+    return true;
+  }
   return milesimos(item.quantidadeRecebida) < milesimos(item.quantidade);
 }
 
