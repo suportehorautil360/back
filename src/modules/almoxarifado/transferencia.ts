@@ -39,17 +39,33 @@ export async function criarTransferencia(
     }
     vistas.add(item.pecaId);
     // `!(x > 0)` e não `x <= 0`: NaN falha em qualquer comparação e passaria.
-    if (!(Math.round(item.quantidade * 1000) > 0)) {
+    // `Number.isFinite` primeiro: sem ele, `Infinity` passava — `Math.round(
+    // Infinity * 1000) > 0` também é `true`. Mesma postura das Tasks 3 e 4:
+    // o ato se sustenta sozinho, não conta com o DTO para barrar valor sujo.
+    if (!Number.isFinite(item.quantidade) || !(Math.round(item.quantidade * 1000) > 0)) {
       throw new BadRequestException('Quantidade tem de ser maior que zero.');
     }
   }
 
   const depositos = await tx.deposito.findMany({
     where: { id: { in: [input.depositoOrigemId, input.depositoDestinoId] }, companyId: input.companyId },
-    select: { id: true },
+    select: { id: true, ativo: true },
   });
   if (depositos.length !== 2) {
     throw new NotFoundException('Depósito de origem ou de destino não encontrado nesta empresa.');
+  }
+  // Só o DESTINO precisa estar ativo — a assimetria é de propósito, não
+  // esquecimento. Pôr mercadoria num depósito que a empresa fechou é criar
+  // estoque num lugar que ninguém mais olha, então o destino filtra. Mas a
+  // ORIGEM pode estar inativa: transferir é o caminho para ESVAZIAR um
+  // depósito desativado, e se a origem também exigisse `ativo`, o estoque de
+  // um depósito fechado ficaria preso sem saída nenhuma — a mesma armadilha
+  // do inventário que não podia ser cancelado (`abrirInventario`/
+  // `cancelarInventario`). Não "conserte" essa assimetria sem reler este
+  // comentário.
+  const destino = depositos.find((d) => d.id === input.depositoDestinoId);
+  if (!destino?.ativo) {
+    throw new BadRequestException('Depósito de destino está inativo — escolha um depósito ativo.');
   }
 
   const pecaIds = [...vistas];

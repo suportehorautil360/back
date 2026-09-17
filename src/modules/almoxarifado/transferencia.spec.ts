@@ -2,12 +2,43 @@ import { BadRequestException, ConflictException, NotFoundException } from '@nest
 import { cancelarTransferencia, criarTransferencia } from './transferencia';
 
 const COMPANY = '11111111-1111-1111-1111-111111111111';
+const OUTRA = '22222222-2222-2222-2222-222222222222';
 const AUTOR = '44444444-4444-4444-4444-444444444444';
 type Linha = Record<string, any>;
 
-function montarCriacao(opts: { pecaDeOutra?: boolean } = {}) {
+// A numeração (`TRF-2026-...`) depende do ano corrente — sem congelar o
+// relógio, a suíte quebra sozinha em 2027-01-01, porque os números esperados
+// abaixo são literais `TRF-2026-…` e o código tira o ano de
+// `new Date().getUTCFullYear()`. Mesmo padrão de `inventario.spec.ts`
+// (`describe('abrirInventario', …)`), aqui no nível do arquivo porque as duas
+// describes (criar e cancelar) dependem da mesma numeração.
+beforeEach(() => {
+  jest.useFakeTimers().setSystemTime(new Date('2026-09-17T12:00:00.000Z'));
+});
+
+afterEach(() => {
+  jest.useRealTimers();
+});
+
+function montarCriacao() {
+  // Duas linhas com BURACO na sequência (001 e 003, não 001 e 002): prova que
+  // o próximo número sai do MAX (004), não da CONTAGEM de linhas (que daria
+  // 003, com só duas linhas existentes). Mesmo raciocínio de
+  // `inventario.spec.ts` ("o número continua do MAX do ano, não do total de
+  // linhas").
   const transferencias: Linha[] = [
     { id: 'trf-0', companyId: COMPANY, numero: 'TRF-2026-001', status: 'recebida' },
+    { id: 'trf-buraco', companyId: COMPANY, numero: 'TRF-2026-003', status: 'cancelada' },
+  ];
+  // Depósitos PERSISTIDOS de verdade (não "devolve de volta o id que
+  // recebeu"): só assim "depósito inexistente", "de outra empresa" e
+  // "inativo" são exprimíveis, e um fake que neutralizasse a guarda deixaria
+  // de passar.
+  const depositos: Linha[] = [
+    { id: 'dep-a', companyId: COMPANY, ativo: true },
+    { id: 'dep-b', companyId: COMPANY, ativo: true },
+    { id: 'dep-inativo', companyId: COMPANY, ativo: false },
+    { id: 'dep-outra', companyId: OUTRA, ativo: true },
   ];
   const itens: Linha[] = [];
   const auditoria: Linha[] = [];
@@ -15,12 +46,16 @@ function montarCriacao(opts: { pecaDeOutra?: boolean } = {}) {
   // (`'trava o cabeçalho ANTES de escrever'`): prova que a trava existe e
   // acontece antes do UPDATE, não só que ela não quebra nada.
   const log: string[] = [];
-  const estado = { transferencias, itens, auditoria, log };
+  const estado = { transferencias, depositos, itens, auditoria, log };
 
   const tx = {
     $queryRaw: jest.fn(async (q: { text: string; values: unknown[] }) => {
-      if (!q.text.includes('FROM transferencias')) {
-        throw new Error(`banco falso: SQL não reconhecido — ${q.text}`);
+      // Exige `FOR UPDATE` no texto, não só o `FROM transferencias`: sem
+      // isso, apagar as duas palavras da trava real deixaria o fake
+      // satisfeito — o teste provaria só "existe um SELECT antes do
+      // UPDATE", não que ele TRAVA.
+      if (!q.text.includes('FROM transferencias') || !q.text.includes('FOR UPDATE')) {
+        throw new Error(`banco falso: SQL não reconhecido, ou sem FOR UPDATE — ${q.text}`);
       }
       log.push('trava:transferencia');
       const t = transferencias.find((x) => x.id === q.values[0] && x.companyId === q.values[1]);
@@ -29,16 +64,26 @@ function montarCriacao(opts: { pecaDeOutra?: boolean } = {}) {
     deposito: {
       findMany: jest.fn(async ({ where }: { where: { id: { in: string[] }; companyId?: string } }) => {
         if (!where.companyId) throw new Error('banco falso: deposito.findMany sem escopo de empresa.');
-        return where.companyId === COMPANY ? where.id.in.map((id) => ({ id })) : [];
+        return depositos
+          .filter((d) => where.id.in.includes(d.id) && d.companyId === where.companyId)
+          .map((d) => ({ id: d.id, ativo: d.ativo }));
       }),
     },
     peca: {
       findMany: jest.fn(async ({ where }: { where: { id: { in: string[] }; companyId?: string; ativo?: boolean } }) => {
-        if (!where.companyId || where.ativo === undefined) {
-          throw new Error('banco falso: peca.findMany sem escopo de empresa ou sem filtro de ativo.');
+        if (where.companyId === undefined) {
+          throw new Error('banco falso: peca.findMany sem escopo de empresa — onde é isso?');
         }
-        if (opts.pecaDeOutra) return [];
-        return where.companyId === COMPANY ? where.id.in.map((id) => ({ id })) : [];
+        if (where.ativo === undefined) {
+          throw new Error('banco falso: peca.findMany sem filtro de ativo — onde é isso?');
+        }
+        // Confere o VALOR do filtro, não só a presença da chave: um
+        // `ativo: false` (a regra invertida) tem de devolver vazio aqui.
+        if (where.companyId !== COMPANY || where.ativo !== true) return [];
+        // "Peça de outra empresa" modelada por ID que este fake nunca
+        // reconhece — não por uma flag global que apagaria TODA peça da
+        // lista, o que provaria só "quando vêm menos peças, recusa".
+        return where.id.in.filter((id) => id !== 'p-de-outra-empresa').map((id) => ({ id }));
       }),
     },
     transferencia: {
@@ -79,6 +124,19 @@ function montarCriacao(opts: { pecaDeOutra?: boolean } = {}) {
         return data;
       }),
     },
+    // Cancelar o RASCUNHO não move saldo nem grava movimento — estes dois
+    // fakes LANÇAM se forem tocados. É assim que os testes de cancelamento
+    // provam a AUSÊNCIA de efeito, não só a presença do que se espera.
+    pecaSaldo: {
+      update: jest.fn(async () => {
+        throw new Error('cancelar rascunho NÃO pode mexer em saldo');
+      }),
+    },
+    estoqueMovimento: {
+      create: jest.fn(async () => {
+        throw new Error('cancelar rascunho NÃO pode gravar movimento');
+      }),
+    },
   };
   return { tx, estado };
 }
@@ -92,9 +150,25 @@ const criacao = (extra: Partial<Record<string, unknown>> = {}) => ({
 describe('criarTransferencia', () => {
   it('nasce rascunho, numerada, com um item por peça', async () => {
     const { tx, estado } = montarCriacao();
-    const r = await criarTransferencia(tx as never, criacao());
-    expect(r).toMatchObject({ numero: 'TRF-2026-002', itens: 1 });
+    const r = await criarTransferencia(tx as never, criacao({
+      itens: [{ pecaId: 'p-1', quantidade: 4 }, { pecaId: 'p-2', quantidade: 2 }],
+    }));
+
+    // Numeração: MAX(001, 003) + 1 = 004 — não a contagem de linhas (2 + 1 =
+    // 003), que um mutante MAX→contagem também acertaria por acidente.
+    expect(r).toMatchObject({ numero: 'TRF-2026-004', itens: 2 });
     expect(estado.transferencias.find((t) => t.id === 'trf-1')).toMatchObject({ status: 'rascunho' });
+
+    // Conteúdo das linhas gravadas, não só a contagem: sem isto, apagar o
+    // `createMany` inteiro (zero linhas) ainda passaria, porque `r.itens` é
+    // `input.itens.length` — um número que nunca toca o banco.
+    expect(estado.itens).toHaveLength(2);
+    expect(estado.itens).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ transferenciaId: 'trf-1', pecaId: 'p-1', quantidade: 4 }),
+        expect.objectContaining({ transferenciaId: 'trf-1', pecaId: 'p-2', quantidade: 2 }),
+      ]),
+    );
   });
 
   it('origem igual ao destino é recusada antes de tocar o banco', async () => {
@@ -103,6 +177,7 @@ describe('criarTransferencia', () => {
       criarTransferencia(tx as never, criacao({ depositoDestinoId: 'dep-a' })),
     ).rejects.toThrow(BadRequestException);
     expect(estado.itens).toHaveLength(0);
+    expect(tx.deposito.findMany).not.toHaveBeenCalled();
   });
 
   it('sem item nenhum é recusada', async () => {
@@ -114,6 +189,18 @@ describe('criarTransferencia', () => {
     const { tx } = montarCriacao();
     await expect(
       criarTransferencia(tx as never, criacao({ itens: [{ pecaId: 'p-1', quantidade: 0 }] })),
+    ).rejects.toThrow(BadRequestException);
+    await expect(
+      criarTransferencia(tx as never, criacao({ itens: [{ pecaId: 'p-1', quantidade: -5 }] })),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('quantidade infinita é recusada — "maior que zero" não é de graça com Infinity', async () => {
+    // `Math.round(Infinity * 1000) > 0` também é `true`: sem o guard
+    // `Number.isFinite`, isto passaria como quantidade válida.
+    const { tx } = montarCriacao();
+    await expect(
+      criarTransferencia(tx as never, criacao({ itens: [{ pecaId: 'p-1', quantidade: Infinity }] })),
     ).rejects.toThrow(BadRequestException);
   });
 
@@ -127,9 +214,37 @@ describe('criarTransferencia', () => {
   });
 
   it('peça de outra empresa é recusada, e nada é criado', async () => {
-    const { tx, estado } = montarCriacao({ pecaDeOutra: true });
-    await expect(criarTransferencia(tx as never, criacao())).rejects.toThrow(BadRequestException);
+    const { tx, estado } = montarCriacao();
+    await expect(
+      criarTransferencia(tx as never, criacao({ itens: [{ pecaId: 'p-de-outra-empresa', quantidade: 4 }] })),
+    ).rejects.toThrow(BadRequestException);
     expect(estado.itens).toHaveLength(0);
+    expect(estado.transferencias.find((t) => t.id === 'trf-1')).toBeUndefined();
+  });
+
+  it('depósito de outra empresa não é encontrado', async () => {
+    const { tx } = montarCriacao();
+    await expect(
+      criarTransferencia(tx as never, criacao({ depositoDestinoId: 'dep-outra' })),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('depósito de destino inativo é recusado', async () => {
+    // Pôr mercadoria num depósito que a empresa fechou é criar estoque num
+    // lugar que ninguém mais olha.
+    const { tx } = montarCriacao();
+    await expect(
+      criarTransferencia(tx as never, criacao({ depositoDestinoId: 'dep-inativo' })),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('depósito de origem inativa é ACEITO — é o caminho para esvaziá-lo', async () => {
+    // Se a origem também exigisse `ativo`, o estoque de um depósito fechado
+    // ficaria preso sem saída nenhuma — a mesma armadilha do inventário que
+    // não podia ser cancelado.
+    const { tx } = montarCriacao();
+    const r = await criarTransferencia(tx as never, criacao({ depositoOrigemId: 'dep-inativo' }));
+    expect(r).toMatchObject({ numero: 'TRF-2026-004', itens: 1 });
   });
 
   it('grava o rastro da criação', async () => {
@@ -153,16 +268,23 @@ describe('cancelarTransferencia', () => {
   });
 
   it('cancela o RASCUNHO, que não moveu saldo nenhum', async () => {
+    // Os fakes de `pecaSaldo.update` e `estoqueMovimento.create` (em
+    // `montarCriacao`) LANÇAM se forem tocados — é assim que este teste prova
+    // a AUSÊNCIA de efeito sobre o estoque, não só o resultado sobre a
+    // transferência.
     const { tx, estado } = montarCriacao();
     await criarTransferencia(tx as never, criacao());
 
     const r = await cancelarTransferencia(tx as never, cancelamento());
 
-    expect(r).toMatchObject({ numero: 'TRF-2026-002' });
-    expect(estado.transferencias.find((t) => t.id === 'trf-1')).toMatchObject({
+    expect(r).toMatchObject({ numero: 'TRF-2026-004' });
+    const linha = estado.transferencias.find((t) => t.id === 'trf-1');
+    expect(linha).toMatchObject({
       status: 'cancelada',
       motivoCancelamento: 'pedida por engano',
+      canceladaPorCompanyUserId: AUTOR,
     });
+    expect(linha!.canceladaEm).toBeInstanceOf(Date);
   });
 
   it('transferência EM TRÂNSITO não cancela — a peça está no caminhão', async () => {
@@ -218,6 +340,25 @@ describe('cancelarTransferencia', () => {
     await cancelarTransferencia(tx as never, cancelamento());
     expect(tx.$queryRaw).toHaveBeenCalledWith(
       expect.objectContaining({ values: ['trf-1', COMPANY] }),
+    );
+  });
+
+  it('grava o rastro do cancelamento com motivo, antes e depois', async () => {
+    const { tx, estado } = montarCriacao();
+    await criarTransferencia(tx as never, criacao());
+    await cancelarTransferencia(tx as never, cancelamento());
+    expect(estado.auditoria).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          acao: 'transferencia.cancelar',
+          alvoTipo: 'suprimentos.transferencia',
+          alvoId: 'trf-1',
+          atorId: AUTOR,
+          motivo: 'pedida por engano',
+          antes: expect.objectContaining({ status: 'rascunho' }),
+          depois: expect.objectContaining({ status: 'cancelada' }),
+        }),
+      ]),
     );
   });
 });
