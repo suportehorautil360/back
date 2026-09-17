@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { cancelarTransferencia, criarTransferencia } from './transferencia';
+import { cancelarTransferencia, criarTransferencia, expedirTransferencia } from './transferencia';
 
 const COMPANY = '11111111-1111-1111-1111-111111111111';
 const OUTRA = '22222222-2222-2222-2222-222222222222';
@@ -360,5 +360,200 @@ describe('cancelarTransferencia', () => {
         }),
       ]),
     );
+  });
+});
+
+function montarExpedicao(opts: { status?: string; reservado?: number; itens?: Linha[] } = {}) {
+  const log: string[] = [];
+  const transferencia: Linha = {
+    id: 'trf-1', companyId: COMPANY, numero: 'TRF-2026-001',
+    depositoOrigemId: 'dep-a', depositoDestinoId: 'dep-b',
+    status: opts.status ?? 'rascunho', expedidaEm: null, expedidaPorCompanyUserId: null,
+  };
+  const itens: Linha[] = opts.itens ?? [
+    { id: 'ti-1', pecaId: 'p-1', quantidade: 4, custoUnit: null },
+  ];
+  const saldos = new Map<string, Linha>([
+    ['p-1|dep-a', { saldoFisico: 10, saldoReservado: opts.reservado ?? 0, custoMedio: 7 }],
+    ['p-2|dep-a', { saldoFisico: 6, saldoReservado: 0, custoMedio: 3 }],
+  ]);
+  const movimentos: Linha[] = [];
+  const auditoria: Linha[] = [];
+  const estado = { log, transferencia, itens, saldos, movimentos, auditoria };
+
+  const chave = (p: string, d: string) => `${p}|${d}`;
+
+  const tx = {
+    $queryRaw: jest.fn(async (q: { text: string; values: unknown[] }) => {
+      if (q.text.includes('FROM transferencias')) {
+        if (!q.text.includes('FOR UPDATE')) {
+          throw new Error(`banco falso: SELECT de transferência sem FOR UPDATE — ${q.text}`);
+        }
+        log.push('trava:transferencia');
+        return transferencia.id === q.values[0] && transferencia.companyId === q.values[1]
+          ? [{ id: 'trf-1' }]
+          : [];
+      }
+      if (q.text.includes('FROM peca_saldos')) {
+        if (!q.text.includes('FOR UPDATE')) {
+          throw new Error(`banco falso: SELECT de saldo sem FOR UPDATE — ${q.text}`);
+        }
+        const [pecaId, depositoId] = q.values as [string, string];
+        log.push(`trava:saldo:${pecaId}|${depositoId}`);
+        return saldos.has(chave(pecaId, depositoId)) ? [{ peca_id: pecaId }] : [];
+      }
+      throw new Error(`banco falso: SQL não reconhecido — ${q.text}`);
+    }),
+    transferencia: {
+      findFirst: jest.fn(async ({ where }: { where: { id: string; companyId: string } }) => {
+        if (!where.companyId) throw new Error('banco falso: findFirst sem escopo de empresa.');
+        return where.id === transferencia.id && where.companyId === transferencia.companyId
+          ? { ...transferencia }
+          : null;
+      }),
+      update: jest.fn(async ({ data }: { data: Linha }) => {
+        Object.assign(transferencia, data);
+        log.push('update:transferencia');
+        return {};
+      }),
+    },
+    transferenciaItem: {
+      findMany: jest.fn(async () =>
+        itens.map((i) => ({ ...i, peca: { codigoInterno: `ALM-${i.pecaId}` } })),
+      ),
+      update: jest.fn(async ({ where, data }: { where: { id: string }; data: Linha }) => {
+        Object.assign(itens.find((i) => i.id === where.id)!, data);
+        return {};
+      }),
+    },
+    pecaSaldo: {
+      findUniqueOrThrow: jest.fn(
+        async ({ where }: { where: { pecaId_depositoId: { pecaId: string; depositoId: string } } }) => {
+          const k = where.pecaId_depositoId;
+          const linha = saldos.get(chave(k.pecaId, k.depositoId));
+          if (!linha) throw new Error('P2025');
+          return { ...linha };
+        },
+      ),
+      update: jest.fn(
+        async ({ where, data }: { where: { pecaId_depositoId: { pecaId: string; depositoId: string } }; data: Linha }) => {
+          const k = where.pecaId_depositoId;
+          const linha = saldos.get(chave(k.pecaId, k.depositoId));
+          if (!linha) throw new Error('P2025');
+          Object.assign(linha, data);
+          return {};
+        },
+      ),
+    },
+    estoqueMovimento: {
+      create: jest.fn(async ({ data }: { data: Linha }) => {
+        const m = { id: `mov-${movimentos.length + 1}`, ...data };
+        movimentos.push(m);
+        return m;
+      }),
+    },
+    companyUser: { findFirst: jest.fn(async () => ({ name: 'Ana', email: 'a@x.com' })) },
+    pontoAuditoria: {
+      create: jest.fn(async ({ data }: { data: Linha }) => {
+        auditoria.push({ ...data });
+        return data;
+      }),
+    },
+  };
+  return { tx, estado };
+}
+
+const expedicao = (extra: Partial<Record<string, unknown>> = {}) => ({
+  companyId: COMPANY, transferenciaId: 'trf-1', autorCompanyUserId: AUTOR, ...extra,
+});
+
+describe('expedirTransferencia', () => {
+  it('a quantidade sai do físico da ORIGEM e vira movimento negativo', async () => {
+    const { tx, estado } = montarExpedicao();
+
+    const r = await expedirTransferencia(tx as never, expedicao());
+
+    expect(r).toMatchObject({ numero: 'TRF-2026-001', itens: 1 });
+    expect(estado.saldos.get('p-1|dep-a')!.saldoFisico).toBe(6);
+    expect(estado.movimentos).toEqual([
+      expect.objectContaining({
+        pecaId: 'p-1', depositoId: 'dep-a', tipo: 'transferencia',
+        quantidade: -4, saldoApos: 6, custoUnit: 7,
+        origemTipo: 'transferencia', origemId: 'trf-1',
+      }),
+    ]);
+  });
+
+  it('a quantidade NÃO entra no destino ainda — ela está no caminhão', async () => {
+    // O §5.4 em uma asserção: entre sair e chegar, a peça não está em
+    // `peca_saldos` nenhum. O destino nem tem linha tocada.
+    const { tx, estado } = montarExpedicao();
+    await expedirTransferencia(tx as never, expedicao());
+    expect(estado.saldos.has('p-1|dep-b')).toBe(false);
+    expect(estado.movimentos).toHaveLength(1);
+  });
+
+  it('congela o custo da origem no item — a média de lá pode mudar no caminho', async () => {
+    const { tx, estado } = montarExpedicao();
+    await expedirTransferencia(tx as never, expedicao());
+    expect(estado.itens[0].custoUnit).toBe(7);
+  });
+
+  it('a média da ORIGEM não muda: saiu quantidade, não saiu valor unitário', async () => {
+    const { tx, estado } = montarExpedicao();
+    await expedirTransferencia(tx as never, expedicao());
+    expect(estado.saldos.get('p-1|dep-a')!.custoMedio).toBe(7);
+  });
+
+  it('o que está reservado não viaja, e nada é gravado', async () => {
+    const { tx, estado } = montarExpedicao({ reservado: 8 });
+    await expect(expedirTransferencia(tx as never, expedicao())).rejects.toThrow(ConflictException);
+    expect(estado.movimentos).toHaveLength(0);
+    expect(estado.transferencia.status).toBe('rascunho');
+  });
+
+  it('a recusa por reserva identifica a peça', async () => {
+    const { tx } = montarExpedicao({ reservado: 8 });
+    await expect(expedirTransferencia(tx as never, expedicao())).rejects.toThrow(/ALM-p-1/);
+  });
+
+  it('trava a transferência e depois os saldos, na ordem do comparador', async () => {
+    const { tx, estado } = montarExpedicao({
+      itens: [
+        { id: 'ti-2', pecaId: 'p-2', quantidade: 1, custoUnit: null },
+        { id: 'ti-1', pecaId: 'p-1', quantidade: 4, custoUnit: null },
+      ],
+    });
+    await expedirTransferencia(tx as never, expedicao());
+    const travas = estado.log.filter((l) => l.startsWith('trava:'));
+    expect(travas[0]).toBe('trava:transferencia');
+    const saldos = travas.slice(1);
+    expect(saldos).toEqual([...saldos].sort());
+  });
+
+  it('transferência que não é rascunho não expede de novo', async () => {
+    const { tx } = montarExpedicao({ status: 'em_transito' });
+    await expect(expedirTransferencia(tx as never, expedicao())).rejects.toThrow(ConflictException);
+  });
+
+  it('fecha como em_transito, com quem expediu e quando', async () => {
+    const { tx, estado } = montarExpedicao();
+    await expedirTransferencia(tx as never, expedicao());
+    expect(estado.transferencia).toMatchObject({
+      status: 'em_transito', expedidaPorCompanyUserId: AUTOR,
+    });
+    expect(estado.transferencia.expedidaEm).toBeInstanceOf(Date);
+  });
+
+  it('grava o rastro da expedição', async () => {
+    const { tx, estado } = montarExpedicao();
+    await expedirTransferencia(tx as never, expedicao());
+    expect(estado.auditoria).toEqual([
+      expect.objectContaining({
+        acao: 'transferencia.expedir',
+        alvoTipo: 'suprimentos.transferencia',
+        alvoId: 'trf-1',
+      }),
+    ]);
   });
 });

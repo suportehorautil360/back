@@ -5,6 +5,8 @@ import {
   formatNumeroTransferencia,
   parseNumeroTransferenciaSeq,
 } from './helpers/numero-transferencia.helper';
+import { cabeNoDisponivel } from './regras/transferencia';
+import { compararPorPecaEDeposito } from './transacao';
 
 type ClienteDaTransacao = Prisma.TransactionClient;
 
@@ -205,4 +207,146 @@ export async function cancelarTransferencia(
   });
 
   return { transferenciaId: transferencia.id, numero: transferencia.numero };
+}
+
+export interface EntradaDeExpedicao {
+  companyId: string;
+  transferenciaId: string;
+  autorCompanyUserId: string;
+}
+
+/**
+ * Despacha: a quantidade sai do físico da origem e NÃO entra em lugar nenhum.
+ * Entre aqui e a confirmação, ela não está em `peca_saldos` nenhum — é a
+ * verdade física, a peça está no caminhão (§5.3, §5.4).
+ *
+ * O custo da origem é congelado no item: a média de lá pode mudar entre a
+ * expedição e a chegada, e o que entra no destino é o valor que saiu.
+ *
+ * Trava o cabeçalho ANTES de ler o status — mesma forma e mesma posição de
+ * `cancelarTransferencia`. Sem ela, um cancelamento e uma expedição
+ * concorrentes sobre o MESMO rascunho leem "rascunho" os dois, escrevem os
+ * dois, e se a expedição comitar por último a peça sai da origem sob um
+ * documento cancelado.
+ *
+ * Ordem de trava: cabeçalho da transferência, depois `peca_saldos` por
+ * `compararPorPecaEDeposito`. Aqui só se trava o depósito de ORIGEM, mas o
+ * comparador é o mesmo do recebimento — que trava o destino — para que as duas
+ * pontas de transferências cruzadas nunca peguem linhas em ordens opostas.
+ *
+ * A origem pode estar INATIVA — de propósito (ver `criarTransferencia`): não
+ * acrescente checagem de `ativo` aqui.
+ */
+export async function expedirTransferencia(
+  tx: ClienteDaTransacao,
+  input: EntradaDeExpedicao,
+): Promise<{ transferenciaId: string; numero: string; itens: number }> {
+  // Mesma trava de `cancelarTransferencia`, na mesma posição (ORDEM ÚNICA DE
+  // TRAVA, topo de `transacao.ts`): sem ela a corrida com o cancelamento volta.
+  await tx.$queryRaw(Prisma.sql`
+    SELECT id FROM transferencias
+     WHERE id = ${input.transferenciaId}::uuid
+       AND company_id = ${input.companyId}::uuid
+       FOR UPDATE
+  `);
+
+  const transferencia = await tx.transferencia.findFirst({
+    where: { id: input.transferenciaId, companyId: input.companyId },
+    select: { id: true, numero: true, status: true, depositoOrigemId: true },
+  });
+  if (!transferencia) {
+    throw new NotFoundException('Transferência não encontrada nesta empresa.');
+  }
+  if (transferencia.status !== 'rascunho') {
+    throw new ConflictException(`Transferência ${transferencia.status} não pode ser expedida.`);
+  }
+
+  const itens = await tx.transferenciaItem.findMany({
+    where: { transferenciaId: transferencia.id },
+    select: { id: true, pecaId: true, quantidade: true, peca: { select: { codigoInterno: true } } },
+  });
+  if (itens.length === 0) {
+    throw new BadRequestException('Transferência sem item nenhum não tem o que expedir.');
+  }
+
+  const ordenados = [...itens].sort((a, b) =>
+    compararPorPecaEDeposito(
+      { pecaId: a.pecaId, depositoId: transferencia.depositoOrigemId },
+      { pecaId: b.pecaId, depositoId: transferencia.depositoOrigemId },
+    ),
+  );
+
+  for (const item of ordenados) {
+    await tx.$queryRaw(Prisma.sql`
+      SELECT peca_id FROM peca_saldos
+       WHERE peca_id = ${item.pecaId}::uuid
+         AND deposito_id = ${transferencia.depositoOrigemId}::uuid
+         FOR UPDATE
+    `);
+
+    const saldo = await tx.pecaSaldo.findUniqueOrThrow({
+      where: { pecaId_depositoId: { pecaId: item.pecaId, depositoId: transferencia.depositoOrigemId } },
+      select: { saldoFisico: true, saldoReservado: true, custoMedio: true },
+    });
+    const quantidade = Number(item.quantidade);
+    const atual = {
+      saldoFisico: Number(saldo.saldoFisico),
+      saldoReservado: Number(saldo.saldoReservado),
+    };
+    if (!cabeNoDisponivel(atual, quantidade)) {
+      throw new ConflictException(
+        `A peça ${item.peca.codigoInterno} não tem esse tanto livre na origem — o que está reservado fica com a OS que o reservou.`,
+      );
+    }
+
+    const depois = Math.round((atual.saldoFisico - quantidade) * 1000) / 1000;
+    // A média da origem NÃO muda: saiu quantidade, não saiu valor unitário.
+    await tx.pecaSaldo.update({
+      where: { pecaId_depositoId: { pecaId: item.pecaId, depositoId: transferencia.depositoOrigemId } },
+      data: { saldoFisico: depois },
+    });
+
+    await tx.estoqueMovimento.create({
+      data: {
+        companyId: input.companyId,
+        pecaId: item.pecaId,
+        depositoId: transferencia.depositoOrigemId,
+        tipo: 'transferencia',
+        quantidade: -quantidade,
+        saldoApos: depois,
+        custoUnit: saldo.custoMedio,
+        origemTipo: 'transferencia',
+        origemId: transferencia.id,
+        autorCompanyUserId: input.autorCompanyUserId,
+        observacao: transferencia.numero,
+      },
+    });
+
+    // Congela o custo da origem: é ele que vai ponderar a média do destino.
+    await tx.transferenciaItem.update({
+      where: { id: item.id },
+      data: { custoUnit: saldo.custoMedio },
+    });
+  }
+
+  await tx.transferencia.update({
+    where: { id: transferencia.id },
+    data: {
+      status: 'em_transito',
+      expedidaEm: new Date(),
+      expedidaPorCompanyUserId: input.autorCompanyUserId,
+    },
+  });
+
+  await registrarAuditoriaSuprimentos(tx, {
+    companyId: input.companyId,
+    acao: 'transferencia.expedir',
+    alvoTipo: 'suprimentos.transferencia',
+    alvoId: transferencia.id,
+    atorCompanyUserId: input.autorCompanyUserId,
+    antes: { numero: transferencia.numero, status: 'rascunho' },
+    depois: { numero: transferencia.numero, status: 'em_transito', itens: itens.length },
+  });
+
+  return { transferenciaId: transferencia.id, numero: transferencia.numero, itens: itens.length };
 }
