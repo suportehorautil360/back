@@ -69,20 +69,21 @@ describe('AlmoxarifadoController — rotas de transferência (Task 8)', () => {
   const prototipo = AlmoxarifadoController.prototype as unknown as Record<string, object>;
   const ROTAS = ['criarTransferencia', 'expedirTransferencia', 'receberTransferencia', 'cancelarTransferencia'] as const;
 
-  it('expõe exatamente as quatro rotas do contrato, com o verbo e o caminho certos', () => {
-    const encontradas = ROTAS.map((nome) => {
+  it('cada handler carrega o verbo e o caminho certos — não só o CONJUNTO dos quatro', () => {
+    // Comparar as duas listas ORDENADAS (`.sort()`) prova só que o conjunto de
+    // rotas bate — trocar os decorators de `expedir` e `receber` entre si
+    // deixaria essa lista igual, e em produção a rota de "expedir" passaria a
+    // rodar o RECEBIMENTO. Por isso: handler a handler, cada nome contra o
+    // verbo+caminho que ELE especificamente carrega.
+    const rotaDe = (nome: (typeof ROTAS)[number]) => {
       const verbo = Reflect.getMetadata(METHOD_METADATA, prototipo[nome]) as RequestMethod;
       const caminho = Reflect.getMetadata(PATH_METADATA, prototipo[nome]) as string;
       return `${RequestMethod[verbo]} ${caminho}`;
-    });
-    expect(encontradas.sort()).toEqual(
-      [
-        'POST transferencias',
-        'POST transferencias/:id/expedir',
-        'POST transferencias/:id/receber',
-        'POST transferencias/:id/cancelar',
-      ].sort(),
-    );
+    };
+    expect(rotaDe('criarTransferencia')).toBe('POST transferencias');
+    expect(rotaDe('expedirTransferencia')).toBe('POST transferencias/:id/expedir');
+    expect(rotaDe('receberTransferencia')).toBe('POST transferencias/:id/receber');
+    expect(rotaDe('cancelarTransferencia')).toBe('POST transferencias/:id/cancelar');
   });
 
   it('nenhuma das quatro sobrescreve o gate da classe (almoxarifado): mover peça é ofício do almoxarife nas duas pontas', () => {
@@ -164,6 +165,25 @@ describe('AlmoxarifadoController — rotas de transferência (Task 8)', () => {
     ]) {
       expect(JSON.stringify(chamada)).not.toContain('forjad');
     }
+  });
+
+  it('receber TRANSMITE o motivoDivergencia preenchido ao serviço — não só o ausente→null', async () => {
+    // Trocar `i.motivoDivergencia ?? null` por `null` fixo passava verde no
+    // teste acima (o único caso exercitado era justamente o ausente). Sem
+    // este segundo caso, quem digita o motivo da divergência levaria um 400
+    // do ato ("chegou em quantidade menor, diga por quê") que nunca
+    // conseguiria satisfazer, porque o motivo seria descartado no caminho.
+    const { servico, controller } = montar();
+    await controller.receberTransferencia(req, 'trf-da-rota', {
+      itens: [{ itemId: 'ti-1', quantidadeRecebida: 3, motivoDivergencia: 'Avaria no transporte' }],
+    } as never);
+
+    expect(servico.receberTransferencia).toHaveBeenCalledWith({
+      companyId: 'empresa-do-token',
+      transferenciaId: 'trf-da-rota',
+      autorCompanyUserId: 'usuario-do-token',
+      itens: [{ itemId: 'ti-1', quantidadeRecebida: 3, motivoDivergencia: 'Avaria no transporte' }],
+    });
   });
 
   it('transferência de outra empresa (404) propaga pela rota — a exceção de domínio não vira 200', async () => {

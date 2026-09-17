@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Max,
   MaxLength,
   Min,
   MinLength,
@@ -19,9 +20,13 @@ class ItemParaTransferirDto {
   @IsUUID()
   pecaId!: string;
 
+  // `quantidade` (de `transferencia_itens`) é `NUMERIC(12,3)`: três casas e o
+  // teto da coluna aqui, para o erro voltar 400 e não 500 do Postgres —
+  // mesmo raciocínio de `peca-adicional.dto.ts`/`devolucao.dto.ts`.
   @ApiProperty({ description: 'Quanto vai. Maior que zero, até 3 casas.' })
   @IsNumber({ maxDecimalPlaces: 3 })
   @Min(0.001)
+  @Max(999_999_999.999)
   quantidade!: number;
 }
 
@@ -58,9 +63,12 @@ class ItemRecebidoDto {
   @IsUUID()
   itemId!: string;
 
+  // `quantidadeRecebida` (de `transferencia_itens`) é `NUMERIC(12,3)`: três
+  // casas e o teto da coluna aqui, mesmo raciocínio da quantidade acima.
   @ApiProperty({ description: 'Quanto chegou. Zero é resultado possível.' })
   @IsNumber({ maxDecimalPlaces: 3 })
   @Min(0)
+  @Max(999_999_999.999)
   quantidadeRecebida!: number;
 
   @ApiProperty({ required: false, description: 'Obrigatório quando chegou menos do que saiu.' })

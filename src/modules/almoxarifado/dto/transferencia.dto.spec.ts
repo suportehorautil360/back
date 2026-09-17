@@ -92,6 +92,23 @@ describe('CriarTransferenciaDto', () => {
     expect(JSON.stringify(erros)).toContain('quantidade');
   });
 
+  it('REJEITA quantidade acima do teto da coluna (NUMERIC(12,3)) — sem isto o ato estoura P2020 cru (500), não 400', async () => {
+    const dto = plainToInstance(CriarTransferenciaDto, {
+      depositoOrigemId: ORIGEM, depositoDestinoId: DESTINO,
+      itens: [{ pecaId: PECA, quantidade: 1e9 }],
+    });
+    const erros = await validate(dto);
+    expect(JSON.stringify(erros)).toContain('quantidade');
+  });
+
+  it('aceita quantidade exatamente no teto da coluna', async () => {
+    const dto = plainToInstance(CriarTransferenciaDto, {
+      depositoOrigemId: ORIGEM, depositoDestinoId: DESTINO,
+      itens: [{ pecaId: PECA, quantidade: 999_999_999.999 }],
+    });
+    expect(await validate(dto)).toHaveLength(0);
+  });
+
   it('REJEITA pecaId de item que não é UUID', async () => {
     const dto = plainToInstance(CriarTransferenciaDto, {
       depositoOrigemId: ORIGEM, depositoDestinoId: DESTINO,
@@ -147,6 +164,21 @@ describe('ReceberTransferenciaDto', () => {
     });
     const erros = await validate(dto);
     expect(JSON.stringify(erros)).toContain('itemId');
+  });
+
+  it('REJEITA quantidadeRecebida acima do teto da coluna (NUMERIC(12,3)) — sem isto o ato estoura P2020 cru (500), não 400', async () => {
+    const dto = plainToInstance(ReceberTransferenciaDto, {
+      itens: [{ itemId: ITEM, quantidadeRecebida: 1e9 }],
+    });
+    const erros = await validate(dto);
+    expect(JSON.stringify(erros)).toContain('quantidadeRecebida');
+  });
+
+  it('aceita quantidadeRecebida exatamente no teto da coluna', async () => {
+    const dto = plainToInstance(ReceberTransferenciaDto, {
+      itens: [{ itemId: ITEM, quantidadeRecebida: 999_999_999.999 }],
+    });
+    expect(await validate(dto)).toHaveLength(0);
   });
 });
 
