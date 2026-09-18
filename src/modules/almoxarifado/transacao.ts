@@ -206,16 +206,26 @@ export function compararPorPeca(
 }
 
 /**
- * A ordem de trava quando a transação toca DUAS linhas de `peca_saldos` da
- * mesma peça — o caso da transferência entre depósitos, e só dele.
+ * O comparador de trava de `peca_saldos` das duas pontas da transferência
+ * entre depósitos — expedição e recebimento. Segue a ORDEM ÚNICA DE TRAVA
+ * documentada no topo deste arquivo; aquele bloco é a fonte, este comentário
+ * só aponta para ele em vez de repetir a lista com palavras próprias.
  *
- * `compararPorPeca` devolve 0 para esse par, e 0 deixa a ordem ao acaso: duas
- * transferências simultâneas da mesma peça em sentidos opostos (A→B e B→A)
- * travariam em ordens contrárias e esperariam uma pela outra.
+ * NÃO existe para o caso de uma MESMA transação tocar duas linhas da MESMA
+ * peça em depósitos diferentes — nenhuma das duas toca: a expedição trava só
+ * a ORIGEM, o recebimento só o DESTINO, e dentro de UMA chamada o
+ * `depositoId` é o MESMO para todo item da lista sendo ordenada —
+ * `compararPorPeca` sozinho já decide a ordem inteira ali, e o desempate por
+ * depósito é código morto dentro de cada função (ver o comentário em
+ * `expedirTransferencia`, em `transferencia.ts`).
  *
- * Por que uma função nova em vez de mudar `compararPorPeca`: os dez chamadores
- * dele travam num depósito só, onde o desempate nunca dispara. Compõem sem
- * ciclo porque os dois ordenam por `pecaId` PRIMEIRO.
+ * A razão verdadeira é outra: uma expedição A→B e um recebimento de B→A
+ * CONCORRENTES tocam linhas EM COMUM — peças que viajam nos dois sentidos
+ * entre os mesmos dois depósitos, onde o destino de uma é a origem da outra
+ * —, e é ordenar por `pecaId` PRIMEIRO que garante que as duas transações
+ * peguem essas linhas na MESMA ordem relativa, para que não se esperem em
+ * círculo. Usar esta MESMA função nas duas pontas é o que evita que elas
+ * divirjam um dia sem ninguém notar — não o desempate por depósito em si.
  */
 export function compararPorPecaEDeposito(
   a: { pecaId: string; depositoId: string },

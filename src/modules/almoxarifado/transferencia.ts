@@ -334,6 +334,30 @@ export async function expedirTransferencia(
       data: { saldoFisico: depois },
     });
 
+    // ZERO na média da origem não é um custo — é a AUSÊNCIA de um conhecido.
+    // `custoMedio` é `Decimal @default(0)` NOT NULL: uma peça que só entrou
+    // por contagem de inventário, ou por entrada sem custo, chega aqui com
+    // média zero por DESCONHECER o custo, não por valer zero de verdade.
+    // `darEntrada` (`almoxarifado.service.ts`) e `compras/recebimento.ts` já
+    // tratam os dois como coisas diferentes: `custoUnit` nulo mantém a média
+    // de quem recebe, zero a achataria. A conversão acontece AQUI, na PONTA
+    // DE SAÍDA — `custoUnit` do item é nulável exatamente para isso — para
+    // que `receberTransferencia` (abaixo) não precise de nenhum caso
+    // especial: ele passa `item.custoUnit` direto para `novoCustoMedio`, que
+    // já sabe o que fazer com `null`. Pelo mesmo motivo o movimento da SAÍDA
+    // usa o valor já convertido: grava "desconhecido" (`null`), não "de
+    // graça" (zero) — que é a verdade sobre o que se sabe do custo aqui.
+    //
+    // Este comentário já justificou o oposto — congelar o zero fielmente e
+    // empurrar a conversão para o recebimento — com a razão de que
+    // `custoUnit` nulo no item significava "ainda não expedido". Essa razão
+    // estava ERRADA: quem precisa saber se a transferência já foi expedida lê
+    // o CABEÇALHO (`status`, `expedidaEm`), nunca o item — o sinal já é
+    // recuperável sem que o item carregue dois significados ao mesmo tempo.
+    // Não reintroduza o caso especial no recebimento sem reler isto.
+    const custoOrigem = Number(saldo.custoMedio);
+    const custoCongelado = custoOrigem === 0 ? null : custoOrigem;
+
     await tx.estoqueMovimento.create({
       data: {
         companyId: input.companyId,
@@ -342,7 +366,7 @@ export async function expedirTransferencia(
         tipo: 'transferencia',
         quantidade: -quantidade,
         saldoApos: depois,
-        custoUnit: saldo.custoMedio,
+        custoUnit: custoCongelado,
         origemTipo: 'transferencia',
         origemId: transferencia.id,
         autorCompanyUserId: input.autorCompanyUserId,
@@ -350,18 +374,9 @@ export async function expedirTransferencia(
       },
     });
 
-    // Congela o custo da origem FIELMENTE — zero inclusive. `custoMedio` é
-    // `NOT NULL DEFAULT 0`: uma peça que só entrou por contagem de inventário
-    // ou por entrada sem custo chega aqui com média zero DE VERDADE, não
-    // "custo desconhecido". Não vire esse zero em nulo: `custoUnit` nulo no
-    // item já significa outra coisa ("ainda não expedido"), e achatar os dois
-    // destruiria essa distinção. A regra do que fazer com um zero congelado
-    // mora no RECEBIMENTO (Task 7), onde a média do destino é calculada — lá,
-    // zero significa "nenhuma informação de custo viajou", e a média do
-    // destino se mantém como está, em vez de ser achatada para zero.
     await tx.transferenciaItem.update({
       where: { id: item.id },
-      data: { custoUnit: saldo.custoMedio },
+      data: { custoUnit: custoCongelado },
     });
   }
 
@@ -570,25 +585,23 @@ export async function receberTransferencia(
     const anterior = Number(saldo.saldoFisico);
     const depois = Math.round((anterior + recebida) * 1000) / 1000;
 
-    // `item.custoUnit` é o que a expedição congelou da origem — zero
-    // inclusive, de propósito (comentário em `expedirTransferencia`). Mas
-    // zero AQUI, na hora de ponderar a média do DESTINO, significa "nenhuma
-    // informação de custo viajou" — não "a peça não vale nada". `custoMedio`
-    // é `Decimal @default(0)`: uma peça que só entrou por contagem de
-    // inventário, ou por `darEntrada` sem custo, chega com média zero DE
-    // VERDADE. `novoCustoMedio` só tem um caminho que MANTÉM a média do
-    // destino: `custoEntrada === null`. Zero não é `null` — se passássemos o
-    // zero adiante, a média do destino cairia em silêncio a cada peça sem
-    // custo conhecido que chegasse. Por isso ausente OU zero viram `null`
-    // aqui: mantém a média do destino como está, em vez de achatá-la.
-    const custoQueViajou = item.custoUnit === null ? null : Number(item.custoUnit);
-    const custoParaMedia = custoQueViajou === null || custoQueViajou === 0 ? null : custoQueViajou;
+    // `item.custoUnit` já chega DECIDIDO: a expedição converte a média zero
+    // da origem em `null` (comentário em `expedirTransferencia`), então não
+    // há caso especial de zero para desfazer aqui. `null` segue direto para
+    // `novoCustoMedio` pela via NORMAL — a mesma função, sem ramificação
+    // própria — e mantém a média do destino intacta; qualquer outro valor
+    // (zero inclusive, se algum dia chegar) pondera normalmente. É a mesma
+    // regra de `darEntrada` (`almoxarifado.service.ts`) e de
+    // `compras/recebimento.ts`: `custoUnit` nulo mantém a média de quem
+    // recebe, zero a achataria — não converta zero em `null` de novo aqui,
+    // essa conversão já aconteceu na origem.
+    const custoUnit = item.custoUnit === null ? null : Number(item.custoUnit);
 
     await tx.pecaSaldo.update({
       where: { pecaId_depositoId: { pecaId: item.pecaId, depositoId: transferencia.depositoDestinoId } },
       data: {
         saldoFisico: depois,
-        custoMedio: novoCustoMedio(Number(saldo.custoMedio), anterior, recebida, custoParaMedia),
+        custoMedio: novoCustoMedio(Number(saldo.custoMedio), anterior, recebida, custoUnit),
       },
     });
 
@@ -600,10 +613,7 @@ export async function receberTransferencia(
         tipo: 'transferencia',
         quantidade: recebida,
         saldoApos: depois,
-        // O movimento registra o valor que de fato viajou, zero inclusive —
-        // mesma fidelidade de `expedirTransferencia`. É só na ponderação da
-        // média (acima) que o zero vira "sem informação".
-        custoUnit: custoQueViajou,
+        custoUnit,
         origemTipo: 'transferencia',
         origemId: transferencia.id,
         autorCompanyUserId: input.autorCompanyUserId,

@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { PainelGuard, type RequestComPainel } from '../../common/painel.guard';
 import { ModuloComercial } from '../../common/modulo-comercial.decorator';
@@ -435,7 +446,14 @@ export class AlmoxarifadoController {
   // vezes se o status ainda não tivesse virado.
   @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: 'Despacha a carga: a peça sai da origem' })
-  async expedirTransferencia(@Req() req: RequestComPainel, @Param('id') id: string) {
+  // `:id` passa por `ParseUUIDPipe`, mesmo motivo do irmão
+  // `compras/compras.controller.ts`: um id malformado chegaria inteiro ao
+  // `::uuid` da trava (`$queryRaw` de `expedirTransferencia`), virando
+  // `invalid input syntax for type uuid` — 500 cru, não 400.
+  async expedirTransferencia(
+    @Req() req: RequestComPainel,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
     return this.servico.expedirTransferencia({
       companyId: req.painel.companyId,
       transferenciaId: id,
@@ -448,7 +466,7 @@ export class AlmoxarifadoController {
   @ApiOperation({ summary: 'Confirma no destino o que chegou' })
   async receberTransferencia(
     @Req() req: RequestComPainel,
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: ReceberTransferenciaDto,
   ) {
     return this.servico.receberTransferencia({
@@ -468,7 +486,7 @@ export class AlmoxarifadoController {
   @ApiOperation({ summary: 'Desiste do rascunho enquanto nada saiu' })
   async cancelarTransferencia(
     @Req() req: RequestComPainel,
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: CancelarTransferenciaDto,
   ) {
     return this.servico.cancelarTransferencia({

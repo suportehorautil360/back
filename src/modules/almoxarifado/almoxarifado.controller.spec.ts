@@ -1,5 +1,5 @@
 import { NotFoundException, RequestMethod } from '@nestjs/common';
-import { INTERCEPTORS_METADATA, METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
+import { INTERCEPTORS_METADATA, METHOD_METADATA, PATH_METADATA, ROUTE_ARGS_METADATA } from '@nestjs/common/constants';
 import { MODULO_COMERCIAL_KEY } from '../../common/modulo-comercial.decorator';
 import { IdempotencyInterceptor } from '../../common/idempotency.interceptor';
 import type { RequestComPainel } from '../../common/painel.guard';
@@ -89,6 +89,26 @@ describe('AlmoxarifadoController — rotas de transferência (Task 8)', () => {
   it('nenhuma das quatro sobrescreve o gate da classe (almoxarifado): mover peça é ofício do almoxarife nas duas pontas', () => {
     for (const nome of ROTAS) {
       expect(Reflect.getMetadata(MODULO_COMERCIAL_KEY, prototipo[nome])).toBeUndefined();
+    }
+  });
+
+  it('expedir, receber e cancelar exigem UUID em `:id` — malformado vira 400, não um 500 cru (achado da revisão final)', () => {
+    // Mesmo motivo do irmão `compras/compras.controller.ts`: sem o pipe, um
+    // id malformado chega inteiro ao `::uuid` da trava (`$queryRaw` de
+    // `expedirTransferencia`/`receberTransferencia`/`cancelarTransferencia`),
+    // e o Postgres devolve `invalid input syntax for type uuid` — 500 cru,
+    // não 400. `criarTransferencia` fica de fora: não tem `:id`, monta um
+    // documento novo.
+    for (const nome of ['expedirTransferencia', 'receberTransferencia', 'cancelarTransferencia'] as const) {
+      const args = Reflect.getMetadata(ROUTE_ARGS_METADATA, AlmoxarifadoController, nome) as
+        | Record<string, { data?: unknown; pipes?: unknown[] }>
+        | undefined;
+      const paramId = Object.values(args ?? {}).find((a) => a.data === 'id');
+      expect(paramId).toBeDefined();
+      const nomesDosPipes = (paramId!.pipes ?? []).map(
+        (p) => (p as { constructor?: { name?: string } })?.constructor?.name ?? (p as { name?: string })?.name,
+      );
+      expect(nomesDosPipes).toContain('ParseUUIDPipe');
     }
   });
 

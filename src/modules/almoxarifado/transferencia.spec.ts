@@ -368,7 +368,9 @@ describe('cancelarTransferencia', () => {
   });
 });
 
-function montarExpedicao(opts: { status?: string; reservado?: number; itens?: Linha[] } = {}) {
+function montarExpedicao(
+  opts: { status?: string; reservado?: number; itens?: Linha[]; custoMedioOrigem?: number } = {},
+) {
   const log: string[] = [];
   const transferencia: Linha = {
     id: 'trf-1', companyId: COMPANY, numero: 'TRF-2026-001',
@@ -382,7 +384,7 @@ function montarExpedicao(opts: { status?: string; reservado?: number; itens?: Li
     opts.itens ?? [{ id: 'ti-1', pecaId: 'p-1', quantidade: 4, custoUnit: null }]
   ).map((i) => ({ transferenciaId: transferencia.id, ...i }));
   const saldos = new Map<string, Linha>([
-    ['p-1|dep-a', { saldoFisico: 10, saldoReservado: opts.reservado ?? 0, custoMedio: 7 }],
+    ['p-1|dep-a', { saldoFisico: 10, saldoReservado: opts.reservado ?? 0, custoMedio: opts.custoMedioOrigem ?? 7 }],
     ['p-2|dep-a', { saldoFisico: 6, saldoReservado: 0, custoMedio: 3 }],
   ]);
   const movimentos: Linha[] = [];
@@ -565,6 +567,23 @@ describe('expedirTransferencia', () => {
     const { tx, estado } = montarExpedicao();
     await expedirTransferencia(tx as never, expedicao());
     expect(estado.itens[0].custoUnit).toBe(7);
+  });
+
+  it('média ZERO na origem congela NULO no item — zero é "desconhecido", não "de graça"', async () => {
+    // Decisão desta rodada (regra da casa, `darEntrada`/`compras/recebimento`):
+    // `custoMedio` é `Decimal @default(0)` NOT NULL — uma peça que só entrou
+    // por contagem de inventário, ou por entrada sem custo, fica com média
+    // zero por DESCONHECER o custo, não por valer zero de verdade. Congelar
+    // o zero fielmente (o que este módulo fazia antes) faria o recebimento
+    // tratar "sem informação" como "grátis", achatando a média do destino em
+    // silêncio. A conversão mora na EXPEDIÇÃO — `custoUnit` é nulável
+    // exatamente para isso.
+    const { tx, estado } = montarExpedicao({ custoMedioOrigem: 0 });
+    await expedirTransferencia(tx as never, expedicao());
+    expect(estado.itens[0].custoUnit).toBeNull();
+    // O movimento da SAÍDA segue a mesma conversão: grava "desconhecido"
+    // (null), não "de graça" (zero) — a mesma verdade nos dois lugares.
+    expect(estado.movimentos[0].custoUnit).toBeNull();
   });
 
   it('a média da ORIGEM não muda: saiu quantidade, não saiu valor unitário', async () => {
@@ -947,18 +966,18 @@ describe('receberTransferencia', () => {
     expect(estado.saldos.get('p-1|dep-b')).toMatchObject({ saldoFisico: 4, custoMedio: 7 });
   });
 
-  it('custo ZERO na origem é "sem informação de custo" — a média do destino não cai', async () => {
-    // Decisão desta frente: `custoMedio` é `Decimal @default(0)` NOT NULL —
-    // uma peça que só entrou por contagem de inventário, ou por `darEntrada`
-    // sem custo, fica com média zero DE VERDADE, e a expedição (Task 6)
-    // congela esse zero fielmente no `custoUnit` do item, de propósito. Zero
-    // ali significa DESCONHECIDO, não "vale nada". `novoCustoMedio` só tem um
-    // caminho de "mantém a média": `custoEntrada === null` — zero NÃO é
-    // `null`, e passar o zero adiante puxaria a média do destino para baixo
-    // em silêncio. Por isso ausente OU zero viram `null` antes de ponderar.
+  it('custo NULO no item (origem zerada na expedição) mantém a média do destino intacta', async () => {
+    // A conversão zero→null acontece na EXPEDIÇÃO (`expedirTransferencia`):
+    // origem com média zero congela `custoUnit: null` no item, nunca o zero
+    // fielmente (decisão revertida nesta rodada — ver o comentário de lá).
+    // Aqui no recebimento não há caso especial de zero para desfazer:
+    // `item.custoUnit` já chega decidido, e este teste prova que ele segue
+    // pela via NORMAL de `novoCustoMedio` — a mesma que qualquer outra
+    // entrada sem custo conhecido (`darEntrada`, `compras/recebimento.ts`) —
+    // e mantém a média do destino como está.
     const { tx, estado } = montarRecebimento({
       itens: [
-        { id: 'ti-1', pecaId: 'p-1', quantidade: 4, custoUnit: 0, quantidadeRecebida: null, motivoDivergencia: null },
+        { id: 'ti-1', pecaId: 'p-1', quantidade: 4, custoUnit: null, quantidadeRecebida: null, motivoDivergencia: null },
       ],
       saldos: [['p-1|dep-b', { saldoFisico: 2, saldoReservado: 0, custoMedio: 50 }]],
     });
@@ -966,9 +985,9 @@ describe('receberTransferencia', () => {
     await receberTransferencia(tx as never, recebimento());
 
     expect(estado.saldos.get('p-1|dep-b')).toMatchObject({ saldoFisico: 6, custoMedio: 50 });
-    // O movimento continua fiel ao zero (mesma fidelidade da expedição): é só
-    // na PONDERAÇÃO da média que o zero vira "sem informação".
-    expect(estado.movimentos[0].custoUnit).toBe(0);
+    // O movimento registra o mesmo "desconhecido" que chegou — nulo, e não
+    // mais um zero que faria parecer "de graça".
+    expect(estado.movimentos[0].custoUnit).toBeNull();
   });
 
   it('chegou menos: entra o que chegou, e a diferença NÃO vira movimento', async () => {
