@@ -613,8 +613,14 @@ export class MecanicaController {
    * Registra o manual que o Route Handler do painel já gravou no bucket
    * PRIVADO `manuais` — o arquivo não passa pelo Nest neste caminho, só o
    * metadado. Por isso é JSON puro: sem `FileInterceptor`, sem teto de
-   * multer, e a checagem de tamanho/tipo/título mora inteira em
-   * `service.registrarManual` (o mesmo método que a rota antiga usa).
+   * multer.
+   *
+   * A validação se divide em duas camadas: o FORMATO do corpo
+   * (`RegistrarManualDto` — tamanho de string, `tamanhoBytes` positivo) roda
+   * no `ValidationPipe` antes de chegar aqui; a REGRA DE NEGÓCIO (tipo
+   * aceito, teto de 50MB, o caminho pertencer à empresa da sessão, o alcance
+   * por equipamento) mora em `service.registrarManual` — o mesmo método que
+   * a rota antiga usa.
    */
   @Post('manuais/registrar')
   @UseInterceptors(IdempotencyInterceptor)

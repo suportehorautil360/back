@@ -128,6 +128,47 @@ describe('uploadManual — teto da rota antiga', () => {
   });
 });
 
+describe('MecanicaController.registrarManual', () => {
+  it('repassa os campos do corpo ao service (trim nos opcionais) e devolve só o id', async () => {
+    // A rota nova é JSON puro: o handler é só encanamento entre o DTO e
+    // `service.registrarManual`. Sem este teste, o mapeamento campo a campo
+    // e o formato `{ id }` da resposta não são exercitados em lugar nenhum.
+    const registrarManual = jest.fn().mockResolvedValue({
+      id: 'man-123',
+      titulo: 'Manual da PC200',
+      url: '',
+      storagePath: 'empresa-1/1737000000-abc.pdf',
+    });
+    const controller = new MecanicaController(
+      servicoFalso({ registrarManual }),
+      uploadsFalso(),
+    );
+
+    const resposta = await controller.registrarManual(reqCom(), {
+      storagePath: 'empresa-1/1737000000-abc.pdf',
+      mimetype: 'application/pdf',
+      tamanhoBytes: 40 * 1024 * 1024,
+      titulo: '  Manual da PC200  ',
+      categoria: '  Elétrico  ',
+      equipamentoId: '  eq-1  ',
+      modelo: '  CAT 320D  ',
+      tipo: '  Escavadeira  ',
+    });
+
+    expect(registrarManual).toHaveBeenCalledWith(PAINEL, {
+      titulo: '  Manual da PC200  ',
+      categoria: 'Elétrico',
+      storagePath: 'empresa-1/1737000000-abc.pdf',
+      mimetype: 'application/pdf',
+      tamanhoBytes: 40 * 1024 * 1024,
+      equipamentoId: 'eq-1',
+      modelo: 'CAT 320D',
+      tipo: 'Escavadeira',
+    });
+    expect(resposta).toEqual({ id: 'man-123' });
+  });
+});
+
 describe('MecanicaController.eu', () => {
   it('devolve empresa, operador e nome de exibição do token', () => {
     const controller = new MecanicaController(servicoFalso(), uploadsFalso());

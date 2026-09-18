@@ -1849,10 +1849,13 @@ describe('MecanicaService — manuais', () => {
 
 /**
  * Banco falso para o caminho NOVO de `registrarManual` (arquivo já no
- * Storage). Filtra `equipment.findFirst` pelo `where` que a produção usa
- * (`id` + `companyId`) e LANÇA se aparecer uma chave que não reconhece — um
- * fake que ignorasse o `where` aprovaria a checagem de empresa mesmo se ela
- * fosse apagada do código.
+ * Storage). Filtra `equipment.findFirst` pelas CHAVES QUE O `where` TRAZ —
+ * não por `id`/`companyId` fixos — e LANÇA se aparecer uma chave que não
+ * reconhece. A diferença importa: um fake que conferisse `companyId` fixo
+ * continuaria recusando mesmo que a produção parasse de mandar `companyId`
+ * no `where` (o campo do REGISTRO ainda bateria, escondendo o furo). Só
+ * filtrando pelo que o `where` de fato contém é que tirar `companyId` da
+ * query de produção derruba o teste de escopo por empresa.
  */
 function bancoDoRegistroDeManual(equipamentos: Record<string, unknown>[] = []) {
   const manuais: Record<string, unknown>[] = [];
@@ -1874,7 +1877,7 @@ function bancoDoRegistroDeManual(equipamentos: Record<string, unknown>[] = []) {
             throw new Error(`where não reconhecido em equipment.findFirst: ${desconhecida}`);
           }
           return Promise.resolve(
-            equipamentos.find((e) => e.id === where.id && e.companyId === where.companyId) ?? null,
+            equipamentos.find((e) => chaves.every((k) => e[k] === where[k])) ?? null,
           );
         }),
       },
@@ -1959,6 +1962,71 @@ describe('MecanicaService — registrarManual (caminho novo, Storage)', () => {
       s.registrarManual(PAINEL, { ...BASE_REGISTRO_MANUAL, equipamentoId: 'eq-de-outra' }),
     ).rejects.toBeInstanceOf(NotFoundException);
     expect(manuais).toHaveLength(0);
+  });
+
+  /**
+   * `..` não escapa só da empresa: escapa do BUCKET INTEIRO (ver o
+   * comentário de `caminhoPertenceAEmpresa` em `regras/manual.ts`). Checar só
+   * o PREFIXO deixaria as três passarem, porque todas começam por
+   * `empresa-1/`.
+   */
+  it.each([
+    'empresa-1/../empresa-2/a.pdf',
+    'empresa-1/sub/../../empresa-2/a.pdf',
+    'empresa-1/%2e%2e/empresa-2/a.pdf',
+  ])('recusa storagePath que escapa do bucket: "%s"', async (storagePath) => {
+    const { prisma, manuais } = bancoDoRegistroDeManual();
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.registrarManual(PAINEL, { ...BASE_REGISTRO_MANUAL, storagePath }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(manuais).toHaveLength(0);
+  });
+
+  it('recusa tamanho zero ou negativo', async () => {
+    // Sem piso, só teto: `0`, `-1` e `-5MB` gravavam a linha antes desta
+    // checagem — o `@IsPositive()` do DTO só vale para quem entra pelo HTTP.
+    const { prisma, manuais } = bancoDoRegistroDeManual();
+    const s = new MecanicaService(prisma);
+
+    for (const tamanhoBytes of [0, -1, -5 * 1024 * 1024]) {
+      await expect(
+        s.registrarManual(PAINEL, { ...BASE_REGISTRO_MANUAL, tamanhoBytes }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    }
+    expect(manuais).toHaveLength(0);
+  });
+
+  it('recusa quando não vem nem url nem storagePath', async () => {
+    // Sem um dos dois, a linha nasce sem apontar para arquivo nenhum — o
+    // TypeScript não barra mais isso desde que `url` virou opcional.
+    const { prisma, manuais } = bancoDoRegistroDeManual();
+    const s = new MecanicaService(prisma);
+
+    const { storagePath, ...semStoragePath } = BASE_REGISTRO_MANUAL;
+    void storagePath;
+
+    await expect(
+      s.registrarManual(PAINEL, semStoragePath),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(manuais).toHaveLength(0);
+  });
+
+  it('companyId gravado vem sempre da sessão, nunca de um campo no corpo', async () => {
+    // Se `dados` alguma vez ganhar um `companyId` — por spread descuidado de
+    // um corpo de requisição, por exemplo — a linha não pode obedecer a ele:
+    // seria a mesma classe de furo que a checagem de `storagePath` existe
+    // para evitar, só que sem precisar de nenhum `..`.
+    const { prisma, manuais } = bancoDoRegistroDeManual();
+    const s = new MecanicaService(prisma);
+
+    await s.registrarManual(PAINEL, {
+      ...BASE_REGISTRO_MANUAL,
+      companyId: 'empresa-2',
+    } as never);
+
+    expect(manuais[0]).toMatchObject({ companyId: 'empresa-1' });
   });
 });
 

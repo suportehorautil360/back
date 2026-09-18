@@ -31,12 +31,15 @@ export const LIMITE_BYTES_FOTO_OS = 5 * 1024 * 1024;
 /**
  * Manual de máquina pesada é documento de fabricante: 200 páginas com esquema
  * elétrico não cabem em 5MB. 50MB é o `file_size_limit` do bucket PRIVADO
- * `manuais` (migration da Task 1) — vale para a rota nova, `registrarManual`,
- * que registra o que o Route Handler do painel já gravou no Storage.
+ * `manuais` (migration da Task 1) — é o teto de NEGÓCIO que
+ * `registrarManual` confere para QUALQUER caminho, novo ou antigo.
  *
- * NÃO usar para a rota antiga (`manuais/upload`): ela ainda escreve no bucket
- * `checklists` e chega pela Server Action, os dois travados em 10MB — ver
- * `LIMITE_BYTES_MANUAL_LEGADO`.
+ * A rota antiga (`manuais/upload`) nunca chega perto disso na prática: o
+ * teto REAL dela é `LIMITE_BYTES_MANUAL_LEGADO` (10MB), aplicado ANTES, no
+ * controller — ela ainda escreve no bucket público `checklists` e o arquivo
+ * chega pela Server Action, os dois travados em 10MB. Este valor roda para
+ * ela também (mesmo `registrarManual`), só nunca é o que barra: 10MB já
+ * bloqueou antes de chegar aqui.
  */
 export const LIMITE_BYTES_MANUAL = 50 * 1024 * 1024;
 

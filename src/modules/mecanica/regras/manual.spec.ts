@@ -1,4 +1,9 @@
-import { especificidade, ordenarParaMaquina, serveAMaquina } from './manual';
+import {
+  caminhoPertenceAEmpresa,
+  especificidade,
+  ordenarParaMaquina,
+  serveAMaquina,
+} from './manual';
 
 const escavadeira = { id: 'eq-1', modelo: 'CAT 320D', tipo: 'Escavadeira' };
 const manual = (p: Partial<Parameters<typeof especificidade>[0]> = {}) => ({
@@ -74,5 +79,55 @@ describe('ordenarParaMaquina', () => {
       'Abastecimento',
       'Zelador',
     ]);
+  });
+});
+
+describe('caminhoPertenceAEmpresa', () => {
+  const EMPRESA = 'empresa-1';
+
+  it('aceita caminho simples da própria empresa', () => {
+    expect(caminhoPertenceAEmpresa('empresa-1/1737000000-abc.pdf', EMPRESA)).toBe(true);
+  });
+
+  it('aceita subpasta da própria empresa', () => {
+    expect(caminhoPertenceAEmpresa('empresa-1/sub/1737000000-abc.pdf', EMPRESA)).toBe(true);
+  });
+
+  it('recusa caminho de outra empresa', () => {
+    expect(caminhoPertenceAEmpresa('empresa-2/a.pdf', EMPRESA)).toBe(false);
+  });
+
+  it('recusa prefixo parecido mas de OUTRA empresa — checar por prefixo aceitaria isto', () => {
+    expect(caminhoPertenceAEmpresa('empresa-10/a.pdf', EMPRESA)).toBe(false);
+    expect(caminhoPertenceAEmpresa('empresa-1x/a.pdf', EMPRESA)).toBe(false);
+  });
+
+  it('recusa sem nenhum segmento depois da empresa', () => {
+    expect(caminhoPertenceAEmpresa('empresa-1', EMPRESA)).toBe(false);
+    expect(caminhoPertenceAEmpresa('empresa-1/', EMPRESA)).toBe(false);
+  });
+
+  it('recusa barra inicial ou URL absoluta', () => {
+    expect(caminhoPertenceAEmpresa('/empresa-1/a.pdf', EMPRESA)).toBe(false);
+    expect(caminhoPertenceAEmpresa('https://x/empresa-1/a.pdf', EMPRESA)).toBe(false);
+  });
+
+  it('recusa segmento vazio (barra dupla)', () => {
+    expect(caminhoPertenceAEmpresa('empresa-1//a.pdf', EMPRESA)).toBe(false);
+  });
+
+  /**
+   * O `..` escapa do BUCKET INTEIRO, não só da empresa — provado com
+   * servidor HTTP local: o `createSignedUrl` monta a URL com o `..` cru, e o
+   * `fetch` do Node normaliza o caminho ANTES de o pedido sair do processo,
+   * entregando o pedido a outro bucket (`ponto-selfies`, dado da Portaria
+   * 671, cuja chave é derivável). Checar só o prefixo aceitaria as três.
+   */
+  it.each([
+    'empresa-1/../empresa-2/a.pdf',
+    'empresa-1/sub/../../empresa-2/a.pdf',
+    'empresa-1/%2e%2e/empresa-2/a.pdf',
+  ])('recusa "%s"', (storagePath) => {
+    expect(caminhoPertenceAEmpresa(storagePath, EMPRESA)).toBe(false);
   });
 });

@@ -20,7 +20,7 @@ import {
 } from './regras/busca-checklist';
 import type { ChecklistModeloDto } from './dto/checklist-modelo.dto';
 import { randomUUID } from 'node:crypto';
-import { ordenarParaMaquina } from './regras/manual';
+import { caminhoPertenceAEmpresa, ordenarParaMaquina } from './regras/manual';
 import {
   gerarGrupos,
   nomeDaInspecao,
@@ -861,16 +861,31 @@ export class MecanicaService {
     if (!TIPOS_MANUAL[dados.mimetype]) {
       throw new BadRequestException('Envie um PDF ou uma imagem do manual.');
     }
+    // `<= 0` e não só `> LIMITE`: sem piso, `0`/negativo grava uma linha que
+    // não corresponde a arquivo nenhum. O DTO também tem `@IsPositive()`,
+    // mas só vale para quem entra pelo HTTP — aqui protege qualquer chamador.
+    if (!(dados.tamanhoBytes > 0)) {
+      throw new BadRequestException('tamanhoBytes precisa ser maior que zero.');
+    }
     if (dados.tamanhoBytes > LIMITE_BYTES_MANUAL) {
       const limiteMb = LIMITE_BYTES_MANUAL / (1024 * 1024);
       throw new BadRequestException(
         `Arquivo muito grande. Envie até ${limiteMb}MB.`,
       );
     }
+    // Sem um dos dois, a linha nasce sem apontar para arquivo nenhum — antes
+    // o TypeScript barrava isso (`url` era obrigatório); virou opcional para
+    // caber o caminho novo, e por isso a checagem precisa ser explícita.
+    if (!dados.url && !dados.storagePath) {
+      throw new BadRequestException(
+        'Informe onde o arquivo está: url (rota antiga) ou storagePath (rota nova).',
+      );
+    }
     // O caminho vem do bucket PRIVADO: a assinatura é feita pelo service
     // role, sem RLS. Sem esta checagem, o painel de uma empresa registraria
-    // (e leria) o objeto de outra.
-    if (dados.storagePath && !dados.storagePath.startsWith(`${painel.companyId}/`)) {
+    // (e leria) o objeto de outra — ou, com `..`, o objeto de OUTRO BUCKET
+    // (ver o comentário de `caminhoPertenceAEmpresa`).
+    if (dados.storagePath && !caminhoPertenceAEmpresa(dados.storagePath, painel.companyId)) {
       throw new BadRequestException('Caminho do arquivo não pertence a esta empresa.');
     }
 
