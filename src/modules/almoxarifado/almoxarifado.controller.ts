@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { PainelGuard, type RequestComPainel } from '../../common/painel.guard';
 import { ModuloComercial } from '../../common/modulo-comercial.decorator';
@@ -16,6 +27,7 @@ import { PedirPecaAdicionalDto } from './dto/peca-adicional.dto';
 import { VerificarEstoqueMinimoDto } from './dto/estoque-minimo.dto';
 import { DevolverSobraDto } from './dto/devolucao.dto';
 import { AbrirInventarioDto, ApurarInventarioDto, CancelarInventarioDto, RegistrarContagemDto } from './dto/inventario.dto';
+import { CancelarTransferenciaDto, CriarTransferenciaDto, ReceberTransferenciaDto } from './dto/transferencia.dto';
 
 @ApiTags('almoxarifado')
 @Controller('almoxarifado')
@@ -412,6 +424,76 @@ export class AlmoxarifadoController {
       motivo: dto.motivo,
       recebidoDe: dto.recebidoDe?.trim() || null,
       itens: dto.itens.map((i) => ({ itemId: i.itemId, quantidade: i.quantidade })),
+    });
+  }
+
+  @Post('transferencias')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Monta o rascunho de uma transferência entre depósitos' })
+  async criarTransferencia(@Req() req: RequestComPainel, @Body() dto: CriarTransferenciaDto) {
+    return this.servico.criarTransferencia({
+      companyId: req.painel.companyId,
+      depositoOrigemId: dto.depositoOrigemId,
+      depositoDestinoId: dto.depositoDestinoId,
+      itens: dto.itens.map((i) => ({ pecaId: i.pecaId, quantidade: i.quantidade })),
+      autorCompanyUserId: req.painel.companyUserId,
+      observacao: dto.observacao ?? null,
+    });
+  }
+
+  @Post('transferencias/:id/expedir')
+  // Mexe em saldo: reenvio sem a chave tiraria a quantidade da origem duas
+  // vezes se o status ainda não tivesse virado.
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Despacha a carga: a peça sai da origem' })
+  // `:id` passa por `ParseUUIDPipe`, mesmo motivo do irmão
+  // `compras/compras.controller.ts`: um id malformado chegaria inteiro ao
+  // `::uuid` da trava (`$queryRaw` de `expedirTransferencia`), virando
+  // `invalid input syntax for type uuid` — 500 cru, não 400.
+  async expedirTransferencia(
+    @Req() req: RequestComPainel,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    return this.servico.expedirTransferencia({
+      companyId: req.painel.companyId,
+      transferenciaId: id,
+      autorCompanyUserId: req.painel.companyUserId,
+    });
+  }
+
+  @Post('transferencias/:id/receber')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Confirma no destino o que chegou' })
+  async receberTransferencia(
+    @Req() req: RequestComPainel,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: ReceberTransferenciaDto,
+  ) {
+    return this.servico.receberTransferencia({
+      companyId: req.painel.companyId,
+      transferenciaId: id,
+      autorCompanyUserId: req.painel.companyUserId,
+      itens: dto.itens.map((i) => ({
+        itemId: i.itemId,
+        quantidadeRecebida: i.quantidadeRecebida,
+        motivoDivergencia: i.motivoDivergencia ?? null,
+      })),
+    });
+  }
+
+  @Post('transferencias/:id/cancelar')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Desiste do rascunho enquanto nada saiu' })
+  async cancelarTransferencia(
+    @Req() req: RequestComPainel,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: CancelarTransferenciaDto,
+  ) {
+    return this.servico.cancelarTransferencia({
+      companyId: req.painel.companyId,
+      transferenciaId: id,
+      autorCompanyUserId: req.painel.companyUserId,
+      motivo: dto.motivo,
     });
   }
 }

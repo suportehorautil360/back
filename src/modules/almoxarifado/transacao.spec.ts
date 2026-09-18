@@ -3,6 +3,7 @@ import {
   alvoDaViolacao,
   colisaoDeContagemJaAberta,
   colisaoDeRequisicaoJaAberta,
+  compararPorPecaEDeposito,
   erroDeContencaoTransitoria,
 } from './transacao';
 
@@ -95,5 +96,35 @@ describe('predicados de retry — formato sem adapter continua aceito', () => {
   it('meta.code no P2010', () => {
     expect(erroDeContencaoTransitoria(comMeta('P2010', { code: '40P01' }))).toBe(true);
     expect(erroDeContencaoTransitoria(comMeta('P2010', { code: '23505' }))).toBe(false);
+  });
+});
+
+describe('compararPorPecaEDeposito', () => {
+  const linha = (pecaId: string, depositoId: string) => ({ pecaId, depositoId });
+
+  it('ordena por peça primeiro — é o que compõe com o resto do módulo', () => {
+    // Todo outro ato trava por `pecaId`. Se este ordenasse por depósito
+    // primeiro, uma transferência e um recebimento poderiam pegar as mesmas
+    // duas linhas em ordens opostas.
+    expect(compararPorPecaEDeposito(linha('p-1', 'dep-9'), linha('p-2', 'dep-1'))).toBeLessThan(0);
+  });
+
+  it('mesma peça em depósitos diferentes desempata pelo depósito', () => {
+    // É o caso que `compararPorPeca` devolve 0 — e 0 deixa a ordem ao acaso,
+    // que é deadlock com a transferência simétrica.
+    expect(compararPorPecaEDeposito(linha('p-1', 'dep-a'), linha('p-1', 'dep-b'))).toBeLessThan(0);
+    expect(compararPorPecaEDeposito(linha('p-1', 'dep-b'), linha('p-1', 'dep-a'))).toBeGreaterThan(0);
+  });
+
+  it('a mesma linha compara igual', () => {
+    expect(compararPorPecaEDeposito(linha('p-1', 'dep-a'), linha('p-1', 'dep-a'))).toBe(0);
+  });
+
+  it('duas transferências em sentidos opostos produzem a MESMA ordem de trava', () => {
+    // O teste que justifica a função existir. A→B e B→A têm de travar a mesma
+    // linha primeiro, senão uma espera a outra em círculo.
+    const aParaB = [linha('p-1', 'dep-b'), linha('p-1', 'dep-a')].sort(compararPorPecaEDeposito);
+    const bParaA = [linha('p-1', 'dep-a'), linha('p-1', 'dep-b')].sort(compararPorPecaEDeposito);
+    expect(aParaB).toEqual(bParaA);
   });
 });

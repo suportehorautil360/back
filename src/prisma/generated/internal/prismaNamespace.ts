@@ -462,6 +462,8 @@ export const ModelName = {
   EstoqueMovimento: 'EstoqueMovimento',
   Inventario: 'Inventario',
   InventarioItem: 'InventarioItem',
+  Transferencia: 'Transferencia',
+  TransferenciaItem: 'TransferenciaItem',
   RequisicaoMaterial: 'RequisicaoMaterial',
   RequisicaoMaterialItem: 'RequisicaoMaterialItem',
   SolicitacaoCompra: 'SolicitacaoCompra',
@@ -488,7 +490,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken" | "checklistModelo" | "manualEquipamento" | "checklistExecucao" | "equipmentProgramador" | "programadorMecanico" | "serviceOrderAuditoria" | "deposito" | "peca" | "pecaSaldo" | "estoqueMovimento" | "inventario" | "inventarioItem" | "requisicaoMaterial" | "requisicaoMaterialItem" | "solicitacaoCompra" | "solicitacaoCompraItem" | "ordemCompra" | "ordemCompraItem" | "ordemCompraItemOrigem" | "recebimento" | "recebimentoItem" | "pontoAuditoria" | "fornecedorPeca"
+    modelProps: "user" | "company" | "companyWhatsappRecipient" | "whatsappPlatformSession" | "companySettings" | "equipment" | "equipmentRevision" | "workFront" | "workFrontAllocation" | "checklistRun" | "serviceOrder" | "serviceOrderInsumo" | "serviceOrderEtapa" | "serviceOrderSintoma" | "serviceOrderOcorrencia" | "serviceOrderApontamento" | "serviceOrderFoto" | "serviceOrderLaudo" | "planoPreventivo" | "operator" | "abastecimento" | "fleetfuelIntencao" | "checklistDefinition" | "lancamentoFinanceiro" | "role" | "accessGroup" | "companyRoleAccessGroup" | "roleAccessGroup" | "partner" | "partnerPortalUser" | "partnerPortalPasswordReset" | "feature" | "pontoRegistro" | "pontoNsrCounter" | "pontoSolicitacao" | "pontoAbono" | "checklistDevolucao" | "checklistChegada" | "garantia" | "orcamento" | "companyRole" | "companyFeature" | "companyFeatureChange" | "companyUser" | "emergency" | "credito" | "lubrificacao" | "comboioReabastecimento" | "notaFiscal" | "syncTombstone" | "idempotencyKey" | "notificacao" | "apiAcessoSemToken" | "checklistModelo" | "manualEquipamento" | "checklistExecucao" | "equipmentProgramador" | "programadorMecanico" | "serviceOrderAuditoria" | "deposito" | "peca" | "pecaSaldo" | "estoqueMovimento" | "inventario" | "inventarioItem" | "transferencia" | "transferenciaItem" | "requisicaoMaterial" | "requisicaoMaterialItem" | "solicitacaoCompra" | "solicitacaoCompraItem" | "ordemCompra" | "ordemCompraItem" | "ordemCompraItemOrigem" | "recebimento" | "recebimentoItem" | "pontoAuditoria" | "fornecedorPeca"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -5302,6 +5304,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Transferencia: {
+      payload: Prisma.$TransferenciaPayload<ExtArgs>
+      fields: Prisma.TransferenciaFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TransferenciaFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TransferenciaFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaPayload>
+        }
+        findFirst: {
+          args: Prisma.TransferenciaFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TransferenciaFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaPayload>
+        }
+        findMany: {
+          args: Prisma.TransferenciaFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaPayload>[]
+        }
+        create: {
+          args: Prisma.TransferenciaCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaPayload>
+        }
+        createMany: {
+          args: Prisma.TransferenciaCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TransferenciaCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaPayload>[]
+        }
+        delete: {
+          args: Prisma.TransferenciaDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaPayload>
+        }
+        update: {
+          args: Prisma.TransferenciaUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaPayload>
+        }
+        deleteMany: {
+          args: Prisma.TransferenciaDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TransferenciaUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TransferenciaUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaPayload>[]
+        }
+        upsert: {
+          args: Prisma.TransferenciaUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaPayload>
+        }
+        aggregate: {
+          args: Prisma.TransferenciaAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTransferencia>
+        }
+        groupBy: {
+          args: Prisma.TransferenciaGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TransferenciaGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TransferenciaCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TransferenciaCountAggregateOutputType> | number
+        }
+      }
+    }
+    TransferenciaItem: {
+      payload: Prisma.$TransferenciaItemPayload<ExtArgs>
+      fields: Prisma.TransferenciaItemFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TransferenciaItemFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaItemPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TransferenciaItemFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaItemPayload>
+        }
+        findFirst: {
+          args: Prisma.TransferenciaItemFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaItemPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TransferenciaItemFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaItemPayload>
+        }
+        findMany: {
+          args: Prisma.TransferenciaItemFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaItemPayload>[]
+        }
+        create: {
+          args: Prisma.TransferenciaItemCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaItemPayload>
+        }
+        createMany: {
+          args: Prisma.TransferenciaItemCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TransferenciaItemCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaItemPayload>[]
+        }
+        delete: {
+          args: Prisma.TransferenciaItemDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaItemPayload>
+        }
+        update: {
+          args: Prisma.TransferenciaItemUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaItemPayload>
+        }
+        deleteMany: {
+          args: Prisma.TransferenciaItemDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TransferenciaItemUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TransferenciaItemUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaItemPayload>[]
+        }
+        upsert: {
+          args: Prisma.TransferenciaItemUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TransferenciaItemPayload>
+        }
+        aggregate: {
+          args: Prisma.TransferenciaItemAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTransferenciaItem>
+        }
+        groupBy: {
+          args: Prisma.TransferenciaItemGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TransferenciaItemGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TransferenciaItemCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TransferenciaItemCountAggregateOutputType> | number
+        }
+      }
+    }
     RequisicaoMaterial: {
       payload: Prisma.$RequisicaoMaterialPayload<ExtArgs>
       fields: Prisma.RequisicaoMaterialFieldRefs
@@ -7407,6 +7557,44 @@ export const InventarioItemScalarFieldEnum = {
 export type InventarioItemScalarFieldEnum = (typeof InventarioItemScalarFieldEnum)[keyof typeof InventarioItemScalarFieldEnum]
 
 
+export const TransferenciaScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  numero: 'numero',
+  depositoOrigemId: 'depositoOrigemId',
+  depositoDestinoId: 'depositoDestinoId',
+  status: 'status',
+  criadaPorCompanyUserId: 'criadaPorCompanyUserId',
+  expedidaPorCompanyUserId: 'expedidaPorCompanyUserId',
+  expedidaEm: 'expedidaEm',
+  recebidaPorCompanyUserId: 'recebidaPorCompanyUserId',
+  recebidaEm: 'recebidaEm',
+  canceladaPorCompanyUserId: 'canceladaPorCompanyUserId',
+  canceladaEm: 'canceladaEm',
+  motivoCancelamento: 'motivoCancelamento',
+  observacao: 'observacao',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TransferenciaScalarFieldEnum = (typeof TransferenciaScalarFieldEnum)[keyof typeof TransferenciaScalarFieldEnum]
+
+
+export const TransferenciaItemScalarFieldEnum = {
+  id: 'id',
+  transferenciaId: 'transferenciaId',
+  pecaId: 'pecaId',
+  quantidade: 'quantidade',
+  quantidadeRecebida: 'quantidadeRecebida',
+  motivoDivergencia: 'motivoDivergencia',
+  custoUnit: 'custoUnit',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TransferenciaItemScalarFieldEnum = (typeof TransferenciaItemScalarFieldEnum)[keyof typeof TransferenciaItemScalarFieldEnum]
+
+
 export const RequisicaoMaterialScalarFieldEnum = {
   id: 'id',
   companyId: 'companyId',
@@ -8104,6 +8292,8 @@ export type GlobalOmitConfig = {
   estoqueMovimento?: Prisma.EstoqueMovimentoOmit
   inventario?: Prisma.InventarioOmit
   inventarioItem?: Prisma.InventarioItemOmit
+  transferencia?: Prisma.TransferenciaOmit
+  transferenciaItem?: Prisma.TransferenciaItemOmit
   requisicaoMaterial?: Prisma.RequisicaoMaterialOmit
   requisicaoMaterialItem?: Prisma.RequisicaoMaterialItemOmit
   solicitacaoCompra?: Prisma.SolicitacaoCompraOmit

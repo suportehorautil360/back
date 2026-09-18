@@ -17,8 +17,17 @@ import { Prisma } from '../../prisma/generated/client';
  *
  *   ordem de compra (cabeçalho)
  *   → requisições (por id)
+ *   → cabeçalho de inventário ou de transferência (por id)
  *   → linhas de item de solicitação de compra (por id)
- *   → `peca_saldos` (por `pecaId`, `compararPorPeca`)
+ *   → `peca_saldos` (por `pecaId`, `compararPorPeca`; na transferência, por
+ *     `compararPorPecaEDeposito` — não porque uma MESMA transação toque duas
+ *     linhas da MESMA peça em depósitos diferentes, ela não toca: a expedição
+ *     trava só a ORIGEM, o recebimento só o DESTINO. A razão é outra: uma
+ *     expedição A→B e um recebimento de B→A concorrentes tocam linhas EM
+ *     COMUM — peças que viajam nos dois sentidos entre os mesmos dois
+ *     depósitos —, e ordenar por `pecaId` PRIMEIRO é o que garante que as
+ *     duas transações peguem essas linhas na MESMA ordem relativa, para que
+ *     não se esperem em círculo)
  *   → cabeçalhos de solicitação de compra (por id)
  *   → OS
  *
@@ -197,6 +206,37 @@ export function compararPorPeca(
 }
 
 /**
+ * O comparador de trava de `peca_saldos` das duas pontas da transferência
+ * entre depósitos — expedição e recebimento. Segue a ORDEM ÚNICA DE TRAVA
+ * documentada no topo deste arquivo; aquele bloco é a fonte, este comentário
+ * só aponta para ele em vez de repetir a lista com palavras próprias.
+ *
+ * NÃO existe para o caso de uma MESMA transação tocar duas linhas da MESMA
+ * peça em depósitos diferentes — nenhuma das duas toca: a expedição trava só
+ * a ORIGEM, o recebimento só o DESTINO, e dentro de UMA chamada o
+ * `depositoId` é o MESMO para todo item da lista sendo ordenada —
+ * `compararPorPeca` sozinho já decide a ordem inteira ali, e o desempate por
+ * depósito é código morto dentro de cada função (ver o comentário em
+ * `expedirTransferencia`, em `transferencia.ts`).
+ *
+ * A razão verdadeira é outra: uma expedição A→B e um recebimento de B→A
+ * CONCORRENTES tocam linhas EM COMUM — peças que viajam nos dois sentidos
+ * entre os mesmos dois depósitos, onde o destino de uma é a origem da outra
+ * —, e é ordenar por `pecaId` PRIMEIRO que garante que as duas transações
+ * peguem essas linhas na MESMA ordem relativa, para que não se esperem em
+ * círculo. Usar esta MESMA função nas duas pontas é o que evita que elas
+ * divirjam um dia sem ninguém notar — não o desempate por depósito em si.
+ */
+export function compararPorPecaEDeposito(
+  a: { pecaId: string; depositoId: string },
+  b: { pecaId: string; depositoId: string },
+): number {
+  const porPeca = compararPorPeca(a.pecaId, b.pecaId);
+  if (porPeca !== 0) return porPeca;
+  return a.depositoId < b.depositoId ? -1 : a.depositoId > b.depositoId ? 1 : 0;
+}
+
+/**
  * Trava a linha da requisição. É o PRIMEIRO passo de toda transação que muda
  * item de uma requisição ou recalcula o `statusMateriais` da OS dela:
  * separação, liberação, entrega e cancelamento — e, na F4, recebimento de
@@ -211,10 +251,9 @@ export function compararPorPeca(
  * o recebimento de compra passa a SUBIR a reserva de um item faltante, e esse
  * argumento deixou de valer.
  *
- * Ordem única de trava — a mesma em todo método, senão é deadlock:
- * cabeçalho da ordem de compra → requisições (por id) → linhas de solicitação
- * de compra → `peca_saldos` (por `pecaId`, `compararPorPeca`) → ordem de
- * serviço.
+ * Segue a ordem única de trava documentada no topo deste arquivo, segundo
+ * passo: trava a requisição DEPOIS do cabeçalho da ordem de compra, e ANTES do
+ * cabeçalho de inventário ou de transferência.
  *
  * Trava e só. Quem chama relê os campos de que precisa com o client da
  * transação, DEPOIS desta chamada — nunca decide pelo retrato lido fora dela.

@@ -127,6 +127,7 @@ model Company {
   ordensCompra            OrdemCompra[]
   recebimentos            Recebimento[]
   inventarios             Inventario[]
+  transferencias          Transferencia[]
 
   @@map("clients")
   fornecedorPecas FornecedorPeca[]
@@ -2227,6 +2228,10 @@ model Deposito {
   ordensCompra       OrdemCompra[]
   recebimentos       Recebimento[]
   inventarios        Inventario[]
+  /// DUAS relações nomeadas, porque o depósito aparece dos dois lados do
+  /// mesmo documento.
+  transferenciasSaindo    Transferencia[] @relation("TransferenciaOrigem")
+  transferenciasChegando  Transferencia[] @relation("TransferenciaDestino")
 
   @@unique([companyId, nome])
   @@map("depositos")
@@ -2271,6 +2276,7 @@ model Peca {
   solicitacaoCompraItens SolicitacaoCompraItem[]
   ordemCompraItens       OrdemCompraItem[]
   inventarioItens        InventarioItem[]
+  transferenciaItens     TransferenciaItem[]
 
   @@unique([companyId, codigoInterno])
   @@index([companyId, codigoFabricante])
@@ -2425,6 +2431,75 @@ model InventarioItem {
   @@unique([inventarioId, pecaId])
   @@index([inventarioId])
   @@map("inventario_itens")
+}
+
+/// A peça mudando de depósito (§5.3). Documento com três estados porque entre
+/// sair de um e chegar no outro existe um tempo real — a peça está no caminhão,
+/// e nesse intervalo ela não está em `peca_saldos` nenhum.
+model Transferencia {
+  id        String @id @default(uuid()) @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+  /// "TRF-2026-001". MAX+1 por empresa, tirado em NÚMERO — ver
+  /// `numero-transferencia.helper.ts`.
+  numero String
+
+  depositoOrigemId  String @map("deposito_origem_id") @db.Uuid
+  depositoDestinoId String @map("deposito_destino_id") @db.Uuid
+
+  /// "rascunho" | "em_transito" | "recebida" | "cancelada"
+  status String @default("rascunho")
+
+  criadaPorCompanyUserId    String    @map("criada_por_company_user_id") @db.Uuid
+  expedidaPorCompanyUserId  String?   @map("expedida_por_company_user_id") @db.Uuid
+  expedidaEm                DateTime? @map("expedida_em")
+  recebidaPorCompanyUserId  String?   @map("recebida_por_company_user_id") @db.Uuid
+  recebidaEm                DateTime? @map("recebida_em")
+  canceladaPorCompanyUserId String?   @map("cancelada_por_company_user_id") @db.Uuid
+  canceladaEm               DateTime? @map("cancelada_em")
+  motivoCancelamento        String?   @map("motivo_cancelamento")
+  observacao                String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company         Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  /// Restrict nos dois: apagar depósito não pode apagar o histórico do que
+  /// saiu ou entrou nele — mesmo raciocínio de `PecaSaldo.deposito`.
+  depositoOrigem  Deposito            @relation("TransferenciaOrigem", fields: [depositoOrigemId], references: [id], onDelete: Restrict)
+  depositoDestino Deposito            @relation("TransferenciaDestino", fields: [depositoDestinoId], references: [id], onDelete: Restrict)
+  itens           TransferenciaItem[]
+
+  @@unique([companyId, numero])
+  @@index([companyId, status, createdAt])
+  @@index([depositoDestinoId, status])
+  @@map("transferencias")
+}
+
+model TransferenciaItem {
+  id               String @id @default(uuid()) @db.Uuid
+  transferenciaId  String @map("transferencia_id") @db.Uuid
+  pecaId           String @map("peca_id") @db.Uuid
+
+  quantidade         Decimal  @db.Decimal(12, 3)
+  /// Quanto chegou. Nulo até a confirmação; ZERO é resultado possível — a
+  /// carga se perdeu.
+  quantidadeRecebida Decimal? @map("quantidade_recebida") @db.Decimal(12, 3)
+  /// Obrigatório quando chegou menos do que saiu (CHECK no banco). A diferença
+  /// NÃO vira movimento de acerto: o razão já conta a história.
+  motivoDivergencia  String?  @map("motivo_divergencia")
+  /// A média da ORIGEM congelada na expedição — é ela que entra na média
+  /// ponderada do destino, e a da origem pode mudar no meio do caminho.
+  custoUnit          Decimal? @map("custo_unit") @db.Decimal(12, 4)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  transferencia Transferencia @relation(fields: [transferenciaId], references: [id], onDelete: Cascade)
+  peca          Peca          @relation(fields: [pecaId], references: [id], onDelete: Restrict)
+
+  @@unique([transferenciaId, pecaId])
+  @@index([transferenciaId])
+  @@map("transferencia_itens")
 }
 
 /// O trabalho do almoxarife. NÃO é uma `ServiceOrder`: OS é conserto de
