@@ -47,6 +47,7 @@ export type ManualEquipamentoMinAggregateOutputType = {
   url: string | null
   mimetype: string | null
   tamanhoBytes: number | null
+  storagePath: string | null
   equipmentId: string | null
   modelo: string | null
   tipo: string | null
@@ -63,6 +64,7 @@ export type ManualEquipamentoMaxAggregateOutputType = {
   url: string | null
   mimetype: string | null
   tamanhoBytes: number | null
+  storagePath: string | null
   equipmentId: string | null
   modelo: string | null
   tipo: string | null
@@ -79,6 +81,7 @@ export type ManualEquipamentoCountAggregateOutputType = {
   url: number
   mimetype: number
   tamanhoBytes: number
+  storagePath: number
   equipmentId: number
   modelo: number
   tipo: number
@@ -105,6 +108,7 @@ export type ManualEquipamentoMinAggregateInputType = {
   url?: true
   mimetype?: true
   tamanhoBytes?: true
+  storagePath?: true
   equipmentId?: true
   modelo?: true
   tipo?: true
@@ -121,6 +125,7 @@ export type ManualEquipamentoMaxAggregateInputType = {
   url?: true
   mimetype?: true
   tamanhoBytes?: true
+  storagePath?: true
   equipmentId?: true
   modelo?: true
   tipo?: true
@@ -137,6 +142,7 @@ export type ManualEquipamentoCountAggregateInputType = {
   url?: true
   mimetype?: true
   tamanhoBytes?: true
+  storagePath?: true
   equipmentId?: true
   modelo?: true
   tipo?: true
@@ -240,6 +246,7 @@ export type ManualEquipamentoGroupByOutputType = {
   url: string
   mimetype: string
   tamanhoBytes: number
+  storagePath: string | null
   equipmentId: string | null
   modelo: string | null
   tipo: string | null
@@ -279,6 +286,7 @@ export type ManualEquipamentoWhereInput = {
   url?: Prisma.StringFilter<"ManualEquipamento"> | string
   mimetype?: Prisma.StringFilter<"ManualEquipamento"> | string
   tamanhoBytes?: Prisma.IntFilter<"ManualEquipamento"> | number
+  storagePath?: Prisma.StringNullableFilter<"ManualEquipamento"> | string | null
   equipmentId?: Prisma.UuidNullableFilter<"ManualEquipamento"> | string | null
   modelo?: Prisma.StringNullableFilter<"ManualEquipamento"> | string | null
   tipo?: Prisma.StringNullableFilter<"ManualEquipamento"> | string | null
@@ -297,6 +305,7 @@ export type ManualEquipamentoOrderByWithRelationInput = {
   url?: Prisma.SortOrder
   mimetype?: Prisma.SortOrder
   tamanhoBytes?: Prisma.SortOrder
+  storagePath?: Prisma.SortOrderInput | Prisma.SortOrder
   equipmentId?: Prisma.SortOrderInput | Prisma.SortOrder
   modelo?: Prisma.SortOrderInput | Prisma.SortOrder
   tipo?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -318,6 +327,7 @@ export type ManualEquipamentoWhereUniqueInput = Prisma.AtLeast<{
   url?: Prisma.StringFilter<"ManualEquipamento"> | string
   mimetype?: Prisma.StringFilter<"ManualEquipamento"> | string
   tamanhoBytes?: Prisma.IntFilter<"ManualEquipamento"> | number
+  storagePath?: Prisma.StringNullableFilter<"ManualEquipamento"> | string | null
   equipmentId?: Prisma.UuidNullableFilter<"ManualEquipamento"> | string | null
   modelo?: Prisma.StringNullableFilter<"ManualEquipamento"> | string | null
   tipo?: Prisma.StringNullableFilter<"ManualEquipamento"> | string | null
@@ -336,6 +346,7 @@ export type ManualEquipamentoOrderByWithAggregationInput = {
   url?: Prisma.SortOrder
   mimetype?: Prisma.SortOrder
   tamanhoBytes?: Prisma.SortOrder
+  storagePath?: Prisma.SortOrderInput | Prisma.SortOrder
   equipmentId?: Prisma.SortOrderInput | Prisma.SortOrder
   modelo?: Prisma.SortOrderInput | Prisma.SortOrder
   tipo?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -360,6 +371,7 @@ export type ManualEquipamentoScalarWhereWithAggregatesInput = {
   url?: Prisma.StringWithAggregatesFilter<"ManualEquipamento"> | string
   mimetype?: Prisma.StringWithAggregatesFilter<"ManualEquipamento"> | string
   tamanhoBytes?: Prisma.IntWithAggregatesFilter<"ManualEquipamento"> | number
+  storagePath?: Prisma.StringNullableWithAggregatesFilter<"ManualEquipamento"> | string | null
   equipmentId?: Prisma.UuidNullableWithAggregatesFilter<"ManualEquipamento"> | string | null
   modelo?: Prisma.StringNullableWithAggregatesFilter<"ManualEquipamento"> | string | null
   tipo?: Prisma.StringNullableWithAggregatesFilter<"ManualEquipamento"> | string | null
@@ -375,6 +387,7 @@ export type ManualEquipamentoCreateInput = {
   url: string
   mimetype: string
   tamanhoBytes: number
+  storagePath?: string | null
   modelo?: string | null
   tipo?: string | null
   ativo?: boolean
@@ -392,6 +405,7 @@ export type ManualEquipamentoUncheckedCreateInput = {
   url: string
   mimetype: string
   tamanhoBytes: number
+  storagePath?: string | null
   equipmentId?: string | null
   modelo?: string | null
   tipo?: string | null
@@ -407,6 +421,7 @@ export type ManualEquipamentoUpdateInput = {
   url?: Prisma.StringFieldUpdateOperationsInput | string
   mimetype?: Prisma.StringFieldUpdateOperationsInput | string
   tamanhoBytes?: Prisma.IntFieldUpdateOperationsInput | number
+  storagePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   modelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -424,6 +439,7 @@ export type ManualEquipamentoUncheckedUpdateInput = {
   url?: Prisma.StringFieldUpdateOperationsInput | string
   mimetype?: Prisma.StringFieldUpdateOperationsInput | string
   tamanhoBytes?: Prisma.IntFieldUpdateOperationsInput | number
+  storagePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   equipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   modelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -440,6 +456,7 @@ export type ManualEquipamentoCreateManyInput = {
   url: string
   mimetype: string
   tamanhoBytes: number
+  storagePath?: string | null
   equipmentId?: string | null
   modelo?: string | null
   tipo?: string | null
@@ -455,6 +472,7 @@ export type ManualEquipamentoUpdateManyMutationInput = {
   url?: Prisma.StringFieldUpdateOperationsInput | string
   mimetype?: Prisma.StringFieldUpdateOperationsInput | string
   tamanhoBytes?: Prisma.IntFieldUpdateOperationsInput | number
+  storagePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   modelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -470,6 +488,7 @@ export type ManualEquipamentoUncheckedUpdateManyInput = {
   url?: Prisma.StringFieldUpdateOperationsInput | string
   mimetype?: Prisma.StringFieldUpdateOperationsInput | string
   tamanhoBytes?: Prisma.IntFieldUpdateOperationsInput | number
+  storagePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   equipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   modelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -496,6 +515,7 @@ export type ManualEquipamentoCountOrderByAggregateInput = {
   url?: Prisma.SortOrder
   mimetype?: Prisma.SortOrder
   tamanhoBytes?: Prisma.SortOrder
+  storagePath?: Prisma.SortOrder
   equipmentId?: Prisma.SortOrder
   modelo?: Prisma.SortOrder
   tipo?: Prisma.SortOrder
@@ -516,6 +536,7 @@ export type ManualEquipamentoMaxOrderByAggregateInput = {
   url?: Prisma.SortOrder
   mimetype?: Prisma.SortOrder
   tamanhoBytes?: Prisma.SortOrder
+  storagePath?: Prisma.SortOrder
   equipmentId?: Prisma.SortOrder
   modelo?: Prisma.SortOrder
   tipo?: Prisma.SortOrder
@@ -532,6 +553,7 @@ export type ManualEquipamentoMinOrderByAggregateInput = {
   url?: Prisma.SortOrder
   mimetype?: Prisma.SortOrder
   tamanhoBytes?: Prisma.SortOrder
+  storagePath?: Prisma.SortOrder
   equipmentId?: Prisma.SortOrder
   modelo?: Prisma.SortOrder
   tipo?: Prisma.SortOrder
@@ -635,6 +657,7 @@ export type ManualEquipamentoCreateWithoutCompanyInput = {
   url: string
   mimetype: string
   tamanhoBytes: number
+  storagePath?: string | null
   modelo?: string | null
   tipo?: string | null
   ativo?: boolean
@@ -650,6 +673,7 @@ export type ManualEquipamentoUncheckedCreateWithoutCompanyInput = {
   url: string
   mimetype: string
   tamanhoBytes: number
+  storagePath?: string | null
   equipmentId?: string | null
   modelo?: string | null
   tipo?: string | null
@@ -695,6 +719,7 @@ export type ManualEquipamentoScalarWhereInput = {
   url?: Prisma.StringFilter<"ManualEquipamento"> | string
   mimetype?: Prisma.StringFilter<"ManualEquipamento"> | string
   tamanhoBytes?: Prisma.IntFilter<"ManualEquipamento"> | number
+  storagePath?: Prisma.StringNullableFilter<"ManualEquipamento"> | string | null
   equipmentId?: Prisma.UuidNullableFilter<"ManualEquipamento"> | string | null
   modelo?: Prisma.StringNullableFilter<"ManualEquipamento"> | string | null
   tipo?: Prisma.StringNullableFilter<"ManualEquipamento"> | string | null
@@ -710,6 +735,7 @@ export type ManualEquipamentoCreateWithoutEquipmentInput = {
   url: string
   mimetype: string
   tamanhoBytes: number
+  storagePath?: string | null
   modelo?: string | null
   tipo?: string | null
   ativo?: boolean
@@ -726,6 +752,7 @@ export type ManualEquipamentoUncheckedCreateWithoutEquipmentInput = {
   url: string
   mimetype: string
   tamanhoBytes: number
+  storagePath?: string | null
   modelo?: string | null
   tipo?: string | null
   ativo?: boolean
@@ -766,6 +793,7 @@ export type ManualEquipamentoCreateManyCompanyInput = {
   url: string
   mimetype: string
   tamanhoBytes: number
+  storagePath?: string | null
   equipmentId?: string | null
   modelo?: string | null
   tipo?: string | null
@@ -781,6 +809,7 @@ export type ManualEquipamentoUpdateWithoutCompanyInput = {
   url?: Prisma.StringFieldUpdateOperationsInput | string
   mimetype?: Prisma.StringFieldUpdateOperationsInput | string
   tamanhoBytes?: Prisma.IntFieldUpdateOperationsInput | number
+  storagePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   modelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -796,6 +825,7 @@ export type ManualEquipamentoUncheckedUpdateWithoutCompanyInput = {
   url?: Prisma.StringFieldUpdateOperationsInput | string
   mimetype?: Prisma.StringFieldUpdateOperationsInput | string
   tamanhoBytes?: Prisma.IntFieldUpdateOperationsInput | number
+  storagePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   equipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   modelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -811,6 +841,7 @@ export type ManualEquipamentoUncheckedUpdateManyWithoutCompanyInput = {
   url?: Prisma.StringFieldUpdateOperationsInput | string
   mimetype?: Prisma.StringFieldUpdateOperationsInput | string
   tamanhoBytes?: Prisma.IntFieldUpdateOperationsInput | number
+  storagePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   equipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   modelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -827,6 +858,7 @@ export type ManualEquipamentoCreateManyEquipmentInput = {
   url: string
   mimetype: string
   tamanhoBytes: number
+  storagePath?: string | null
   modelo?: string | null
   tipo?: string | null
   ativo?: boolean
@@ -841,6 +873,7 @@ export type ManualEquipamentoUpdateWithoutEquipmentInput = {
   url?: Prisma.StringFieldUpdateOperationsInput | string
   mimetype?: Prisma.StringFieldUpdateOperationsInput | string
   tamanhoBytes?: Prisma.IntFieldUpdateOperationsInput | number
+  storagePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   modelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -857,6 +890,7 @@ export type ManualEquipamentoUncheckedUpdateWithoutEquipmentInput = {
   url?: Prisma.StringFieldUpdateOperationsInput | string
   mimetype?: Prisma.StringFieldUpdateOperationsInput | string
   tamanhoBytes?: Prisma.IntFieldUpdateOperationsInput | number
+  storagePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   modelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -872,6 +906,7 @@ export type ManualEquipamentoUncheckedUpdateManyWithoutEquipmentInput = {
   url?: Prisma.StringFieldUpdateOperationsInput | string
   mimetype?: Prisma.StringFieldUpdateOperationsInput | string
   tamanhoBytes?: Prisma.IntFieldUpdateOperationsInput | number
+  storagePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   modelo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ativo?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -889,6 +924,7 @@ export type ManualEquipamentoSelect<ExtArgs extends runtime.Types.Extensions.Int
   url?: boolean
   mimetype?: boolean
   tamanhoBytes?: boolean
+  storagePath?: boolean
   equipmentId?: boolean
   modelo?: boolean
   tipo?: boolean
@@ -907,6 +943,7 @@ export type ManualEquipamentoSelectCreateManyAndReturn<ExtArgs extends runtime.T
   url?: boolean
   mimetype?: boolean
   tamanhoBytes?: boolean
+  storagePath?: boolean
   equipmentId?: boolean
   modelo?: boolean
   tipo?: boolean
@@ -925,6 +962,7 @@ export type ManualEquipamentoSelectUpdateManyAndReturn<ExtArgs extends runtime.T
   url?: boolean
   mimetype?: boolean
   tamanhoBytes?: boolean
+  storagePath?: boolean
   equipmentId?: boolean
   modelo?: boolean
   tipo?: boolean
@@ -943,6 +981,7 @@ export type ManualEquipamentoSelectScalar = {
   url?: boolean
   mimetype?: boolean
   tamanhoBytes?: boolean
+  storagePath?: boolean
   equipmentId?: boolean
   modelo?: boolean
   tipo?: boolean
@@ -951,7 +990,7 @@ export type ManualEquipamentoSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ManualEquipamentoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "companyId" | "titulo" | "categoria" | "url" | "mimetype" | "tamanhoBytes" | "equipmentId" | "modelo" | "tipo" | "ativo" | "createdAt" | "updatedAt", ExtArgs["result"]["manualEquipamento"]>
+export type ManualEquipamentoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "companyId" | "titulo" | "categoria" | "url" | "mimetype" | "tamanhoBytes" | "storagePath" | "equipmentId" | "modelo" | "tipo" | "ativo" | "createdAt" | "updatedAt", ExtArgs["result"]["manualEquipamento"]>
 export type ManualEquipamentoInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   equipment?: boolean | Prisma.ManualEquipamento$equipmentArgs<ExtArgs>
@@ -985,6 +1024,12 @@ export type $ManualEquipamentoPayload<ExtArgs extends runtime.Types.Extensions.I
     url: string
     mimetype: string
     tamanhoBytes: number
+    /**
+     * Caminho no bucket PRIVADO `manuais`. Nulo = manual antigo, que vive no
+     * bucket público `checklists` e abre pela `url` direta. Presente = precisa
+     * de URL assinada para abrir. Ver o §4.4 do desenho.
+     */
+    storagePath: string | null
     /**
      * Nenhum preenchido = vale para a frota inteira.
      */
@@ -1426,6 +1471,7 @@ export interface ManualEquipamentoFieldRefs {
   readonly url: Prisma.FieldRef<"ManualEquipamento", 'String'>
   readonly mimetype: Prisma.FieldRef<"ManualEquipamento", 'String'>
   readonly tamanhoBytes: Prisma.FieldRef<"ManualEquipamento", 'Int'>
+  readonly storagePath: Prisma.FieldRef<"ManualEquipamento", 'String'>
   readonly equipmentId: Prisma.FieldRef<"ManualEquipamento", 'String'>
   readonly modelo: Prisma.FieldRef<"ManualEquipamento", 'String'>
   readonly tipo: Prisma.FieldRef<"ManualEquipamento", 'String'>
