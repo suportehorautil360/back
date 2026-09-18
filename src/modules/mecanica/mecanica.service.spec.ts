@@ -1847,6 +1847,121 @@ describe('MecanicaService — manuais', () => {
   });
 });
 
+/**
+ * Banco falso para o caminho NOVO de `registrarManual` (arquivo já no
+ * Storage). Filtra `equipment.findFirst` pelo `where` que a produção usa
+ * (`id` + `companyId`) e LANÇA se aparecer uma chave que não reconhece — um
+ * fake que ignorasse o `where` aprovaria a checagem de empresa mesmo se ela
+ * fosse apagada do código.
+ */
+function bancoDoRegistroDeManual(equipamentos: Record<string, unknown>[] = []) {
+  const manuais: Record<string, unknown>[] = [];
+  return {
+    prisma: {
+      manualEquipamento: {
+        create: jest.fn(({ data }: { data: Record<string, unknown> }) => {
+          const linha = { id: `man-${manuais.length + 1}`, ...data };
+          manuais.push(linha);
+          return Promise.resolve(linha);
+        }),
+      },
+      equipment: {
+        findFirst: jest.fn(({ where }: { where: Record<string, unknown> }) => {
+          const chaves = Object.keys(where);
+          const reconhecidas = new Set(['id', 'companyId']);
+          const desconhecida = chaves.find((k) => !reconhecidas.has(k));
+          if (desconhecida) {
+            throw new Error(`where não reconhecido em equipment.findFirst: ${desconhecida}`);
+          }
+          return Promise.resolve(
+            equipamentos.find((e) => e.id === where.id && e.companyId === where.companyId) ?? null,
+          );
+        }),
+      },
+    } as never,
+    manuais,
+  };
+}
+
+const BASE_REGISTRO_MANUAL = {
+  storagePath: 'empresa-1/1737000000-abc.pdf',
+  mimetype: 'application/pdf',
+  tamanhoBytes: 40 * 1024 * 1024,
+  titulo: 'Manual da PC200',
+};
+
+describe('MecanicaService — registrarManual (caminho novo, Storage)', () => {
+  it('grava a linha com o storagePath, e a url fica vazia', async () => {
+    // Manual novo não tem URL pública: o bucket é privado, e quem abre assina
+    // na hora. Guardar uma URL assinada aqui seria guardar algo que expira.
+    const { prisma, manuais } = bancoDoRegistroDeManual();
+    const s = new MecanicaService(prisma);
+
+    await s.registrarManual(PAINEL, BASE_REGISTRO_MANUAL);
+
+    expect(manuais[0]).toMatchObject({
+      companyId: 'empresa-1',
+      storagePath: BASE_REGISTRO_MANUAL.storagePath,
+      url: '',
+      tamanhoBytes: BASE_REGISTRO_MANUAL.tamanhoBytes,
+    });
+  });
+
+  it('recusa caminho que não começa pela empresa da sessão', async () => {
+    // Sem isto, o painel de uma empresa registraria um caminho da outra — e a
+    // leitura assinaria o objeto alheio, porque a assinatura é do service role.
+    const { prisma, manuais } = bancoDoRegistroDeManual();
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.registrarManual(PAINEL, { ...BASE_REGISTRO_MANUAL, storagePath: 'outra-empresa/x.pdf' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(manuais).toHaveLength(0);
+  });
+
+  it('recusa acima de 50 MB', async () => {
+    const { prisma, manuais } = bancoDoRegistroDeManual();
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.registrarManual(PAINEL, { ...BASE_REGISTRO_MANUAL, tamanhoBytes: 51 * 1024 * 1024 }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(manuais).toHaveLength(0);
+  });
+
+  it('recusa tipo fora de PDF/imagem', async () => {
+    const { prisma, manuais } = bancoDoRegistroDeManual();
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.registrarManual(PAINEL, { ...BASE_REGISTRO_MANUAL, mimetype: 'application/zip' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(manuais).toHaveLength(0);
+  });
+
+  it('recusa título vazio', async () => {
+    const { prisma, manuais } = bancoDoRegistroDeManual();
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.registrarManual(PAINEL, { ...BASE_REGISTRO_MANUAL, titulo: '   ' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(manuais).toHaveLength(0);
+  });
+
+  it('equipamento de outra empresa não prende o manual', async () => {
+    const { prisma, manuais } = bancoDoRegistroDeManual([
+      { id: 'eq-de-outra', companyId: 'empresa-2' },
+    ]);
+    const s = new MecanicaService(prisma);
+
+    await expect(
+      s.registrarManual(PAINEL, { ...BASE_REGISTRO_MANUAL, equipamentoId: 'eq-de-outra' }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(manuais).toHaveLength(0);
+  });
+});
+
 /** Execução de checklist: abrir, gravar seção, concluir. */
 const MODELO_CHECKLIST = {
   id: 'mod-57',

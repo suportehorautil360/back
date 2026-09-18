@@ -28,7 +28,11 @@ import {
   TIPO_OS_PREVENTIVA,
 } from './regras/inspecao-do-plano';
 import { selarBatidaOriginal } from '../checklist-auth/helpers/ponto-ledger.helper';
-import { UploadsService } from '../uploads/uploads.service';
+import {
+  LIMITE_BYTES_MANUAL,
+  TIPOS_MANUAL,
+  UploadsService,
+} from '../uploads/uploads.service';
 
 /** Os quatro momentos da folha do dia — mesma ordem do app do motorista. */
 const TIPOS_DE_PONTO = ['entrada', 'almoco', 'volta', 'saida'];
@@ -825,7 +829,11 @@ export class MecanicaService {
   }
 
   /**
-   * Registra o manual já subido para o Storage.
+   * Registra o manual — seja o que a rota antiga acabou de subir (`url`
+   * pública preenchida), seja o que o Route Handler do painel já gravou no
+   * bucket PRIVADO `manuais` (`storagePath` preenchido, sem `url`: manual
+   * novo não tem link público, e quem abre assina na hora — guardar uma URL
+   * assinada aqui seria guardar algo que expira).
    *
    * Vínculo: `equipamentoId` prende a uma máquina; `modelo` ou `tipo` alcançam
    * a família; nada preenchido vale para a frota inteira. Guardar os três
@@ -837,7 +845,8 @@ export class MecanicaService {
     dados: {
       titulo: string;
       categoria?: string;
-      url: string;
+      url?: string;
+      storagePath?: string;
       mimetype: string;
       tamanhoBytes: number;
       equipamentoId?: string;
@@ -845,6 +854,26 @@ export class MecanicaService {
       tipo?: string;
     },
   ) {
+    const titulo = dados.titulo?.trim();
+    if (!titulo) {
+      throw new BadRequestException('Dê um título ao manual.');
+    }
+    if (!TIPOS_MANUAL[dados.mimetype]) {
+      throw new BadRequestException('Envie um PDF ou uma imagem do manual.');
+    }
+    if (dados.tamanhoBytes > LIMITE_BYTES_MANUAL) {
+      const limiteMb = LIMITE_BYTES_MANUAL / (1024 * 1024);
+      throw new BadRequestException(
+        `Arquivo muito grande. Envie até ${limiteMb}MB.`,
+      );
+    }
+    // O caminho vem do bucket PRIVADO: a assinatura é feita pelo service
+    // role, sem RLS. Sem esta checagem, o painel de uma empresa registraria
+    // (e leria) o objeto de outra.
+    if (dados.storagePath && !dados.storagePath.startsWith(`${painel.companyId}/`)) {
+      throw new BadRequestException('Caminho do arquivo não pertence a esta empresa.');
+    }
+
     if (dados.equipamentoId) {
       const existe = await this.prisma.equipment.findFirst({
         where: { id: dados.equipamentoId, companyId: painel.companyId },
@@ -856,9 +885,10 @@ export class MecanicaService {
     return this.prisma.manualEquipamento.create({
       data: {
         companyId: painel.companyId,
-        titulo: dados.titulo,
+        titulo,
         categoria: dados.categoria ?? null,
-        url: dados.url,
+        url: dados.storagePath ? '' : (dados.url ?? ''),
+        storagePath: dados.storagePath ?? null,
         mimetype: dados.mimetype,
         tamanhoBytes: dados.tamanhoBytes,
         equipmentId: dados.equipamentoId ?? null,

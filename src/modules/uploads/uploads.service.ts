@@ -30,10 +30,24 @@ export const LIMITE_BYTES_FOTO_OS = 5 * 1024 * 1024;
 
 /**
  * Manual de máquina pesada é documento de fabricante: 200 páginas com esquema
- * elétrico não cabem em 5MB. 25MB cobre o caso real sem abrir a porta para
- * alguém usar o bucket como disco.
+ * elétrico não cabem em 5MB. 50MB é o `file_size_limit` do bucket PRIVADO
+ * `manuais` (migration da Task 1) — vale para a rota nova, `registrarManual`,
+ * que registra o que o Route Handler do painel já gravou no Storage.
+ *
+ * NÃO usar para a rota antiga (`manuais/upload`): ela ainda escreve no bucket
+ * `checklists` e chega pela Server Action, os dois travados em 10MB — ver
+ * `LIMITE_BYTES_MANUAL_LEGADO`.
  */
-export const LIMITE_BYTES_MANUAL = 25 * 1024 * 1024;
+export const LIMITE_BYTES_MANUAL = 50 * 1024 * 1024;
+
+/**
+ * Teto da rota ANTIGA (`manuais/upload`), que continua existindo. Não é
+ * `LIMITE_BYTES_MANUAL`: aquele é o teto do bucket novo, e esta rota nem o
+ * alcança — ela grava no bucket público `checklists` (`file_size_limit`
+ * 10MB) e o arquivo chega pela Server Action do painel (`bodySizeLimit`,
+ * também 10MB). Prometer 50MB aqui seria trocar uma mentira por outra.
+ */
+export const LIMITE_BYTES_MANUAL_LEGADO = 10 * 1024 * 1024;
 
 /** PDF é o formato do fabricante; imagem cobre a foto da página do manual. */
 export const TIPOS_MANUAL: Record<string, string> = {
