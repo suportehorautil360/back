@@ -7,6 +7,7 @@ import {
 import { MecanicaService } from './mecanica.service';
 import type { PainelPayload } from '../../common/painel.guard';
 import { Prisma } from '../../prisma/generated/client';
+import type { UploadsService } from '../uploads/uploads.service';
 
 const PAINEL: PainelPayload = {
   companyUserId: 'user-1',
@@ -2027,6 +2028,270 @@ describe('MecanicaService — registrarManual (caminho novo, Storage)', () => {
     } as never);
 
     expect(manuais[0]).toMatchObject({ companyId: 'empresa-1' });
+  });
+});
+
+/**
+ * Banco falso para a LISTA de manuais — o acervo que o app do mecânico pede.
+ * `findMany` filtra pelas CHAVES QUE O `where` TRAZ, pelo mesmo motivo de
+ * `bancoDoRegistroDeManual`: tirar `companyId` da query de produção tem de
+ * derrubar o teste, e não passar despercebido porque o registro também bate.
+ */
+function bancoDaListaDeManuais(manuais: Record<string, unknown>[]) {
+  return {
+    manualEquipamento: {
+      findMany: jest.fn(({ where }: { where: Record<string, unknown> }) =>
+        Promise.resolve(
+          manuais.filter((m) =>
+            Object.keys(where).every((k) => m[k] === where[k]),
+          ),
+        ),
+      ),
+    },
+    equipment: { findFirst: jest.fn(() => Promise.resolve(null)) },
+  } as never;
+}
+
+/**
+ * Dublê do `UploadsService` só para a assinatura. Devolve uma URL que NÃO
+ * contém o caminho cru, de propósito: assim um teste que confere o `href`
+ * distingue "assinou" de "devolveu o `storagePath` de volta".
+ */
+function uploadsQueAssina(
+  falhas: string[] = [],
+): { uploads: UploadsService; chamadas: { caminhos: string[]; ttl: number }[] } {
+  const chamadas: { caminhos: string[]; ttl: number }[] = [];
+  const uploads = {
+    assinarManuais: jest.fn((caminhos: string[], ttl: number) => {
+      chamadas.push({ caminhos, ttl });
+      const mapa = new Map<string, string>();
+      for (const [i, caminho] of caminhos.entries()) {
+        if (falhas.includes(caminho)) continue;
+        mapa.set(caminho, `https://assinada.exemplo/link-${i}?token=t${i}`);
+      }
+      return Promise.resolve(mapa);
+    }),
+  } as unknown as UploadsService;
+  return { uploads, chamadas };
+}
+
+const MANUAL_NOVO = {
+  id: 'm-novo',
+  companyId: 'empresa-1',
+  ativo: true,
+  titulo: 'Manual da PC200',
+  url: '',
+  storagePath: 'empresa-1/1737000000-abc.pdf',
+  equipmentId: null,
+  modelo: null,
+  tipo: null,
+};
+
+const MANUAL_ANTIGO = {
+  id: 'm-antigo',
+  companyId: 'empresa-1',
+  ativo: true,
+  titulo: 'Antigo, bucket público',
+  url: 'https://cdn.exemplo/checklists/manuais/antigo.pdf',
+  storagePath: null,
+  equipmentId: null,
+  modelo: null,
+  tipo: null,
+};
+
+/**
+ * O link de abertura sai do Nest pronto — é o que conserta os DOIS clientes
+ * de uma vez (painel e app do mecânico) em vez de espalhar assinatura por
+ * app. Antes disto, o manual novo chegava ao app com `url: ''` e o toque não
+ * fazia nada: aparecia na biblioteca, com título e tamanho, e não abria.
+ */
+describe('MecanicaService — listarManuais devolve o link pronto', () => {
+  it('manual novo vira URL assinada — nunca o caminho cru do bucket', async () => {
+    const { uploads, chamadas } = uploadsQueAssina();
+    const s = new MecanicaService(bancoDaListaDeManuais([MANUAL_NOVO]), uploads);
+
+    const [manual] = await s.listarManuais(PAINEL);
+
+    expect(chamadas).toEqual([
+      { caminhos: ['empresa-1/1737000000-abc.pdf'], ttl: 3600 },
+    ]);
+    expect(manual.href).toBe('https://assinada.exemplo/link-0?token=t0');
+    // Devolver o `storage_path` cru seria um "link" que o navegador do
+    // mecânico resolve contra a própria origem — outro toque que não faz nada.
+    expect(manual.href).not.toBe(MANUAL_NOVO.storagePath);
+    expect(manual.href).not.toContain('1737000000-abc.pdf');
+  });
+
+  /**
+   * 3600, literal. Não é estética: validade de URL de bucket privado é
+   * propriedade de segurança, e é o mesmo número que o painel usa
+   * (`TTL_MANUAL_SEGUNDOS` em `lib/company/manuais.ts`). O teste trava o
+   * NÚMERO, não o tipo — trocar por 300 ou por 86400 tem de ficar vermelho.
+   */
+  it('assina com validade de uma hora, e não com outro número qualquer', async () => {
+    const { uploads, chamadas } = uploadsQueAssina();
+    const s = new MecanicaService(bancoDaListaDeManuais([MANUAL_NOVO]), uploads);
+
+    await s.listarManuais(PAINEL);
+
+    expect(chamadas[0].ttl).toBe(3600);
+  });
+
+  it('manual antigo abre pela url pública, e não chega a ser assinado', async () => {
+    // Regressão que custaria caro: assinar um caminho que não existe no
+    // bucket privado devolveria erro para um manual que hoje funciona.
+    const { uploads } = uploadsQueAssina();
+    const s = new MecanicaService(bancoDaListaDeManuais([MANUAL_ANTIGO]), uploads);
+
+    const [manual] = await s.listarManuais(PAINEL);
+
+    expect(manual.href).toBe(MANUAL_ANTIGO.url);
+    expect(uploads.assinarManuais).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Quem decide entre assinar e abrir direto é a COLUNA `storagePath`, nunca
+   * o FORMATO do texto. Sem isto travado, "simplificar" o código para assinar
+   * tudo que PARECE chave de bucket passa despercebido: o manual antigo
+   * continuaria abrindo (a `url` dele não parece chave), e só a linha rara
+   * cujo `url` parece chave quebraria — em produção, meses depois.
+   */
+  it('manual antigo cuja url PARECE chave de bucket continua não sendo assinado', async () => {
+    const { uploads } = uploadsQueAssina();
+    const s = new MecanicaService(
+      bancoDaListaDeManuais([
+        { ...MANUAL_ANTIGO, url: 'empresa-1/parece-uma-chave.pdf' },
+      ]),
+      uploads,
+    );
+
+    const [manual] = await s.listarManuais(PAINEL);
+
+    expect(uploads.assinarManuais).not.toHaveBeenCalled();
+    expect(manual.href).toBe('empresa-1/parece-uma-chave.pdf');
+  });
+
+  it('manual antigo sem url nenhuma vira manual sem link, não string vazia', async () => {
+    const { uploads } = uploadsQueAssina();
+    const s = new MecanicaService(
+      bancoDaListaDeManuais([{ ...MANUAL_ANTIGO, url: '' }]),
+      uploads,
+    );
+
+    expect((await s.listarManuais(PAINEL))[0].href).toBeNull();
+  });
+
+  /**
+   * O caminho é assinado com o SERVICE ROLE, sem RLS. Um `..` sobrevive ao
+   * `createSignedUrl` e é normalizado pelo navegador DEPOIS — o alvo
+   * derivável é `ponto-selfies` (selfie de batida de ponto, Portaria 671).
+   * Achado CRITICAL duas vezes nesta frente: caminho que não passa na régua
+   * não vira link, e não chega nem a ser pedido ao Storage.
+   */
+  it.each([
+    ['empresa-1/../../ponto-selfies/empresa-1/2026/09/x.jpg'],
+    ['empresa-1/../empresa-2/a.pdf'],
+    ['empresa-1/%2e%2e/%2e%2e/ponto-selfies/empresa-1/2026/09/x.jpg'],
+    ['empresa-1//a.pdf'],
+    ['empresa-1'],
+  ])('travessia de diretório não vira link: %s', async (storagePath) => {
+    const { uploads } = uploadsQueAssina();
+    const s = new MecanicaService(
+      bancoDaListaDeManuais([{ ...MANUAL_NOVO, storagePath }]),
+      uploads,
+    );
+
+    const [manual] = await s.listarManuais(PAINEL);
+
+    expect(manual.href).toBeNull();
+    expect(uploads.assinarManuais).not.toHaveBeenCalled();
+  });
+
+  it('caminho de OUTRA empresa não vira link', async () => {
+    // O registro já barra isto na entrada; a lista barra de novo porque a
+    // linha pode ter entrado por outro caminho (import, correção manual no
+    // banco) e quem assina aqui é o service role.
+    const { uploads } = uploadsQueAssina();
+    const s = new MecanicaService(
+      bancoDaListaDeManuais([{ ...MANUAL_NOVO, storagePath: 'empresa-2/a.pdf' }]),
+      uploads,
+    );
+
+    const [manual] = await s.listarManuais(PAINEL);
+
+    expect(manual.href).toBeNull();
+    expect(uploads.assinarManuais).not.toHaveBeenCalled();
+  });
+
+  it('empresa-10 não passa por ser prefixo de empresa-1', async () => {
+    const { uploads } = uploadsQueAssina();
+    const s = new MecanicaService(
+      bancoDaListaDeManuais([{ ...MANUAL_NOVO, storagePath: 'empresa-10/a.pdf' }]),
+      uploads,
+    );
+
+    expect((await s.listarManuais(PAINEL))[0].href).toBeNull();
+    expect(uploads.assinarManuais).not.toHaveBeenCalled();
+  });
+
+  it('falha ao assinar vira manual sem link — não derruba a lista inteira', async () => {
+    const { uploads } = uploadsQueAssina(['empresa-1/1737000000-abc.pdf']);
+    const s = new MecanicaService(
+      bancoDaListaDeManuais([MANUAL_NOVO, MANUAL_ANTIGO]),
+      uploads,
+    );
+
+    const lista = await s.listarManuais(PAINEL);
+
+    expect(lista).toHaveLength(2);
+    expect(lista.find((m) => m.id === 'm-novo')?.href).toBeNull();
+    expect(lista.find((m) => m.id === 'm-antigo')?.href).toBe(MANUAL_ANTIGO.url);
+  });
+
+  it('o acervo inteiro é assinado numa chamada só, não uma por manual', async () => {
+    // A tela do mecânico sincroniza o acervo INTEIRO a cada abertura. Uma
+    // requisição por manual transformaria um acervo de cinquenta documentos
+    // em cinquenta idas ao Storage.
+    const { uploads, chamadas } = uploadsQueAssina();
+    const s = new MecanicaService(
+      bancoDaListaDeManuais([
+        MANUAL_NOVO,
+        { ...MANUAL_NOVO, id: 'm-novo-2', storagePath: 'empresa-1/outro.pdf' },
+        MANUAL_ANTIGO,
+      ]),
+      uploads,
+    );
+
+    await s.listarManuais(PAINEL);
+
+    expect(chamadas).toHaveLength(1);
+    expect(chamadas[0].caminhos).toEqual([
+      'empresa-1/1737000000-abc.pdf',
+      'empresa-1/outro.pdf',
+    ]);
+  });
+
+  it('lista vazia não vai ao Storage', async () => {
+    const { uploads } = uploadsQueAssina();
+    const s = new MecanicaService(bancoDaListaDeManuais([]), uploads);
+
+    expect(await s.listarManuais(PAINEL)).toEqual([]);
+    expect(uploads.assinarManuais).not.toHaveBeenCalled();
+  });
+
+  it('a lista continua sendo só a da empresa da sessão', async () => {
+    const { uploads } = uploadsQueAssina();
+    const s = new MecanicaService(
+      bancoDaListaDeManuais([
+        MANUAL_NOVO,
+        { ...MANUAL_NOVO, id: 'm-de-outra', companyId: 'empresa-2' },
+      ]),
+      uploads,
+    );
+
+    const lista = await s.listarManuais(PAINEL);
+
+    expect(lista.map((m) => m.id)).toEqual(['m-novo']);
   });
 });
 

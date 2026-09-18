@@ -20,7 +20,11 @@ import {
 } from './regras/busca-checklist';
 import type { ChecklistModeloDto } from './dto/checklist-modelo.dto';
 import { randomUUID } from 'node:crypto';
-import { caminhoPertenceAEmpresa, ordenarParaMaquina } from './regras/manual';
+import {
+  caminhoPertenceAEmpresa,
+  ordenarParaMaquina,
+  TTL_URL_MANUAL_SEGUNDOS,
+} from './regras/manual';
 import {
   gerarGrupos,
   nomeDaInspecao,
@@ -810,6 +814,17 @@ export class MecanicaService {
    *
    * Sem `equipamentoId`, devolve o acervo inteiro da empresa — é a visão de
    * quem administra, não a de quem está na máquina.
+   *
+   * Cada manual sai com `href`: o endereço para ABRIR AGORA. É o Nest que o
+   * resolve, e não cada cliente, porque são dois (o painel e o app do
+   * mecânico) e espalhar assinatura por app já produziu o defeito que esta
+   * mudança conserta — o app não sabia do `storagePath`, lia `url: ''` e
+   * renderizava um toque que não fazia nada.
+   *
+   * `href` é EFÊMERO quando o manual é novo: é URL assinada, com validade de
+   * `TTL_URL_MANUAL_SEGUNDOS`. Quem consome não pode guardá-lo como se fosse
+   * estável — o `pwa-mecanico` guarda a LISTA no Dexie e o `href` só em
+   * memória, justamente por isso.
    */
   async listarManuais(painel: PainelPayload, equipamentoId?: string) {
     const manuais = await this.prisma.manualEquipamento.findMany({
@@ -817,7 +832,9 @@ export class MecanicaService {
       orderBy: { titulo: 'asc' },
     });
 
-    if (!equipamentoId) return manuais;
+    const comHref = await this.comLinkDeAbertura(manuais, painel.companyId);
+
+    if (!equipamentoId) return comHref;
 
     const maquina = await this.prisma.equipment.findFirst({
       where: { id: equipamentoId, companyId: painel.companyId },
@@ -825,7 +842,53 @@ export class MecanicaService {
     });
     if (!maquina) throw new NotFoundException('Equipamento não encontrado.');
 
-    return ordenarParaMaquina(manuais, maquina);
+    return ordenarParaMaquina(comHref, maquina);
+  }
+
+  /**
+   * Anexa a cada manual o endereço de abertura. Quem decide é a COLUNA, nunca
+   * o formato do texto:
+   *
+   * - `storagePath` preenchido ⇒ manual novo, bucket PRIVADO `manuais`.
+   *   Assina — mas só depois de `caminhoPertenceAEmpresa`.
+   * - `storagePath` nulo ⇒ manual antigo, bucket público de sempre. Abre pela
+   *   `url` direta, SEM assinar: assinar um caminho que não existe no bucket
+   *   privado devolveria erro para um manual que hoje funciona.
+   * - caminho que não passa na régua ⇒ `href: null`, e o Storage nem é
+   *   procurado. A assinatura usa o SERVICE ROLE, sem RLS: um `..` sobrevive
+   *   ao `createSignedUrl` e é normalizado pelo NAVEGADOR depois, o que faz
+   *   `empresa-1/../../ponto-selfies/...` virar link para selfie de batida de
+   *   ponto (Portaria 671). A régua é a mesma de `registrarManual`, repetida
+   *   aqui porque a linha pode ter entrado no banco por outro caminho.
+   *
+   * `null` e não `''`: "não há link" é um estado, e string vazia já foi
+   * exatamente o valor que o app renderizou como `href` — um toque que
+   * recarregava a própria página, sem erro e sem aviso.
+   */
+  private async comLinkDeAbertura<
+    T extends { url: string; storagePath: string | null },
+  >(manuais: T[], companyId: string): Promise<(T & { href: string | null })[]> {
+    const aAssinar = manuais
+      .map((m) => m.storagePath)
+      .filter(
+        (p): p is string => !!p && caminhoPertenceAEmpresa(p, companyId),
+      );
+
+    // Sem nenhum manual novo VÁLIDO, o Storage não é procurado — nem para
+    // devolver um lote vazio. Importa para o acervo que só tem manual antigo,
+    // que é o estado de toda empresa que ainda não subiu nada pelo caminho
+    // novo: a lista não deve passar a depender do Supabase para abrir.
+    const assinadas =
+      aAssinar.length > 0
+        ? await this.uploads.assinarManuais(aAssinar, TTL_URL_MANUAL_SEGUNDOS)
+        : new Map<string, string>();
+
+    return manuais.map((manual) => ({
+      ...manual,
+      href: manual.storagePath
+        ? (assinadas.get(manual.storagePath) ?? null)
+        : manual.url || null,
+    }));
   }
 
   /**

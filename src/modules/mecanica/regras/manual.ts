@@ -10,6 +10,23 @@
  * Funções puras: sem Prisma, para o teste provar a regra sem banco.
  */
 
+/**
+ * Validade da URL assinada do manual, em segundos.
+ *
+ * Uma HORA, e não os 300s que o painel usa para `<img>`: aqui o link é
+ * assinado quando a LISTA é montada e fica esperando um toque. O mecânico que
+ * abre o acervo, é chamado na bancada e volta seis minutos depois não pode
+ * receber erro cru do Supabase numa aba nova — e um PDF de 45MB numa rede de
+ * campo lenta ainda pode estar baixando quando o link expira.
+ *
+ * Literal e travado por teste de propósito: validade de URL de bucket privado
+ * é propriedade de segurança, e é o MESMO número que o painel usa
+ * (`TTL_MANUAL_SEGUNDOS` em `horautil/lib/company/manuais.ts`). Se um dos dois
+ * mudar sozinho, o manual passa a expirar em tempos diferentes conforme quem
+ * abriu — que é o tipo de divergência que ninguém diagnostica.
+ */
+export const TTL_URL_MANUAL_SEGUNDOS = 3600;
+
 export interface ManualParaCasar {
   equipmentId: string | null;
   modelo: string | null;

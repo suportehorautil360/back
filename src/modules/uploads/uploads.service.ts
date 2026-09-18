@@ -66,6 +66,16 @@ const DEFAULT_NOTA_FISCAL_BUCKET = 'notas-fiscais';
 const BUCKET_SELFIES_PONTO = 'ponto-selfies';
 
 /**
+ * Bucket PRIVADO dos manuais (migration da Task 1, `file_size_limit` 50MB).
+ * Não é `this.bucket`: manual novo não tem URL pública, e quem abre assina
+ * na hora. Literal, e não variável de ambiente, pelo mesmo motivo do painel
+ * (`BUCKETS.manuais`) — os dois lados têm de apontar para o mesmo bucket, e
+ * uma variável a mais é uma chance a mais de apontarem para buckets
+ * diferentes sem ninguém notar.
+ */
+const BUCKET_MANUAIS = 'manuais';
+
+/**
  * Teto real do bucket `ponto-selfies` (`file_size_limit` na migration do
  * horautil, `20260821090000_storage_buckets_rh`). Exportado para o
  * controller usar no `FileInterceptor` — um arquivo que passa no Nest e é
@@ -296,6 +306,51 @@ export class UploadsService {
       );
     }
     return storage.getPublicUrl(path).data.publicUrl;
+  }
+
+  /**
+   * Assina, em UMA ida ao Storage, os manuais que moram no bucket PRIVADO.
+   *
+   * Em lote de propósito: a tela do mecânico sincroniza o acervo INTEIRO a
+   * cada abertura, e uma assinatura por manual transformaria um acervo de
+   * cinquenta documentos em cinquenta requisições ao Supabase.
+   *
+   * Quem chama é responsável por só mandar caminho JÁ VALIDADO contra a
+   * empresa da sessão (`caminhoPertenceAEmpresa`). Aqui se assina com o
+   * SERVICE ROLE, sem RLS: um `..` que chegasse até este ponto viraria link
+   * para outro bucket. Este método não revalida porque não sabe de qual
+   * empresa é a sessão — a régua mora em quem tem o `companyId` na mão.
+   *
+   * O mapa devolvido só tem os caminhos que assinaram. Caminho ausente é a
+   * forma de dizer "sem link": manual que não abre não pode derrubar a lista
+   * inteira, e a tela sabe tratar manual sem link.
+   */
+  async assinarManuais(
+    caminhos: string[],
+    ttlSegundos: number,
+  ): Promise<Map<string, string>> {
+    const assinadas = new Map<string, string>();
+    if (caminhos.length === 0) return assinadas;
+
+    const storage = this.getCliente().storage.from(BUCKET_MANUAIS);
+    const { data, error } = await storage.createSignedUrls(
+      caminhos,
+      ttlSegundos,
+    );
+    if (error) {
+      // Erro do LOTE inteiro (bucket inexistente, credencial recusada):
+      // nenhuma alegação de sucesso órfã — todos ficam sem link.
+      console.error('Supabase createSignedUrls falhou [bucket=manuais]:', error);
+      return assinadas;
+    }
+
+    for (const item of data ?? []) {
+      // `path` é o caminho pedido, de volta; `error` é por ITEM (arquivo que
+      // sumiu do bucket, por exemplo) e convive com sucesso dos outros.
+      if (item.error || !item.signedUrl || !item.path) continue;
+      assinadas.set(item.path, item.signedUrl);
+    }
+    return assinadas;
   }
 
   async uploadOsFoto(
