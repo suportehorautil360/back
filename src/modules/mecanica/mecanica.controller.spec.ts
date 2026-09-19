@@ -82,6 +82,7 @@ describe('idempotência das escritas', () => {
     'executarPreventiva',
     'criarModeloDeChecklist',
     'uploadManual',
+    'registrarManual',
     'iniciarChecklist',
     'concluirChecklist',
     'cancelarChecklist',
@@ -104,6 +105,67 @@ describe('idempotência das escritas', () => {
     );
 
     expect(interceptors[0]).toBe(IdempotencyInterceptor);
+  });
+});
+
+describe('uploadManual — teto da rota antiga', () => {
+  it('recusa arquivo acima do teto da rota antiga (10 MB), mesmo dentro dos 50 MB da regra nova', async () => {
+    // A rota antiga ainda grava no bucket `checklists` (10 MB, público) e o
+    // arquivo chega pela Server Action do painel (10 MB): ela não pode
+    // aceitar o teto de 50 MB que vale só para a rota nova
+    // (`registrarManual`). Sem este teste, subir `LIMITE_BYTES_MANUAL_LEGADO`
+    // para 50 MB não derruba teste nenhum — e a rota antiga volta a prometer
+    // um tamanho que os dois lugares por onde o arquivo passa não aguentam.
+    const controller = new MecanicaController(servicoFalso(), uploadsFalso());
+    const arquivoGrande = arquivo({
+      size: 11 * 1024 * 1024,
+      mimetype: 'application/pdf',
+    });
+
+    await expect(
+      controller.uploadManual(reqCom(), arquivoGrande, 'Manual grande'),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+});
+
+describe('MecanicaController.registrarManual', () => {
+  it('repassa os campos do corpo ao service (trim nos opcionais) e devolve só o id', async () => {
+    // A rota nova é JSON puro: o handler é só encanamento entre o DTO e
+    // `service.registrarManual`. Sem este teste, o mapeamento campo a campo
+    // e o formato `{ id }` da resposta não são exercitados em lugar nenhum.
+    const registrarManual = jest.fn().mockResolvedValue({
+      id: 'man-123',
+      titulo: 'Manual da PC200',
+      url: '',
+      storagePath: 'empresa-1/1737000000-abc.pdf',
+    });
+    const controller = new MecanicaController(
+      servicoFalso({ registrarManual }),
+      uploadsFalso(),
+    );
+
+    const resposta = await controller.registrarManual(reqCom(), {
+      storagePath: 'empresa-1/1737000000-abc.pdf',
+      mimetype: 'application/pdf',
+      tamanhoBytes: 40 * 1024 * 1024,
+      titulo: '  Manual da PC200  ',
+      categoria: '  Elétrico  ',
+      equipamentoId: '  eq-1  ',
+      modelo: '  CAT 320D  ',
+      tipo: '  Escavadeira  ',
+    });
+
+    expect(registrarManual).toHaveBeenCalledWith(PAINEL, {
+      titulo: '  Manual da PC200  ',
+      categoria: 'Elétrico',
+      storagePath: 'empresa-1/1737000000-abc.pdf',
+      mimetype: 'application/pdf',
+      tamanhoBytes: 40 * 1024 * 1024,
+      equipamentoId: 'eq-1',
+      modelo: 'CAT 320D',
+      tipo: 'Escavadeira',
+    });
+    expect(resposta).toEqual({ id: 'man-123' });
   });
 });
 

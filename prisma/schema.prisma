@@ -2045,6 +2045,11 @@ model ManualEquipamento {
   mimetype     String
   tamanhoBytes Int    @map("tamanho_bytes")
 
+  /// Caminho no bucket PRIVADO `manuais`. Nulo = manual antigo, que vive no
+  /// bucket público `checklists` e abre pela `url` direta. Presente = precisa
+  /// de URL assinada para abrir. Ver o §4.4 do desenho.
+  storagePath String? @map("storage_path")
+
   /// Nenhum preenchido = vale para a frota inteira.
   equipmentId String? @map("equipment_id") @db.Uuid
   modelo      String?

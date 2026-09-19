@@ -30,10 +30,27 @@ export const LIMITE_BYTES_FOTO_OS = 5 * 1024 * 1024;
 
 /**
  * Manual de máquina pesada é documento de fabricante: 200 páginas com esquema
- * elétrico não cabem em 5MB. 25MB cobre o caso real sem abrir a porta para
- * alguém usar o bucket como disco.
+ * elétrico não cabem em 5MB. 50MB é o `file_size_limit` do bucket PRIVADO
+ * `manuais` (migration da Task 1) — é o teto de NEGÓCIO que
+ * `registrarManual` confere para QUALQUER caminho, novo ou antigo.
+ *
+ * A rota antiga (`manuais/upload`) nunca chega perto disso na prática: o
+ * teto REAL dela é `LIMITE_BYTES_MANUAL_LEGADO` (10MB), aplicado ANTES, no
+ * controller — ela ainda escreve no bucket público `checklists` e o arquivo
+ * chega pela Server Action, os dois travados em 10MB. Este valor roda para
+ * ela também (mesmo `registrarManual`), só nunca é o que barra: 10MB já
+ * bloqueou antes de chegar aqui.
  */
-export const LIMITE_BYTES_MANUAL = 25 * 1024 * 1024;
+export const LIMITE_BYTES_MANUAL = 50 * 1024 * 1024;
+
+/**
+ * Teto da rota ANTIGA (`manuais/upload`), que continua existindo. Não é
+ * `LIMITE_BYTES_MANUAL`: aquele é o teto do bucket novo, e esta rota nem o
+ * alcança — ela grava no bucket público `checklists` (`file_size_limit`
+ * 10MB) e o arquivo chega pela Server Action do painel (`bodySizeLimit`,
+ * também 10MB). Prometer 50MB aqui seria trocar uma mentira por outra.
+ */
+export const LIMITE_BYTES_MANUAL_LEGADO = 10 * 1024 * 1024;
 
 /** PDF é o formato do fabricante; imagem cobre a foto da página do manual. */
 export const TIPOS_MANUAL: Record<string, string> = {
@@ -47,6 +64,16 @@ const DEFAULT_NOTA_FISCAL_BUCKET = 'notas-fiscais';
 
 /** Privado por exigência da Portaria 671 — ver o comentário de `photoUrl` no schema. */
 const BUCKET_SELFIES_PONTO = 'ponto-selfies';
+
+/**
+ * Bucket PRIVADO dos manuais (migration da Task 1, `file_size_limit` 50MB).
+ * Não é `this.bucket`: manual novo não tem URL pública, e quem abre assina
+ * na hora. Literal, e não variável de ambiente, pelo mesmo motivo do painel
+ * (`BUCKETS.manuais`) — os dois lados têm de apontar para o mesmo bucket, e
+ * uma variável a mais é uma chance a mais de apontarem para buckets
+ * diferentes sem ninguém notar.
+ */
+const BUCKET_MANUAIS = 'manuais';
 
 /**
  * Teto real do bucket `ponto-selfies` (`file_size_limit` na migration do
@@ -279,6 +306,51 @@ export class UploadsService {
       );
     }
     return storage.getPublicUrl(path).data.publicUrl;
+  }
+
+  /**
+   * Assina, em UMA ida ao Storage, os manuais que moram no bucket PRIVADO.
+   *
+   * Em lote de propósito: a tela do mecânico sincroniza o acervo INTEIRO a
+   * cada abertura, e uma assinatura por manual transformaria um acervo de
+   * cinquenta documentos em cinquenta requisições ao Supabase.
+   *
+   * Quem chama é responsável por só mandar caminho JÁ VALIDADO contra a
+   * empresa da sessão (`caminhoPertenceAEmpresa`). Aqui se assina com o
+   * SERVICE ROLE, sem RLS: um `..` que chegasse até este ponto viraria link
+   * para outro bucket. Este método não revalida porque não sabe de qual
+   * empresa é a sessão — a régua mora em quem tem o `companyId` na mão.
+   *
+   * O mapa devolvido só tem os caminhos que assinaram. Caminho ausente é a
+   * forma de dizer "sem link": manual que não abre não pode derrubar a lista
+   * inteira, e a tela sabe tratar manual sem link.
+   */
+  async assinarManuais(
+    caminhos: string[],
+    ttlSegundos: number,
+  ): Promise<Map<string, string>> {
+    const assinadas = new Map<string, string>();
+    if (caminhos.length === 0) return assinadas;
+
+    const storage = this.getCliente().storage.from(BUCKET_MANUAIS);
+    const { data, error } = await storage.createSignedUrls(
+      caminhos,
+      ttlSegundos,
+    );
+    if (error) {
+      // Erro do LOTE inteiro (bucket inexistente, credencial recusada):
+      // nenhuma alegação de sucesso órfã — todos ficam sem link.
+      console.error('Supabase createSignedUrls falhou [bucket=manuais]:', error);
+      return assinadas;
+    }
+
+    for (const item of data ?? []) {
+      // `path` é o caminho pedido, de volta; `error` é por ITEM (arquivo que
+      // sumiu do bucket, por exemplo) e convive com sucesso dos outros.
+      if (item.error || !item.signedUrl || !item.path) continue;
+      assinadas.set(item.path, item.signedUrl);
+    }
+    return assinadas;
   }
 
   async uploadOsFoto(

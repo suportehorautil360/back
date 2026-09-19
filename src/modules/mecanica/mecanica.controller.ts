@@ -23,7 +23,7 @@ import { ModuloComercial } from '../../common/modulo-comercial.decorator';
 import {
   EXTENSOES,
   LIMITE_BYTES_FOTO_OS,
-  LIMITE_BYTES_MANUAL,
+  LIMITE_BYTES_MANUAL_LEGADO,
   LIMITE_BYTES_SELFIE_PONTO,
   TIPOS_MANUAL,
   UploadsService,
@@ -39,6 +39,7 @@ import { LaudoDto } from './dto/laudo.dto';
 import { OrcamentoInternoDto } from './dto/orcamento.dto';
 import { ExecutarPreventivaDto } from './dto/preventiva.dto';
 import { ChecklistModeloDto } from './dto/checklist-modelo.dto';
+import { RegistrarManualDto } from './dto/registrar-manual.dto';
 import {
   CancelarChecklistDto,
   ConcluirChecklistDto,
@@ -76,8 +77,12 @@ function validarSituacao(situacao?: string): SituacaoOs | undefined {
  */
 const TETO_MULTER_FOTO_OS = LIMITE_BYTES_FOTO_OS + 3 * 1024 * 1024;
 
-/** Mesma folga do teto de foto, pelo mesmo motivo: mensagem em vez de 413 cru. */
-const TETO_MULTER_MANUAL = LIMITE_BYTES_MANUAL + 5 * 1024 * 1024;
+/**
+ * Mesma folga do teto de foto, pelo mesmo motivo: mensagem em vez de 413 cru.
+ * Acompanha `LIMITE_BYTES_MANUAL_LEGADO` — o teto DESTA rota, não o da rota
+ * nova — para não ficar mais permissivo do que ela pode honrar.
+ */
+const TETO_MULTER_MANUAL = LIMITE_BYTES_MANUAL_LEGADO + 5 * 1024 * 1024;
 
 function validarManual(file?: Express.Multer.File): Express.Multer.File {
   if (!file) {
@@ -86,8 +91,8 @@ function validarManual(file?: Express.Multer.File): Express.Multer.File {
   if (!TIPOS_MANUAL[file.mimetype]) {
     throw new BadRequestException('Envie um PDF ou uma imagem do manual.');
   }
-  if (file.size > LIMITE_BYTES_MANUAL) {
-    const limiteMb = LIMITE_BYTES_MANUAL / (1024 * 1024);
+  if (file.size > LIMITE_BYTES_MANUAL_LEGADO) {
+    const limiteMb = LIMITE_BYTES_MANUAL_LEGADO / (1024 * 1024);
     throw new BadRequestException(
       `Arquivo muito grande. Envie até ${limiteMb}MB.`,
     );
@@ -602,6 +607,39 @@ export class MecanicaController {
       modelo: modelo?.trim() || undefined,
       tipo: tipo?.trim() || undefined,
     });
+  }
+
+  /**
+   * Registra o manual que o Route Handler do painel já gravou no bucket
+   * PRIVADO `manuais` — o arquivo não passa pelo Nest neste caminho, só o
+   * metadado. Por isso é JSON puro: sem `FileInterceptor`, sem teto de
+   * multer.
+   *
+   * A validação se divide em duas camadas: o FORMATO do corpo
+   * (`RegistrarManualDto` — tamanho de string, `tamanhoBytes` positivo) roda
+   * no `ValidationPipe` antes de chegar aqui; a REGRA DE NEGÓCIO (tipo
+   * aceito, teto de 50MB, o caminho pertencer à empresa da sessão, o alcance
+   * por equipamento) mora em `service.registrarManual` — o mesmo método que
+   * a rota antiga usa.
+   */
+  @Post('manuais/registrar')
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Registrar um manual já gravado no Storage' })
+  async registrarManual(
+    @Req() req: RequestComPainel,
+    @Body() dto: RegistrarManualDto,
+  ) {
+    const manual = await this.service.registrarManual(req.painel, {
+      titulo: dto.titulo,
+      categoria: dto.categoria?.trim() || undefined,
+      storagePath: dto.storagePath,
+      mimetype: dto.mimetype,
+      tamanhoBytes: dto.tamanhoBytes,
+      equipamentoId: dto.equipamentoId?.trim() || undefined,
+      modelo: dto.modelo?.trim() || undefined,
+      tipo: dto.tipo?.trim() || undefined,
+    });
+    return { id: manual.id };
   }
 
   @Delete('manuais/:id')

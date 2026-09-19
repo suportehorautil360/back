@@ -10,6 +10,23 @@
  * Funções puras: sem Prisma, para o teste provar a regra sem banco.
  */
 
+/**
+ * Validade da URL assinada do manual, em segundos.
+ *
+ * Uma HORA, e não os 300s que o painel usa para `<img>`: aqui o link é
+ * assinado quando a LISTA é montada e fica esperando um toque. O mecânico que
+ * abre o acervo, é chamado na bancada e volta seis minutos depois não pode
+ * receber erro cru do Supabase numa aba nova — e um PDF de 45MB numa rede de
+ * campo lenta ainda pode estar baixando quando o link expira.
+ *
+ * Literal e travado por teste de propósito: validade de URL de bucket privado
+ * é propriedade de segurança, e é o MESMO número que o painel usa
+ * (`TTL_MANUAL_SEGUNDOS` em `horautil/lib/company/manuais.ts`). Se um dos dois
+ * mudar sozinho, o manual passa a expirar em tempos diferentes conforme quem
+ * abriu — que é o tipo de divergência que ninguém diagnostica.
+ */
+export const TTL_URL_MANUAL_SEGUNDOS = 3600;
+
 export interface ManualParaCasar {
   equipmentId: string | null;
   modelo: string | null;
@@ -73,4 +90,48 @@ export function ordenarParaMaquina<T extends ManualParaCasar & { titulo: string 
     .filter((x): x is { m: T; peso: number } => x.peso !== null)
     .sort((a, b) => b.peso - a.peso || a.m.titulo.localeCompare(b.m.titulo, 'pt-BR'))
     .map((x) => x.m);
+}
+
+/**
+ * Só letras/números/ponto/hífen/underscore, e nunca `.` ou `..` sozinho —
+ * `..` é feito só de caracteres que a classe permite, então tem de ser
+ * recusado à parte.
+ */
+function segmentoValido(segmento: string): boolean {
+  if (segmento === '' || segmento === '.' || segmento === '..') return false;
+  return /^[A-Za-z0-9._-]+$/.test(segmento);
+}
+
+/**
+ * O caminho no bucket PRIVADO `manuais` pertence à empresa da sessão?
+ *
+ * Checar só o PREFIXO (`storagePath.startsWith(companyId + '/')`) não basta:
+ * `empresa-1/../empresa-2/a.pdf` também começa por `empresa-1/`. Provado com
+ * servidor HTTP local: o `..` sobrevive ao `createSignedUrl` do Supabase e é
+ * normalizado pelo `fetch` do Node ANTES de o pedido sair do processo —
+ * `.../manuais/empresa-1/../../ponto-selfies/empresa-1/2026/09/x.jpg` chega
+ * ao destino como `.../ponto-selfies/empresa-1/2026/09/x.jpg`. Ou seja, o
+ * `..` não escapa só da EMPRESA: escapa do BUCKET INTEIRO — e a chave de
+ * `ponto-selfies` (selfie da batida, dado da Portaria 671) é derivável
+ * (`${companyId}/${ano}/${mes}/${pontoId}.jpg`, ver `uploadSelfiePonto` em
+ * `uploads.service.ts`).
+ *
+ * Por isso a checagem é por SEGMENTO, não por prefixo: o primeiro segmento
+ * tem de ser exatamente o `companyId` (não só começar com ele — descarta
+ * `empresa-10` quando a empresa é `empresa-1`); tem de haver pelo menos mais
+ * um segmento depois; e cada um dos que vêm depois casa `segmentoValido` —
+ * o que recusa `..`, segmento vazio (barra dupla) e barra a mais. O `%` do
+ * caminho INTEIRO é recusado à parte, antes de sequer dividir por `/`: barra
+ * a forma percent-encoded do mesmo ataque (`%2e%2e`), inclusive uma barra
+ * codificada que reintroduziria um nível a mais depois da divisão.
+ */
+export function caminhoPertenceAEmpresa(
+  storagePath: string,
+  companyId: string,
+): boolean {
+  if (storagePath.includes('%')) return false;
+  const segmentos = storagePath.split('/');
+  if (segmentos.length < 2) return false;
+  if (segmentos[0] !== companyId) return false;
+  return segmentos.slice(1).every(segmentoValido);
 }

@@ -7377,6 +7377,7 @@ export const ManualEquipamentoScalarFieldEnum = {
   url: 'url',
   mimetype: 'mimetype',
   tamanhoBytes: 'tamanhoBytes',
+  storagePath: 'storagePath',
   equipmentId: 'equipmentId',
   modelo: 'modelo',
   tipo: 'tipo',

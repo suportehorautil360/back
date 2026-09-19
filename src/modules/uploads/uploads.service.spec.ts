@@ -7,9 +7,11 @@ import { UploadsService } from './uploads.service';
 
 const uploadMock = jest.fn();
 const getPublicUrlMock = jest.fn();
+const createSignedUrlsMock = jest.fn();
 const fromMock = jest.fn(() => ({
   upload: uploadMock,
   getPublicUrl: getPublicUrlMock,
+  createSignedUrls: createSignedUrlsMock,
 }));
 const listBucketsMock = jest.fn();
 const createBucketMock = jest.fn();
@@ -51,6 +53,7 @@ describe('UploadsService', () => {
     getPublicUrlMock.mockImplementation((path: string) => ({
       data: { publicUrl: `https://cdn.exemplo/${path}` },
     }));
+    createSignedUrlsMock.mockResolvedValue({ data: [], error: null });
     listBucketsMock.mockResolvedValue({ data: [], error: null });
     createBucketMock.mockResolvedValue({ error: null });
     resolveCompany.mockResolvedValue('company-1');
@@ -262,6 +265,77 @@ describe('UploadsService', () => {
       });
       const path = (upload.mock.calls[0] as string[])[0];
       expect(path).not.toContain('..');
+    });
+  });
+
+  /**
+   * Assinatura em lote dos manuais do bucket PRIVADO. O que estes testes
+   * travam é o que some em silêncio: o NOME do bucket, o TTL que chega ao
+   * Supabase e a diferença entre "assinou" e "não assinou" — porque um
+   * manual sem link tem de sair da lista como SEM LINK, e não como um link
+   * quebrado que o mecânico só descobre em cima da máquina.
+   */
+  describe('assinarManuais', () => {
+    it('assina no bucket PRIVADO `manuais`, com o TTL que recebeu', async () => {
+      // O bucket errado não falha alto: `checklists` existe, e devolveria
+      // assinatura para um caminho que não mora lá — ou erro, dependendo do
+      // dia. O nome é parte do contrato com a migration da Task 1.
+      createSignedUrlsMock.mockResolvedValue({
+        data: [{ path: 'empresa-1/a.pdf', signedUrl: 'https://s/a?token=1', error: null }],
+        error: null,
+      });
+      const service = new UploadsService(PRISMA);
+
+      const mapa = await service.assinarManuais(['empresa-1/a.pdf'], 3600);
+
+      expect(fromMock).toHaveBeenCalledWith('manuais');
+      expect(createSignedUrlsMock).toHaveBeenCalledWith(['empresa-1/a.pdf'], 3600);
+      expect(mapa.get('empresa-1/a.pdf')).toBe('https://s/a?token=1');
+    });
+
+    it('lista vazia nem chega a falar com o Storage', async () => {
+      const service = new UploadsService(PRISMA);
+
+      expect((await service.assinarManuais([], 3600)).size).toBe(0);
+      expect(createSignedUrlsMock).not.toHaveBeenCalled();
+    });
+
+    it('item que falhou fica de fora do mapa, e os outros seguem', async () => {
+      createSignedUrlsMock.mockResolvedValue({
+        data: [
+          { path: 'empresa-1/a.pdf', signedUrl: 'https://s/a?token=1', error: null },
+          { path: 'empresa-1/sumiu.pdf', signedUrl: null, error: 'Object not found' },
+        ],
+        error: null,
+      });
+      const service = new UploadsService(PRISMA);
+
+      const mapa = await service.assinarManuais(
+        ['empresa-1/a.pdf', 'empresa-1/sumiu.pdf'],
+        3600,
+      );
+
+      expect(mapa.get('empresa-1/a.pdf')).toBe('https://s/a?token=1');
+      expect(mapa.has('empresa-1/sumiu.pdf')).toBe(false);
+    });
+
+    it('erro do lote inteiro não vira link para ninguém', async () => {
+      createSignedUrlsMock.mockResolvedValue({
+        data: null,
+        error: { message: 'Bucket not found' },
+      });
+      const service = new UploadsService(PRISMA);
+
+      expect((await service.assinarManuais(['empresa-1/a.pdf'], 3600)).size).toBe(0);
+    });
+
+    it('responde 503 quando o Supabase não está configurado', async () => {
+      delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+      const service = new UploadsService(PRISMA);
+
+      await expect(
+        service.assinarManuais(['empresa-1/a.pdf'], 3600),
+      ).rejects.toBeInstanceOf(ServiceUnavailableException);
     });
   });
 });

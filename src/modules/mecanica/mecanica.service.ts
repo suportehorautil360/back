@@ -20,7 +20,11 @@ import {
 } from './regras/busca-checklist';
 import type { ChecklistModeloDto } from './dto/checklist-modelo.dto';
 import { randomUUID } from 'node:crypto';
-import { ordenarParaMaquina } from './regras/manual';
+import {
+  caminhoPertenceAEmpresa,
+  ordenarParaMaquina,
+  TTL_URL_MANUAL_SEGUNDOS,
+} from './regras/manual';
 import {
   gerarGrupos,
   nomeDaInspecao,
@@ -28,7 +32,11 @@ import {
   TIPO_OS_PREVENTIVA,
 } from './regras/inspecao-do-plano';
 import { selarBatidaOriginal } from '../checklist-auth/helpers/ponto-ledger.helper';
-import { UploadsService } from '../uploads/uploads.service';
+import {
+  LIMITE_BYTES_MANUAL,
+  TIPOS_MANUAL,
+  UploadsService,
+} from '../uploads/uploads.service';
 
 /** Os quatro momentos da folha do dia — mesma ordem do app do motorista. */
 const TIPOS_DE_PONTO = ['entrada', 'almoco', 'volta', 'saida'];
@@ -806,6 +814,17 @@ export class MecanicaService {
    *
    * Sem `equipamentoId`, devolve o acervo inteiro da empresa — é a visão de
    * quem administra, não a de quem está na máquina.
+   *
+   * Cada manual sai com `href`: o endereço para ABRIR AGORA. É o Nest que o
+   * resolve, e não cada cliente, porque são dois (o painel e o app do
+   * mecânico) e espalhar assinatura por app já produziu o defeito que esta
+   * mudança conserta — o app não sabia do `storagePath`, lia `url: ''` e
+   * renderizava um toque que não fazia nada.
+   *
+   * `href` é EFÊMERO quando o manual é novo: é URL assinada, com validade de
+   * `TTL_URL_MANUAL_SEGUNDOS`. Quem consome não pode guardá-lo como se fosse
+   * estável — o `pwa-mecanico` guarda a LISTA no Dexie e o `href` só em
+   * memória, justamente por isso.
    */
   async listarManuais(painel: PainelPayload, equipamentoId?: string) {
     const manuais = await this.prisma.manualEquipamento.findMany({
@@ -813,7 +832,9 @@ export class MecanicaService {
       orderBy: { titulo: 'asc' },
     });
 
-    if (!equipamentoId) return manuais;
+    const comHref = await this.comLinkDeAbertura(manuais, painel.companyId);
+
+    if (!equipamentoId) return comHref;
 
     const maquina = await this.prisma.equipment.findFirst({
       where: { id: equipamentoId, companyId: painel.companyId },
@@ -821,11 +842,61 @@ export class MecanicaService {
     });
     if (!maquina) throw new NotFoundException('Equipamento não encontrado.');
 
-    return ordenarParaMaquina(manuais, maquina);
+    return ordenarParaMaquina(comHref, maquina);
   }
 
   /**
-   * Registra o manual já subido para o Storage.
+   * Anexa a cada manual o endereço de abertura. Quem decide é a COLUNA, nunca
+   * o formato do texto:
+   *
+   * - `storagePath` preenchido ⇒ manual novo, bucket PRIVADO `manuais`.
+   *   Assina — mas só depois de `caminhoPertenceAEmpresa`.
+   * - `storagePath` nulo ⇒ manual antigo, bucket público de sempre. Abre pela
+   *   `url` direta, SEM assinar: assinar um caminho que não existe no bucket
+   *   privado devolveria erro para um manual que hoje funciona.
+   * - caminho que não passa na régua ⇒ `href: null`, e o Storage nem é
+   *   procurado. A assinatura usa o SERVICE ROLE, sem RLS: um `..` sobrevive
+   *   ao `createSignedUrl` e é normalizado pelo NAVEGADOR depois, o que faz
+   *   `empresa-1/../../ponto-selfies/...` virar link para selfie de batida de
+   *   ponto (Portaria 671). A régua é a mesma de `registrarManual`, repetida
+   *   aqui porque a linha pode ter entrado no banco por outro caminho.
+   *
+   * `null` e não `''`: "não há link" é um estado, e string vazia já foi
+   * exatamente o valor que o app renderizou como `href` — um toque que
+   * recarregava a própria página, sem erro e sem aviso.
+   */
+  private async comLinkDeAbertura<
+    T extends { url: string; storagePath: string | null },
+  >(manuais: T[], companyId: string): Promise<(T & { href: string | null })[]> {
+    const aAssinar = manuais
+      .map((m) => m.storagePath)
+      .filter(
+        (p): p is string => !!p && caminhoPertenceAEmpresa(p, companyId),
+      );
+
+    // Sem nenhum manual novo VÁLIDO, o Storage não é procurado — nem para
+    // devolver um lote vazio. Importa para o acervo que só tem manual antigo,
+    // que é o estado de toda empresa que ainda não subiu nada pelo caminho
+    // novo: a lista não deve passar a depender do Supabase para abrir.
+    const assinadas =
+      aAssinar.length > 0
+        ? await this.uploads.assinarManuais(aAssinar, TTL_URL_MANUAL_SEGUNDOS)
+        : new Map<string, string>();
+
+    return manuais.map((manual) => ({
+      ...manual,
+      href: manual.storagePath
+        ? (assinadas.get(manual.storagePath) ?? null)
+        : manual.url || null,
+    }));
+  }
+
+  /**
+   * Registra o manual — seja o que a rota antiga acabou de subir (`url`
+   * pública preenchida), seja o que o Route Handler do painel já gravou no
+   * bucket PRIVADO `manuais` (`storagePath` preenchido, sem `url`: manual
+   * novo não tem link público, e quem abre assina na hora — guardar uma URL
+   * assinada aqui seria guardar algo que expira).
    *
    * Vínculo: `equipamentoId` prende a uma máquina; `modelo` ou `tipo` alcançam
    * a família; nada preenchido vale para a frota inteira. Guardar os três
@@ -837,7 +908,8 @@ export class MecanicaService {
     dados: {
       titulo: string;
       categoria?: string;
-      url: string;
+      url?: string;
+      storagePath?: string;
       mimetype: string;
       tamanhoBytes: number;
       equipamentoId?: string;
@@ -845,6 +917,41 @@ export class MecanicaService {
       tipo?: string;
     },
   ) {
+    const titulo = dados.titulo?.trim();
+    if (!titulo) {
+      throw new BadRequestException('Dê um título ao manual.');
+    }
+    if (!TIPOS_MANUAL[dados.mimetype]) {
+      throw new BadRequestException('Envie um PDF ou uma imagem do manual.');
+    }
+    // `<= 0` e não só `> LIMITE`: sem piso, `0`/negativo grava uma linha que
+    // não corresponde a arquivo nenhum. O DTO também tem `@IsPositive()`,
+    // mas só vale para quem entra pelo HTTP — aqui protege qualquer chamador.
+    if (!(dados.tamanhoBytes > 0)) {
+      throw new BadRequestException('tamanhoBytes precisa ser maior que zero.');
+    }
+    if (dados.tamanhoBytes > LIMITE_BYTES_MANUAL) {
+      const limiteMb = LIMITE_BYTES_MANUAL / (1024 * 1024);
+      throw new BadRequestException(
+        `Arquivo muito grande. Envie até ${limiteMb}MB.`,
+      );
+    }
+    // Sem um dos dois, a linha nasce sem apontar para arquivo nenhum — antes
+    // o TypeScript barrava isso (`url` era obrigatório); virou opcional para
+    // caber o caminho novo, e por isso a checagem precisa ser explícita.
+    if (!dados.url && !dados.storagePath) {
+      throw new BadRequestException(
+        'Informe onde o arquivo está: url (rota antiga) ou storagePath (rota nova).',
+      );
+    }
+    // O caminho vem do bucket PRIVADO: a assinatura é feita pelo service
+    // role, sem RLS. Sem esta checagem, o painel de uma empresa registraria
+    // (e leria) o objeto de outra — ou, com `..`, o objeto de OUTRO BUCKET
+    // (ver o comentário de `caminhoPertenceAEmpresa`).
+    if (dados.storagePath && !caminhoPertenceAEmpresa(dados.storagePath, painel.companyId)) {
+      throw new BadRequestException('Caminho do arquivo não pertence a esta empresa.');
+    }
+
     if (dados.equipamentoId) {
       const existe = await this.prisma.equipment.findFirst({
         where: { id: dados.equipamentoId, companyId: painel.companyId },
@@ -856,9 +963,10 @@ export class MecanicaService {
     return this.prisma.manualEquipamento.create({
       data: {
         companyId: painel.companyId,
-        titulo: dados.titulo,
+        titulo,
         categoria: dados.categoria ?? null,
-        url: dados.url,
+        url: dados.storagePath ? '' : (dados.url ?? ''),
+        storagePath: dados.storagePath ?? null,
         mimetype: dados.mimetype,
         tamanhoBytes: dados.tamanhoBytes,
         equipmentId: dados.equipamentoId ?? null,
